@@ -1,0 +1,21 @@
+{
+  "name": "@blue-might/units",
+  "version": "0.0.0",
+  "author": "Thorn-Welf Walli",
+  "contributors": [
+    {
+      "name": "Thorn-Welf Walli",
+      "email": "lammpee@gmail.com"
+    }
+  ],
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": {},
+  "dependencies": {
+    "three": "catalog:"
+  },
+  "devDependencies": {
+    "@types/three": "catalog:"
+  }
+}

@@ -1,0 +1,175 @@
+import type { Texture } from 'three';
+import { Object3D } from 'three';
+import type App from './App';
+import UnitsModule from './mapModule/Units';
+import type { AnimationLoopValue } from './Renderer';
+import assetLoader from '@blue-might/app/services/assetLoader';
+import { LOADER } from './AssetLoader';
+import GroundModule from './mapModule/Ground';
+import type Unit from './Unit';
+import LightModule from './mapModule/Light';
+import CollisionUnitModule from './unitModule/Collision';
+import { Subscription } from 'rxjs';
+
+type MapModuleList = (
+  | typeof UnitsModule
+  | typeof GroundModule
+  | typeof LightModule
+)[];
+
+interface MapModules {
+  units: UnitsModule;
+  ground: GroundModule;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface MapState {}
+
+export default class Map<
+  Modules extends MapModules = MapModules,
+  ModuleList extends MapModuleList = MapModuleList
+> {
+  debug = false;
+  subscription = new Subscription();
+
+  state: MapState = {};
+  modules: Modules = {} as Modules;
+  root: Object3D;
+  description: MapDescription;
+  textures: {
+    heightMap: Texture<ImageBitmap> | null;
+    backgroundTexture: Texture<ImageBitmap> | null;
+    foregroundTexture: Texture<ImageBitmap> | null;
+  } = {
+    heightMap: null,
+    backgroundTexture: null,
+    foregroundTexture: null
+  };
+
+  constructor(
+    description: MapDescription,
+    public app: App,
+    protected moduleList: unknown[] = []
+  ) {
+    this.root = new Object3D();
+    this.root.name = 'map';
+
+    this.description = description;
+  }
+
+  async setup() {
+    await this.loadAssets();
+    await this.setupModules();
+
+    this.subscription.add(
+      this.modules.units.observables.select$.subscribe(unit =>
+        this.app.modules.selection.setSelectedUnit(unit)
+      )
+    );
+  }
+
+  private async setupModules() {
+    const moduleList = this.moduleList as ModuleList;
+    moduleList.push(UnitsModule, GroundModule, LightModule);
+
+    const preparedModules = moduleList.map(ModuleClass => {
+      const moduleInstance = new ModuleClass(this, this.debug);
+      return [ModuleClass.TYPE, moduleInstance];
+    });
+    this.modules = Object.fromEntries(preparedModules);
+
+    await Promise.all(
+      Object.values(this.modules).map(module => module.setup())
+    );
+  }
+
+  private async loadAssets() {
+    const [heightMap, backgroundTexture, foregroundTexture] = await Promise.all(
+      [
+        assetLoader.add<Texture<ImageBitmap>>({
+          value: this.description.textures.heightMap,
+          loader: LOADER.TEXTURE
+        }),
+        assetLoader.add<Texture<ImageBitmap>>({
+          value: this.description.textures.backgroundTexture,
+          loader: LOADER.TEXTURE
+        }),
+        assetLoader.add<Texture<ImageBitmap>>({
+          value: this.description.textures.foregroundTexture,
+          loader: LOADER.TEXTURE
+        })
+      ]
+    );
+    this.textures.heightMap = heightMap;
+    this.textures.backgroundTexture = backgroundTexture;
+    this.textures.foregroundTexture = foregroundTexture;
+  }
+
+  destroy() {
+    this.subscription.unsubscribe();
+    this.app.renderer.scene.remove(this.root);
+    this.root.remove();
+    Object.values(this.modules).forEach(module => module.destroy());
+  }
+
+  addToRoot(...object: Object3D[]) {
+    this.root.add(...object);
+  }
+
+  removeFromRoot(...object: Object3D[]) {
+    this.root.remove(...object);
+  }
+
+  update(value: AnimationLoopValue) {
+    Object.values(this.modules).forEach(module => {
+      module.update(value);
+    });
+  }
+
+  get name() {
+    return this.description.name;
+  }
+
+  checkCollision(unit: Unit) {
+    const cm1 = getCollisionModule(unit);
+    if (!cm1) return false;
+
+    cm1.refreshWorldOBB();
+    cm1.refreshDebugHelper();
+
+    const units = this.modules.units.getUnits();
+
+    for (let i = 0; i < units.length; i++) {
+      const target = units[i]!;
+      if (target === unit) continue; // Verwende === statt .equal()
+
+      const cm2 = getCollisionModule(target);
+      if (!cm2) continue;
+
+      cm2.refreshWorldOBB();
+      cm2.refreshDebugHelper(); // Nur für debug, sonst weglassen
+
+      if (cm1.worldOBB.intersectsOBB(cm2.worldOBB)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+}
+
+export interface MapDescription {
+  name: string;
+  textures: {
+    backgroundTexture: string;
+    foregroundTexture: string;
+    heightMap: string;
+  };
+  units: Unit[];
+}
+
+function getCollisionModule(unit: Unit): CollisionUnitModule | null {
+  const cm = unit.getModule<CollisionUnitModule>(CollisionUnitModule.TYPE);
+  if (!cm) return null;
+  return cm;
+}

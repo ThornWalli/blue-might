@@ -1,0 +1,26 @@
+import type { SubscriptionLike } from 'rxjs';
+import type Player from './Player';
+import Module, { type ModuleObservables, type ModuleState } from './Module';
+
+export interface PlayerModuleObservables extends ModuleObservables {
+  [key: string]: SubscriptionLike | unknown;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface PlayerModuleState extends ModuleState {}
+
+export default abstract class PlayerModule<
+  State extends PlayerModuleState = PlayerModuleState,
+  Observables extends PlayerModuleObservables = PlayerModuleObservables
+> extends Module<State, Observables> {
+  constructor(
+    public player: Player,
+    debug?: boolean
+  ) {
+    super(debug);
+  }
+
+  override destroy() {
+    super.destroy();
+  }
+}
