@@ -1,0 +1,107 @@
+<template>
+  <bm-object-preview
+    v-if="root"
+    :cache-key="modelValue ? JSON.stringify(modelValue) : undefined"
+    :root="root"
+    :app="app"
+    :mode="mode"
+    :width="width ?? 'auto'"
+    :ratio="ratio"
+    :hydrate-when-visible="hydrateWhenVisible"
+    class="bm-object-preview-unit"
+    @animation-loop="!animationLoop$.closed && animationLoop$.next($event)" />
+</template>
+
+<script lang="ts" setup>
+import type { Vector3 } from 'three';
+import { Object3D } from 'three';
+import { markRaw, onUnmounted, ref, type Raw } from 'vue';
+import { Subscription, Subject } from 'rxjs';
+
+import type App from '../../lib/classes/App';
+import type { AnimationLoopValue } from '../../lib/classes/Renderer';
+
+import BmObjectPreview from '../ObjectPreview.vue';
+import { units } from '@blue-might/units';
+import type Unit from '@blue-might/app/lib/classes/Unit';
+
+const $props = defineProps<{
+  app: App;
+  mode?: 'static' | 'loop';
+  width?: number | 'auto';
+  ratio: number;
+  modelValue: UnitPreview;
+  hydrateWhenVisible?: boolean;
+  showGround?: boolean;
+  size?: Vector3 | null;
+}>();
+
+const root = ref<Object3D>(new Object3D());
+
+const animationLoop$ = new Subject<AnimationLoopValue>();
+
+onUnmounted(() => {
+  unitInstance.value?.destroy();
+  root.value.remove();
+  animationLoop$.unsubscribe();
+  unitSubscriptions?.unsubscribe();
+});
+
+let unitSubscriptions: Subscription;
+
+const unitInstance = ref<Raw<Unit> | null>(null);
+
+async function setup(data: UnitPreview) {
+  const UnitClass = (await units[
+    data.type as keyof typeof units
+  ]) as unknown as { new (): Unit };
+
+  unitInstance.value = markRaw(new UnitClass() as Unit);
+
+  const instance = unitInstance.value;
+  await instance.setup({
+    unit: instance
+  });
+  await instance.afterSetup({
+    unit: instance
+  });
+
+  unitSubscriptions?.unsubscribe();
+  unitSubscriptions = new Subscription();
+
+  return new Promise<Object3D>(resolve => {
+    unitSubscriptions.add(
+      instance.observables.materialReady$.subscribe(() => {
+        unitSubscriptions.add(
+          animationLoop$.subscribe(value => {
+            unitInstance.value!.update(value);
+          })
+        );
+        if (instance.modules.animation) {
+          if (data.action) {
+            instance.modules.animation.setAnimationAction(data.action);
+          } else {
+            instance.modules.animation.setAnimationAction('idle');
+          }
+        }
+        resolve(instance.root);
+      })
+    );
+  });
+}
+
+root.value = markRaw(await setup($props.modelValue));
+</script>
+
+<script lang="ts">
+export interface UnitPreview {
+  type: string;
+  action: string;
+}
+</script>
+
+<style lang="postcss" scoped>
+.bm-object-preview-unit {
+  /* empty */
+}
+</style>

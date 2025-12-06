@@ -1,0 +1,36 @@
+# Folders
+/.history/
+/.tmp/
+.nuxt
+.output
+dist
+node_modules
+.reports
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
+
+# Node template
+# Logs
+logs
+*.log
+*.log.*
+
+# Files
+.DS_Store
+.scannerwork
+
+sw.*
+packages/frontend/.certs/*
+!packages/frontend/.certs/README.md
+
+.old
+.env
+.eslintcache
+dist
+.secrets
+/target
+*.blend1
