@@ -39,7 +39,7 @@ export default class ControlTower_1<
       action.setDuration(2);
     }
 
-    this.modules.animation.setAnimationAction('radar');
+    this.modules.animation.playAction('radar');
     this.setMaterialReady();
   }
 

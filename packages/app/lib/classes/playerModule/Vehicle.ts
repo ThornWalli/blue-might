@@ -29,7 +29,7 @@ export default class VehicleModule extends PlayerModule<State, Observables> {
   };
 
   constructor(player: Player, debug?: boolean) {
-    super(player, debug);
+    super(player, {} as State, debug);
 
     //#region observables
     this.observables.vehicle$ = new ReplaySubject<{

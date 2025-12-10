@@ -83,7 +83,9 @@ export default class UnitsModule extends MapModule<State, Observables> {
         .pipe(debounceTime(20))
         .subscribe(() => {
           this.state.visibleUnits = Array.from(
-            this.chunkManager.updateVisibility(this.map.app.renderer.camera)
+            this.chunkManager.updateVisibility(
+              this.map.app.renderer.modules.camera.getCamera()
+            )
           );
         })
     );

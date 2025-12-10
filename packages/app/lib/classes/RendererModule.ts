@@ -13,8 +13,9 @@ export default abstract class RendererModule<
 > extends Module<State, Observables> {
   constructor(
     public renderer: Renderer,
+    state: State,
     debug?: boolean
   ) {
-    super(debug);
+    super(state, debug);
   }
 }

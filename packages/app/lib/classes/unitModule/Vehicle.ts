@@ -1,215 +1,158 @@
-import { Vector3, Object3D } from 'three';
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
   type UnitModuleState
 } from '../UnitModule';
-import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
+import type VehicleUnit from '../unit/Vehicle';
+import { ReplaySubject } from 'rxjs';
 
-interface ControlState {
-  forward: boolean;
-  backward: boolean;
-  left: boolean;
-  right: boolean;
-  brake: boolean;
+export interface PowerInfo {
+  flightPower: number;
+  currentPower: number;
+  maxPower: number;
+  minPower: number;
+  idlePower: number;
 }
 
-export interface VehicleUnitModuleOptions extends UnitModuleOptions {
-  maxSpeed: number;
-  acceleration: number;
-  turnSpeed: number;
-  turnMovementSpeed: number;
-  friction: number;
+export interface VehicleUnitModuleObservables extends UnitModuleObservables {
+  active$: ReplaySubject<boolean>;
+  powerInfo$: ReplaySubject<PowerInfo>;
 }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface VehicleUnitModuleOptions extends UnitModuleOptions {}
 
 export interface VehicleUnitModuleState extends UnitModuleState {
-  velocity: Vector3;
-  tilt: Vector3;
-  groundNormal: Vector3;
-  controls: ControlState;
+  active: boolean;
+  rawPower: number;
+  maxPower: number;
+  minPower: number;
+  idlePower: number;
+
+  lastActive?: boolean;
+  lastPower?: number;
 }
 
 export default class VehicleUnitModule<
   Options extends VehicleUnitModuleOptions = VehicleUnitModuleOptions,
   State extends VehicleUnitModuleState = VehicleUnitModuleState,
-  Obervables extends UnitModuleObservables = UnitModuleObservables,
-  U extends Unit = Unit
+  Obervables extends
+    VehicleUnitModuleObservables = VehicleUnitModuleObservables,
+  U extends VehicleUnit = VehicleUnit
 > extends UnitModule<Options, State, Obervables, U> {
   static override TYPE = 'vehicle';
-  private _dir = new Vector3();
-
-  getTmpDirection() {
-    return this._dir;
-  }
-  setTmpDirection(x: number, y: number, z: number) {
-    this._dir.set(x, y, z);
-  }
-  private _rotDir = new Vector3();
-  getTmpRotationDirection() {
-    return this._rotDir;
-  }
-  setTmpRotationDirection(value: Vector3) {
-    this._rotDir.copy(value);
-  }
-
-  root: Object3D;
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {
     super(
       unit,
       {
-        ...options,
-        maxSpeed: options.maxSpeed ?? 20,
-        acceleration: options.acceleration ?? 8,
-        // leicht höherer Default für Fahr-Lenkung
-        turnSpeed: options.turnSpeed ?? 2.5,
-        turnMovementSpeed: options.turnMovementSpeed ?? 3.25,
-        friction: options.friction ?? 0.92
+        ...options
       },
       {
         ...state,
-        velocity: state.velocity ?? new Vector3(0, 0, 0),
-        tilt: state.tilt ?? new Vector3(0, 0, 0),
-        groundNormal: state.groundNormal ?? new Vector3(0, 1, 0),
-        controls: {
-          forward: false,
-          backward: false,
-          left: false,
-          right: false,
-          brake: false
-        }
+        active: state.active ?? false,
+        rawPower: state.rawPower ?? 0,
+        maxPower: state.maxPower ?? 1,
+        minPower: state.minPower ?? 0.4,
+        idlePower: state.idlePower ?? 0.2
       },
       debug
     );
 
-    this.root = new Object3D();
-  }
-
-  setControls(controls: ControlState) {
-    this.state.controls = { ...this.state.controls, ...controls };
-  }
-  // eslint-disable-next-line complexity
-  override update({ delta }: AnimationLoopValue): void {
-    const unit = this.getUnit();
-    const acceleration = this.options.acceleration;
-    const rotation = unit.getRotation();
-    const controls = this.state.controls;
-    const maxSpeed = this.options.maxSpeed;
-    const friction = this.options.friction;
-
-    // Früher Bail-out: wenn keine Eingaben und Geschwindigkeiten ~0, nichts tun
-    const eps = 1e-4;
-    if (
-      !controls.forward &&
-      !controls.backward &&
-      !controls.left &&
-      !controls.right &&
-      !controls.brake &&
-      this.state.velocity.lengthSq() < eps
-    ) {
-      return;
-    }
-
-    // 1. Beschleunigung durch Input
-    let accel = 0;
-    if (controls.forward) accel += acceleration;
-    if (controls.backward) accel -= acceleration * 0.5; // Rückwärts langsamer
-
-    // Wenn weder Bewegung noch Rotation stattfinden soll, abbrechen
-    if (accel === 0 && this.state.velocity.lengthSq() < eps) {
-      // kleine Restgeschwindigkeiten hart auf 0 setzen
-      if (this.state.velocity.lengthSq() < eps)
-        this.state.velocity.setScalar(0);
-
-      return;
-    }
-
-    // 2. Richtung aus Rotation (keine neuen Objekte erzeugen)
-    this.setTmpDirection(Math.sin(rotation), 0, Math.cos(rotation));
-    this.setTmpRotationDirection(this.getTmpDirection());
-
-    //#region forward/backward
-    let speed = 0;
-    const velocity = this.state.velocity;
-
-    velocity.addScaledVector(this.getTmpDirection(), accel * delta);
-    if (controls.brake) {
-      velocity.multiplyScalar(0.8);
-    }
-    velocity.multiplyScalar(friction);
-
-    // Traktion: Queranteil zur Fahrtrichtung dämpfen
-    const forward = this.getTmpDirection();
-    const dot = velocity.dot(forward);
-    // Querkomponente = v - proj_v
-    const lateralX = velocity.x - forward.x * dot;
-    const lateralZ = velocity.z - forward.z * dot;
-    const lateralMagSq = lateralX * lateralX + lateralZ * lateralZ;
-
-    if (lateralMagSq > 0) {
-      // grip: 0..1 (höher = mehr Traktion, weniger seitliches Schliddern)
-      const grip = 0.85; // ggf. als Option konfigurierbar
-      // dämpfe die Querkomponente
-      velocity.x = forward.x * dot + lateralX * (1 - grip);
-      velocity.z = forward.z * dot + lateralZ * (1 - grip);
-    }
-
-    speed = velocity.length();
-    if (speed > maxSpeed) {
-      velocity.setLength(maxSpeed);
-    } else if (speed < eps) {
-      velocity.setScalar(0);
-      speed = 0;
-    }
+    //#region observables
+    this.observables.active$ = new ReplaySubject<boolean>(1);
+    this.observables.active$.next(this.state.active);
+    this.observables.powerInfo$ = new ReplaySubject<PowerInfo>(1);
+    this.observables.powerInfo$.next({
+      flightPower: this.getCurrentPower(),
+      currentPower: this.state.rawPower,
+      maxPower: this.state.maxPower,
+      minPower: this.state.minPower,
+      idlePower: this.state.idlePower
+    });
     //#endregion
+  }
 
-    const turnSpeed = this.options.turnMovementSpeed;
+  getControls() {
+    const unit = this.getUnit() as U;
+    return (
+      unit.modules.player.getPlayer()?.modules.controls.getControls() ?? {}
+    );
+  }
 
-    if (speed > 0.05) {
-      let turnInput = 0;
+  override update({ delta: _delta }: AnimationLoopValue): void {
+    // to be implemented by subclasses
 
-      if (controls.left) turnInput += 1;
-      if (controls.right) turnInput -= 1;
-      if (controls.backward) turnInput *= -1;
+    let currentPower = this.state.rawPower ?? 0;
 
-      if (turnInput !== 0) {
-        const norm = Math.min(speed / this.options.maxSpeed, 1);
-        // sanfteres Steering-Scaling
-        const turnFactor = Math.pow(norm, 0.6);
-        const lowSpeedBoost = norm < 0.2 ? 1.15 : 1.0;
-
-        // Steering glätten (anstatt sofort volle Lenkung)
-        const steeringSmoothing = 100; // höher = schnellerer Übergang
-        // akkumulierten, geglätteten Lenkwert im State speichern (optional extern)
-        // hier: temporär berechnet (sanftes Einfaden)
-        const targetTurn = turnInput * turnSpeed * lowSpeedBoost;
-        // sanfte Annäherung an targetTurn
-        const smoothTurn =
-          targetTurn * (1 - Math.exp(-steeringSmoothing * delta));
-
-        unit.setRotation(unit.getRotation() + smoothTurn * delta * turnFactor);
-
-        // Mildes Dämpfen statt hartem Abbremsen:
-        // abhängig von Geschwindigkeit und Delta, nur wenig Energieabbau beim Lenken
-        const maxDamp = 0.05; // 5% statt 15%
-        const dampStrength = maxDamp * norm; // bei höherer Geschwindigkeit etwas mehr
-        const turningDamp = 1 - Math.min(dampStrength, maxDamp);
-        velocity.multiplyScalar(turningDamp);
+    if (
+      (!this.state.active && currentPower > 0) || // Off
+      (this.state.active && currentPower < this.getMaxPower()) ||
+      (this.state.active && currentPower > this.getMaxPower())
+    ) {
+      if (this.state.active) {
+        if (currentPower > this.getMaxPower()) {
+          currentPower = Math.max(
+            (currentPower ?? 0) - 0.01,
+            this.getMaxPower()
+          );
+        } else {
+          currentPower = Math.min(
+            (currentPower ?? 0) + 0.01,
+            this.getMaxPower()
+          );
+        }
       } else {
-        // Kein Lenken → kein Extra-Dämpfen
+        currentPower = Math.max(this.state.rawPower - 0.02, 0);
       }
-    }
 
-    // Position
-    const pos = unit.getPosition();
-    const dx = velocity.x * delta;
-    const dz = velocity.z * delta;
-    if (Math.abs(dx) > eps || Math.abs(dz) > eps) {
-      pos.x += dx;
-      pos.z += dz;
-      unit.setPosition(pos);
-      unit.updateGroundAlignment();
+      this.state.lastActive = this.state.active;
+      this.state.lastPower = this.state.rawPower;
+      this.state.rawPower = currentPower;
+
+      this.observables.powerInfo$.next({
+        flightPower: this.getCurrentPower(),
+        currentPower: this.state.rawPower,
+        maxPower: this.state.maxPower,
+        minPower: this.state.minPower,
+        idlePower: this.state.idlePower
+      });
     }
+  }
+
+  hasMinPower() {
+    return this.state.rawPower >= this.state.minPower;
+  }
+
+  getRawPower() {
+    return this.state.rawPower;
+  }
+
+  getCurrentPower() {
+    return (
+      Math.max(this.state.rawPower - this.getMinPower(), 0) /
+      (this.getMaxPower() - this.getMinPower())
+    );
+  }
+
+  getMaxPower() {
+    if (this.state.active) {
+      return this.state.maxPower;
+    }
+    return 0;
+  }
+
+  getMinPower() {
+    return this.state.minPower;
+  }
+
+  getActive() {
+    return this.state.active;
+  }
+
+  setActive(value: boolean) {
+    this.state.active = value;
+    this.observables.active$.next(this.state.active);
   }
 }

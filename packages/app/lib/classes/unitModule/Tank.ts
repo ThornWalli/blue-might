@@ -1,18 +1,21 @@
 import { Vector3 } from 'three';
-import VehicleUnitModule, {
-  type VehicleUnitModuleOptions,
-  type VehicleUnitModuleState
-} from './Vehicle';
+import GroundVehicleUnitModule, {
+  type GroundVehicleUnitModuleOptions,
+  type GroundVehicleUnitModuleState
+} from './GroundVehicle';
 import type { AnimationLoopValue } from '../Renderer';
-import type Unit from '../Unit';
+import type TankUnit from '../unit/vehicle/Tank';
 
-type Options = VehicleUnitModuleOptions;
-type State = VehicleUnitModuleState & {
+type Options = GroundVehicleUnitModuleOptions;
+type State = GroundVehicleUnitModuleState & {
   rotationVelocity: Vector3;
 };
 
-export default class TankUnitModule extends VehicleUnitModule<Options, State> {
-  constructor(unit: Unit, options: Options, state: State, debug: boolean) {
+export default class TankUnitModule extends GroundVehicleUnitModule<
+  Options,
+  State
+> {
+  constructor(unit: TankUnit, options: Options, state: State, debug: boolean) {
     super(
       unit,
       {
@@ -29,11 +32,14 @@ export default class TankUnitModule extends VehicleUnitModule<Options, State> {
   }
 
   // eslint-disable-next-line complexity
-  override update({ delta }: AnimationLoopValue): void {
+  override update({ delta, time }: AnimationLoopValue): void {
+    super.update({ delta, time });
     const unit = this.getUnit();
     const acceleration = this.options.acceleration;
-    const rotation = unit.getRotation();
-    const controls = this.state.controls;
+
+    const controls = this.getControls();
+    const currentPower = this.getCurrentPower();
+
     const maxSpeed = this.options.maxSpeed;
     const friction = this.options.friction;
 
@@ -42,22 +48,21 @@ export default class TankUnitModule extends VehicleUnitModule<Options, State> {
     // Früher Bail-out: wenn keine Eingaben und Geschwindigkeiten ~0, nichts tun
     const eps = 1e-4;
     if (
-      !controls.forward &&
-      !controls.backward &&
+      !controls.up &&
+      !controls.down &&
       !controls.left &&
       !controls.right &&
-      !controls.brake &&
+      !controls.space &&
       this.state.velocity.lengthSq() < eps &&
       this.state.rotationVelocity.lengthSq() < eps
     ) {
       return;
     }
-
     // 1. Beschleunigung durch Input
     let accel = 0;
     let rotationAccel = 0;
-    if (controls.forward) accel += acceleration;
-    if (controls.backward) accel -= acceleration * 0.5; // Rückwärts langsamer
+    if (controls.up) accel += acceleration;
+    if (controls.down) accel -= acceleration * 0.5; // Rückwärts langsamer
 
     if (isRotating) {
       if (controls.left) rotationAccel += acceleration;
@@ -82,15 +87,16 @@ export default class TankUnitModule extends VehicleUnitModule<Options, State> {
     }
 
     // 2. Richtung aus Rotation (keine neuen Objekte erzeugen)
-    this.setTmpDirection(Math.sin(rotation), 0, Math.cos(rotation));
-    this.setTmpRotationDirection(this.getTmpDirection());
+    const forward = unit.getForwardXZFromYaw(new Vector3());
+    this.setTmpDirection(forward.x, 0, forward.z);
+    this.setTmpRotationDirection(forward);
 
     //#region forward/backward
     let speed = 0;
     const velocity = this.state.velocity;
     if (!isRotating) {
       velocity.addScaledVector(this.getTmpDirection(), accel * delta);
-      if (controls.brake) {
+      if (controls.space) {
         velocity.multiplyScalar(0.8);
       }
       velocity.multiplyScalar(friction);
@@ -139,13 +145,16 @@ export default class TankUnitModule extends VehicleUnitModule<Options, State> {
       if (controls.right) turn -= turnSpeed * (isRotating ? 1 : 0.5);
 
       const turnFactor = Math.min(_rotationSpeed / maxSpeed, 1);
-      unit.setRotation(rotation + turn * delta * turnFactor);
+
+      // Statt Quaternion: Yaw direkt ändern, unabhängig von Tilt/Pitch/Roll
+      const newYaw = unit.getYaw() + turn * delta * turnFactor;
+      unit.setYaw(newYaw);
     }
 
     // newPosition vermeiden: temp nutzen
     const pos = unit.getPosition().clone();
-    const dx = velocity.x * delta;
-    const dz = velocity.z * delta;
+    const dx = velocity.x * delta * currentPower;
+    const dz = velocity.z * delta * currentPower;
     if (Math.abs(dx) > eps || Math.abs(dz) > eps) {
       pos.x += dx;
       pos.z += dz;

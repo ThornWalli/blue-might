@@ -1,9 +1,15 @@
-export enum ICON {}
+import { defineAsyncComponent, markRaw } from 'vue';
+
+export enum ICON {
+  LOCKED = 'locked',
+  UNLOCKED = 'unlocked'
+}
 
 export default {
-  // [ICON.WALL]: markRaw(
-  //   defineAsyncComponent(
-  //     () => import('../assets/icons/actions/wall.svg?component')
-  //   )
-  // ),
+  [ICON.LOCKED]: markRaw(
+    defineAsyncComponent(() => import('../assets/icons/lock.svg?component'))
+  ),
+  [ICON.UNLOCKED]: markRaw(
+    defineAsyncComponent(() => import('../assets/icons/lock-off.svg?component'))
+  )
 };

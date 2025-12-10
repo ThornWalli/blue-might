@@ -79,9 +79,9 @@ async function setup(data: UnitPreview) {
         );
         if (instance.modules.animation) {
           if (data.action) {
-            instance.modules.animation.setAnimationAction(data.action);
+            instance.modules.animation.playAction(data.action);
           } else {
-            instance.modules.animation.setAnimationAction('idle');
+            instance.modules.animation.playAction('idle');
           }
         }
         resolve(instance.root);

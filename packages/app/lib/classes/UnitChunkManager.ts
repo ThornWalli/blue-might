@@ -2,6 +2,7 @@ import type { Camera } from 'three';
 import { Box3, Frustum, Matrix4, Mesh, Vector3 } from 'three';
 import type Unit from './Unit';
 import { HumanPlayer } from './player/Human';
+import PlayerUnitModule from './unitModule/Player';
 
 export interface UnitChunking {
   currentChunkKeys: string[];
@@ -93,7 +94,7 @@ export default class UnitChunkManager {
       }
     });
     new Set(hideUnits).forEach(unit => {
-      const player = unit.modules.player.getPlayer();
+      const player = unit.getModuleByType(PlayerUnitModule)?.getPlayer();
       if (player instanceof HumanPlayer) {
         unit.setChunkVisible(false);
       }

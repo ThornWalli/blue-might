@@ -16,11 +16,12 @@
 
     <p>
       <span>Pos.:</span>
-      {{ position?.clone().round().toArray().join(' / ') }}<br />
+      {{ position?.round().toArray().join(' / ') }}<br />
     </p>
-    <bm-button :disabled="!canUseVehicle" @click="onClickUseVehicle"
-      >Use Vehicle</bm-button
-    >
+    <bm-button @click="onClickFocusUnit"> Focus Unit </bm-button>
+    <bm-button :disabled="!canUseVehicle" @click="onClickUseVehicle">
+      Use Vehicle
+    </bm-button>
   </bm-panel>
 </template>
 
@@ -34,6 +35,7 @@ import { EMPTY, Subscription, switchMap } from 'rxjs';
 import type { Vector3 } from 'three';
 import BmButton from '../Button.vue';
 import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
+import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 
 const $props = defineProps<{
   app: App;
@@ -41,7 +43,9 @@ const $props = defineProps<{
 
 const unit = ref<Raw<Unit> | null>(null);
 
-const player = computed(() => unit.value?.modules.player.getPlayer());
+const player = computed(() =>
+  unit.value?.getModuleByType(PlayerUnitModule)?.getPlayer()
+);
 const panelTitle = computed(
   () => player.value?.name || unit.value?.name || 'n/a'
 );
@@ -68,7 +72,7 @@ async function setup() {
         })
       )
       .subscribe(p => {
-        position.value = p;
+        position.value = p.clone();
       })
   );
 
@@ -93,21 +97,30 @@ const previewOptions = computed(() => {
 
 const canUseVehicle = computed(() => {
   if (!unit.value) return false;
-  return (
-    unit.value instanceof VehicleUnit && !unit.value.modules.player.hasPlayer()
-  );
+
+  const playerUnitModule = unit.value.getModuleByType(PlayerUnitModule);
+  return playerUnitModule && !playerUnitModule.hasPlayer();
 });
 
 function onClickUseVehicle() {
-  if (!unit.value) return;
-  if (unit.value instanceof VehicleUnit) {
+  const u = unit.value;
+  if (!u) return;
+  if (u instanceof VehicleUnit) {
     const app = $props.app;
     const player = app.modules.player.getCurrentPlayer();
-    if (!player) return;
 
-    player.modules.vehicle.setVehicle(unit.value as VehicleUnit);
-    unit.value.modules.player.setPlayer(player);
+    if (!player) return;
+    player.modules.vehicle.setVehicle(u as VehicleUnit);
+    u.getModuleByType(PlayerUnitModule)?.setPlayer(player);
+    unit.value = u;
   }
+}
+
+function onClickFocusUnit() {
+  const u = unit.value;
+  if (!u) return;
+  const app = $props.app;
+  app.modules.unitFocus.focus(u);
 }
 </script>
 

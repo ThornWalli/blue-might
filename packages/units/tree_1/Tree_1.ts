@@ -3,7 +3,7 @@ import type {
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { LoopRepeat, Mesh, SkinnedMesh } from 'three';
+import { Mesh, SkinnedMesh } from 'three';
 import baseGlb from './assets/tree_1.glb?url';
 import BuildingUnit, {
   type BuildingUnitModuleList,
@@ -30,17 +30,6 @@ export default class Tree_1<
       },
       moduleList as ModuleList
     );
-  }
-  override afterSetup(_context: SetupContext): void {
-    const action = this.modules.animation.getAction('radar');
-    if (action) {
-      action.clampWhenFinished = false;
-      action.setLoop(LoopRepeat, Infinity);
-      action.setDuration(2);
-    }
-
-    this.modules.animation.setAnimationAction('radar');
-    this.setMaterialReady();
   }
 
   override async createMesh(_context: SetupContext) {

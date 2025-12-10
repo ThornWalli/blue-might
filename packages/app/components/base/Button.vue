@@ -10,7 +10,8 @@ button {
   padding: 0;
   margin: 0;
   font: initial;
-  cursor: inherit;
+  font-family: var(--font-base);
+  cursor: pointer;
   background: none;
   border: none;
 

@@ -49,13 +49,11 @@ export default class LandingPort_1 extends LandingPortUnit {
     const mesh = new Mesh(
       new PlaneGeometry(1, 1),
       new MeshLambertMaterial({
-        // color: 0x00ff00,
         map: texture,
-        transparent: true,
-        wireframe: false
+        transparent: true
       })
     );
-
+    mesh.renderOrder = 100;
     mesh.rotateX(-Math.PI / 2);
     mesh.position.set(0, 0.001, 0);
 

@@ -13,7 +13,7 @@ import { OBB } from 'three/examples/jsm/math/OBB.js';
 
 export interface CollisionUnitModuleOptions extends UnitModuleOptions {
   targetName: string;
-  targetChild?: boolean;
+  targetChildIndex?: number;
 }
 
 export default class CollisionUnitModule extends UnitModule {
@@ -50,11 +50,18 @@ export default class CollisionUnitModule extends UnitModule {
   }
 
   getTarget() {
-    const { targetName, targetChild } = this
+    const { targetName, targetChildIndex } = this
       .options as CollisionUnitModuleOptions;
     const target = this.getUnit().root.getObjectByName(targetName);
-    if (targetChild) {
-      return target?.children[1] || null;
+
+    if (targetChildIndex !== undefined) {
+      const children = target?.children[targetChildIndex] || null;
+      if (!children) {
+        console.warn(
+          `CollisionUnitModule: Child index ${targetChildIndex} does not exist on target '${targetName}'.`
+        );
+      }
+      return children;
     }
     return target || null;
   }

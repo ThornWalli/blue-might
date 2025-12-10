@@ -1,4 +1,5 @@
 import Unit, {
+  GROUND_ADJUSTMENT_MODE,
   type UnitConstructorOptions,
   type UnitModuleList,
   type UnitModules,
@@ -38,6 +39,6 @@ export default class BuildingUnit<
       moduleList.push(BuildingUnitModule);
     }
     super(options, moduleList);
-    this.setNormalizeGroundAlignment(false);
+    this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.MIN_HEIGHT);
   }
 }

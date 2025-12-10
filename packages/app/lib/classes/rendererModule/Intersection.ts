@@ -53,7 +53,7 @@ export default class IntersectionRendererModule extends RendererModule<State> {
   globalListener: IntersectionListener;
 
   constructor(renderer: Renderer) {
-    super(renderer);
+    super(renderer, {});
     this.raycaster = new Raycaster();
     this.mouse = new Vector2();
     this.globalListener = this.registerListener();
@@ -84,7 +84,10 @@ export default class IntersectionRendererModule extends RendererModule<State> {
         offset = getOffset(this.renderer.el);
         const x = ((e.clientX - offset.x) / dimension.x) * 2 - 1;
         const y = -((e.clientY - offset.y) / dimension.y) * 2 + 1;
-        this.raycaster.setFromCamera(new Vector2(x, y), this.renderer.camera);
+        this.raycaster.setFromCamera(
+          new Vector2(x, y),
+          this.renderer.modules.camera.getCamera()
+        );
         this.listeners.forEach(listener => {
           const intersects = this.raycaster.intersectObjects(
             listener.meshes,
@@ -156,7 +159,10 @@ export default class IntersectionRendererModule extends RendererModule<State> {
   override update() {
     const mouse = this.mouse;
     this.mouse.copy(mouse);
-    this.raycaster.setFromCamera(mouse, this.renderer.camera);
+    this.raycaster.setFromCamera(
+      mouse,
+      this.renderer.modules.camera.getCamera()
+    );
   }
 }
 

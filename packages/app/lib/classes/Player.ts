@@ -3,11 +3,13 @@ import { ReplaySubject, type SubscriptionLike } from 'rxjs';
 import { Subscription } from 'rxjs';
 import VehicleModule from './playerModule/Vehicle';
 import type VehicleUnit from './unit/Vehicle';
+import type ControlsModule from './playerModule/Controls';
 
 export type PlayerModuleList = (typeof VehicleModule)[];
 
 export interface PlayerModules {
   vehicle: VehicleModule;
+  controls: ControlsModule;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -51,6 +53,13 @@ export default class Player<
         unit: Unit;
       }>(1)
     };
+
+    const preparedModules = (moduleList as ModuleList).map(ModuleClass => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const moduleInstance = new (ModuleClass as any)(this, this.debug);
+      return [ModuleClass.TYPE, moduleInstance];
+    });
+    this.modules = Object.fromEntries(preparedModules);
   }
 
   async setup() {
@@ -58,15 +67,6 @@ export default class Player<
   }
 
   private async setupModules() {
-    const moduleList = this.moduleList as ModuleList;
-
-    const preparedModules = moduleList.map(ModuleClass => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const moduleInstance = new (ModuleClass as any)(this, this.debug);
-      return [ModuleClass.TYPE, moduleInstance];
-    });
-    this.modules = Object.fromEntries(preparedModules);
-
     await Promise.all(
       Object.values(this.modules).map(module => module.setup())
     );

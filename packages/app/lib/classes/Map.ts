@@ -70,7 +70,7 @@ export default class Map<
 
   private async setupModules() {
     const moduleList = this.moduleList as ModuleList;
-    moduleList.push(UnitsModule, GroundModule, LightModule);
+    moduleList.push(GroundModule, UnitsModule, LightModule);
 
     const preparedModules = moduleList.map(ModuleClass => {
       const moduleInstance = new ModuleClass(this, this.debug);

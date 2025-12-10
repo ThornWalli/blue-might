@@ -2,6 +2,7 @@
   <bm-app-layout class="bm-app-playground">
     <template #[PANEL.BOTTOM_LEFT]>
       <div class="panel-row">
+        <bm-panel-debug key="general" :app="app" />
         <bm-panel-controls key="general" :app="app" />
       </div>
     </template>
@@ -17,6 +18,7 @@
 <script lang="ts" setup>
 import type App from '../../lib/classes/App';
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
+import BmPanelDebug from '../panel/Debug.vue';
 import BmPanelControls from '../panel/Controls.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';

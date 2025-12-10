@@ -6,7 +6,7 @@ import TankUnit, {
   type TankUnitModuleList,
   type TankUnitModules,
   type TankUnitOptions
-} from '@blue-might/app/lib/classes/unit/Tank';
+} from '@blue-might/app/lib/classes/unit/vehicle/Tank';
 
 import baseGlb from './assets/tank_1.glb?url';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
@@ -28,7 +28,12 @@ export default class Tank_1<
     super(
       {
         ...options,
-        name: 'Tank 1'
+        name: 'Tank 1',
+        moduleOptions: {
+          collision: {
+            targetName: 'base'
+          }
+        }
       },
       moduleList as ModuleList
     );

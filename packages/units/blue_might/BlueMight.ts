@@ -1,3 +1,4 @@
+import { combineLatest, filter } from 'rxjs';
 import type {
   SetupContext,
   UnitConstructorOptions
@@ -5,21 +6,21 @@ import type {
 
 import baseGlb from './assets/blue_might.glb?url';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { Mesh, SkinnedMesh, LoopRepeat } from 'three';
-import VehicleUnit, {
-  type VehicleUnitModuleList,
-  type VehicleUnitModules,
-  type VehicleUnitOptions
-} from '@blue-might/app/lib/classes/unit/Vehicle';
+import { Mesh, SkinnedMesh, LoopRepeat, LoopOnce } from 'three';
+import HelicopterUnit, {
+  type HelicopterUnitModuleList,
+  type HelicopterUnitModules,
+  type HelicopterUnitOptions
+} from '@blue-might/app/lib/classes/unit/vehicle/Helicopter';
 
-export type Options = VehicleUnitOptions;
-export type Modules = VehicleUnitModules;
-export type ModuleList = VehicleUnitModuleList;
+export type Options = HelicopterUnitOptions;
+export type Modules = HelicopterUnitModules;
+export type ModuleList = HelicopterUnitModuleList;
 
 export default class BlueMight<
-  Modules extends VehicleUnitModules = VehicleUnitModules,
-  ModuleList extends VehicleUnitModuleList = VehicleUnitModuleList
-> extends VehicleUnit<Options, Modules, ModuleList> {
+  Modules extends HelicopterUnitModules = HelicopterUnitModules,
+  ModuleList extends HelicopterUnitModuleList = HelicopterUnitModuleList
+> extends HelicopterUnit<Options, Modules, ModuleList> {
   static override KEY = 'blue_might';
 
   constructor(
@@ -30,10 +31,14 @@ export default class BlueMight<
       {
         ...options,
         name: 'BlueMight',
+
         moduleOptions: {
+          helicopter: {
+            gearsHeight: 0.15
+          },
           collision: {
             targetName: 'base',
-            targetChild: true
+            targetChildIndex: 1
           }
         }
       },
@@ -41,16 +46,64 @@ export default class BlueMight<
     );
   }
 
-  override async afterSetup(_context: SetupContext) {
-    const action = this.modules.animation.getAction('idle_rotor');
-    if (action) {
-      action.clampWhenFinished = false;
-      action.setLoop(LoopRepeat, Infinity);
-      action.setDuration(4);
-    }
+  override async setup(context: SetupContext) {
+    await super.setup(context);
+  }
 
-    // this.modules.animation.setAnimationAction('idle_rotor');
+  animationSettings: Record<
+    string,
+    {
+      clampWhenFinished: boolean;
+      loop: typeof LoopRepeat | typeof LoopOnce;
+      duration: number;
+    }
+  > = {
+    land_gears: { clampWhenFinished: true, loop: LoopOnce, duration: 2 },
+    rotor_idle: { clampWhenFinished: false, loop: LoopRepeat, duration: 8 },
+    rotor_run: { clampWhenFinished: false, loop: LoopRepeat, duration: 0.25 },
+    rotor_off: { clampWhenFinished: false, loop: LoopRepeat, duration: 0 }
+  };
+
+  override async afterSetup(_context: SetupContext) {
+    Object.entries(this.animationSettings).forEach(
+      ([name, { clampWhenFinished, loop, duration }]) => {
+        const action = this.modules.animation.getAction(name);
+        if (action) {
+          action.clampWhenFinished = clampWhenFinished;
+          action.setLoop(loop, Infinity);
+          action.setDuration(duration);
+        }
+      }
+    );
+
     this.setMaterialReady();
+
+    this.subscription.add(
+      this.modules.helicopter.observables.gearsActive$
+        .pipe(filter(gearsActive => gearsActive))
+        .subscribe(() => {
+          if (!this.modules.helicopter.getGearsOpened()) {
+            this.modules.animation.playAction('land_gears', { reverse: true });
+          } else {
+            this.modules.animation.playAction('land_gears');
+          }
+        })
+    );
+
+    this.subscription.add(
+      combineLatest([
+        this.modules.helicopter.observables.active$,
+        this.modules.helicopter.observables.powerInfo$,
+        this.modules.helicopter.observables.flightStatus$
+      ]).subscribe(([_active, powerInfo]) => {
+        const action = this.modules.animation.getAction('rotor_run');
+        if (action) {
+          action.timeScale = powerInfo.currentPower;
+        }
+      })
+    );
+
+    this.modules.animation.playAction('rotor_run');
   }
 
   override async createMesh(_context: SetupContext) {

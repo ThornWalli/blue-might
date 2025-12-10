@@ -33,7 +33,7 @@ export default class CursorAppModule extends AppModule<State, Observables> {
   private currentSubject = new ReplaySubject<Cursor>(0);
 
   constructor(app: App) {
-    super(app);
+    super(app, {} as State);
     //#region observables
     this.observables.current$ = this.currentSubject.pipe(
       distinctUntilChanged((prev, current) => current.type === prev.type)

@@ -29,19 +29,14 @@ import BmRenderer from './Renderer.vue';
 
 import setupFonts from './../utils/fonts';
 import type { RendererOptions } from '../types';
-import { fromEvent, Subscription } from 'rxjs';
-import { Vector2, Vector3 } from 'three';
+import { filter, fromEvent, map, Subscription } from 'rxjs';
+import { Vector2 } from 'three';
 import type Renderer from '../lib/classes/Renderer';
 import type { Cursor } from '../lib/classes/appModule/Cursor';
 
 import { defaultMap } from '@blue-might/maps';
-import Tank_1 from '@blue-might/units/tank_1/Tank_1';
-import PlayerUnitModule from '../lib/classes/unitModule/Player';
-import type {
-  TankUnitModuleList,
-  TankUnitModules
-} from '../lib/classes/unit/Tank';
 import { HumanPlayer } from '../lib/classes/player/Human';
+import type VehicleUnit from '../lib/classes/unit/Vehicle';
 
 setupFonts();
 const $props = defineProps<{
@@ -86,8 +81,7 @@ async function setup() {
     if (app.value.modules.player) {
       await setupPlayer(app.value);
     }
-
-    app.value.enterMap(defaultMap);
+    await app.value.enterMap(defaultMap);
   } else {
     throw new Error('App not initialized');
   }
@@ -121,15 +115,14 @@ async function setupPlayer(app: App) {
     )
   );
 
-  const vehicle = new Tank_1<
-    {
-      player: PlayerUnitModule;
-    } & TankUnitModules,
-    typeof PlayerUnitModule & TankUnitModuleList
-  >({}, [PlayerUnitModule]);
-  player.modules.vehicle.setVehicle(vehicle);
-
-  vehicle.setPosition(new Vector3(7, 0, 3));
+  app.modules.map.observables.map$
+    .pipe(
+      map(map => map?.modules.units.getById<VehicleUnit>('blue-might-1')),
+      filter(Boolean)
+    )
+    .subscribe(vehicle => {
+      player.modules.vehicle.setVehicle(vehicle);
+    });
 
   hasPlayer.value = true;
 }
