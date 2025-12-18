@@ -77,7 +77,7 @@ export default class Map<
     moduleList.push(UnitsModule, GroundModule, LightModule, PathfindingModule);
 
     const moduleDebug = {
-      [PathfindingModule.TYPE]: true,
+      [PathfindingModule.TYPE]: false,
       [GroundModule.TYPE]: false,
       [LightModule.TYPE]: false,
       [UnitsModule.TYPE]: false

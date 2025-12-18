@@ -44,7 +44,7 @@ const desc: MapDescription = {
           active: true
         },
         patrol: {
-          active: false
+          active: true
         }
       },
       moduleOptions: {
@@ -77,7 +77,7 @@ const desc: MapDescription = {
       position: new Vector3(12.83, 0, 3.83),
       moduleStates: {
         patrol: {
-          active: false
+          active: true
         }
       },
       moduleOptions: {
@@ -98,7 +98,7 @@ const desc: MapDescription = {
       position: new Vector3(5.5, 0, 4.17),
       moduleStates: {
         patrol: {
-          active: false
+          active: true
         }
       },
       moduleOptions: {
