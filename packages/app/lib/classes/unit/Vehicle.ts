@@ -1,42 +1,29 @@
-import Unit, {
-  type UnitConstructorOptions,
-  type UnitModuleList,
-  type UnitModules,
-  type UnitOptions
-} from '../Unit';
-import VehicleUnitModule from '../unitModule/Vehicle';
-import CollisionUnitModule from '../unitModule/Collision';
+import type { UnitConstructorOptions, UnitOptions } from '../Unit';
+import MovableUnit, {
+  type MovableUnitModuleList,
+  type MovableUnitModules
+} from './Movable';
+import PatrolUnitModule from '../unitModule/Patrol';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface VehicleUnitOptions extends UnitOptions {}
 
-export type VehicleUnitModules = UnitModules & {
-  vehicle: VehicleUnitModule;
-  collision: CollisionUnitModule;
+export type VehicleUnitModules = MovableUnitModules & {
+  patrol: PatrolUnitModule;
 };
 
-export type VehicleUnitModuleList = (
-  | typeof VehicleUnitModule
-  | typeof CollisionUnitModule
-)[] &
-  UnitModuleList;
+export type VehicleUnitModuleList = (typeof PatrolUnitModule)[] &
+  MovableUnitModuleList;
 export default class VehicleUnit<
   Options extends VehicleUnitOptions = VehicleUnitOptions,
   Modules extends VehicleUnitModules = VehicleUnitModules,
   ModuleList extends VehicleUnitModuleList = VehicleUnitModuleList
-> extends Unit<Options, Modules, ModuleList> {
+> extends MovableUnit<Options, Modules, ModuleList> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []
   ) {
-    moduleList.push(CollisionUnitModule);
-    if (
-      !(moduleList as ModuleList).find(
-        ({ TYPE }) => TYPE === VehicleUnitModule.TYPE
-      )
-    ) {
-      moduleList.push(VehicleUnitModule);
-    }
+    moduleList.push(PatrolUnitModule);
     super(options, moduleList);
   }
 }

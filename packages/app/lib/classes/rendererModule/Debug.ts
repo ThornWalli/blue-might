@@ -3,31 +3,28 @@ import RendererModule, { type RendererModuleState } from '../RendererModule';
 import type Renderer from '../Renderer';
 import GUI from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
-export function getDefaultOptions(): DebugState {
-  return {
-    gui: true,
-    axes: true
-  };
-}
-
-export interface DebugState extends RendererModuleState {
+export interface State extends RendererModuleState {
   gui?: boolean;
   axes?: boolean;
   ghost?: boolean;
 }
 
-export default class DebugRendererModule extends RendererModule<DebugState> {
+export default class DebugRendererModule extends RendererModule<State> {
   static override TYPE = 'debug';
 
   axisHelper?: AxesHelper;
   gui?: GUI;
 
-  override state: DebugState = {
-    gui: false,
-    axes: false
-  };
+  constructor(renderer: Renderer, state: State) {
+    super(renderer, {
+      ...state,
+      gui: state.gui ?? true,
+      axes: state.axes ?? true,
+      ghost: state.ghost ?? false
+    });
+  }
 
-  setOptions(options: Partial<DebugState>) {
+  setOptions(options: Partial<State>) {
     this.state = { ...this.state, ...options };
     this.setup();
   }

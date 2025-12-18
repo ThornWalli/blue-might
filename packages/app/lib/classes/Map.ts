@@ -1,25 +1,29 @@
 import type { Texture } from 'three';
 import { Object3D } from 'three';
 import type App from './App';
-import UnitsModule from './mapModule/Units';
 import type { AnimationLoopValue } from './Renderer';
 import assetLoader from '@blue-might/app/services/assetLoader';
 import { LOADER } from './AssetLoader';
-import GroundModule from './mapModule/Ground';
 import type Unit from './Unit';
-import LightModule from './mapModule/Light';
 import CollisionUnitModule from './unitModule/Collision';
 import { Subscription } from 'rxjs';
+import UnitsModule from './mapModule/Units';
+import GroundModule from './mapModule/Ground';
+import LightModule from './mapModule/Light';
+import PathfindingModule from './mapModule/Pathfinding';
 
 type MapModuleList = (
   | typeof UnitsModule
   | typeof GroundModule
   | typeof LightModule
+  | typeof PathfindingModule
 )[];
 
 interface MapModules {
   units: UnitsModule;
   ground: GroundModule;
+  light: LightModule;
+  pathfinding: PathfindingModule;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -29,7 +33,7 @@ export default class Map<
   Modules extends MapModules = MapModules,
   ModuleList extends MapModuleList = MapModuleList
 > {
-  debug = false;
+  debug = true;
   subscription = new Subscription();
 
   state: MapState = {};
@@ -70,16 +74,29 @@ export default class Map<
 
   private async setupModules() {
     const moduleList = this.moduleList as ModuleList;
-    moduleList.push(UnitsModule, GroundModule, LightModule);
+    moduleList.push(UnitsModule, GroundModule, LightModule, PathfindingModule);
+
+    const moduleDebug = {
+      [PathfindingModule.TYPE]: false,
+      [GroundModule.TYPE]: false,
+      [LightModule.TYPE]: false,
+      [UnitsModule.TYPE]: false
+    };
 
     const preparedModules = moduleList.map(ModuleClass => {
-      const moduleInstance = new ModuleClass(this, this.debug);
+      const moduleInstance = new ModuleClass(
+        this,
+        this.debug && (moduleDebug[ModuleClass.TYPE] ?? false)
+      );
       return [ModuleClass.TYPE, moduleInstance];
     });
     this.modules = Object.fromEntries(preparedModules);
 
     await Promise.all(
       Object.values(this.modules).map(module => module.setup())
+    );
+    await Promise.all(
+      Object.values(this.modules).map(module => module.afterSetup())
     );
   }
 

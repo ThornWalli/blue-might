@@ -1,17 +1,26 @@
 import { ConeGeometry, Mesh, MeshStandardMaterial, Object3D } from 'three';
 import type Player from '../Player';
 import UnitModule, {
+  type UnitModuleObservables,
   type UnitModuleOptions,
   type UnitModuleSetupContext,
   type UnitModuleState
 } from '../UnitModule';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type Unit from '../Unit';
+import { ReplaySubject } from 'rxjs';
 
+interface Observables extends UnitModuleObservables {
+  player$: ReplaySubject<Player | null>;
+}
 type Options = UnitModuleOptions;
 type State = UnitModuleState;
 
-export default class PlayerUnitModule extends UnitModule<Options, State> {
+export default class PlayerUnitModule extends UnitModule<
+  Options,
+  State,
+  Observables
+> {
   hasPlayer() {
     return this._player !== null;
   }
@@ -22,6 +31,10 @@ export default class PlayerUnitModule extends UnitModule<Options, State> {
 
   constructor(unit: Unit, options: Options, state: State, debug: boolean) {
     super(unit, options, state, debug);
+
+    //#region observables
+    this.observables.player$ = new ReplaySubject<Player | null>(1);
+    //#endregion
 
     this.root = new Object3D();
   }
@@ -64,6 +77,7 @@ export default class PlayerUnitModule extends UnitModule<Options, State> {
   }
   setPlayer(player: Player | null) {
     this._player = player;
+    this.observables.player$.next(this._player);
   }
 
   isCurrentPlayer() {

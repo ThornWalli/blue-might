@@ -31,14 +31,14 @@ export default abstract class UnitModule<
   constructor(
     private _unit: U,
     public options: Options = {} as Options,
-    public override state: State = {} as State,
+    state: State = {} as State,
     debug?: boolean
   ) {
-    super(debug);
+    super(state, debug);
   }
 
   getUnit() {
-    return this._unit;
+    return this._unit as U;
   }
 
   setupMesh(context: UnitModuleSetupContext) {

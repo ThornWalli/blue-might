@@ -17,10 +17,7 @@ import Renderer, { type RendererModuleList } from '../lib/classes/Renderer';
 import { Vector2 } from 'three';
 import { fromEvent, Subscription } from 'rxjs';
 import type { RendererOptions } from '../types';
-import {
-  getDefaultOptions,
-  type DebugState
-} from '../lib/classes/rendererModule/Debug';
+import type { State as DebugState } from '../lib/classes/rendererModule/Debug';
 
 const renderer = ref<Renderer>();
 
@@ -65,7 +62,7 @@ onMounted(async () => {
     rootEl.value.offsetHeight
   );
 
-  const { pixelated, controls } = $props.options || defaultRendererOptions;
+  const { pixelated } = $props.options || defaultRendererOptions;
 
   renderer.value = markRaw(
     new Renderer(
@@ -73,15 +70,15 @@ onMounted(async () => {
       dimension.value,
       {
         debug: !!$props.debug,
-        pixelated: pixelated,
-        controls: controls
+        pixelated: pixelated
       },
       $props.modules
     )
   );
+  await renderer.value.setup();
 
   renderer.value.modules.debug?.setOptions(
-    typeof $props.debug === 'object' ? $props.debug : getDefaultOptions()
+    typeof $props.debug === 'object' ? $props.debug : ({} as DebugState)
   );
 
   subscription.add(

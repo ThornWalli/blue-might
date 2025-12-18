@@ -1,40 +1,42 @@
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import type { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 
 import { Observable, ReplaySubject, fromEvent } from 'rxjs';
-import type { Quaternion, Vector2, Object3D } from 'three';
+import type { Vector2, Object3D } from 'three';
 import {
+  WebGLRenderer,
   Clock,
   SRGBColorSpace,
-  Vector3,
   BasicShadowMap,
   PCFShadowMap,
   NeutralToneMapping,
-  PerspectiveCamera,
   Color,
-  OrthographicCamera,
   PCFSoftShadowMap,
-  Scene,
-  WebGLRenderer
+  Scene
 } from 'three';
 
 import IntersectionRendererModule from './rendererModule/Intersection';
 import DebugRendererModule from './rendererModule/Debug';
-import type { HasEventTargetAddRemove } from 'rxjs/internal/observable/fromEvent';
+import CameraRendererModule from './rendererModule/Camera';
+import ControlsRendererModule from './rendererModule/Controls';
 
 export type RendererModuleList = (
+  | typeof CameraRendererModule
+  | typeof ControlsRendererModule
   | typeof DebugRendererModule
   | typeof IntersectionRendererModule
 )[];
 
-interface RendererModules {
+export interface RendererModules {
+  camera: CameraRendererModule;
+  controls: ControlsRendererModule;
   debug: DebugRendererModule;
   intersection: IntersectionRendererModule;
 }
 
 interface Passes {
+  render: RenderPass;
   output: OutputPass;
 }
 
@@ -60,22 +62,15 @@ export default class Renderer<
     pointerDown$: Observable<PointerEvent>;
     pointerMove$: Observable<PointerEvent>;
     pointerUp$: Observable<PointerEvent>;
-    controls$: ReplaySubject<{
-      pen: boolean;
-      zoom: boolean;
-      rotate: boolean;
-    }>;
     rotation$: ReplaySubject<number>;
     controlsChange$: Observable<Event>;
   };
   shadowQuality: ShadowQuality = ShadowQuality.LOW;
 
   clock = new Clock();
-  renderer: WebGLRenderer;
+  private renderer?: WebGLRenderer;
   scene!: Scene;
-  camera!: PerspectiveCamera;
-  controls!: OrbitControls;
-  composer!: EffectComposer;
+  private composer?: EffectComposer;
   dimension: Vector2;
 
   pixelated: boolean;
@@ -84,6 +79,7 @@ export default class Renderer<
   private passes!: Passes;
 
   private _debug: boolean;
+  private canvas: HTMLCanvasElement;
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -95,7 +91,11 @@ export default class Renderer<
     } = {},
     modules: RendererModuleList = []
   ) {
-    modules.push(IntersectionRendererModule);
+    modules.push(
+      CameraRendererModule,
+      ControlsRendererModule,
+      IntersectionRendererModule
+    );
 
     if (this.debug) {
       modules.push(DebugRendererModule);
@@ -110,68 +110,53 @@ export default class Renderer<
       pointerDown$: fromEvent<PointerEvent>(canvas, 'pointerdown'),
       pointerMove$: fromEvent<PointerEvent>(canvas, 'pointermove'),
       pointerUp$: fromEvent<PointerEvent>(canvas, 'pointerup'),
-      controls$: new ReplaySubject<{
-        pen: boolean;
-        zoom: boolean;
-        rotate: boolean;
-      }>(1),
       rotation$: new ReplaySubject<number>(1),
       controlsChange$: new Observable<Event>()
     };
 
+    this.canvas = canvas;
     this.dimension = dimension;
     this._debug = options.debug ?? false;
+    this.pixelated = options.pixelated ?? false;
 
-    this.setupScene();
-    this.setupCamera();
+    //#region Modules
+    const preparedModules = modules.map(ModuleClass => {
+      const moduleInstance = new ModuleClass(this, {});
+      return [ModuleClass.TYPE, moduleInstance];
+    });
+    this.modules = Object.fromEntries(preparedModules);
+    //#endregion
+  }
+
+  async setup() {
+    const canvas = this.canvas;
+    const dimension = this.dimension;
 
     canvas.width = dimension.x;
     canvas.height = dimension.y;
 
-    this.pixelated = options.pixelated ?? false;
-    const renderer = new WebGLRenderer({
-      canvas,
-      antialias: options.pixelated ? false : true
-    });
+    const renderer = this.setupRenderer(canvas, { pixelated: this.pixelated });
 
-    this.renderer = renderer;
+    //#region Modules
+    await Promise.all(
+      Object.values(this.modules).map(module => module.setup())
+    );
+    //#endregion
 
-    this.setupRenderer();
+    this.setupScene();
     this.setupComposer();
 
     this.setShadowQuality(ShadowQuality.MEDIUM);
 
-    if (options.controls) {
-      this.setupControls();
-      this.observables.controlsChange$ = fromEvent<Event>(
-        this.controls as HasEventTargetAddRemove<Event>,
-        'change'
-      );
-    }
-
-    //#region Modules
-    const preparedModules = modules.map(ModuleClass => {
-      const moduleInstance = new ModuleClass(this);
-      return [ModuleClass.TYPE, moduleInstance];
-    });
-    this.modules = Object.fromEntries(preparedModules);
-    Object.values(this.modules).forEach(module => module.setup());
-    //#endregion
-
-    let lastTime = 0;
     renderer.setAnimationLoop(time => {
-      const delta = time - lastTime;
-      lastTime = time;
+      const rawDelta = this.clock.getDelta();
+      const delta = Math.min(rawDelta, 1 / 60);
       this.observables.animationLoop$.next({
         time,
-        delta: this.clock.getDelta()
+        delta
       });
 
-      if (this.controls?.enableDamping) {
-        this.controls.update();
-      }
-
-      this.composer.render(time);
+      this.getComposer().render(time);
 
       Object.values(this.modules)
         .filter(handler => 'update' in handler)
@@ -185,24 +170,25 @@ export default class Renderer<
   }
 
   setShadowQuality(quality: ShadowQuality) {
-    this.renderer.shadowMap.enabled = true;
+    const renderer = this.getRenderer();
+    renderer.shadowMap.enabled = true;
 
     switch (quality) {
       case ShadowQuality.HIGH:
-        this.renderer.shadowMap.type = PCFSoftShadowMap;
+        renderer.shadowMap.type = PCFSoftShadowMap;
         break;
       case ShadowQuality.MEDIUM:
-        this.renderer.shadowMap.type = PCFShadowMap;
+        renderer.shadowMap.type = PCFShadowMap;
         break;
       case ShadowQuality.LOW:
-        this.renderer.shadowMap.type = BasicShadowMap;
+        renderer.shadowMap.type = BasicShadowMap;
         break;
       case ShadowQuality.OFF:
-        this.renderer.shadowMap.enabled = false;
+        renderer.shadowMap.enabled = false;
         break;
     }
 
-    this.renderer.shadowMap.needsUpdate = true;
+    renderer.shadowMap.needsUpdate = true;
     this.shadowQuality = quality;
     this.observables.shadowQuality$.next(quality);
   }
@@ -210,8 +196,8 @@ export default class Renderer<
   destroy() {
     this.observables.animationLoop$.complete();
     Object.values(this.modules).forEach(handler => handler.destroy());
-    this.renderer.dispose();
-    this.composer.dispose();
+    this.renderer?.dispose();
+    this.composer?.dispose();
     this.scene.clear();
     this.scene.remove();
   }
@@ -219,64 +205,11 @@ export default class Renderer<
   resize(dimension: Vector2) {
     this.dimension = dimension;
 
-    const camera = this.camera;
-    if (camera instanceof OrthographicCamera) {
-      camera.left = -this.cameraZoom * this.aspectRatio;
-      camera.right = this.cameraZoom * this.aspectRatio;
-      camera.top = this.cameraZoom;
-      camera.bottom = -this.cameraZoom;
-      camera.updateProjectionMatrix();
-    }
+    this.modules.camera.resize();
 
-    this.renderer.setSize(dimension.x, dimension.y);
+    this.renderer?.setSize(dimension.x, dimension.y);
 
-    this.controls?.update();
-  }
-
-  getControlsOptions() {
-    return {
-      pan: this.controls.enablePan,
-      zoom: this.controls.enableZoom,
-      rotate: this.controls.enableRotate
-    };
-  }
-
-  setControlsOptions({
-    pan = true,
-    zoom = true,
-    rotate = true
-  }: {
-    pan?: boolean;
-    zoom?: boolean;
-    rotate?: boolean;
-  }) {
-    this.controls.enablePan = pan;
-    this.controls.enableZoom = zoom;
-    this.controls.enableRotate = rotate;
-    this.observables.controls$.next({
-      pen: this.controls.enablePan,
-      zoom: this.controls.enableZoom,
-      rotate: this.controls.enableRotate
-    });
-  }
-
-  enableControls() {
-    this.setControlsOptions({
-      pan: true,
-      zoom: true,
-      rotate: true
-    });
-  }
-  disableControls() {
-    this.setControlsOptions({
-      pan: true,
-      zoom: true,
-      rotate: false
-    });
-  }
-
-  get aspectRatio() {
-    return this.dimension.x / this.dimension.y;
+    this.modules.controls.refresh();
   }
 
   addToScene(root: Object3D) {
@@ -291,48 +224,57 @@ export default class Renderer<
     this.scene = scene;
   }
 
-  setupControls() {
-    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+  setupRenderer(
+    canvas: HTMLCanvasElement,
+    options: { pixelated?: boolean } = {}
+  ) {
+    const { dimension } = this;
 
-    this.controls.dampingFactor = 0.05; // kleiner Wert = smoother
-    this.controls.zoomSpeed = 1.0;
-    this.controls.zoomSpeed = 1.0;
-    this.controls.panSpeed = 1.0;
+    const renderer = new WebGLRenderer({
+      canvas,
+      antialias: false
+      // powerPreference: 'low-power'
+    });
 
-    // WICHTIG: Target setzen (Mittelpunkt der Szene)
-    this.controls.target.set(0, 0, 0);
+    this.renderer = renderer;
 
-    // Zoom-Limits um Near-Plane-Clipping zu verhindern
-    this.controls.minDistance = 5;
-    this.controls.maxDistance = 200;
-
-    // Enable damping für smoothere Bewegung
-    // this.controls.enableDamping = true;
-
-    this.enableControls();
-    this.controls.update();
-  }
-
-  setupRenderer() {
-    const { renderer, dimension } = this;
     renderer.shadowMap.autoUpdate = true;
     renderer.outputColorSpace = SRGBColorSpace;
     renderer.toneMapping = NeutralToneMapping;
     renderer.toneMappingExposure = 1.0;
-    // renderer.setPixelRatio(480 / window.innerWidth);
-    // renderer.setPixelRatio(1 / 3);
-    // renderer.setPixelRatio(window.devicePixelRatio); // window.devicePixelRatio
+    if (options.pixelated) {
+      renderer.setPixelRatio(480 / window.innerWidth);
+    }
     renderer.setSize(dimension.x, dimension.y);
     //#endregion
+
+    return renderer;
+  }
+
+  getRenderer() {
+    if (!this.renderer) {
+      throw new Error('Renderer not initialized');
+    }
+    return this.renderer;
+  }
+
+  getComposer() {
+    if (!this.composer) {
+      throw new Error('Composer not initialized');
+    }
+    return this.composer;
   }
 
   setupComposer(dimension: Vector2 = this.dimension) {
-    const composer = new EffectComposer(this.renderer);
+    const composer = new EffectComposer(this.getRenderer());
     this.composer = composer;
 
     const passes: Partial<Passes> = {};
 
-    const renderPass = new RenderPass(this.scene, this.camera);
+    const renderPass = new RenderPass(
+      this.scene,
+      this.modules.camera.getCamera()
+    );
     composer.addPass(renderPass);
 
     this.passes = passes as Passes;
@@ -340,69 +282,11 @@ export default class Renderer<
     this.composer.setSize(dimension.x, dimension.y);
   }
 
-  setupCamera() {
-    const camera = new PerspectiveCamera(
-      60, // FOV reduziert von 75 auf 60 für bessere Sicht auf Details
-      this.dimension.x / this.dimension.y,
-      0.1, // near plane näher für kleine Objekte
-      2000 // far plane
-    );
-
-    this.camera = camera;
-    this.updateCamera();
-  }
-
-  updateCamera(options?: { position: Vector3; quaternion: Quaternion }) {
-    this.camera.zoom = (this.controls?.object as PerspectiveCamera)?.zoom || 1;
-
-    if (options) {
-      const { position, quaternion } = options;
-      // console.log('updateZoom', position, quaternion);
-      const cameraOffset = new Vector3(0, 5, -5);
-      const lerpFactor = 0.1;
-      const idealPosition = position
-        .clone()
-        .add(cameraOffset.clone().applyQuaternion(quaternion));
-
-      this.camera.position.lerp(idealPosition, lerpFactor);
-      this.camera.lookAt(position);
-
-      if (this.controls) {
-        this.controls.target.copy(position);
-        this.controls.update();
-      }
-    } else {
-      this.camera.position.set(30, 30, 30);
-      this.camera.lookAt(0, 0, 0); // Explizit auf Zentrum schauen
-
-      if (this.controls) {
-        this.controls.target.set(0, 0, 0); // Target der Controls setzen
-        this.controls.update();
-      }
-    }
-  }
-
-  setCameraClamp(value: boolean) {
-    if (value) {
-      this.controls.enableRotate = false; // Kein Drehen
-      this.controls.enablePan = true; // Nur bewegen
-      this.controls.enableZoom = true; // Zoom mit Mausrad
-    } else {
-      this.controls.enableRotate = true; // Kein Drehen
-      this.controls.enablePan = true; // Nur bewegen
-      this.controls.enableZoom = true; // Zoom mit Mausrad
-    }
-  }
-
-  get cameraZoom() {
-    // return 1 * 48 * (512 / window.innerWidth);
-    return 1;
-  }
   get debug() {
     return this._debug;
   }
 
   get el() {
-    return this.renderer.domElement;
+    return this.getRenderer().domElement;
   }
 }

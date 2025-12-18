@@ -2,7 +2,7 @@
 import { ReplaySubject, Subscription } from 'rxjs';
 import { Euler, Quaternion, Vector3, type Object3D } from 'three';
 import { Group } from 'three';
-import PlayerUnitModule from './unitModule/Player';
+
 import type UnitModule from './UnitModule';
 import type { UnitModuleOptions, UnitModuleState } from './UnitModule';
 
@@ -13,6 +13,13 @@ import type Map from './Map';
 import type { AnimationLoopValue } from './Renderer';
 import { AnimationUnitModule } from './unitModule/Animation';
 import SelectionUnitModule from './unitModule/Selection';
+import PathfindingUnitModule from './unitModule/Pathfinding';
+
+export enum GROUND_ADJUSTMENT_MODE {
+  MIN_HEIGHT = 'min-height',
+  GROUND = 'ground',
+  FLIGHT = 'flight'
+}
 
 type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
 
@@ -24,14 +31,13 @@ declare module '../../lib/utils/object' {
 OBJECT_USER_DATA.UNIT = 'unit';
 
 export type UnitModuleList = (
-  | typeof PlayerUnitModule
   | typeof AnimationUnitModule
   | typeof SelectionUnitModule
+  | typeof PathfindingUnitModule
 )[];
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-type UnitOptionsPlaceholder = {};
-export type UnitOptions<OtherOptions = UnitOptionsPlaceholder> = OtherOptions;
+export interface UnitOptions {}
 
 export interface UnitConstructorOptions<
   Options extends UnitOptions = UnitOptions
@@ -42,12 +48,13 @@ export interface UnitConstructorOptions<
   moduleOptions?: { [key: string]: UnitModuleOptions };
   moduleStates?: { [key: string]: UnitModuleState };
   position?: Vector3;
+  rotation?: Euler;
 }
 
 export interface UnitModules {
-  player: PlayerUnitModule;
   animation: AnimationUnitModule;
   selection: SelectionUnitModule;
+  pathfinding: PathfindingUnitModule;
 }
 
 export interface SetupContext {
@@ -57,9 +64,10 @@ export interface SetupContext {
 
 export interface UnitObservables {
   position$: ReplaySubject<Vector3>;
-  rotation$: ReplaySubject<number>;
+  rotation$: ReplaySubject<Euler>;
+  ready$: ReplaySubject<void>;
   materialReady$: ReplaySubject<void>;
-  map$: ReplaySubject<Map | null>;
+  visible$: ReplaySubject<boolean>;
 }
 
 export default class Unit<
@@ -68,6 +76,20 @@ export default class Unit<
   ModuleList extends UnitModuleList = UnitModuleList,
   Observables extends UnitObservables = UnitObservables
 > {
+  getForwardXZFromYaw(target = new Vector3()): Vector3 {
+    const qYaw = this.getYawQuaternion();
+    target.set(0, 0, 1).applyQuaternion(qYaw);
+    target.y = 0;
+    return target.normalize();
+  }
+
+  getYawQuaternion(): Quaternion {
+    return new Quaternion().setFromAxisAngle(
+      new Vector3(0, 1, 0),
+      this._rotation.y
+    );
+  }
+
   debug = false;
 
   static KEY = 'unit';
@@ -86,9 +108,10 @@ export default class Unit<
   root: Group;
   private _updateModules: UnitModule[] = [];
   private _map: Map | null = null;
-  private normalizeGroundAlignment: boolean = true;
+  private groundAdjustmentMode: GROUND_ADJUSTMENT_MODE =
+    GROUND_ADJUSTMENT_MODE.GROUND;
   private _position: Vector3 = new Vector3(0, 0, 0);
-  private _rotation: number = 0;
+  private _rotation: Euler = new Euler(0, 0, 0);
   /**
    * Gelände-Neigung (Pitch/Roll)
    * x = pitch
@@ -102,6 +125,7 @@ export default class Unit<
       debug,
       name,
       position,
+      rotation,
       options,
       moduleOptions,
       moduleStates
@@ -115,17 +139,20 @@ export default class Unit<
     moduleList: unknown[] = []
   ) {
     //#region observables
+    this.observables.ready$ = new ReplaySubject<void>(1);
     this.observables.materialReady$ = new ReplaySubject<void>(1);
     this.observables.position$ = new ReplaySubject<Vector3>(1);
-    this.observables.rotation$ = new ReplaySubject<number>(1);
+    this.observables.rotation$ = new ReplaySubject<Euler>(1);
+    this.observables.visible$ = new ReplaySubject<boolean>(1);
     //#endregion
 
     this.id = id || crypto.randomUUID();
     this.name = name;
 
-    this.debug = debug ?? false;
+    this.debug = debug ?? this.debug;
 
     this._position = position || new Vector3(0, 0, 0);
+    this._rotation = rotation || new Euler(0, 0, 0);
 
     this.options = {
       ...this.options,
@@ -135,9 +162,9 @@ export default class Unit<
     //#region modules
 
     moduleList.unshift(
-      PlayerUnitModule,
       AnimationUnitModule,
-      SelectionUnitModule
+      SelectionUnitModule,
+      PathfindingUnitModule
     );
 
     this.moduleList = moduleList as ModuleList;
@@ -145,6 +172,7 @@ export default class Unit<
     const preparedModules = (moduleList as ModuleList).map(ModuleClass => {
       const options = moduleOptions?.[ModuleClass.TYPE] ?? {};
       const state = moduleStates?.[ModuleClass.TYPE] ?? {};
+
       const moduleInstance = new ModuleClass(
         this,
         options as any,
@@ -198,10 +226,30 @@ export default class Unit<
     for (const module of modules) {
       await module.afterSetup();
     }
+
+    this.updateMeshTransform();
+
+    this.observables.ready$.next();
   }
 
+  pitchWrapper!: Group;
+  rollWrapper!: Group;
+  tiltWrapper!: Group;
   setupRoot(name: string) {
     const root = new Group();
+
+    this.pitchWrapper = new Group(); // player pitch
+    this.pitchWrapper.name = `${name}_pitchWrapper`;
+    this.rollWrapper = new Group(); // player roll
+    this.rollWrapper.name = `${name}_rollWrapper`;
+    this.tiltWrapper = new Group(); // NEW: terrain tilt
+    this.tiltWrapper.name = `${name}_tiltWrapper`;
+
+    this.tiltWrapper.add(this.pitchWrapper);
+    this.pitchWrapper.add(this.rollWrapper);
+
+    root.add(this.tiltWrapper);
+
     root.name = name;
     root.userData[OBJECT_USER_DATA.MAIN_OBJECT] = root.id;
     root.userData[OBJECT_USER_DATA.UNIT] = this;
@@ -214,7 +262,7 @@ export default class Unit<
   }
 
   addToRoot(object: Object3D) {
-    this.root.add(object);
+    this.rollWrapper.add(object);
     setMainObjectRecursive(object, this.root);
   }
 
@@ -246,29 +294,50 @@ export default class Unit<
     return this._position;
   }
 
-  getNormalizeGroundAlignment() {
-    return this.normalizeGroundAlignment;
+  getGroundAdjustmentMode() {
+    return this.groundAdjustmentMode;
   }
 
-  setNormalizeGroundAlignment(normalize: boolean) {
-    this.normalizeGroundAlignment = normalize;
+  setGroundAdjustmentMode(groundAdjustmentMode: GROUND_ADJUSTMENT_MODE) {
+    this.groundAdjustmentMode = groundAdjustmentMode;
   }
 
-  updateGroundAlignment(position: Vector3 = this._position) {
+  updateGroundAlignment(position?: Vector3) {
     const groundModule = this._map?.modules.ground;
     if (!groundModule) {
       this.updateMeshTransform();
       return;
     }
+    if (position) {
+      this._position.copy(position);
+    }
+    position = this._position;
 
-    this._position.copy(position);
+    switch (this.groundAdjustmentMode) {
+      case GROUND_ADJUSTMENT_MODE.MIN_HEIGHT:
+        this._position.y = this.getMinGroundHeight();
+        break;
 
-    const groundHeight = groundModule.getHeightAt(position.x, position.z);
-    this._position.y = groundHeight;
+      case GROUND_ADJUSTMENT_MODE.GROUND:
+        {
+          const groundHeight = groundModule.getHeightAt(position.x, position.z);
+          this._position.y = groundHeight;
 
-    if (this.normalizeGroundAlignment) {
-      // Gelände-Normale berechnen (für Neigung)
-      this.calculateGroundNormal();
+          // Gelände-Normale berechnen (für Neigung)
+          this.calculateGroundNormal();
+        }
+        break;
+
+      case GROUND_ADJUSTMENT_MODE.FLIGHT:
+        // Keine Anpassung
+        this._position.y = Math.max(
+          this._position.y,
+          Math.max(this.getMinGroundHeight(), 0)
+        );
+        break;
+
+      default:
+        break;
     }
 
     // Rotation berechnen
@@ -282,19 +351,14 @@ export default class Unit<
   getRotation() {
     return this._rotation;
   }
-  setRotation(rotation: number) {
-    const lastRotation = this._rotation;
-    this._rotation = rotation;
-    this.updateMeshTransform();
-    if (this.checkCollision()) {
-      this._rotation = lastRotation;
-    }
-    this.observables.rotation$.next(rotation);
+
+  setRotation(rotation: Euler) {
+    this.setYaw(rotation.y); // Nur Heading
   }
 
   private calculateGroundNormal() {
     const sampleDistance = 1;
-    const rotation = this._rotation;
+    const rotation = this._rotation.y;
     const groundModule = this._map?.modules.ground;
     if (!groundModule) return;
     // 4 Punkte um das Fahrzeug herum samplen
@@ -327,52 +391,187 @@ export default class Unit<
     this._tilt.set(pitch, 0, roll);
   }
 
-  /**
-   * Aktualisiert Mesh Position und Rotation
-   */
-  private updateMeshTransform() {
-    // Position
-    this.root.position.copy(this._position);
+  getMinGroundHeight(): number {
+    const sampleDistance = 1;
+    const rotation = this._rotation.y;
+    const groundModule = this._map?.modules.ground;
+    if (!groundModule) return this._position.y;
 
-    // Rotation: Erst Y (Heading), dann Gelände-Anpassung (Pitch/Roll)
-    const quaternion = new Quaternion();
-
-    // Y-Rotation (Fahrtrichtung)
-    const yaw = new Quaternion().setFromEuler(
-      new Euler(0, this.getRotation(), 0)
+    const front = groundModule.getHeightAt(
+      this._position.x + Math.sin(rotation) * sampleDistance,
+      this._position.z + Math.cos(rotation) * sampleDistance
+    );
+    const back = groundModule.getHeightAt(
+      this._position.x - Math.sin(rotation) * sampleDistance,
+      this._position.z - Math.cos(rotation) * sampleDistance
+    );
+    const left = groundModule.getHeightAt(
+      this._position.x + Math.cos(rotation) * sampleDistance,
+      this._position.z - Math.sin(rotation) * sampleDistance
+    );
+    const right = groundModule.getHeightAt(
+      this._position.x - Math.cos(rotation) * sampleDistance,
+      this._position.z + Math.sin(rotation) * sampleDistance
     );
 
-    // Pitch und Roll (Gelände-Anpassung)
-    const groundRotation = new Quaternion().setFromEuler(
-      new Euler(this._tilt.x, 0, this._tilt.z)
-    );
-
-    // Kombinieren: Erst Heading, dann Gelände
-    quaternion.multiplyQuaternions(yaw, groundRotation);
-    this.root.quaternion.copy(quaternion);
-    this.root.updateWorldMatrix(true, false);
-    this.root.updateMatrixWorld(true);
+    return Math.min(front, back, left, right);
   }
 
+  private _playerPitch = 0;
+  private _playerRoll = 0;
+
+  private updateMeshTransform() {
+    // 1. Position setzen
+    this.root.position.copy(this._position);
+
+    // 2. Root = nur Yaw
+    this.root.rotation.set(0, this._rotation.y, 0);
+
+    // 3. Terrain-Tilt als Quaternion
+    const terrainQuat = new Quaternion().setFromEuler(
+      new Euler(this._tilt.x, 0, this._tilt.z)
+    );
+    this.tiltWrapper.setRotationFromQuaternion(terrainQuat);
+
+    // 4. Spieler Pitch/Roll
+    this.pitchWrapper.rotation.x = this._playerPitch; // wir speichern sie gleich!
+    this.rollWrapper.rotation.z = this._playerRoll;
+  }
+
+  lastPosition: Vector3 = new Vector3();
   setPosition(position: Vector3) {
-    const lastPosition = this._position.clone();
+    const desired = position.clone();
+
+    // Ground-Ausrichtung vorbereiten
     if (this._map) {
-      this.updateGroundAlignment(position);
+      this.updateGroundAlignment(desired);
     } else {
-      this._position.copy(position);
-      this.root.position.copy(position);
+      this._position.copy(desired);
+      this.root.position.copy(desired);
     }
+
+    // Direkt frei?
+    if (!this.checkCollision()) {
+      this.lastPosition.copy(desired);
+      this.observables.position$.next(desired);
+      return;
+    }
+
+    // --- Sweep entlang der Bewegung (from -> desired) ---
+    const from = this.lastPosition.clone();
+    const delta = desired.clone().sub(from);
+
+    // Keine sinnvolle Bewegung?
+    if (delta.lengthSq() === 0) {
+      // bleibe auf lastPosition
+      this._position.copy(this.lastPosition);
+      this.root.position.copy(this.lastPosition);
+      return;
+    }
+
+    // Binärsuche: größtes t in [0,1] ohne Kollision
+    const maxIter = 12;
+    let lo = 0; // kollisionsfrei
+    let hi = 1; // kollidiert
+    // Sicherstellen, dass lo wirklich frei ist:
+    this._position.copy(from);
+    this.updateGroundAlignment(from);
     if (this.checkCollision()) {
-      this._position.copy(lastPosition);
-      this.root.position.copy(lastPosition);
+      // Startpunkt steckt schon drin -> kleiner Rückzug entgegen delta
+      const backoffEps = 0.1;
+      const safe = from
+        .clone()
+        .add(delta.clone().normalize().multiplyScalar(-backoffEps));
+      this._position.copy(safe);
+      this.updateGroundAlignment(safe);
+      if (!this.checkCollision()) {
+        this.root.position.copy(this._position);
+        this.lastPosition.copy(this._position);
+        this.observables.position$.next(this._position.clone());
+        return;
+      }
+      // Notfall: bleibe auf lastPosition
+      this._position.copy(this.lastPosition);
+      this.root.position.copy(this.lastPosition);
+      return;
     }
-    this.observables.position$.next(position.clone());
+
+    // hi ist kollidiert, lo ist frei -> suche Grenze
+    for (let i = 0; i < maxIter; i++) {
+      const mid = (lo + hi) * 0.5;
+      const test = from.clone().addScaledVector(delta, mid);
+
+      this._position.copy(test);
+      this.updateGroundAlignment(test);
+
+      if (this.checkCollision()) {
+        hi = mid;
+      } else {
+        lo = mid;
+      }
+    }
+
+    // Nimm die letzte freie Position + kleiner Sicherheitsabstand weg vom Hindernis
+    const epsilon = 0.03;
+    const safePos = from
+      .clone()
+      .addScaledVector(delta, lo)
+      .add(delta.clone().normalize().multiplyScalar(-epsilon));
+
+    this._position.copy(safePos);
+    this.updateGroundAlignment(safePos);
+
+    if (!this.checkCollision()) {
+      this.root.position.copy(this._position);
+      this.lastPosition.copy(this._position);
+      this.observables.position$.next(this._position.clone());
+      return;
+    }
+
+    // Fallback: achsweises Sliding
+    const axisTry = (ax: 'x' | 'z') => {
+      const axisDelta = new Vector3(
+        ax === 'x' ? delta.x : 0,
+        0,
+        ax === 'z' ? delta.z : 0
+      );
+      let alo = 0,
+        ahi = 1;
+      for (let i = 0; i < maxIter; i++) {
+        const mid = (alo + ahi) * 0.5;
+        const test = from.clone().addScaledVector(axisDelta, mid);
+        this._position.copy(test);
+        this.updateGroundAlignment(test);
+        if (this.checkCollision()) ahi = mid;
+        else alo = mid;
+      }
+      const slidePos = from
+        .clone()
+        .addScaledVector(axisDelta, alo)
+        .add(axisDelta.clone().normalize().multiplyScalar(-epsilon));
+      this._position.copy(slidePos);
+      this.updateGroundAlignment(slidePos);
+      return !this.checkCollision();
+    };
+
+    if (axisTry('x') || axisTry('z')) {
+      this.root.position.copy(this._position);
+      this.lastPosition.copy(this._position);
+      this.observables.position$.next(this._position.clone());
+      return;
+    }
+
+    // Letzter Fallback: bleibe auf lastPosition, ohne sie zu überschreiben
+    this._position.copy(this.lastPosition);
+    this.root.position.copy(this.lastPosition);
   }
 
   //#region visibility
   private visible: boolean = true;
   setVisible(visible = this.visible && this.chunkVisible) {
+    if (this.visible === visible) return;
     this.root.visible = visible;
+    this.observables.visible$.next(visible);
   }
   //#endregion
 
@@ -402,4 +601,39 @@ export default class Unit<
     return Object.values(this.modules).some(m => m instanceof ModuleClass);
   }
   //#endregion
+
+  // --- YAW (Root) --------------------------------------------------
+  getYaw() {
+    return this._rotation.y;
+  }
+
+  setYaw(yaw: number) {
+    const lastYaw = this._rotation.y;
+    this._rotation.y = yaw;
+    this.updateGroundAlignment();
+    if (this.checkCollision()) {
+      this._rotation.y = lastYaw;
+    }
+    this.observables.rotation$.next(this._rotation.clone());
+  }
+
+  // --- PITCH --------------------------------------------------------
+  getPitch() {
+    return this.pitchWrapper.rotation.x;
+  }
+
+  setPitch(p: number) {
+    this._playerPitch = p;
+    this.updateGroundAlignment();
+  }
+
+  // --- ROLL ---------------------------------------------------------
+  getRoll() {
+    return this.rollWrapper.rotation.z;
+  }
+
+  setRoll(r: number) {
+    this._playerRoll = r;
+    this.updateGroundAlignment();
+  }
 }

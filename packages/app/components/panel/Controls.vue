@@ -5,7 +5,8 @@
       <strong>S / Arrow Down:</strong> Move Backward<br />
       <strong>A / Arrow Left:</strong> Turn Left <br />
       <strong>D / Arrow Right:</strong> Turn Right <br />
-      <strong>Space:</strong> Brake
+      <strong>Space:</strong> Start / Up / Brake <br />
+      <strong>Shift+Space:</strong> Down
     </p>
   </bm-panel>
 </template>

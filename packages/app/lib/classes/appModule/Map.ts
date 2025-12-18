@@ -21,7 +21,7 @@ export default class MapAppModule extends AppModule<State, Observables> {
   };
 
   constructor(app: App) {
-    super(app);
+    super(app, {} as State);
 
     //#region observables
     this.observables.map$ = new ReplaySubject<Map>(1);

@@ -16,9 +16,10 @@ export default abstract class AppModule<
 > extends Module<State, Observables> {
   constructor(
     public app: App,
+    state: State,
     debug?: boolean
   ) {
-    super(debug);
+    super(state, debug);
   }
 
   /**

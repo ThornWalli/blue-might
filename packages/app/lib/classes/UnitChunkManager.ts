@@ -1,7 +1,6 @@
 import type { Camera } from 'three';
 import { Box3, Frustum, Matrix4, Mesh, Vector3 } from 'three';
 import type Unit from './Unit';
-import { HumanPlayer } from './player/Human';
 
 export interface UnitChunking {
   currentChunkKeys: string[];
@@ -24,7 +23,7 @@ export default class UnitChunkManager {
   chunks: Map<string, Chunk> = new Map();
   worldChunks: Map<string, Vector3> = new Map();
 
-  constructor(size: number = 2) {
+  constructor(size: number = 1) {
     this.size = size;
   }
 
@@ -92,12 +91,12 @@ export default class UnitChunkManager {
         chunk.visible = false;
       }
     });
-    new Set(hideUnits).forEach(unit => {
-      const player = unit.modules.player.getPlayer();
-      if (player instanceof HumanPlayer) {
-        unit.setChunkVisible(false);
-      }
-    });
+    // new Set(hideUnits).forEach(unit => {
+    //   const player = unit.getModuleByType(PlayerUnitModule)?.getPlayer();
+    //   if (player instanceof HumanPlayer) {
+    //     unit.setChunkVisible(false);
+    //   }
+    // });
 
     const visibleUnitsSet = new Set(visibleUnits);
     visibleUnitsSet.forEach(unit => {

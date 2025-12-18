@@ -1,4 +1,12 @@
-import { ReplaySubject, Subscription, type SubscriptionLike } from 'rxjs';
+import {
+  EMPTY,
+  filter,
+  map,
+  ReplaySubject,
+  Subscription,
+  switchMap,
+  type SubscriptionLike
+} from 'rxjs';
 import type Renderer from './Renderer';
 import AssetLoader from './AssetLoader';
 import CursorAppModule from './appModule/Cursor';
@@ -6,26 +14,34 @@ import PlayerAppModule from './appModule/Player';
 import MapAppModule from './appModule/Map';
 import type { MapDescription } from './Map';
 import SelectionAppModule from './appModule/Selection';
+import type Unit from './Unit';
+import UnitFocusAppModule from './appModule/UnitFocus';
+import DebugAppModule from './appModule/Debug';
 
 type AppModuleList = (
+  | typeof DebugAppModule
   | typeof CursorAppModule
   | typeof PlayerAppModule
   | typeof MapAppModule
   | typeof SelectionAppModule
+  | typeof UnitFocusAppModule
 )[];
 interface AppModules {
+  debug: DebugAppModule;
   cursor: CursorAppModule;
   player: PlayerAppModule;
   map: MapAppModule;
   selection: SelectionAppModule;
+  unitFocus: UnitFocusAppModule;
 }
 
 interface AppObservables {
   mode$: ReplaySubject<APP_MODE>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface AppState {}
+interface AppState {
+  focusedUnit?: Unit;
+}
 
 export enum APP_MODE {
   PLAYGROUND = 'playground',
@@ -65,10 +81,12 @@ export class BaseApp<
     moduleList: ModuleList = [] as unknown as ModuleList
   ) {
     moduleList.push(
+      DebugAppModule,
       CursorAppModule,
       PlayerAppModule,
       MapAppModule,
-      SelectionAppModule
+      SelectionAppModule,
+      UnitFocusAppModule
     );
 
     this.moduleList = moduleList;
@@ -89,6 +107,24 @@ export class BaseApp<
       Object.values(this.modules).map(module => module.setup())
     );
 
+    this.subscription.add(
+      this.modules.player.observables.currentPlayer$
+        .pipe(
+          switchMap(
+            player => player.modules.vehicle?.observables.vehicle$ ?? EMPTY
+          ),
+          map(({ current }) => current),
+          filter(Boolean),
+          switchMap(
+            vehicle =>
+              vehicle?.observables.ready$.pipe(map(() => vehicle)) ?? EMPTY
+          )
+        )
+        .subscribe(vehicle => {
+          this.modules.unitFocus.focus(vehicle);
+        })
+    );
+
     this.ready = true;
   }
 
@@ -96,22 +132,6 @@ export class BaseApp<
     const map = await this.loadMap(desc);
     await this.modules.map.setMap(map);
     console.log('Map loaded', map);
-
-    // Player hinzufügen
-    const player = this.modules.player.getCurrentPlayer();
-    const vehicle = player.modules.vehicle.getVehicle();
-    if (vehicle) {
-      await this.modules.map.getMap().modules.units.add(vehicle);
-      // this.subscription.add(
-      //   vehicle.observables.position$.subscribe(position => {
-      //     // Kamera auf Fahrzeug setzen
-      //     this.renderer.updateCamera(
-      //       position.clone(),
-      //       vehicle.root.quaternion.clone()
-      //     );
-      //   })
-      // );
-    }
   }
 
   private async loadMap(description: MapDescription) {

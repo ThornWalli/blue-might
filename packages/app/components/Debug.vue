@@ -1,0 +1,18 @@
+<template>
+  <div class="bm-debug">
+    <bm-debug-controls :app="app" />
+    <bm-debug-markers :app="app" />
+    <bm-debug-move :app="app" />
+  </div>
+</template>
+
+<script lang="ts" setup>
+import type App from '../lib/classes/App';
+import BmDebugControls from './debug/Controls.vue';
+import BmDebugMarkers from './debug/Markers.vue';
+import BmDebugMove from './debug/Move.vue';
+
+const _$props = defineProps<{
+  app: App;
+}>();
+</script>

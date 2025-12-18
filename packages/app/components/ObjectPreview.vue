@@ -347,6 +347,7 @@ const next = () => {
     display: block;
     width: 100%;
     height: 100%;
+    image-rendering: pixelated;
     filter: drop-shadow(0 0 1px rgb(0 0 0 /40%));
   }
 

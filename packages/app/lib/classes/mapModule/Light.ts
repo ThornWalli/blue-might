@@ -24,25 +24,28 @@ export default class LightModule extends MapModule<State, Observables> {
     const light = new DirectionalLight(0xffffff, 1);
     light.position.set(20, 50, 20);
 
-    const helper = new DirectionalLightHelper(light, 5);
-    this.map.addToRoot(helper);
-
     light.castShadow = true;
 
-    light.shadow.mapSize.width = 4096 * 4; // groß = hohe Qualität
-    light.shadow.mapSize.height = 4096 * 4;
+    light.shadow.mapSize.width = 2048;
+    light.shadow.mapSize.height = 2048;
 
-    light.shadow.camera.left = -20;
-    light.shadow.camera.right = 20;
-    light.shadow.camera.top = 20;
-    light.shadow.camera.bottom = -20;
+    light.shadow.camera.left = -10;
+    light.shadow.camera.right = 10;
+    light.shadow.camera.top = 10;
+    light.shadow.camera.bottom = -10;
 
     // Optional: Shadow Radius = 0 für harte Kanten
     light.shadow.radius = 0;
+    light.shadow.bias = -0.0005;
     const ambientLight = new AmbientLight(0xffffff, 0.4);
 
     this.lights = [light, ambientLight];
     this.map.addToRoot(...this.lights);
+
+    if (this.debug) {
+      const helper = new DirectionalLightHelper(light, 5);
+      this.map.addToRoot(helper);
+    }
   }
 
   override destroy(): void {

@@ -1,4 +1,4 @@
-import { Vector2, Vector3, type Texture } from 'three';
+import { ShadowMaterial, Vector2, Vector3, type Texture } from 'three';
 import {
   Mesh,
   MeshLambertMaterial,
@@ -10,11 +10,13 @@ import MapModule, {
   type MapModuleObservables,
   type MapModuleState
 } from '../MapModule';
-import { Subject } from 'rxjs';
+import { filter, map, Subject } from 'rxjs';
 import type Map from '../Map';
+import { getCostsFromImage, TILE_TYPE } from '../../utils/pathfinding';
 
 interface Observables extends MapModuleObservables {
   select$: Subject<Vector2>;
+  hover$: Subject<Vector2>;
 }
 
 interface State extends MapModuleState {
@@ -22,6 +24,7 @@ interface State extends MapModuleState {
   terrainWidth: number;
   segments: number;
   heights: number[];
+  origin: Vector3;
 }
 
 export default class GroundModule extends MapModule<State, Observables> {
@@ -31,14 +34,20 @@ export default class GroundModule extends MapModule<State, Observables> {
     segments: 64,
     terrainHeight: 0,
     terrainWidth: 0,
-    heights: []
+    heights: [],
+    origin: new Vector3(0, 9, 0)
   };
 
-  constructor(room: Map, debug: boolean) {
-    super(room, debug);
+  constructor(map: Map, debug: boolean) {
+    super(map, debug);
     //#region observables
     this.observables.select$ = new Subject<Vector2>();
+    this.observables.hover$ = new Subject<Vector2>();
     //#endregion
+  }
+
+  getSeaLevel() {
+    return 1 / 4;
   }
 
   /**
@@ -53,21 +62,23 @@ export default class GroundModule extends MapModule<State, Observables> {
       x = x.x;
     }
 
-    const { terrainWidth, terrainHeight, segments, heights } = this.state;
+    const { terrainWidth, terrainHeight, segments, heights, origin } =
+      this.state;
 
-    // Position relativ zum Terrain (normalisiert 0-1)
-    const normalizedX = (x + terrainWidth / 2) / terrainWidth;
-    const normalizedZ = (z! + terrainHeight / 2) / terrainHeight;
+    // Welt -> Terrain-Koordinaten: Offset durch object.position berücksichtigen
+    const localX = x - origin.x;
+    const localZ = z! - origin.z;
 
-    // Clamp auf gültige Werte
+    // Position relativ zum Terrain (normalisiert 0-1, Terrain um (0,0) zentriert)
+    const normalizedX = (localX + terrainWidth / 2) / terrainWidth;
+    const normalizedZ = (localZ + terrainHeight / 2) / terrainHeight;
+
     const clampedX = Math.max(0, Math.min(1, normalizedX));
     const clampedZ = Math.max(0, Math.min(1, normalizedZ));
 
-    // Vertex-Index berechnen (geglättete Heights)
     const vertexX = clampedX * segments;
     const vertexZ = clampedZ * segments;
 
-    // Bilineare Interpolation für glatte Übergänge zwischen Vertices
     const x0 = Math.floor(vertexX);
     const x1 = Math.min(x0 + 1, segments);
     const z0 = Math.floor(vertexZ);
@@ -76,13 +87,11 @@ export default class GroundModule extends MapModule<State, Observables> {
     const fx = vertexX - x0;
     const fz = vertexZ - z0;
 
-    // 4 umliegende Vertices
     const h00 = heights[z0 * (segments + 1) + x0] || 0;
     const h10 = heights[z0 * (segments + 1) + x1] || 0;
     const h01 = heights[z1 * (segments + 1) + x0] || 0;
     const h11 = heights[z1 * (segments + 1) + x1] || 0;
 
-    // Bilineare Interpolation
     const h0 = h00 * (1 - fx) + h10 * fx;
     const h1 = h01 * (1 - fx) + h11 * fx;
     const height = h0 * (1 - fz) + h1 * fz;
@@ -98,7 +107,28 @@ export default class GroundModule extends MapModule<State, Observables> {
    */
   getHeightAt(x: number | Vector2, z?: number): number {
     const depth = this.getDepthAt(x, z);
-    return depth * -10 + 9; // Gleiche Transformation wie im Mesh
+    // gleiche Transformation wie im Mesh: vertices Y = depth * -10; object.position.y = 9
+    return depth * -10 + this.state.origin.y;
+  }
+
+  getAvgHeightAt(x: number, z: number, sampleDistance = 1): number {
+    const directions = [
+      [0, 0],
+      [0, sampleDistance],
+      [sampleDistance, sampleDistance],
+      [sampleDistance, 0]
+    ];
+    return (
+      directions.reduce((acc, [dx, dz]) => {
+        return (
+          acc +
+          this.map.modules.ground.getHeightAt(
+            Math.round(x + dx!),
+            Math.round(z + dz!)
+          )
+        );
+      }, 0) / directions.length
+    );
   }
 
   private getGroundHeights(segments = 64) {
@@ -108,7 +138,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     heightMap.generateMipmaps = false;
 
     const data = getPixelsFromTexture(heightMap);
-    const vertexCount = (segments + 1) * (segments + 1); // KORRIGIERT: segments verwenden!
+    const vertexCount = (segments + 1) * (segments + 1);
 
     // Höhen setzen
     const heights: number[] = [];
@@ -184,9 +214,9 @@ export default class GroundModule extends MapModule<State, Observables> {
     backgroundTerrain.name = 'Ground Background';
     const foregroundTerrain = new Mesh(geometry, foregroundMaterial);
     foregroundTerrain.name = 'Ground Foreground';
-
-    backgroundTerrain.receiveShadow = true;
-    foregroundTerrain.receiveShadow = true;
+    const shadowTerrain = new Mesh(geometry, new ShadowMaterial());
+    shadowTerrain.name = 'Ground Shadow';
+    shadowTerrain.receiveShadow = true;
 
     const waterMaterial = new MeshLambertMaterial({
       color: 0x004080,
@@ -203,8 +233,11 @@ export default class GroundModule extends MapModule<State, Observables> {
     const object = new Object3D();
     object.add(backgroundTerrain);
     object.add(foregroundTerrain);
+    object.add(shadowTerrain);
     object.add(water);
-    object.position.copy(new Vector3(-0.5, 9, -0.5));
+    object.position.copy(new Vector3(0, 9, 0));
+    // origin speichern, damit Abfragen korrekt transformieren
+    this.state.origin.copy(object.position);
     return object;
   }
 
@@ -220,9 +253,45 @@ export default class GroundModule extends MapModule<State, Observables> {
 
     this.subscription.add(
       listener.clickIntersect$.subscribe(intersect => {
-        const point = intersect.point.clone().floor();
-        this.observables.select$?.next(new Vector2(point.x, point.z));
+        this.observables.select$?.next(
+          new Vector2(intersect.point.x, intersect.point.z)
+        );
       })
+    );
+    this.subscription.add(
+      listener.hoverIntersect$
+        .pipe(
+          map(intersections => intersections[0]),
+          filter(Boolean)
+        )
+        .subscribe(intersect => {
+          this.observables.hover$?.next(
+            new Vector2(intersect.point.x, intersect.point.z)
+          );
+        })
+    );
+  }
+
+  pathfinderTileTypes: (TILE_TYPE | undefined)[][] = [];
+  override async afterSetup() {
+    await super.afterSetup();
+
+    function tileTypeByColor(
+      r: number,
+      g: number,
+      b: number,
+      a: number
+    ): TILE_TYPE | undefined {
+      if (a > 128) {
+        if (r === 217 && g === 217 && b === 217) return TILE_TYPE.BETON_ROAD;
+      }
+
+      return undefined;
+    }
+
+    this.pathfinderTileTypes = await getCostsFromImage(
+      this.map.textures.foregroundTexture!,
+      tileTypeByColor
     );
   }
 
@@ -231,10 +300,9 @@ export default class GroundModule extends MapModule<State, Observables> {
       z = x.y;
       x = x.x;
     }
+    const sampleDistance = 0.25;
 
-    const sampleDistance = 0.5;
-
-    // 3 Punkte für Normale berechnen
+    // Normale basierend auf Weltkoordinaten mit gleicher Höhenfunktion (inkl. Offset)
     const h0 = this.getHeightAt(x, z!);
     const h1 = this.getHeightAt(x + sampleDistance, z!);
     const h2 = this.getHeightAt(x, z! + sampleDistance);

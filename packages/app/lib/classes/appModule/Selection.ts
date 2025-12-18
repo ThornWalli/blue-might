@@ -18,7 +18,7 @@ export default class SelectionAppModule extends AppModule<State, Observables> {
   static override TYPE = 'selection';
 
   constructor(app: App) {
-    super(app);
+    super(app, {} as State);
 
     //#region state
     this.state.selectedUnit = null;

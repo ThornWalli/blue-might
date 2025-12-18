@@ -6,17 +6,28 @@
       [`style-type-${styleType ?? 'primary'}`]: true,
       [`mode-${mode ?? 'normal'}`]: true
     }">
+    <base-icon
+      v-if="icon && (!iconAlign || iconAlign === 'left')"
+      size="very-small"
+      :name="icon" />
     <slot>Button</slot>
+    <base-icon v-if="icon && iconAlign === 'right'" :name="icon" />
   </base-button>
 </template>
 
 <script lang="ts" setup>
+import type { FunctionalComponent } from 'vue';
+import type icons from '../utils/icons';
+import type { ICON } from '../utils/icons';
 import BaseButton from './base/Button.vue';
+import BaseIcon from './base/Icon.vue';
 
 defineProps<{
   styleType?: 'primary' | 'secondary' | 'tertiary' | 'quaternary';
   mode?: 'normal';
   selected?: boolean;
+  icon?: ICON | keyof typeof icons | FunctionalComponent;
+  iconAlign?: 'left' | 'right';
 }>();
 </script>
 
@@ -33,6 +44,7 @@ defineProps<{
   --indicator-background: var(--color-blue-7);
 
   display: inline-flex;
+  gap: var(--bm-spacing-small);
   align-items: center;
   justify-content: center;
   cursor: pointer;

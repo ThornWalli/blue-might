@@ -1,20 +1,38 @@
-import { fromEvent } from 'rxjs';
+/* eslint-disable complexity */
+import { fromEvent, ReplaySubject } from 'rxjs';
 import type {
   PlayerModuleObservables,
   PlayerModuleState
 } from '../PlayerModule';
 import PlayerModule from '../PlayerModule';
+import type Player from '../Player';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface Observables extends PlayerModuleObservables {}
+interface Observables extends PlayerModuleObservables {
+  controls$: ReplaySubject<ControlState>;
+}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface State extends PlayerModuleState {}
+interface State extends PlayerModuleState {
+  controls: ControlState;
+}
 
 export default class ControlsModule extends PlayerModule<State, Observables> {
   static override TYPE = 'controls';
 
-  override state: State = {};
+  override state: State = {
+    controls: {}
+  };
+
+  constructor(player: Player, debug?: boolean) {
+    super(player, {} as State, debug);
+
+    //#region observables
+    this.observables.controls$ = new ReplaySubject<ControlState>();
+    //#endregion
+  }
+
+  getControls() {
+    return this.state.controls;
+  }
 
   override async setup() {
     await super.setup();
@@ -32,47 +50,72 @@ export default class ControlsModule extends PlayerModule<State, Observables> {
     );
   }
 
-  // eslint-disable-next-line complexity
   private handleKeyEvent(event: KeyboardEvent, isKeyDown: boolean) {
     const vehicle = this.player.modules.vehicle.getVehicle();
     if (!vehicle) return;
 
-    const state = vehicle.modules.vehicle.getState();
+    const controls: ControlState = this.state.controls;
+
+    controls.modifier = event.shiftKey;
 
     switch (event.code) {
+      case 'KeyQ':
+        controls.rotateLeft = isKeyDown;
+        break;
+      case 'KeyG':
+        controls.gear = isKeyDown;
+        break;
+      case 'KeyL':
+        controls.landing = isKeyDown;
+        break;
+      case 'KeyE':
+        controls.rotateRight = isKeyDown;
+        break;
       case 'KeyW':
       case 'ArrowUp':
-        state.controls.forward = isKeyDown;
+        controls.up = isKeyDown;
         break;
       case 'KeyS':
       case 'ArrowDown':
-        state.controls.backward = isKeyDown;
+        controls.down = isKeyDown;
         break;
       case 'KeyA':
       case 'ArrowLeft':
-        if (state.controls.backward) {
-          state.controls.right = false;
-          state.controls.left = isKeyDown;
-        } else {
-          state.controls.left = isKeyDown;
-        }
+        controls.left = isKeyDown;
         break;
       case 'KeyD':
       case 'ArrowRight':
-        if (state.controls.backward) {
-          state.controls.left = false;
-          state.controls.right = isKeyDown;
-        } else {
-          state.controls.right = isKeyDown;
-        }
+        controls.right = isKeyDown;
         break;
       case 'Space':
-        state.controls.brake = isKeyDown;
+        controls.space = isKeyDown;
         break;
     }
+    this.observables.controls$.next({ ...controls });
   }
 
   override destroy(): void {
     super.destroy();
   }
+}
+
+export interface ControlState {
+  gear?: boolean;
+  landing?: boolean;
+  modifier?: boolean;
+  rotateLeft?: boolean;
+  rotateRight?: boolean;
+  up?: boolean;
+  down?: boolean;
+  left?: boolean;
+  right?: boolean;
+  space?: boolean;
+}
+
+export enum Controls {
+  UP = 'up',
+  DOWN = 'down',
+  LEFT = 'left',
+  RIGHT = 'right',
+  SPACE = 'space'
 }

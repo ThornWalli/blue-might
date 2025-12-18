@@ -12,14 +12,15 @@ import UnitModule, { type UnitModuleOptions } from '../UnitModule';
 import { OBB } from 'three/examples/jsm/math/OBB.js';
 
 export interface CollisionUnitModuleOptions extends UnitModuleOptions {
+  disabled: boolean;
   targetName: string;
-  targetChild?: boolean;
+  targetChildIndex?: number;
 }
 
-export default class CollisionUnitModule extends UnitModule {
+export default class CollisionUnitModule extends UnitModule<CollisionUnitModuleOptions> {
   static override TYPE = 'collision';
 
-  override debug = true;
+  override debug = false;
 
   localOBB = new OBB();
   worldOBB = new OBB();
@@ -49,18 +50,35 @@ export default class CollisionUnitModule extends UnitModule {
     this.refreshDebugHelper();
   }
 
+  enableCollision() {
+    this.getCollisionObject().userData.ignorePathfinding = false;
+  }
+
+  disableCollision() {
+    this.getCollisionObject().userData.ignorePathfinding = true;
+  }
+
   getTarget() {
-    const { targetName, targetChild } = this
+    const { targetName, targetChildIndex } = this
       .options as CollisionUnitModuleOptions;
     const target = this.getUnit().root.getObjectByName(targetName);
-    if (targetChild) {
-      return target?.children[1] || null;
+
+    if (targetChildIndex !== undefined) {
+      const children = target?.children[targetChildIndex] || null;
+      if (!children) {
+        console.warn(
+          `CollisionUnitModule: Child index ${targetChildIndex} does not exist on target '${targetName}'.`
+        );
+      }
+      return children;
     }
     return target || null;
   }
 
   getCollisionObject() {
-    return this.getTarget() || this.getUnit().root;
+    const obj = this.getTarget() || this.getUnit().root;
+    obj.userData.ignorePathfinding = this.options.disabled;
+    return obj;
   }
 
   setupLocalOBB() {
@@ -78,19 +96,21 @@ export default class CollisionUnitModule extends UnitModule {
     this.localOBB.center.copy(center).sub(object.position);
     this.localOBB.rotation.identity();
   }
-
   refreshWorldOBB() {
+    const unit = this.getUnit();
     const object = this.getCollisionObject();
 
+    // Lokale OBB bleibt vom Mesh/AABB abgeleitet
+    // Für die Welt-OBB: nur Yaw berücksichtigen, Pitch/Roll ignorieren
+    // und die Y-Position stabil halten (z. B. die aktuelle _position.y).
     object.updateMatrixWorld(true);
-
-    const rotMatrix = new Matrix4().extractRotation(object.matrixWorld);
-
+    const yawQuat = unit.getYawQuaternion();
+    const worldMatrix = new Matrix4()
+      .makeRotationFromQuaternion(yawQuat)
+      .setPosition(unit.getPosition()); // x,y,z
+    this.worldOBB.rotation.setFromMatrix4(worldMatrix);
+    this.worldOBB.center.copy(this.localOBB.center).applyMatrix4(worldMatrix);
     this.worldOBB.halfSize.copy(this.localOBB.halfSize);
-    this.worldOBB.rotation.setFromMatrix4(rotMatrix);
-    this.worldOBB.center
-      .copy(this.localOBB.center)
-      .applyMatrix4(object.matrixWorld);
   }
 
   refreshDebugHelper() {

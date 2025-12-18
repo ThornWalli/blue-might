@@ -15,7 +15,10 @@ import type { AnimationLoopValue } from '../Renderer';
 type Actions = { [key: string]: AnimationAction };
 
 interface Observables extends UnitModuleObservables {
-  action$: ReplaySubject<string | null>;
+  action$: ReplaySubject<{
+    current: string | null;
+    previous: string | null;
+  }>;
   addAction$: Subject<AnimationAction>;
 }
 
@@ -34,6 +37,12 @@ export class AnimationUnitModule extends UnitModule<
   actions: Actions = {};
   animations: AnimationClip[] = [];
   private action: string | null;
+  private activeActionsCount = 0; // Counter für aktive Actions
+  isAnimating = false; // Public Property für externe Checks
+
+  override isForceUpdate() {
+    return this.isAnimating;
+  }
 
   getCurrentAction() {
     return this.action;
@@ -45,8 +54,14 @@ export class AnimationUnitModule extends UnitModule<
     this.action = null;
 
     //#region observables
-    this.observables.action$ = new ReplaySubject<string | null>(1);
-    this.observables.action$.next(this.action);
+    this.observables.action$ = new ReplaySubject<{
+      current: string | null;
+      previous: string | null;
+    }>(1);
+    this.observables.action$.next({
+      current: this.action,
+      previous: null
+    });
     this.observables.addAction$ = new ReplaySubject<AnimationAction>(1);
     //#endregion
   }
@@ -87,31 +102,78 @@ export class AnimationUnitModule extends UnitModule<
     this.animations = animations;
   }
 
-  setAnimationAction(type: string, duration = 0.2) {
-    if (!this.mixer) {
-      console.warn('Animation mixer not initialized yet');
-      return;
-    }
-    if (this.action === type) return;
-    this.action = type;
-    this.fadeToAction(this.mixer ? this.actions : {}, type, duration);
-    this.observables.action$.next(type);
-  }
-
   override update({ delta }: AnimationLoopValue) {
     this.mixer?.update(delta);
   }
 
-  activeAction: AnimationAction | null = null;
-  fadeToAction(actions: Actions, name: string, duration = 0.5) {
-    const next = actions[name];
-    if (!next || next === this.activeAction) return;
+  activeActions: Set<string> = new Set();
 
-    if (this.activeAction) {
-      this.activeAction.fadeOut(duration);
+  stopAction(name: string) {
+    const action = this.actions[name];
+    if (!action) return;
+
+    action.stop();
+  }
+
+  playAction(
+    name: string,
+    {
+      reverse = false,
+      from,
+      duration = 0
+    }: {
+      reverse?: boolean;
+      from?: string;
+      duration?: number;
+    } = {}
+  ) {
+    console.log('Play action:', name, from, duration, reverse);
+    const next = this.actions[name];
+    if (!next) return;
+
+    const current = from && this.actions[from];
+
+    // Wichtig: nicht reset() benutzen beim Reverse,
+    // denn reset setzt die Zeit auf 0, was falsch ist!
+    next.enabled = true;
+    next.reset();
+
+    const timeScale = next.timeScale;
+    if (reverse) {
+      next.timeScale = -Math.abs(timeScale);
+    } else {
+      next.timeScale = Math.abs(timeScale);
     }
 
-    next.reset().fadeIn(duration).play();
-    this.activeAction = next;
+    if (reverse) {
+      next.time = next.getClip().duration - 0.000001;
+    } else {
+      next.time = 0;
+    }
+
+    if (from && current) {
+      next.crossFadeFrom(current, duration, true);
+    }
+
+    next.play();
+
+    // Tracking starten
+    this.activeActionsCount++;
+    this.isAnimating = true;
+
+    // Setze isAnimating zurück, wenn Action endet
+    this.mixer.addEventListener('finished', event => {
+      if (event.action === next) {
+        this.activeActionsCount--;
+        if (this.activeActionsCount === 0) {
+          this.isAnimating = false;
+        }
+      }
+    });
+
+    this.observables.action$.next({
+      current: name,
+      previous: from ?? null
+    });
   }
 }

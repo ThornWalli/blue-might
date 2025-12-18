@@ -15,12 +15,17 @@ export default class Module<
 > {
   static TYPE: string;
 
-  state: State = {} as State;
+  protected state: State = {} as State;
 
   subscription = new Subscription();
   observables: Observables = {} as Observables;
 
-  constructor(readonly debug: boolean = false) {}
+  constructor(
+    state: State,
+    readonly debug: boolean = false
+  ) {
+    this.state = state;
+  }
   async setup(): Promise<void> {
     // This method can be overridden by subclasses to set up specific handlers
     return;
@@ -46,5 +51,9 @@ export default class Module<
     return {
       ...this.state
     };
+  }
+
+  isForceUpdate() {
+    return false;
   }
 }

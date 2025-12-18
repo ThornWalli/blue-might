@@ -15,9 +15,10 @@ export default abstract class PlayerModule<
 > extends Module<State, Observables> {
   constructor(
     public player: Player,
+    state: State,
     debug?: boolean
   ) {
-    super(debug);
+    super(state, debug);
   }
 
   override destroy() {

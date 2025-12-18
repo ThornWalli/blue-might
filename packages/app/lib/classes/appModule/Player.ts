@@ -19,12 +19,9 @@ interface State extends AppModuleState {
 }
 export default class PlayerAppModule extends AppModule<State, Observables> {
   static override TYPE = 'player';
-  override state: State = {
-    players: []
-  };
 
   constructor(app: App) {
-    super(app);
+    super(app, { players: [] });
     //#region observables
     this.observables.currentPlayer$ = new ReplaySubject<Player>(0);
     this.observables.addPlayer$ = new Subject<Player>();

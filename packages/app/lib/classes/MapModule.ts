@@ -17,7 +17,7 @@ export default abstract class MapModule<
     public map: Map,
     debug?: boolean
   ) {
-    super(debug);
+    super({} as State, debug);
   }
 
   override destroy() {

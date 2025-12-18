@@ -4,15 +4,7 @@ import MapModule, {
 } from '../MapModule';
 import type Unit from '../Unit';
 import UnitChunkManager from '../UnitChunkManager';
-import {
-  EMPTY,
-  Subject,
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  merge,
-  switchMap
-} from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, map, merge } from 'rxjs';
 import type { AnimationLoopValue } from '../Renderer';
 import type Map from '../Map';
 import type { Object3D } from 'three';
@@ -72,25 +64,24 @@ export default class UnitsModule extends MapModule<State, Observables> {
     this.subscription.add(
       merge(
         this.observables.addUnit$.pipe(map(() => null)),
-        this.map.app.renderer.observables.controlsChange$,
-        this.map.app.modules.player.observables.currentPlayer$.pipe(
-          switchMap(
-            player => player?.modules.vehicle.observables.vehicle$ || EMPTY
-          ),
-          switchMap(({ current }) => current?.observables.position$ || EMPTY)
-        )
+        this.map.app.renderer.modules.controls.observables.change$
+        // this.map.app.modules.player.observables.currentPlayer$.pipe(
+        //   switchMap(
+        //     player => player?.modules.vehicle.observables.vehicle$ || EMPTY
+        //   ),
+        //   switchMap(({ current }) => current?.observables.visible$ || EMPTY)
+        // )
       )
-        .pipe(debounceTime(20))
+        .pipe(debounceTime(200))
         .subscribe(() => {
+          console.log('Updating unit visibility...');
           this.state.visibleUnits = Array.from(
-            this.chunkManager.updateVisibility(this.map.app.renderer.camera)
+            this.chunkManager.updateVisibility(
+              this.map.app.renderer.modules.camera.getCamera()
+            )
           );
         })
     );
-
-    await this.setupUnits(this.map.description.units || []);
-
-    this.listener.addMeshes(this.getUnits().map(unit => unit.root));
 
     this.subscription.add(
       this.listener.clickIntersect$.subscribe(intersect => {
@@ -99,6 +90,14 @@ export default class UnitsModule extends MapModule<State, Observables> {
         );
       })
     );
+  }
+
+  override async afterSetup() {
+    await super.afterSetup();
+
+    await this.setupUnits(this.map.description.units || []);
+
+    this.listener.addMeshes(this.getUnits().map(unit => unit.root));
   }
 
   //#region methods
@@ -152,7 +151,21 @@ export default class UnitsModule extends MapModule<State, Observables> {
   }
 
   override update(v: AnimationLoopValue) {
-    this.state.visibleUnits.forEach(unit => unit.update(v));
+    // Sammle Units, die sichtbar sind oder animieren
+    const animatingUnits = this.getUnits().filter(
+      unit =>
+        unit.modules.animation?.isForceUpdate() ||
+        unit.modules.pathfinding?.isForceUpdate()
+    );
+    const unitsToUpdate = new Set([
+      ...this.state.visibleUnits,
+      ...animatingUnits
+    ]);
+
+    // Update nur relevante Units
+    unitsToUpdate.forEach(unit => unit.update(v));
+
+    // this.state.visibleUnits.forEach(unit => unit.update(v));
   }
 
   //#endregion
