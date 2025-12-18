@@ -148,13 +148,12 @@ export default class Renderer<
 
     this.setShadowQuality(ShadowQuality.MEDIUM);
 
-    let lastTime = 0;
     renderer.setAnimationLoop(time => {
-      const delta = time - lastTime;
-      lastTime = time;
+      const rawDelta = this.clock.getDelta();
+      const delta = Math.min(rawDelta, 1 / 60);
       this.observables.animationLoop$.next({
         time,
-        delta: this.clock.getDelta()
+        delta
       });
 
       this.getComposer().render(time);
@@ -233,7 +232,7 @@ export default class Renderer<
 
     const renderer = new WebGLRenderer({
       canvas,
-      antialias: options.pixelated ? false : true
+      antialias: false
       // powerPreference: 'low-power'
     });
 
@@ -243,9 +242,9 @@ export default class Renderer<
     renderer.outputColorSpace = SRGBColorSpace;
     renderer.toneMapping = NeutralToneMapping;
     renderer.toneMappingExposure = 1.0;
-    // renderer.setPixelRatio(480 / window.innerWidth);
-    // renderer.setPixelRatio(1 / 3);
-    // renderer.setPixelRatio(window.devicePixelRatio); // window.devicePixelRatio
+    if (options.pixelated) {
+      renderer.setPixelRatio(480 / window.innerWidth);
+    }
     renderer.setSize(dimension.x, dimension.y);
     //#endregion
 

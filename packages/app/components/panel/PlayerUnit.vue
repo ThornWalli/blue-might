@@ -49,14 +49,14 @@
         </base-button>
       </div>
     </div>
-    <bm-button @click="onClickUnitActive">{{
-      unitActive ? 'Vehicle Off' : 'Vehicle On'
-    }}</bm-button>
+    <bm-button :disabled="!isVehicle" @click="onClickUnitActive">
+      {{ unitActive ? 'Vehicle Off' : 'Vehicle On' }}
+    </bm-button>
     <bm-button
       :icon="unitFocused ? ICON.UNLOCKED : ICON.LOCKED"
-      @click="onClickFocusUnit"
-      >{{ unitFocused ? 'Unlock' : 'Lock' }}</bm-button
-    >
+      @click="onClickFocusUnit">
+      {{ unitFocused ? 'Unlock' : 'Lock' }}
+    </bm-button>
     <p>
       <strong>Height:</strong> {{ seaLevelDiff.toFixed(2) }} m /
       {{ (minGroundHeight ?? 0).toFixed(2) }} m (<span
@@ -91,13 +91,14 @@ import {
 import { Vector3 } from 'three';
 import { ICON } from '@blue-might/app/utils/icons';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/Helicopter';
+import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/moveable/Helicopter';
 import HelicopterUnit from '@blue-might/app/lib/classes/unit/vehicle/Helicopter';
-import type { PowerInfo } from '@blue-might/app/lib/classes/unitModule/Vehicle';
-import VehicleUnitModule from '@blue-might/app/lib/classes/unitModule/Vehicle';
+import type { PowerInfo } from '@blue-might/app/lib/classes/unitModule/Movable';
+import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import BaseButton from '../base/Button.vue';
 
-import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/Helicopter';
+import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/moveable/Helicopter';
+import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
 
 const $props = defineProps<{
   app: App;
@@ -137,6 +138,10 @@ const heightDiff = computed(() => {
   return 0;
 });
 
+const isVehicle = computed(() => {
+  return unit.value instanceof VehicleUnit;
+});
+
 const ready = ref(false);
 const subscription = new Subscription();
 const position = ref<Vector3 | null>(null);
@@ -158,10 +163,10 @@ async function setup() {
   );
 
   const vehicleModule$ = vehicle$.pipe(
-    filter(({ current }) => current?.hasModuleType(VehicleUnitModule) ?? false),
+    filter(({ current }) => current?.hasModuleType(MovableUnitModule) ?? false),
     switchMap(
       ({ current }) =>
-        of(current?.getModuleByType<VehicleUnitModule>(VehicleUnitModule)) ??
+        of(current?.getModuleByType<MovableUnitModule>(MovableUnitModule)) ??
         EMPTY
     ),
     filter(Boolean)

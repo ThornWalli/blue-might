@@ -10,11 +10,13 @@ import MapModule, {
   type MapModuleObservables,
   type MapModuleState
 } from '../MapModule';
-import { Subject } from 'rxjs';
+import { filter, map, Subject } from 'rxjs';
 import type Map from '../Map';
+import { getCostsFromImage, TILE_TYPE } from '../../utils/pathfinding';
 
 interface Observables extends MapModuleObservables {
   select$: Subject<Vector2>;
+  hover$: Subject<Vector2>;
 }
 
 interface State extends MapModuleState {
@@ -36,11 +38,16 @@ export default class GroundModule extends MapModule<State, Observables> {
     origin: new Vector3(0, 9, 0)
   };
 
-  constructor(room: Map, debug: boolean) {
-    super(room, debug);
+  constructor(map: Map, debug: boolean) {
+    super(map, debug);
     //#region observables
     this.observables.select$ = new Subject<Vector2>();
+    this.observables.hover$ = new Subject<Vector2>();
     //#endregion
+  }
+
+  getSeaLevel() {
+    return 1 / 4;
   }
 
   /**
@@ -102,6 +109,26 @@ export default class GroundModule extends MapModule<State, Observables> {
     const depth = this.getDepthAt(x, z);
     // gleiche Transformation wie im Mesh: vertices Y = depth * -10; object.position.y = 9
     return depth * -10 + this.state.origin.y;
+  }
+
+  getAvgHeightAt(x: number, z: number, sampleDistance = 1): number {
+    const directions = [
+      [0, 0],
+      [0, sampleDistance],
+      [sampleDistance, sampleDistance],
+      [sampleDistance, 0]
+    ];
+    return (
+      directions.reduce((acc, [dx, dz]) => {
+        return (
+          acc +
+          this.map.modules.ground.getHeightAt(
+            Math.round(x + dx!),
+            Math.round(z + dz!)
+          )
+        );
+      }, 0) / directions.length
+    );
   }
 
   private getGroundHeights(segments = 64) {
@@ -208,7 +235,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     object.add(foregroundTerrain);
     object.add(shadowTerrain);
     object.add(water);
-    object.position.copy(new Vector3(-0.5, 9, -0.5));
+    object.position.copy(new Vector3(0, 9, 0));
     // origin speichern, damit Abfragen korrekt transformieren
     this.state.origin.copy(object.position);
     return object;
@@ -226,9 +253,45 @@ export default class GroundModule extends MapModule<State, Observables> {
 
     this.subscription.add(
       listener.clickIntersect$.subscribe(intersect => {
-        const point = intersect.point.clone().floor();
-        this.observables.select$?.next(new Vector2(point.x, point.z));
+        this.observables.select$?.next(
+          new Vector2(intersect.point.x, intersect.point.z)
+        );
       })
+    );
+    this.subscription.add(
+      listener.hoverIntersect$
+        .pipe(
+          map(intersections => intersections[0]),
+          filter(Boolean)
+        )
+        .subscribe(intersect => {
+          this.observables.hover$?.next(
+            new Vector2(intersect.point.x, intersect.point.z)
+          );
+        })
+    );
+  }
+
+  pathfinderTileTypes: (TILE_TYPE | undefined)[][] = [];
+  override async afterSetup() {
+    await super.afterSetup();
+
+    function tileTypeByColor(
+      r: number,
+      g: number,
+      b: number,
+      a: number
+    ): TILE_TYPE | undefined {
+      if (a > 128) {
+        if (r === 217 && g === 217 && b === 217) return TILE_TYPE.BETON_ROAD;
+      }
+
+      return undefined;
+    }
+
+    this.pathfinderTileTypes = await getCostsFromImage(
+      this.map.textures.foregroundTexture!,
+      tileTypeByColor
     );
   }
 

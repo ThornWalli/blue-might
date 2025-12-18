@@ -36,7 +36,7 @@ import type { Cursor } from '../lib/classes/appModule/Cursor';
 
 import { defaultMap } from '@blue-might/maps';
 import { HumanPlayer } from '../lib/classes/player/Human';
-import type VehicleUnit from '../lib/classes/unit/Vehicle';
+import type MovableUnit from '../lib/classes/unit/Movable';
 
 setupFonts();
 const $props = defineProps<{
@@ -117,7 +117,7 @@ async function setupPlayer(app: App) {
 
   app.modules.map.observables.map$
     .pipe(
-      map(map => map?.modules.units.getById<VehicleUnit>('blue-might-1')),
+      map(map => map?.modules.units.getById<MovableUnit>('soldat-1')),
       filter(Boolean)
     )
     .subscribe(vehicle => {

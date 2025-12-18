@@ -1,23 +1,23 @@
 /* eslint-disable complexity */
 
 import { Vector3 } from 'three';
-import type { AnimationLoopValue } from '../Renderer';
+import type { AnimationLoopValue } from '../../Renderer';
 
 import { EMPTY, filter, fromEvent, ReplaySubject, switchMap } from 'rxjs';
-import VehicleUnitModule, {
-  type VehicleUnitModuleObservables,
-  type VehicleUnitModuleOptions,
-  type VehicleUnitModuleState
-} from './Vehicle';
-import type HelicopterUnit from '../unit/vehicle/Helicopter';
+import MovableUnitModule, {
+  type MovableUnitModuleObservables,
+  type MovableUnitModuleOptions,
+  type MovableUnitModuleState
+} from '../Movable';
+import type HelicopterUnit from '../../unit/vehicle/Helicopter';
 
-interface HelicopterUnitObservables extends VehicleUnitModuleObservables {
+interface HelicopterUnitObservables extends MovableUnitModuleObservables {
   flightStatus$: ReplaySubject<FLIGHT_STATUS>;
   gearsActive$: ReplaySubject<boolean>;
   gearsOpened$: ReplaySubject<boolean>;
 }
 
-export interface HelicopterUnitModuleOptions extends VehicleUnitModuleOptions {
+export interface HelicopterUnitModuleOptions extends MovableUnitModuleOptions {
   gearsHeight: number;
   maxSpeed: number;
   acceleration: number;
@@ -39,7 +39,7 @@ export enum FLIGHT_STATUS {
   LANDING = 'landing'
 }
 
-export interface HelicopterUnitModuleState extends VehicleUnitModuleState {
+export interface HelicopterUnitModuleState extends MovableUnitModuleState {
   velocity: Vector3; // includes y
   tilt: Vector3; // x=pitch, y=unused, z=roll (right-handed; adjust as needed)
   groundNormal: Vector3;
@@ -58,7 +58,7 @@ export default class HelicopterUnitModule<
   State extends HelicopterUnitModuleState = HelicopterUnitModuleState,
   Obervables extends HelicopterUnitObservables = HelicopterUnitObservables,
   U extends HelicopterUnit = HelicopterUnit
-> extends VehicleUnitModule<Options, State, Obervables, U> {
+> extends MovableUnitModule<Options, State, Obervables, U> {
   getTilt() {
     return this.state.tilt;
   }
@@ -193,6 +193,7 @@ export default class HelicopterUnitModule<
     return this.state.gearsActive && this.state.gearsOpened ? 0.2 : 0.6;
   }
 
+  lastPosition = new Vector3();
   override update({ delta, time }: AnimationLoopValue): void {
     super.update({ delta, time });
 
@@ -404,7 +405,11 @@ export default class HelicopterUnitModule<
         this.state.isAirborne = false;
         velocity.y = 0;
         position.y = minY ?? 0;
-        unit.setPosition(position);
+
+        if (!this.lastPosition?.equals(position)) {
+          unit.setPosition(position);
+          this.lastPosition.copy(pos);
+        }
         status = FLIGHT_STATUS.LANDED;
       }
     }
@@ -423,7 +428,6 @@ export default class HelicopterUnitModule<
       pos.x += dx;
       pos.y += dy;
       pos.z += dz;
-
       unit.setPosition(pos);
       if (!this.state.isAirborne) {
         unit.updateGroundAlignment();

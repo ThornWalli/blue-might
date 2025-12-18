@@ -2,7 +2,7 @@ import { Vector3 } from 'three';
 import GroundVehicleUnitModule, {
   type GroundVehicleUnitModuleOptions,
   type GroundVehicleUnitModuleState
-} from './GroundVehicle';
+} from './moveable/GroundVehicle';
 import type { AnimationLoopValue } from '../Renderer';
 import type TankUnit from '../unit/vehicle/Tank';
 
@@ -32,8 +32,7 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
   }
 
   // eslint-disable-next-line complexity
-  override update({ delta, time }: AnimationLoopValue): void {
-    super.update({ delta, time });
+  override moveUpdate({ delta }: AnimationLoopValue): void {
     const unit = this.getUnit();
     const acceleration = this.options.acceleration;
 
@@ -67,7 +66,6 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
     if (isRotating) {
       if (controls.left) rotationAccel += acceleration;
       if (controls.right) rotationAccel -= acceleration;
-      accel = 0;
     } else {
       rotationAccel = accel;
     }
@@ -96,6 +94,7 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
     const velocity = this.state.velocity;
     if (!isRotating) {
       velocity.addScaledVector(this.getTmpDirection(), accel * delta);
+
       if (controls.space) {
         velocity.multiplyScalar(0.8);
       }
@@ -155,11 +154,11 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
     const pos = unit.getPosition().clone();
     const dx = velocity.x * delta * currentPower;
     const dz = velocity.z * delta * currentPower;
+
     if (Math.abs(dx) > eps || Math.abs(dz) > eps) {
       pos.x += dx;
       pos.z += dz;
       unit.setPosition(pos);
-      unit.updateGroundAlignment();
     }
   }
 }

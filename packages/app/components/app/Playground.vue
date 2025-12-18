@@ -3,6 +3,8 @@
     <template #[PANEL.BOTTOM_LEFT]>
       <div class="panel-row">
         <bm-panel-debug key="general" :app="app" />
+      </div>
+      <div class="panel-row">
         <bm-panel-controls key="general" :app="app" />
       </div>
     </template>

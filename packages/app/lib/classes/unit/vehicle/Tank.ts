@@ -6,8 +6,7 @@ import VehicleUnit, {
   type VehicleUnitOptions
 } from '../Vehicle';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface TankUnitOptions extends VehicleUnitOptions {}
+export type TankUnitOptions = VehicleUnitOptions;
 
 export type TankUnitModules = VehicleUnitModules & {
   vehicle: TankUnitModule;

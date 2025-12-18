@@ -4,8 +4,8 @@ import UnitModule, {
   type UnitModuleState
 } from '../UnitModule';
 import type { AnimationLoopValue } from '../Renderer';
-import type VehicleUnit from '../unit/Vehicle';
-import { ReplaySubject } from 'rxjs';
+import type MovableUnit from '../unit/Movable';
+import { ReplaySubject, Subject } from 'rxjs';
 
 export interface PowerInfo {
   flightPower: number;
@@ -15,15 +15,18 @@ export interface PowerInfo {
   idlePower: number;
 }
 
-export interface VehicleUnitModuleObservables extends UnitModuleObservables {
+export interface MovableUnitModuleObservables extends UnitModuleObservables {
   active$: ReplaySubject<boolean>;
   powerInfo$: ReplaySubject<PowerInfo>;
+  move$: Subject<void>;
+  rotate$: Subject<void>;
+  stop$: Subject<void>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface VehicleUnitModuleOptions extends UnitModuleOptions {}
+export interface MovableUnitModuleOptions extends UnitModuleOptions {}
 
-export interface VehicleUnitModuleState extends UnitModuleState {
+export interface MovableUnitModuleState extends UnitModuleState {
   active: boolean;
   rawPower: number;
   maxPower: number;
@@ -34,14 +37,14 @@ export interface VehicleUnitModuleState extends UnitModuleState {
   lastPower?: number;
 }
 
-export default class VehicleUnitModule<
-  Options extends VehicleUnitModuleOptions = VehicleUnitModuleOptions,
-  State extends VehicleUnitModuleState = VehicleUnitModuleState,
+export default class MovableUnitModule<
+  Options extends MovableUnitModuleOptions = MovableUnitModuleOptions,
+  State extends MovableUnitModuleState = MovableUnitModuleState,
   Obervables extends
-    VehicleUnitModuleObservables = VehicleUnitModuleObservables,
-  U extends VehicleUnit = VehicleUnit
+    MovableUnitModuleObservables = MovableUnitModuleObservables,
+  U extends MovableUnit = MovableUnit
 > extends UnitModule<Options, State, Obervables, U> {
-  static override TYPE = 'vehicle';
+  static override TYPE = 'movable';
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {
     super(
@@ -71,6 +74,10 @@ export default class VehicleUnitModule<
       minPower: this.state.minPower,
       idlePower: this.state.idlePower
     });
+
+    this.observables.move$ = new Subject<void>();
+    this.observables.rotate$ = new Subject<void>();
+    this.observables.stop$ = new Subject<void>();
     //#endregion
   }
 

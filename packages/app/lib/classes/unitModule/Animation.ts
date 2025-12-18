@@ -37,6 +37,12 @@ export class AnimationUnitModule extends UnitModule<
   actions: Actions = {};
   animations: AnimationClip[] = [];
   private action: string | null;
+  private activeActionsCount = 0; // Counter für aktive Actions
+  isAnimating = false; // Public Property für externe Checks
+
+  override isForceUpdate() {
+    return this.isAnimating;
+  }
 
   getCurrentAction() {
     return this.action;
@@ -100,29 +106,14 @@ export class AnimationUnitModule extends UnitModule<
     this.mixer?.update(delta);
   }
 
-  // playAction(name: string, { from }: { from?: string } = {}) {
-  //   const next = this.actions[name];
-  //   if (!next) return;
-  //   const current = from && this.actions[from];
+  activeActions: Set<string> = new Set();
 
-  //   if (from && current) {
-  //     // Zeitwert übernehmen
-  //     const currentTime = current.time;
-  //     current.fadeOut(0.5);
-  //     // Kein reset, damit die Zeit nicht auf 0 springt!
-  //     next.enabled = true;
-  //     next.time = currentTime % next.getClip().duration;
-  //     next.fadeIn(0.5).play();
-  //   } else {
-  //     next.enabled = true;
-  //     next.play();
-  //   }
+  stopAction(name: string) {
+    const action = this.actions[name];
+    if (!action) return;
 
-  //   this.observables.action$.next({
-  //     current: name,
-  //     previous: from ?? null
-  //   });
-  // }
+    action.stop();
+  }
 
   playAction(
     name: string,
@@ -166,62 +157,23 @@ export class AnimationUnitModule extends UnitModule<
 
     next.play();
 
+    // Tracking starten
+    this.activeActionsCount++;
+    this.isAnimating = true;
+
+    // Setze isAnimating zurück, wenn Action endet
+    this.mixer.addEventListener('finished', event => {
+      if (event.action === next) {
+        this.activeActionsCount--;
+        if (this.activeActionsCount === 0) {
+          this.isAnimating = false;
+        }
+      }
+    });
+
     this.observables.action$.next({
       current: name,
       previous: from ?? null
     });
   }
-
-  // playAction(
-  //   name: string,
-  //   {
-  //     reverse,
-  //     from,
-  //     duration
-  //   }: {
-  //     reverse?: boolean;
-  //     from?: string;
-  //     duration?: number;
-  //   } = {}
-  // ) {
-  //   console.log('Play action:', name, from, duration);
-  //   const next = this.actions[name];
-  //   if (!next) return;
-  //   const current = from && this.actions[from];
-
-  //   next.reset();
-  //   if (reverse) {
-  //     next.timeScale = next.timeScale * -1;
-  //   }
-  //   if (from && current) {
-  //     next.crossFadeFrom(current, duration ?? 0, true);
-  //   }
-  //   next.play();
-  //   this.observables.action$.next({
-  //     current: name,
-  //     previous: from ?? null
-  //   });
-  // }
-
-  // playActionFadeTo(
-  //   name: string,
-  //   options: {
-  //     fadeInDuration?: number;
-  //     fadeOutDuration?: number;
-  //   } = {}
-  // ) {
-  //   const next = this.actions[name];
-  //   if (!next || next === this.activeAction) return;
-
-  //   let currentTime = 0;
-  //   if (this.activeAction) {
-  //     currentTime = this.activeAction.time;
-  //     this.activeAction.fadeOut(options.fadeOutDuration ?? 0);
-  //   }
-
-  //   next.reset();
-  //   next.time = currentTime % next.getClip().duration; // Zeit nach reset setzen!
-  //   next.fadeIn(options.fadeInDuration ?? 0).play();
-  //   this.activeAction = next;
-  // }
 }

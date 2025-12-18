@@ -1,16 +1,19 @@
 /* eslint-disable complexity */
 import { Vector3 } from 'three';
-import type { AnimationLoopValue } from '../Renderer';
+import type { AnimationLoopValue } from '../../Renderer';
 import type {
-  VehicleUnitModuleObservables,
-  VehicleUnitModuleOptions,
-  VehicleUnitModuleState
-} from './Vehicle';
-import VehicleUnitModule from './Vehicle';
-import type VehicleUnit from '../unit/Vehicle';
+  MovableUnitModuleObservables,
+  MovableUnitModuleOptions,
+  MovableUnitModuleState
+} from '../Movable';
+import MovableUnitModule from '../Movable';
+import type MovableUnit from '../../unit/Movable';
+import type { ControlState } from '../../playerModule/Controls';
+
+export type GroundVehicleUnitModuleObservables = MovableUnitModuleObservables;
 
 export interface GroundVehicleUnitModuleOptions
-  extends VehicleUnitModuleOptions {
+  extends MovableUnitModuleOptions {
   maxSpeed: number;
   acceleration: number;
   turnSpeed: number;
@@ -18,7 +21,7 @@ export interface GroundVehicleUnitModuleOptions
   friction: number;
 }
 
-export interface GroundVehicleUnitModuleState extends VehicleUnitModuleState {
+export interface GroundVehicleUnitModuleState extends MovableUnitModuleState {
   velocity: Vector3;
   tilt: Vector3;
   groundNormal: Vector3;
@@ -29,25 +32,12 @@ export default class GroundVehicleUnitModule<
     GroundVehicleUnitModuleOptions = GroundVehicleUnitModuleOptions,
   State extends GroundVehicleUnitModuleState = GroundVehicleUnitModuleState,
   Obervables extends
-    VehicleUnitModuleObservables = VehicleUnitModuleObservables,
-  U extends VehicleUnit = VehicleUnit
-> extends VehicleUnitModule<Options, State, Obervables, U> {
+    GroundVehicleUnitModuleObservables = GroundVehicleUnitModuleObservables,
+  U extends MovableUnit = MovableUnit
+> extends MovableUnitModule<Options, State, Obervables, U> {
   static override TYPE = 'groundVehicle';
   private _dir = new Vector3();
-
-  getTmpDirection() {
-    return this._dir;
-  }
-  setTmpDirection(x: number, y: number, z: number) {
-    this._dir.set(x, y, z);
-  }
   private _rotDir = new Vector3();
-  getTmpRotationDirection() {
-    return this._rotDir;
-  }
-  setTmpRotationDirection(value: Vector3) {
-    this._rotDir.copy(value);
-  }
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {
     super(
@@ -71,16 +61,65 @@ export default class GroundVehicleUnitModule<
     );
   }
 
-  override update({ delta }: AnimationLoopValue): void {
+  override update({ delta, time }: AnimationLoopValue): void {
+    super.update({ delta, time });
+    this.moveUpdate({ delta });
+  }
+
+  private _aiControls?: ControlState;
+  setAutopilotControls(controls?: ControlState) {
+    this._aiControls = controls;
+  }
+  clearAutopilotControls() {
+    this._aiControls = undefined;
+  }
+  getVelocity() {
+    return this.state.velocity;
+  }
+  getTmpDirection() {
+    return this._dir;
+  }
+  setTmpDirection(x: number, y: number, z: number) {
+    this._dir.set(x, y, z);
+  }
+  getTmpRotationDirection() {
+    return this._rotDir;
+  }
+  setTmpRotationDirection(value: Vector3) {
+    this._rotDir.copy(value);
+  }
+
+  override getControls() {
+    const human = super.getControls();
+    const ai = this._aiControls;
+    if (!ai) return human;
+
+    return {
+      up: ai.up ?? human.up,
+      down: ai.down ?? human.down,
+      left: ai.left ?? human.left,
+      right: ai.right ?? human.right,
+      space: ai.space ?? human.space,
+      gear: ai.gear ?? human.gear,
+      landing: ai.landing ?? human.landing,
+      modifier: ai.modifier ?? human.modifier,
+      rotateLeft: ai.rotateLeft ?? human.rotateLeft,
+      rotateRight: ai.rotateRight ?? human.rotateRight
+    };
+  }
+
+  moveUpdate({ delta }: { delta: number }) {
     const unit = this.getUnit();
     const acceleration = this.options.acceleration;
     const maxSpeed = this.options.maxSpeed;
     const friction = this.options.friction;
 
     const controls = this.getControls();
+    const aiActive = !!this._aiControls;
 
     const eps = 1e-4;
     if (
+      !aiActive && // Early-Return nur ohne Autopilot
       !controls.up &&
       !controls.down &&
       !controls.left &&
@@ -96,13 +135,17 @@ export default class GroundVehicleUnitModule<
     if (controls.up) accel += acceleration;
     if (controls.down) accel -= acceleration * 0.5;
 
-    if (accel === 0 && this.state.velocity.lengthSq() < eps) {
-      if (this.state.velocity.lengthSq() < eps)
-        this.state.velocity.setScalar(0);
+    // Autopilot: minimaler Vortrieb, damit das Fahrzeug losfährt (auch beim Drehen)
+    if (aiActive && accel === 0 && (controls.left || controls.right)) {
+      accel = acceleration * 0.4;
+    }
+
+    if (!aiActive && accel === 0 && this.state.velocity.lengthSq() < eps) {
+      this.state.velocity.setScalar(0);
       return;
     }
 
-    // 2) Richtung aus NUR Yaw (Heading), damit Tilt/Pitch/Roll keinen Einfluss haben
+    // 2) Richtung nur aus Yaw
     const forwardYaw = unit.getForwardXZFromYaw(this.getTmpDirection());
     this.setTmpRotationDirection(forwardYaw);
 
@@ -115,7 +158,7 @@ export default class GroundVehicleUnitModule<
     }
     velocity.multiplyScalar(friction);
 
-    // Traktion: Queranteil zur Fahrtrichtung dämpfen
+    // Queranteil dämpfen
     const dot = velocity.dot(forwardYaw);
     const lateralX = velocity.x - forwardYaw.x * dot;
     const lateralZ = velocity.z - forwardYaw.z * dot;
@@ -137,9 +180,10 @@ export default class GroundVehicleUnitModule<
     }
     //#endregion
 
-    // 3) Lenken: Yaw direkt setzen, entkoppelt von Tilt
+    // 3) Lenken: Yaw setzen
     const turnSpeed = this.options.turnMovementSpeed;
-    if (speed > 0.05) {
+    if (speed > 0.02) {
+      // leichter anfahren erlauben
       let turnInput = 0;
       if (controls.left) turnInput += 1;
       if (controls.right) turnInput -= 1;
@@ -166,8 +210,8 @@ export default class GroundVehicleUnitModule<
       }
     }
 
-    // 4) Position integrieren und am Boden ausrichten
-    const pos = unit.getPosition();
+    // 4) Position integrieren
+    const pos = unit.getPosition().clone();
     const dx = velocity.x * delta;
     const dz = velocity.z * delta;
     if (Math.abs(dx) > eps || Math.abs(dz) > eps) {

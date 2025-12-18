@@ -1,13 +1,12 @@
 import type { UnitConstructorOptions } from '../../Unit';
-import GroundVehicleUnitModule from '../../unitModule/GroundVehicle';
+import GroundVehicleUnitModule from '../../unitModule/moveable/GroundVehicle';
 import type CollisionUnitModule from '../../unitModule/Collision';
 import type PlayerUnitModule from '../../unitModule/Player';
-import type {
-  VehicleUnitModuleList,
-  VehicleUnitModules,
-  VehicleUnitOptions
+import VehicleUnit, {
+  type VehicleUnitModuleList,
+  type VehicleUnitModules,
+  type VehicleUnitOptions
 } from '../Vehicle';
-import VehicleUnit from '../Vehicle';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CarUnitOptions extends VehicleUnitOptions {}

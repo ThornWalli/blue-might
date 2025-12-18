@@ -17,7 +17,7 @@ export default class Human_1<
   Modules extends FigureUnitModules = FigureUnitModules,
   ModuleList extends FigureUnitModuleList = FigureUnitModuleList
 > extends FigureUnit<FigureUnitOptions, Modules, ModuleList> {
-  static override KEY = 'human_1';
+  static override KEY = 'soldat_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []
@@ -25,7 +25,7 @@ export default class Human_1<
     super(
       {
         ...options,
-        name: 'Human 1'
+        name: 'Soldat 1'
       },
       moduleList as ModuleList
     );
@@ -33,8 +33,23 @@ export default class Human_1<
 
   override async afterSetup(_context: SetupContext) {
     this.setMaterialReady();
-
-    this.modules.animation.playAction('walk');
+    this.modules.animation.playAction('idle');
+    this.subscription.add(
+      (_context.unit as FigureUnit).modules.figure.observables.move$.subscribe(
+        () => {
+          this.modules.animation.stopAction('idle');
+          this.modules.animation.playAction('walk');
+        }
+      )
+    );
+    this.subscription.add(
+      (_context.unit as FigureUnit).modules.figure.observables.stop$.subscribe(
+        () => {
+          this.modules.animation.stopAction('walk');
+          this.modules.animation.playAction('idle');
+        }
+      )
+    );
   }
 
   override async createMesh(_context: SetupContext) {

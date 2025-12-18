@@ -24,9 +24,6 @@ export default class LightModule extends MapModule<State, Observables> {
     const light = new DirectionalLight(0xffffff, 1);
     light.position.set(20, 50, 20);
 
-    const helper = new DirectionalLightHelper(light, 5);
-    this.map.addToRoot(helper);
-
     light.castShadow = true;
 
     light.shadow.mapSize.width = 2048;
@@ -44,6 +41,11 @@ export default class LightModule extends MapModule<State, Observables> {
 
     this.lights = [light, ambientLight];
     this.map.addToRoot(...this.lights);
+
+    if (this.debug) {
+      const helper = new DirectionalLightHelper(light, 5);
+      this.map.addToRoot(helper);
+    }
   }
 
   override destroy(): void {

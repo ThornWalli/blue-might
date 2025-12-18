@@ -13,6 +13,7 @@ import type Map from './Map';
 import type { AnimationLoopValue } from './Renderer';
 import { AnimationUnitModule } from './unitModule/Animation';
 import SelectionUnitModule from './unitModule/Selection';
+import PathfindingUnitModule from './unitModule/Pathfinding';
 
 export enum GROUND_ADJUSTMENT_MODE {
   MIN_HEIGHT = 'min-height',
@@ -32,6 +33,7 @@ OBJECT_USER_DATA.UNIT = 'unit';
 export type UnitModuleList = (
   | typeof AnimationUnitModule
   | typeof SelectionUnitModule
+  | typeof PathfindingUnitModule
 )[];
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -52,6 +54,7 @@ export interface UnitConstructorOptions<
 export interface UnitModules {
   animation: AnimationUnitModule;
   selection: SelectionUnitModule;
+  pathfinding: PathfindingUnitModule;
 }
 
 export interface SetupContext {
@@ -64,7 +67,7 @@ export interface UnitObservables {
   rotation$: ReplaySubject<Euler>;
   ready$: ReplaySubject<void>;
   materialReady$: ReplaySubject<void>;
-  map$: ReplaySubject<Map | null>;
+  visible$: ReplaySubject<boolean>;
 }
 
 export default class Unit<
@@ -140,12 +143,13 @@ export default class Unit<
     this.observables.materialReady$ = new ReplaySubject<void>(1);
     this.observables.position$ = new ReplaySubject<Vector3>(1);
     this.observables.rotation$ = new ReplaySubject<Euler>(1);
+    this.observables.visible$ = new ReplaySubject<boolean>(1);
     //#endregion
 
     this.id = id || crypto.randomUUID();
     this.name = name;
 
-    this.debug = debug ?? false;
+    this.debug = debug ?? this.debug;
 
     this._position = position || new Vector3(0, 0, 0);
     this._rotation = rotation || new Euler(0, 0, 0);
@@ -157,13 +161,18 @@ export default class Unit<
 
     //#region modules
 
-    moduleList.unshift(AnimationUnitModule, SelectionUnitModule);
+    moduleList.unshift(
+      AnimationUnitModule,
+      SelectionUnitModule,
+      PathfindingUnitModule
+    );
 
     this.moduleList = moduleList as ModuleList;
 
     const preparedModules = (moduleList as ModuleList).map(ModuleClass => {
       const options = moduleOptions?.[ModuleClass.TYPE] ?? {};
       const state = moduleStates?.[ModuleClass.TYPE] ?? {};
+
       const moduleInstance = new ModuleClass(
         this,
         options as any,
@@ -293,14 +302,16 @@ export default class Unit<
     this.groundAdjustmentMode = groundAdjustmentMode;
   }
 
-  updateGroundAlignment(position: Vector3 = this._position) {
+  updateGroundAlignment(position?: Vector3) {
     const groundModule = this._map?.modules.ground;
     if (!groundModule) {
       this.updateMeshTransform();
       return;
     }
-
-    this._position.copy(position);
+    if (position) {
+      this._position.copy(position);
+    }
+    position = this._position;
 
     switch (this.groundAdjustmentMode) {
       case GROUND_ADJUSTMENT_MODE.MIN_HEIGHT:
@@ -427,25 +438,140 @@ export default class Unit<
     this.rollWrapper.rotation.z = this._playerRoll;
   }
 
+  lastPosition: Vector3 = new Vector3();
   setPosition(position: Vector3) {
-    const lastPosition = this._position.clone();
+    const desired = position.clone();
+
+    // Ground-Ausrichtung vorbereiten
     if (this._map) {
-      this.updateGroundAlignment(position);
+      this.updateGroundAlignment(desired);
     } else {
-      this._position.copy(position);
-      this.root.position.copy(position);
+      this._position.copy(desired);
+      this.root.position.copy(desired);
     }
+
+    // Direkt frei?
+    if (!this.checkCollision()) {
+      this.lastPosition.copy(desired);
+      this.observables.position$.next(desired);
+      return;
+    }
+
+    // --- Sweep entlang der Bewegung (from -> desired) ---
+    const from = this.lastPosition.clone();
+    const delta = desired.clone().sub(from);
+
+    // Keine sinnvolle Bewegung?
+    if (delta.lengthSq() === 0) {
+      // bleibe auf lastPosition
+      this._position.copy(this.lastPosition);
+      this.root.position.copy(this.lastPosition);
+      return;
+    }
+
+    // Binärsuche: größtes t in [0,1] ohne Kollision
+    const maxIter = 12;
+    let lo = 0; // kollisionsfrei
+    let hi = 1; // kollidiert
+    // Sicherstellen, dass lo wirklich frei ist:
+    this._position.copy(from);
+    this.updateGroundAlignment(from);
     if (this.checkCollision()) {
-      this._position.copy(lastPosition);
-      this.root.position.copy(lastPosition);
+      // Startpunkt steckt schon drin -> kleiner Rückzug entgegen delta
+      const backoffEps = 0.1;
+      const safe = from
+        .clone()
+        .add(delta.clone().normalize().multiplyScalar(-backoffEps));
+      this._position.copy(safe);
+      this.updateGroundAlignment(safe);
+      if (!this.checkCollision()) {
+        this.root.position.copy(this._position);
+        this.lastPosition.copy(this._position);
+        this.observables.position$.next(this._position.clone());
+        return;
+      }
+      // Notfall: bleibe auf lastPosition
+      this._position.copy(this.lastPosition);
+      this.root.position.copy(this.lastPosition);
+      return;
     }
-    this.observables.position$.next(position);
+
+    // hi ist kollidiert, lo ist frei -> suche Grenze
+    for (let i = 0; i < maxIter; i++) {
+      const mid = (lo + hi) * 0.5;
+      const test = from.clone().addScaledVector(delta, mid);
+
+      this._position.copy(test);
+      this.updateGroundAlignment(test);
+
+      if (this.checkCollision()) {
+        hi = mid;
+      } else {
+        lo = mid;
+      }
+    }
+
+    // Nimm die letzte freie Position + kleiner Sicherheitsabstand weg vom Hindernis
+    const epsilon = 0.03;
+    const safePos = from
+      .clone()
+      .addScaledVector(delta, lo)
+      .add(delta.clone().normalize().multiplyScalar(-epsilon));
+
+    this._position.copy(safePos);
+    this.updateGroundAlignment(safePos);
+
+    if (!this.checkCollision()) {
+      this.root.position.copy(this._position);
+      this.lastPosition.copy(this._position);
+      this.observables.position$.next(this._position.clone());
+      return;
+    }
+
+    // Fallback: achsweises Sliding
+    const axisTry = (ax: 'x' | 'z') => {
+      const axisDelta = new Vector3(
+        ax === 'x' ? delta.x : 0,
+        0,
+        ax === 'z' ? delta.z : 0
+      );
+      let alo = 0,
+        ahi = 1;
+      for (let i = 0; i < maxIter; i++) {
+        const mid = (alo + ahi) * 0.5;
+        const test = from.clone().addScaledVector(axisDelta, mid);
+        this._position.copy(test);
+        this.updateGroundAlignment(test);
+        if (this.checkCollision()) ahi = mid;
+        else alo = mid;
+      }
+      const slidePos = from
+        .clone()
+        .addScaledVector(axisDelta, alo)
+        .add(axisDelta.clone().normalize().multiplyScalar(-epsilon));
+      this._position.copy(slidePos);
+      this.updateGroundAlignment(slidePos);
+      return !this.checkCollision();
+    };
+
+    if (axisTry('x') || axisTry('z')) {
+      this.root.position.copy(this._position);
+      this.lastPosition.copy(this._position);
+      this.observables.position$.next(this._position.clone());
+      return;
+    }
+
+    // Letzter Fallback: bleibe auf lastPosition, ohne sie zu überschreiben
+    this._position.copy(this.lastPosition);
+    this.root.position.copy(this.lastPosition);
   }
 
   //#region visibility
   private visible: boolean = true;
   setVisible(visible = this.visible && this.chunkVisible) {
+    if (this.visible === visible) return;
     this.root.visible = visible;
+    this.observables.visible$.next(visible);
   }
   //#endregion
 

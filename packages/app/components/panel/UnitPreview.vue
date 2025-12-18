@@ -34,7 +34,7 @@ import type App from '../../lib/classes/App';
 import { EMPTY, Subscription, switchMap } from 'rxjs';
 import type { Vector3 } from 'three';
 import BmButton from '../Button.vue';
-import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
+import MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 
 const $props = defineProps<{
@@ -105,12 +105,12 @@ const canUseVehicle = computed(() => {
 function onClickUseVehicle() {
   const u = unit.value;
   if (!u) return;
-  if (u instanceof VehicleUnit) {
+  if (u instanceof MovableUnit) {
     const app = $props.app;
     const player = app.modules.player.getCurrentPlayer();
 
     if (!player) return;
-    player.modules.vehicle.setVehicle(u as VehicleUnit);
+    player.modules.vehicle.setVehicle(u as MovableUnit);
     u.getModuleByType(PlayerUnitModule)?.setPlayer(player);
     unit.value = u;
   }

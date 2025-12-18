@@ -4,18 +4,18 @@ import type {
   PlayerModuleState
 } from '../PlayerModule';
 import PlayerModule from '../PlayerModule';
-import type VehicleUnit from '../unit/Vehicle';
+import type MovableUnit from '../unit/Movable';
 import type Player from '../Player';
 
 interface Observables extends PlayerModuleObservables {
   vehicle$: ReplaySubject<{
-    current: VehicleUnit | null;
-    last: VehicleUnit | null;
+    current: MovableUnit | null;
+    last: MovableUnit | null;
   }>;
 }
 
 interface State extends PlayerModuleState {
-  vehicle: VehicleUnit | null;
+  vehicle: MovableUnit | null;
 }
 
 export default class VehicleModule extends PlayerModule<State, Observables> {
@@ -33,8 +33,8 @@ export default class VehicleModule extends PlayerModule<State, Observables> {
 
     //#region observables
     this.observables.vehicle$ = new ReplaySubject<{
-      current: VehicleUnit | null;
-      last: VehicleUnit | null;
+      current: MovableUnit | null;
+      last: MovableUnit | null;
     }>();
     //#endregion
   }
@@ -42,7 +42,7 @@ export default class VehicleModule extends PlayerModule<State, Observables> {
     return this.state.vehicle;
   }
 
-  setVehicle(vehicle: VehicleUnit | null) {
+  setVehicle(vehicle: MovableUnit | null) {
     const last = this.state.vehicle;
     last?.modules.player.setPlayer(null);
 

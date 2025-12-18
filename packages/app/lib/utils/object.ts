@@ -42,6 +42,8 @@ export function disposeObject3D(object: Object3D): void {
 
   const mesh = object as Mesh;
 
+  mesh.removeFromParent();
+
   if (mesh.geometry) {
     mesh.geometry.dispose();
   }

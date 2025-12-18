@@ -52,4 +52,8 @@ export default class Module<
       ...this.state
     };
   }
+
+  isForceUpdate() {
+    return false;
+  }
 }

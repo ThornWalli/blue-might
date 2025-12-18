@@ -2,7 +2,7 @@ import type Unit from './Unit';
 import { ReplaySubject, type SubscriptionLike } from 'rxjs';
 import { Subscription } from 'rxjs';
 import VehicleModule from './playerModule/Vehicle';
-import type VehicleUnit from './unit/Vehicle';
+import type MovableUnit from './unit/Movable';
 import type ControlsModule from './playerModule/Controls';
 
 export type PlayerModuleList = (typeof VehicleModule)[];
@@ -91,7 +91,7 @@ export default class Player<
     return this.id === player.id;
   }
 
-  setVehicle(unit: VehicleUnit | null) {
+  setVehicle(unit: MovableUnit | null) {
     if (this.modules.vehicle.hasVehicle()) {
       this.modules.vehicle.getVehicle()?.modules.player.setPlayer(null);
     }

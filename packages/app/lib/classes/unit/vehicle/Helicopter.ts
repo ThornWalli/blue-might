@@ -2,7 +2,7 @@ import {
   GROUND_ADJUSTMENT_MODE,
   type UnitConstructorOptions
 } from '../../Unit';
-import HelicopterUnitModule from '../../unitModule/Helicopter';
+import HelicopterUnitModule from '../../unitModule/moveable/Helicopter';
 import type CollisionUnitModule from '../../unitModule/Collision';
 import type PlayerUnitModule from '../../unitModule/Player';
 import VehicleUnit, {
@@ -11,8 +11,7 @@ import VehicleUnit, {
   type VehicleUnitOptions
 } from '../Vehicle';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface HelicopterUnitOptions extends VehicleUnitOptions {}
+export type HelicopterUnitOptions = VehicleUnitOptions;
 
 export type HelicopterUnitModules = VehicleUnitModules & {
   helicopter: HelicopterUnitModule;

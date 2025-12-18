@@ -16,8 +16,10 @@ import type { MapDescription } from './Map';
 import SelectionAppModule from './appModule/Selection';
 import type Unit from './Unit';
 import UnitFocusAppModule from './appModule/UnitFocus';
+import DebugAppModule from './appModule/Debug';
 
 type AppModuleList = (
+  | typeof DebugAppModule
   | typeof CursorAppModule
   | typeof PlayerAppModule
   | typeof MapAppModule
@@ -25,6 +27,7 @@ type AppModuleList = (
   | typeof UnitFocusAppModule
 )[];
 interface AppModules {
+  debug: DebugAppModule;
   cursor: CursorAppModule;
   player: PlayerAppModule;
   map: MapAppModule;
@@ -78,6 +81,7 @@ export class BaseApp<
     moduleList: ModuleList = [] as unknown as ModuleList
   ) {
     moduleList.push(
+      DebugAppModule,
       CursorAppModule,
       PlayerAppModule,
       MapAppModule,
