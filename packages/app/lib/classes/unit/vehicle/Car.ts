@@ -1,6 +1,5 @@
 import type { UnitConstructorOptions } from '../../Unit';
 import GroundVehicleUnitModule from '../../unitModule/moveable/GroundVehicle';
-import type CollisionUnitModule from '../../unitModule/Collision';
 import type PlayerUnitModule from '../../unitModule/Player';
 import VehicleUnit, {
   type VehicleUnitModuleList,
@@ -14,13 +13,11 @@ export interface CarUnitOptions extends VehicleUnitOptions {}
 export type CarUnitModules = VehicleUnitModules & {
   vehicle: GroundVehicleUnitModule;
   player: PlayerUnitModule;
-  collision: CollisionUnitModule;
 };
 
 export type CarUnitModuleList = (
   | typeof GroundVehicleUnitModule
   | typeof PlayerUnitModule
-  | typeof CollisionUnitModule
 )[] &
   VehicleUnitModuleList;
 export default class CarUnit<

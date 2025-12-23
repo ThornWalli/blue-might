@@ -162,4 +162,16 @@ export default class MovableUnitModule<
     this.state.active = value;
     this.observables.active$.next(this.state.active);
   }
+
+  isTurnOn() {
+    return this.getActive() ?? false;
+  }
+
+  turnOn() {
+    this.setActive(true);
+  }
+
+  turnOff() {
+    this.setActive(false);
+  }
 }

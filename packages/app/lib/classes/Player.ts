@@ -4,6 +4,7 @@ import { Subscription } from 'rxjs';
 import VehicleModule from './playerModule/Vehicle';
 import type MovableUnit from './unit/Movable';
 import type ControlsModule from './playerModule/Controls';
+import PlayerUnitModule from './unitModule/Player';
 
 export type PlayerModuleList = (typeof VehicleModule)[];
 
@@ -93,7 +94,10 @@ export default class Player<
 
   setVehicle(unit: MovableUnit | null) {
     if (this.modules.vehicle.hasVehicle()) {
-      this.modules.vehicle.getVehicle()?.modules.player.setPlayer(null);
+      this.modules.vehicle
+        .getVehicle()
+        ?.getModuleByType(PlayerUnitModule)
+        .setPlayer(null);
     }
     this.modules.vehicle.setVehicle(unit);
   }

@@ -35,20 +35,16 @@ export default class Human_1<
     this.setMaterialReady();
     this.modules.animation.playAction('idle');
     this.subscription.add(
-      (_context.unit as FigureUnit).modules.figure.observables.move$.subscribe(
-        () => {
-          this.modules.animation.stopAction('idle');
-          this.modules.animation.playAction('walk');
-        }
-      )
+      (this as FigureUnit).modules.figure.observables.move$.subscribe(() => {
+        this.modules.animation.stopAction('idle');
+        this.modules.animation.playAction('walk');
+      })
     );
     this.subscription.add(
-      (_context.unit as FigureUnit).modules.figure.observables.stop$.subscribe(
-        () => {
-          this.modules.animation.stopAction('walk');
-          this.modules.animation.playAction('idle');
-        }
-      )
+      (this as FigureUnit).modules.figure.observables.stop$.subscribe(() => {
+        this.modules.animation.stopAction('walk');
+        this.modules.animation.playAction('idle');
+      })
     );
   }
 

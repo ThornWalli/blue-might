@@ -59,12 +59,8 @@ async function setup(data: UnitPreview) {
   unitInstance.value = markRaw(new UnitClass() as Unit);
 
   const instance = unitInstance.value;
-  await instance.setup({
-    unit: instance
-  });
-  await instance.afterSetup({
-    unit: instance
-  });
+  await instance.setup({});
+  await instance.afterSetup({});
 
   unitSubscriptions?.unsubscribe();
   unitSubscriptions = new Subscription();

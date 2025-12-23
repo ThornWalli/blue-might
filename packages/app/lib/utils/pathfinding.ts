@@ -3,10 +3,11 @@ import { Raycaster } from 'three';
 
 export enum TILE_TYPE {
   BLOCKED = 0,
-  DRY_ROAD = 1,
-  BETON_ROAD = 2,
-  GRASS = 3,
-  WATER = 4
+  SOFT = 1,
+  DRY_ROAD = 2,
+  BETON_ROAD = 3,
+  GRASS = 4,
+  WATER = 5
 }
 
 export const TILE_INDEX: { [key: number]: TILE_TYPE } = {
@@ -19,6 +20,7 @@ export const TILE_INDEX: { [key: number]: TILE_TYPE } = {
 
 export const TILE_COSTS: { [key: number]: number } = {
   [TILE_TYPE.BLOCKED]: Infinity, // Hohe Kosten für blockierte Zellen
+  [TILE_TYPE.SOFT]: 9999,
   [TILE_TYPE.GRASS]: 1000,
   [TILE_TYPE.DRY_ROAD]: 200,
   [TILE_TYPE.BETON_ROAD]: 50,

@@ -395,7 +395,10 @@ export default class HelicopterUnitModule<
     if (!active || !(controls.space && !controls.modifier)) {
       const position = unit.getPosition();
       let minY =
-        unit.getMap()?.modules.ground.getHeightAt(position.x, position.z) ?? 0;
+        unit
+          .getMap()
+          ?.modules.ground.getSurfaceHeightAt(position.x, position.z, [unit]) ??
+        0;
 
       if (this.state.gearsOpened) {
         minY += this.options.gearsHeight;

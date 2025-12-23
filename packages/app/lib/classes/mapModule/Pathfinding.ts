@@ -35,9 +35,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       this.map.modules.units.observables.addUnit$
         .pipe(
           filter(unit => {
-            return !!unit
-              .getModuleByType(CollisionUnitModule)
-              ?.getCollisionObject();
+            return !!unit.modules.collision.getCollisionObject();
           })
         )
         .subscribe(unit => this.addUnit(unit))
@@ -47,9 +45,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       this.map.modules.units.observables.removeUnit$
         .pipe(
           filter(unit => {
-            return !!unit
-              .getModuleByType(CollisionUnitModule)
-              ?.getCollisionObject();
+            return !!unit.modules.collision.getCollisionObject();
           })
         )
         .subscribe(unit => this.removeUnit(unit))
@@ -58,11 +54,10 @@ export default class PathfindingModule extends MapModule<State, Observables> {
 
   override async afterSetup() {
     await super.afterSetup();
-    const colliders: Object3D[] = this.colliders.slice();
 
     this.groundNavigationSmall = new GroundNavigator(
       this.map,
-      colliders,
+      this.colliders.slice(),
       {
         gridSize: 1 / 3,
         size: new Vector2(
@@ -75,7 +70,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     );
     this.groundNavigationLarge = new GroundNavigator(
       this.map,
-      colliders,
+      this.colliders.slice(),
       {
         gridSize: 1 / 3,
         size: new Vector2(
@@ -87,7 +82,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       this.debug
     );
 
-    this.airNavigation = new AirNavigator(this.map, colliders);
+    this.airNavigation = new AirNavigator(this.map, this.colliders.slice());
 
     if (this.debug) {
       this.groundNavigationLarge.setupDebugGridObjects();
@@ -97,15 +92,12 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     this.groundNavigationLarge.getGrid().update();
   }
 
-  // Neue Methode: Grid basierend auf Unit-Größe wählen
   getGroundNavigatorForUnit(unit: Unit): GroundNavigator {
-    const collisionObject = unit
-      .getModuleByType(CollisionUnitModule)!
-      .getCollisionObject();
+    const collisionObject = unit.modules.collision.getCollisionObject();
     const size = new Box3()
       .setFromObject(collisionObject)
       .getSize(new Vector3());
-    const isLarge = size.x > 1 || size.z > 1; // Beispiel: Größer als 1x1 -> groß
+    const isLarge = size.x > 1 / 2 || size.z > 1 / 2;
 
     return isLarge ? this.groundNavigationLarge! : this.groundNavigationSmall!;
   }
@@ -121,10 +113,22 @@ export default class PathfindingModule extends MapModule<State, Observables> {
 
   addUnit(unit: Unit) {
     if (this.units.includes(unit)) return;
+    const collisionModule = unit.getModuleByType(CollisionUnitModule);
+    if (collisionModule?.options.disabled) return;
     this.units.push(unit);
-    this.addToColliders(
-      unit.getModuleByType(CollisionUnitModule)!.getCollisionObject()
+    // this.addToColliders(
+    //   unit.getModuleByType(CollisionUnitModule)!.getCollisionObject()
+    // );
+
+    this.groundNavigationSmall?.addCollider(
+      unit.modules.collision.getCollisionObject()
     );
+    this.groundNavigationLarge?.addCollider(
+      unit.modules.collision.getCollisionObject()
+    );
+
+    // this.groundNavigationSmall?.updateWalkabilityAroundObject(unit.root);
+    // this.groundNavigationLarge?.updateWalkabilityAroundObject(unit.root);
 
     this.unitSubscriptions.set(
       unit,
@@ -141,9 +145,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     if (index !== -1) {
       this.units.splice(index, 1);
     }
-    this.removeFromColliders(
-      unit.getModuleByType(CollisionUnitModule)!.getCollisionObject()
-    );
+    this.removeFromColliders(unit.modules.collision.getCollisionObject());
 
     const sub = this.unitSubscriptions.get(unit);
     if (sub) {

@@ -192,7 +192,8 @@ export default class FigureUnitModule extends MovableUnitModule<
 
     // 8. Bodenkontakt prüfen
     const groundHeight =
-      unit.getMap()?.modules.ground.getHeightAt(pos.x, pos.z) ?? 0;
+      unit.getMap()?.modules.ground.getSurfaceHeightAt(pos.x, pos.z, [unit]) ??
+      0;
     if (pos.y <= groundHeight) {
       pos.y = groundHeight;
       this.state.velocity.y = 0;

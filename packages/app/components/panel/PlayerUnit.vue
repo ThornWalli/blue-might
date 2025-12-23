@@ -48,6 +48,17 @@
           Gears
         </base-button>
       </div>
+      <div
+        class="damage"
+        :class="{
+          demolished: unitDamageValue >= 1,
+          damaged: unitDamageValue >= 0.5
+        }"
+        :style="{
+          '--value': 1 - unitDamageValue
+        }">
+        <div></div>
+      </div>
     </div>
     <bm-button :disabled="!isVehicle" @click="onClickUnitActive">
       {{ unitActive ? 'Vehicle Off' : 'Vehicle On' }}
@@ -104,6 +115,7 @@ const $props = defineProps<{
   app: App;
 }>();
 
+const unitDamageValue = ref<number>(0);
 const tilt = ref<Vector3>(new Vector3(0, 0, 0));
 const maxTilt = ref<Vector3>(new Vector3(0, 0, 0));
 const gearsActive = ref(false);
@@ -123,7 +135,11 @@ const minGroundHeight = computed(
     position.value &&
     $props.app.modules.map
       .getMap()
-      .modules.ground.getHeightAt(position.value.x, position.value.z)
+      .modules.ground.getSurfaceHeightAt(
+        position.value.x,
+        position.value.z,
+        [unit.value].filter(Boolean) as Unit[]
+      )
 );
 const seaLevelDiff = computed(() => {
   if (position.value) {
@@ -257,6 +273,19 @@ async function setup() {
         );
       })
   );
+
+  subscription.add(
+    vehicle$
+      .pipe(
+        switchMap(
+          ({ current }) => current?.modules.damage.observables.damage$ ?? EMPTY
+        )
+      )
+      .subscribe(v => {
+        unitDamageValue.value = v;
+      })
+  );
+
   ready.value = true;
 }
 
@@ -280,13 +309,15 @@ function onClickUnitActive(e: Event) {
   (e.target as HTMLButtonElement).blur();
   const vehicle = player.value?.modules.vehicle;
   if (!vehicle) return;
+  const vehicleModule = vehicle
+    .getVehicle()!
+    .getModuleByType(MovableUnitModule);
 
-  if (vehicle.getVehicle()?.isTurnOn()) {
-    vehicle.getVehicle()?.turnOff();
+  if (vehicleModule.isTurnOn()) {
+    vehicleModule.turnOff();
   } else {
-    vehicle.getVehicle()?.turnOn();
+    vehicleModule.turnOn();
   }
-  // vehicle.getVehicle()?.modules.vehicle.
 }
 
 function onClickFocusUnit() {
@@ -294,7 +325,7 @@ function onClickFocusUnit() {
   if (unitFocused.value) {
     app.modules.unitFocus.unfocus();
   } else {
-    app.modules.unitFocus.focus(unit.value!);
+    app.modules.unitFocus.followFocus(unit.value!);
   }
 }
 
@@ -432,6 +463,27 @@ function onClickGears() {
     &.active {
       color: var(--color-black);
       background-color: yellow;
+    }
+  }
+
+  & .damage {
+    position: relative;
+    width: 16px;
+    background-color: red;
+
+    &.damaged {
+      & div {
+        background-color: yellow;
+      }
+    }
+
+    & div {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100% * var(--value));
+      background-color: green;
     }
   }
 }

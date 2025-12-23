@@ -1,4 +1,10 @@
-import { ShadowMaterial, Vector2, Vector3, type Texture } from 'three';
+import {
+  Raycaster,
+  ShadowMaterial,
+  Vector2,
+  Vector3,
+  type Texture
+} from 'three';
 import {
   Mesh,
   MeshLambertMaterial,
@@ -13,6 +19,7 @@ import MapModule, {
 import { filter, map, Subject } from 'rxjs';
 import type Map from '../Map';
 import { getCostsFromImage, TILE_TYPE } from '../../utils/pathfinding';
+import type Unit from '../Unit';
 
 interface Observables extends MapModuleObservables {
   select$: Subject<Vector2>;
@@ -30,12 +37,23 @@ interface State extends MapModuleState {
 export default class GroundModule extends MapModule<State, Observables> {
   static override TYPE = 'ground';
 
+  private root?: Object3D;
+  getRoot() {
+    return this.root!;
+  }
+
   override state: State = {
     segments: 64,
     terrainHeight: 0,
     terrainWidth: 0,
     heights: [],
     origin: new Vector3(0, 9, 0)
+  };
+
+  private surfaceData = {
+    raycaster: new Raycaster(),
+    position: new Vector3(0, 0, 0),
+    direction: new Vector3(0, -1, 0)
   };
 
   constructor(map: Map, debug: boolean) {
@@ -129,6 +147,45 @@ export default class GroundModule extends MapModule<State, Observables> {
         );
       }, 0) / directions.length
     );
+  }
+
+  getSurfaceHeightAt(
+    x: number | Vector2,
+    z?: number,
+    ignoredUnits: Unit[] = [],
+    maxDistance = 100
+  ): number {
+    if (x instanceof Vector2) {
+      z = x.y;
+      x = x.x;
+    }
+
+    this.surfaceData.position.set(x, 50, z!);
+
+    const raycaster = this.surfaceData.raycaster;
+    raycaster.far = maxDistance; // Maximale Distanz
+    raycaster.set(this.surfaceData.position, this.surfaceData.direction);
+
+    const allMeshes = this.map.modules.units.getAllMeshes(ignoredUnits); // Du musst diese Funktion hinzufügen oder die Meshes sammeln
+
+    // this.root!.traverse(child => {
+    //   if (child instanceof Mesh) {
+    //     allMeshes.push(child);
+    //   }
+    // });
+
+    const intersections = raycaster.intersectObjects(allMeshes, true);
+
+    if (intersections.length > 0) {
+      return intersections[0]!.point.y;
+    }
+
+    return this.getHeightAt(x, z);
+  }
+
+  private createRaycaster() {
+    const raycaster = new Raycaster();
+    this.surfaceData.raycaster = raycaster;
   }
 
   private getGroundHeights(segments = 64) {
@@ -246,6 +303,7 @@ export default class GroundModule extends MapModule<State, Observables> {
 
     const object = await this.createMeshes();
     this.map.addToRoot(object);
+    this.root = object;
 
     const listener =
       this.map.app.renderer.modules.intersection.registerListener();

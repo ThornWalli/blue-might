@@ -1,0 +1,266 @@
+import type {
+  SetupContext,
+  UnitConstructorOptions
+} from '@blue-might/app/lib/classes/Unit';
+import { loadGltf } from '@blue-might/app/lib/utils/gltf';
+
+import { Vector2, Vector3, Mesh, SkinnedMesh, Object3D } from 'three';
+import baseGlb from './assets/stationary_gun_2.glb?url';
+import BuildingUnit, {
+  type BuildingUnitModuleList,
+  type BuildingUnitModules,
+  type BuildingUnitOptions
+} from '@blue-might/app/lib/classes/unit/Building';
+
+import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
+
+import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
+import { weapons } from '@blue-might/weapon';
+import GunUnitModule, {
+  type GunUnitModuleOptions
+} from '@blue-might/app/lib/classes/unitModule/Gun';
+import { playSound } from '@blue-might/debug/utils';
+import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
+import { createBarrelTargetShoot } from '../stationary_gun_1/utils';
+import { getSfx } from '@blue-might/weapon/projectile';
+
+interface State {
+  active: boolean;
+  velocity: Vector2;
+  maxBarrelAngleX: number;
+  minBarrelAngleX: number;
+  targetRotationY: number;
+  targetRotationX: number;
+  rotationSpeed: number;
+  sourcePositions: [Vector3];
+  lastShootTime: number;
+}
+
+export type Options = BuildingUnitOptions;
+
+export interface Modules extends BuildingUnitModules {
+  movable: MovableUnitModule;
+  gun: GunUnitModule;
+  player: PlayerUnitModule;
+}
+
+export type ModuleList = BuildingUnitModuleList &
+  [typeof MovableUnitModule | typeof GunUnitModule | typeof PlayerUnitModule];
+
+export default class StationaryGun_2 extends BuildingUnit<
+  BuildingUnitOptions,
+  Modules,
+  ModuleList
+> {
+  static override KEY = 'stationary_gun_2';
+
+  state: State = {
+    active: false,
+    velocity: new Vector2(0, 0),
+    maxBarrelAngleX: 0.2,
+    minBarrelAngleX: -0.6,
+    targetRotationY: -0.6,
+    targetRotationX: 0,
+    rotationSpeed: 0.05,
+    sourcePositions: [new Vector3()],
+    lastShootTime: 0
+  };
+
+  objects: {
+    head?: Object3D;
+    barrels: Object3D[];
+    barrelTargets: Object3D[];
+    barrelTargetShoots: Object3D[];
+  } = {
+    barrels: [],
+    barrelTargets: [],
+    barrelTargetShoots: []
+  };
+
+  constructor(
+    options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
+    moduleList: unknown[] = []
+  ) {
+    moduleList.push(MovableUnitModule, GunUnitModule, PlayerUnitModule);
+    super(
+      {
+        ...options,
+        name: 'StationaryGun 1',
+        moduleOptions: {
+          ...options.moduleOptions,
+          gun: {
+            weapons: (options.moduleOptions?.gun as GunUnitModuleOptions)
+              ?.weapons ?? [new weapons.default(), new weapons.default()],
+            ...options.moduleOptions?.gun
+          }
+        }
+      },
+      moduleList as ModuleList
+    );
+  }
+
+  override setup(context: SetupContext): Promise<void> {
+    this.subscription.add(
+      this.modules.gun.observables.shoot$.subscribe(async ({ index }) => {
+        this.objects.barrelTargetShoots[index]!.visible = true;
+        playSound(
+          await getSfx(this.modules.gun.getWeapon(index)!.projectile.id),
+          0.3
+        );
+      })
+    );
+
+    this.subscription.add(
+      this.modules.gun.observables.cooldown$.subscribe(({ index }) => {
+        this.objects.barrelTargetShoots[index]!.visible = false;
+      })
+    );
+    this.subscription.add(
+      this.modules.gun.observables.active$.subscribe(v => {
+        if (!v) {
+          Object.values(this.objects.barrelTargetShoots).forEach(shoot => {
+            shoot.visible = false;
+          });
+        }
+      })
+    );
+    return super.setup(context);
+  }
+
+  override async afterSetup(_context: SetupContext) {
+    this.setMaterialReady();
+  }
+
+  override async createMesh(_context: SetupContext) {
+    const { object, animations } = await loadGltf(baseGlb);
+
+    this.modules.animation.setAnimations(animations);
+
+    const headObj = object.getObjectByName('head')!;
+    const barrelPrimaryObj = object.getObjectByName('barrel_primary')!;
+    const barrelSecondaryObj = object.getObjectByName('barrel_secondary')!;
+    const barrelPrimaryTargetObj = object.getObjectByName(
+      'barrel_primary_target'
+    )!;
+    const barrelSecondaryTargetObj = object.getObjectByName(
+      'barrel_secondary_target'
+    )!;
+
+    const barrelWrapperPrimary = new Object3D();
+    barrelPrimaryObj.position.set(
+      barrelPrimaryObj.position.x,
+      -0.55,
+      barrelPrimaryObj.position.z
+    );
+    barrelWrapperPrimary.add(barrelPrimaryObj);
+    barrelWrapperPrimary.position.set(0, 0.55, 0.1);
+    headObj.add(barrelWrapperPrimary);
+
+    const barrelWrapperSecondary = new Object3D();
+    barrelSecondaryObj.position.set(
+      barrelSecondaryObj.position.x,
+      -0.55,
+      barrelSecondaryObj.position.z
+    );
+    barrelWrapperSecondary.add(barrelSecondaryObj);
+    barrelWrapperSecondary.position.set(0, 0.55, 0.1);
+    headObj.add(barrelWrapperSecondary);
+
+    const barrelTargetShootPrimary = createBarrelTargetShoot();
+    barrelPrimaryTargetObj.add(barrelTargetShootPrimary);
+
+    const barrelTargetShootSecondary = createBarrelTargetShoot();
+    barrelSecondaryTargetObj.add(barrelTargetShootSecondary);
+
+    this.objects = {
+      head: headObj,
+      barrels: [barrelWrapperPrimary, barrelWrapperSecondary],
+      barrelTargets: [barrelPrimaryTargetObj, barrelSecondaryTargetObj],
+      barrelTargetShoots: [barrelTargetShootPrimary, barrelTargetShootSecondary]
+    };
+
+    this.modules.gun.registerBarrelTarget(barrelPrimaryTargetObj);
+    this.modules.gun.registerBarrelTarget(barrelSecondaryTargetObj);
+
+    object.traverse(child => {
+      if (child instanceof Mesh || child instanceof SkinnedMesh) {
+        child.castShadow = true;
+        child.receiveShadow = false;
+
+        // (child.material as MeshLambertMaterial).wireframe = true;
+      }
+    });
+
+    // const box = new Mesh(
+    //   new BoxGeometry(0.1, 0.1, 0.1),
+    //   new MeshLambertMaterial({ color: 0xff0000 })
+    // );
+    // barrelWrapperPrimary.add(box);
+
+    return object;
+  }
+
+  private getControls() {
+    if (!this.hasModuleType(PlayerUnitModule)) return {};
+
+    return (
+      this.getModuleByType(PlayerUnitModule)
+        ?.getPlayer()
+        ?.modules.controls.getControls() ?? {}
+    );
+  }
+
+  override update(_v: AnimationLoopValue): void {
+    super.update(_v);
+    this.updateControls();
+    this.updateObjects();
+  }
+
+  updateControls() {
+    const controls = this.getControls();
+    if (controls.up) {
+      this.state.velocity.y -= 0.005;
+    }
+    if (controls.down) {
+      this.state.velocity.y += 0.005;
+    }
+    if (controls.left) {
+      this.state.velocity.x += 0.005;
+    }
+    if (controls.right) {
+      this.state.velocity.x -= 0.005;
+    }
+    this.modules.gun.setActive(controls.space ?? false);
+  }
+
+  private updateObjects() {
+    const {
+      head: headObj,
+      barrels: [barrelPrimary, barrelSecondary]
+    } = this.objects;
+
+    if (headObj && barrelPrimary && barrelSecondary) {
+      headObj.rotation.y += this.state.velocity.x;
+      barrelPrimary.rotation.x += this.state.velocity.y;
+      barrelSecondary.rotation.x += this.state.velocity.y;
+
+      barrelPrimary.rotation.x = Math.max(
+        this.state.minBarrelAngleX,
+        Math.min(this.state.maxBarrelAngleX, barrelPrimary.rotation.x)
+      );
+      barrelSecondary.rotation.x = Math.max(
+        this.state.minBarrelAngleX,
+        Math.min(this.state.maxBarrelAngleX, barrelSecondary.rotation.x)
+      );
+
+      this.state.velocity.multiplyScalar(0.9);
+
+      if (this.state.velocity.length() < 0.001) {
+        this.state.velocity.set(0, 0);
+      } else {
+        this.modules.gun.updateSourcePosition(0);
+        this.modules.gun.updateSourcePosition(1);
+      }
+    }
+  }
+}

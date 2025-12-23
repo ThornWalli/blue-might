@@ -1,5 +1,12 @@
 import type { Texture } from 'three';
-import { Mesh, MeshLambertMaterial, NearestFilter, PlaneGeometry } from 'three';
+import {
+  BoxGeometry,
+  Mesh,
+  MeshLambertMaterial,
+  NearestFilter,
+  Object3D,
+  PlaneGeometry
+} from 'three';
 import type {
   SetupContext,
   UnitConstructorOptions
@@ -46,17 +53,30 @@ export default class LandingPort_1 extends LandingPortUnit {
     texture.magFilter = NearestFilter;
     texture.generateMipmaps = false;
 
-    const mesh = new Mesh(
+    const height = 0.025;
+    const boxMesh = new Mesh(
+      new BoxGeometry(1, height, 1),
+      new MeshLambertMaterial({})
+    );
+    boxMesh.receiveShadow = true;
+    boxMesh.position.set(0, height / 2, 0);
+
+    const planeMesh = new Mesh(
       new PlaneGeometry(1, 1),
       new MeshLambertMaterial({
         map: texture,
         transparent: true
       })
     );
-    mesh.renderOrder = 100;
-    mesh.rotateX(-Math.PI / 2);
-    mesh.position.set(0, 0.001, 0);
+    planeMesh.renderOrder = 100;
+    planeMesh.rotateX(-Math.PI / 2);
+    planeMesh.position.set(0, height + 0.001, 0);
 
-    return mesh;
+    const obj = new Object3D();
+
+    obj.add(boxMesh);
+    obj.add(planeMesh);
+
+    return obj;
   }
 }

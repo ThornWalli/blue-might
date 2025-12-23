@@ -13,7 +13,8 @@ import {
   NeutralToneMapping,
   Color,
   PCFSoftShadowMap,
-  Scene
+  Scene,
+  Fog
 } from 'three';
 
 import IntersectionRendererModule from './rendererModule/Intersection';
@@ -221,6 +222,11 @@ export default class Renderer<
   setupScene(color: Color = new Color(0x000000)) {
     const scene = new Scene();
     scene.background = color;
+    scene.fog = new Fog(color, 30, 30.001);
+
+    const cam = this.modules.camera.getCamera();
+    cam.far = 30;
+    cam.updateProjectionMatrix();
     this.scene = scene;
   }
 

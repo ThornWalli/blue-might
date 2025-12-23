@@ -51,7 +51,7 @@ const canvasEl = ref();
 const subscription = new Subscription();
 
 const defaultRendererOptions: RendererOptions = {
-  pixelated: true,
+  pixelated: false,
   controls: true
 };
 

@@ -3,7 +3,6 @@ import {
   type UnitConstructorOptions
 } from '../../Unit';
 import HelicopterUnitModule from '../../unitModule/moveable/Helicopter';
-import type CollisionUnitModule from '../../unitModule/Collision';
 import type PlayerUnitModule from '../../unitModule/Player';
 import VehicleUnit, {
   type VehicleUnitModuleList,
@@ -16,7 +15,6 @@ export type HelicopterUnitOptions = VehicleUnitOptions;
 export type HelicopterUnitModules = VehicleUnitModules & {
   helicopter: HelicopterUnitModule;
   player: PlayerUnitModule;
-  collision: CollisionUnitModule;
 };
 
 export type HelicopterUnitModuleList = (typeof HelicopterUnitModule)[] &

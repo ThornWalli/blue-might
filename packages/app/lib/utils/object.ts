@@ -20,14 +20,10 @@ export const OBJECT_NAME: ObjectName = {
 
 export interface ObjectUserData {
   MAIN_OBJECT: string;
-  WALL_SELECT_FRONT: string;
-  WALL_SELECT_BACK: string;
 }
 
 export const OBJECT_USER_DATA: ObjectUserData = {
-  MAIN_OBJECT: 'mainObject',
-  WALL_SELECT_FRONT: 'wallSelectFront',
-  WALL_SELECT_BACK: 'wallSelectBack'
+  MAIN_OBJECT: 'mainObject'
 } as ObjectUserData;
 
 export function setMainObjectRecursive(object: Object3D, mainObject: Object3D) {

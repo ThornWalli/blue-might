@@ -5,6 +5,8 @@ import LandingPort_1 from './landing_port_1/LandingPort_1';
 import Tank_1 from './tank_1/Tank_1';
 import Tree_1 from './tree_1/Tree_1';
 import Barrack_1 from './barrack_1/Barrack_1';
+import StationaryGun_1 from './stationary_gun_1/StationaryGun_1';
+import StationaryGun_2 from './stationary_gun_2/StationaryGun_2';
 
 export { default as ControlTower_1 } from './control_tower_1/ControlTower_1';
 export { default as Tank_1 } from './tank_1/Tank_1';
@@ -12,6 +14,9 @@ export { default as LandingPort_1 } from './landing_port_1/LandingPort_1';
 export { default as Tree_1 } from './tree_1/Tree_1';
 export { default as BlueMight } from './blue_might/BlueMight';
 export { default as Barrack_1 } from './barrack_1/Barrack_1';
+export { default as StationaryGun_1 } from './stationary_gun_1/StationaryGun_1';
+export { default as StationaryGun_2 } from './stationary_gun_2/StationaryGun_2';
+export { default as Soldat_1 } from './soldat_1/Soldat_1';
 
 const units = {
   [ControlTower_1.KEY]: ControlTower_1,
@@ -20,6 +25,9 @@ const units = {
   [Tree_1.KEY]: Tree_1,
   [BlueMight.KEY]: BlueMight,
   [Barrack_1.KEY]: Barrack_1,
+  [Soldat_1.KEY]: Soldat_1,
+  [StationaryGun_1.KEY]: StationaryGun_1,
+  [StationaryGun_2.KEY]: StationaryGun_2,
   [Soldat_1.KEY]: Soldat_1
 };
 

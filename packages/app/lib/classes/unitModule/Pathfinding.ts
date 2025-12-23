@@ -10,9 +10,16 @@ import HelicopterUnitModule from './moveable/Helicopter';
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 import { Subject } from 'rxjs';
-import CollisionUnitModule from './Collision';
-import { disposeObject3D } from '../../utils/object';
+import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import FigureUnitModule from './moveable/Figure';
+
+declare module '../../utils/object' {
+  interface ObjectUserData {
+    IGNORE_PATHFINDING: string;
+  }
+}
+
+OBJECT_USER_DATA.IGNORE_PATHFINDING = 'ignorePathfinding';
 
 interface Observables extends UnitModuleObservables {
   moveStart$: Subject<void>;
@@ -92,13 +99,11 @@ export default class PathfindingUnitModule extends UnitModule<
       return false; // Bereits ein Pfad aktiv
     }
 
-    console.log('unit.getPosition()', unit.getPosition(), target);
-
     const path = await groundNavigator.findPath(unit.getPosition(), target, [
-      unit.getModuleByType(CollisionUnitModule)!.getCollisionObject()
+      unit.modules.collision.getCollisionObject()
     ]);
 
-    console.log('Found path:', [...path]);
+    // console.log('Found path:', [...path]);
     // path[0] = unit.getPosition().clone(); // Startpunkt an aktuelle Position anpassen
     // path[path.length - 1] = target.clone(); // Endpunkt an Zielposition anpassen
     if (!path) return false;

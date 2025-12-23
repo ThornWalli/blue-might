@@ -132,15 +132,8 @@ export class AnimationUnitModule extends UnitModule<
     }
 
     next.reset();
-    next.time = currentTime % next.getClip().duration; // Zeit nach reset setzen!
+    next.time = currentTime % next.getClip().duration;
     next.fadeIn(fadeInDuration).play();
     this.activeAction = next;
-    console.log('Wechsel:', {
-      from: this.activeAction?.getClip().name,
-      fromTime: this.activeAction?.time,
-      fromDuration: this.activeAction?.getClip().duration,
-      to: next.getClip().name,
-      toDuration: next.getClip().duration
-    });
   }
 }

@@ -17,6 +17,7 @@ import SelectionAppModule from './appModule/Selection';
 import type Unit from './Unit';
 import UnitFocusAppModule from './appModule/UnitFocus';
 import DebugAppModule from './appModule/Debug';
+import type { RendererOptions } from '@blue-might/app/types';
 
 type AppModuleList = (
   | typeof DebugAppModule
@@ -45,11 +46,17 @@ interface AppState {
 
 export enum APP_MODE {
   PLAYGROUND = 'playground',
-  EDITOR = 'editor'
+  DEBUG = 'debug'
 }
 
 export interface AppConfig {
   mode?: APP_MODE;
+  rendererOptions: RendererOptions;
+  debug?: {
+    map?: {
+      [key: string]: boolean;
+    };
+  };
 }
 
 export class BaseApp<
@@ -130,6 +137,7 @@ export class BaseApp<
 
   async enterMap(desc: MapDescription) {
     const map = await this.loadMap(desc);
+    map.setDebug(this.config.debug?.map ?? {});
     await this.modules.map.setMap(map);
     console.log('Map loaded', map);
   }

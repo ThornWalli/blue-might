@@ -8,23 +8,69 @@ import {
   Matrix4,
   Vector3
 } from 'three';
-import UnitModule, { type UnitModuleOptions } from '../UnitModule';
+import UnitModule, {
+  type UnitModuleObservables,
+  type UnitModuleOptions,
+  type UnitModuleState
+} from '../UnitModule';
 import { OBB } from 'three/examples/jsm/math/OBB.js';
+import type Unit from '../Unit';
+import { OBJECT_USER_DATA } from '../../utils/object';
+
+declare module '../../utils/object' {
+  interface ObjectUserData {
+    COLLISION_TYPE: string;
+  }
+}
+OBJECT_USER_DATA.COLLISION_TYPE = 'collisionType';
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface CollisionUnitModuleObservables extends UnitModuleObservables {}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface CollisionUnitModuleState extends UnitModuleState {}
+
+export enum COLLISION_TYPE {
+  NONE = 0,
+  SOFT = 1,
+  BLOCKED = 2
+}
 
 export interface CollisionUnitModuleOptions extends UnitModuleOptions {
   disabled: boolean;
+  type: COLLISION_TYPE;
   targetName: string;
   targetChildIndex?: number;
 }
 
-export default class CollisionUnitModule extends UnitModule<CollisionUnitModuleOptions> {
+export default class CollisionUnitModule<
+  Options extends CollisionUnitModuleOptions = CollisionUnitModuleOptions,
+  Observables extends
+    CollisionUnitModuleObservables = CollisionUnitModuleObservables,
+  State extends CollisionUnitModuleState = CollisionUnitModuleState
+> extends UnitModule<Options, State, Observables> {
   static override TYPE = 'collision';
-
-  override debug = false;
-
   localOBB = new OBB();
   worldOBB = new OBB();
   debugHelper: LineSegments | Box3Helper | null = null;
+
+  getCollisionType() {
+    return this.options.type;
+  }
+
+  constructor(unit: Unit, options: Options, state: State, debug?: boolean) {
+    super(
+      unit,
+      {
+        ...options,
+        type: options.type ?? COLLISION_TYPE.BLOCKED
+      },
+      {
+        ...state
+      },
+      debug
+    );
+  }
 
   override async setup() {
     const unit = this.getUnit();
@@ -65,11 +111,11 @@ export default class CollisionUnitModule extends UnitModule<CollisionUnitModuleO
 
     if (targetChildIndex !== undefined) {
       const children = target?.children[targetChildIndex] || null;
-      if (!children) {
-        console.warn(
-          `CollisionUnitModule: Child index ${targetChildIndex} does not exist on target '${targetName}'.`
-        );
-      }
+      // if (!children) {
+      //   console.warn(
+      //     `CollisionUnitModule: Child index ${targetChildIndex} does not exist on target '${targetName}'.`
+      //   );
+      // }
       return children;
     }
     return target || null;
@@ -77,7 +123,7 @@ export default class CollisionUnitModule extends UnitModule<CollisionUnitModuleO
 
   getCollisionObject() {
     const obj = this.getTarget() || this.getUnit().root;
-    obj.userData.ignorePathfinding = this.options.disabled;
+    obj.userData[OBJECT_USER_DATA.COLLISION_TYPE] = this.options.type;
     return obj;
   }
 

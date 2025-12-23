@@ -74,7 +74,6 @@ export default class UnitsModule extends MapModule<State, Observables> {
       )
         .pipe(debounceTime(200))
         .subscribe(() => {
-          console.log('Updating unit visibility...');
           this.state.visibleUnits = Array.from(
             this.chunkManager.updateVisibility(
               this.map.app.renderer.modules.camera.getCamera()
@@ -169,6 +168,21 @@ export default class UnitsModule extends MapModule<State, Observables> {
   }
 
   //#endregion
+
+  // Hilfsfunktion, um alle Meshes der Map zu sammeln (füge das zur Map-Klasse hinzu)
+  getAllMeshes(ignoredUnits: Unit[] = []): Object3D[] {
+    const meshes: Object3D[] = [];
+    this.state.units.forEach(unit => {
+      if (!ignoredUnits.includes(unit)) {
+        unit.root?.traverse(child => {
+          if (child instanceof Mesh) {
+            meshes.push(child);
+          }
+        });
+      }
+    });
+    return meshes;
+  }
 }
 
 function getMeshes(obj: Object3D): Mesh[] {

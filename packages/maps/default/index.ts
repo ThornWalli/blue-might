@@ -44,7 +44,7 @@ const desc: MapDescription = {
           active: true
         },
         patrol: {
-          active: true
+          active: false
         }
       },
       moduleOptions: {
@@ -67,7 +67,7 @@ const desc: MapDescription = {
     }),
     new BlueMight({
       id: 'blue-might-1',
-      position: new Vector3(9.5, 0.4, 5.5)
+      position: new Vector3(9.5, 0, 5.5)
     }),
     new Barrack_1({
       position: new Vector3(10.5, 0, 1)
@@ -77,7 +77,7 @@ const desc: MapDescription = {
       position: new Vector3(12.83, 0, 3.83),
       moduleStates: {
         patrol: {
-          active: true
+          active: false
         }
       },
       moduleOptions: {
@@ -98,7 +98,7 @@ const desc: MapDescription = {
       position: new Vector3(5.5, 0, 4.17),
       moduleStates: {
         patrol: {
-          active: true
+          active: false
         }
       },
       moduleOptions: {

@@ -99,11 +99,12 @@ function onClickUnitActive(e: Event) {
   (e.target as HTMLButtonElement).blur();
   const unit = $props.app.modules.selection.getSelectedUnit() as MovableUnit;
   if (!unit) return;
+  const vehicleModule = unit.getModuleByType(MovableUnitModule);
 
-  if (unit.isTurnOn()) {
-    unit.turnOff();
+  if (vehicleModule.isTurnOn()) {
+    vehicleModule.turnOff();
   } else {
-    unit.turnOn();
+    vehicleModule.turnOn();
   }
 }
 </script>

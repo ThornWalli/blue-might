@@ -20,7 +20,9 @@ function getAliases() {
     Object.entries({
       ['@blue-might/app']: 'app',
       ['@blue-might/maps']: 'maps',
-      ['@blue-might/units']: 'units'
+      ['@blue-might/units']: 'units',
+      ['@blue-might/weapon']: 'weapon',
+      ['@blue-might/debug']: 'debug'
     })
       .map(([name, packageName]) => {
         return [

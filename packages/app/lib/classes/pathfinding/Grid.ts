@@ -2,6 +2,7 @@ import { Subject } from 'rxjs';
 import type { Object3D } from 'three';
 import { Vector2 } from 'three';
 import { TILE_TYPE } from '../../utils/pathfinding';
+import { COLLISION_TYPE } from '../unitModule/Collision';
 
 export type WalkableFunction = (
   options: {
@@ -11,10 +12,16 @@ export type WalkableFunction = (
     excludeObjects: Object3D[];
   },
   debug?: boolean
-) => boolean;
+) => {
+  value: boolean;
+  collisionType: COLLISION_TYPE;
+};
 
 export interface GridNode {
-  walkable: boolean;
+  walkable: {
+    value: boolean;
+    collisionType: COLLISION_TYPE;
+  };
   x: number;
   y: number;
 }
@@ -47,7 +54,7 @@ export default class Grid {
       for (let x = 0; x < this.width; x++) {
         const node = this.nodes[this.index(x, y)]!;
 
-        const tileType = node.walkable
+        const tileType = node.walkable.value
           ? (this.getTileType?.(node) ?? TILE_TYPE.GRASS)
           : TILE_TYPE.BLOCKED;
         row.push(tileType);
@@ -70,7 +77,10 @@ export default class Grid {
 
     this.nodes = new Array(this.width * this.height).fill(0).map((_, i) => {
       return {
-        walkable: true,
+        walkable: {
+          value: true,
+          collisionType: COLLISION_TYPE.NONE
+        },
         x: i % this.width,
         y: Math.floor(i / this.width)
       };
@@ -120,7 +130,7 @@ export default class Grid {
         excludeObjects
       });
 
-      const tileType = node.walkable
+      const tileType = node.walkable.value
         ? (this.getTileType?.(node) ?? TILE_TYPE.GRASS)
         : TILE_TYPE.BLOCKED;
       this.matrix[node.y]![node.x] = tileType;
@@ -149,7 +159,7 @@ export default class Grid {
 
       if (nx >= 0 && nx < this.width && ny >= 0 && ny < this.height) {
         const n = this.nodes[this.index(nx, ny)]!;
-        if (n.walkable) result.push(n);
+        if (n.walkable.value) result.push(n);
       }
     }
 

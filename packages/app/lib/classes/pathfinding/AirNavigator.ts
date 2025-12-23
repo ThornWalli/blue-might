@@ -26,7 +26,8 @@ export default class AirNavigator {
 
     for (let x = 0; x < worldW; x += spacing) {
       for (let z = 0; z < worldH; z += spacing) {
-        const y = this.map.modules.ground.getHeightAt(x, z) + flightHeight;
+        const y =
+          this.map.modules.ground.getSurfaceHeightAt(x, z) + flightHeight;
         const node = new Vector3(x, y, z);
         this.nodes.push(node);
       }

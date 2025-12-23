@@ -14,6 +14,8 @@ import type { AnimationLoopValue } from './Renderer';
 import { AnimationUnitModule } from './unitModule/Animation';
 import SelectionUnitModule from './unitModule/Selection';
 import PathfindingUnitModule from './unitModule/Pathfinding';
+import DamageUnitModule from './unitModule/Damage';
+import CollisionUnitModule, { COLLISION_TYPE } from './unitModule/Collision';
 
 export enum GROUND_ADJUSTMENT_MODE {
   MIN_HEIGHT = 'min-height',
@@ -34,6 +36,8 @@ export type UnitModuleList = (
   | typeof AnimationUnitModule
   | typeof SelectionUnitModule
   | typeof PathfindingUnitModule
+  | typeof CollisionUnitModule
+  | typeof DamageUnitModule
 )[];
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -49,16 +53,18 @@ export interface UnitConstructorOptions<
   moduleStates?: { [key: string]: UnitModuleState };
   position?: Vector3;
   rotation?: Euler;
+  debug?: { [key: string]: boolean };
 }
 
 export interface UnitModules {
   animation: AnimationUnitModule;
   selection: SelectionUnitModule;
   pathfinding: PathfindingUnitModule;
+  collision: CollisionUnitModule;
+  damage: DamageUnitModule;
 }
 
 export interface SetupContext {
-  unit: Unit;
   map?: Map;
 }
 
@@ -90,8 +96,6 @@ export default class Unit<
     );
   }
 
-  debug = false;
-
   static KEY = 'unit';
   static NAME = 'Unit';
 
@@ -106,6 +110,10 @@ export default class Unit<
   subscription = new Subscription();
   options: Options = {} as Options;
   root: Group;
+
+  getRoot() {
+    return this.root;
+  }
   private _updateModules: UnitModule[] = [];
   private _map: Map | null = null;
   private groundAdjustmentMode: GROUND_ADJUSTMENT_MODE =
@@ -122,19 +130,20 @@ export default class Unit<
   constructor(
     {
       id,
-      debug,
       name,
       position,
       rotation,
       options,
       moduleOptions,
-      moduleStates
-    }: UnitConstructorOptions & { debug?: boolean } = {
+      moduleStates,
+      debug
+    }: UnitConstructorOptions = {
       name: 'Unit',
       position: new Vector3(0, 0, 0),
       options: {} as Options,
       moduleOptions: {},
-      moduleStates: {}
+      moduleStates: {},
+      debug: {}
     },
     moduleList: unknown[] = []
   ) {
@@ -146,10 +155,10 @@ export default class Unit<
     this.observables.visible$ = new ReplaySubject<boolean>(1);
     //#endregion
 
+    this.debug = { ...this.debug, ...debug };
+
     this.id = id || crypto.randomUUID();
     this.name = name;
-
-    this.debug = debug ?? this.debug;
 
     this._position = position || new Vector3(0, 0, 0);
     this._rotation = rotation || new Euler(0, 0, 0);
@@ -162,6 +171,8 @@ export default class Unit<
     //#region modules
 
     moduleList.unshift(
+      CollisionUnitModule,
+      DamageUnitModule,
       AnimationUnitModule,
       SelectionUnitModule,
       PathfindingUnitModule
@@ -177,7 +188,7 @@ export default class Unit<
         this,
         options as any,
         state as any,
-        this.debug
+        this.debug[ModuleClass.TYPE] ?? false
       );
       return [ModuleClass.TYPE, moduleInstance];
     });
@@ -187,6 +198,18 @@ export default class Unit<
 
     this.root = this.setupRoot(name);
   }
+  //#region debug
+  private debug: { [key: string]: boolean } = {
+    [AnimationUnitModule.TYPE]: false,
+    [SelectionUnitModule.TYPE]: false,
+    [PathfindingUnitModule.TYPE]: false,
+    [CollisionUnitModule.TYPE]: false,
+    [DamageUnitModule.TYPE]: false
+  };
+  setDebug(debug: { [key: string]: boolean }) {
+    this.debug = { ...this.debug, ...debug };
+  }
+  //#endregion
 
   get key(): string {
     return (this.constructor as typeof Unit).KEY;
@@ -345,7 +368,7 @@ export default class Unit<
   }
 
   checkCollision() {
-    return this._map && this._map.checkCollision(this);
+    return this._map?.checkCollision(this) ?? COLLISION_TYPE.NONE;
   }
 
   getRotation() {
@@ -451,7 +474,7 @@ export default class Unit<
     }
 
     // Direkt frei?
-    if (!this.checkCollision()) {
+    if (this.checkCollision() < COLLISION_TYPE.BLOCKED) {
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       return;
@@ -476,7 +499,7 @@ export default class Unit<
     // Sicherstellen, dass lo wirklich frei ist:
     this._position.copy(from);
     this.updateGroundAlignment(from);
-    if (this.checkCollision()) {
+    if (this.checkCollision() >= COLLISION_TYPE.BLOCKED) {
       // Startpunkt steckt schon drin -> kleiner Rückzug entgegen delta
       const backoffEps = 0.1;
       const safe = from
@@ -484,7 +507,7 @@ export default class Unit<
         .add(delta.clone().normalize().multiplyScalar(-backoffEps));
       this._position.copy(safe);
       this.updateGroundAlignment(safe);
-      if (!this.checkCollision()) {
+      if (this.checkCollision() < COLLISION_TYPE.BLOCKED) {
         this.root.position.copy(this._position);
         this.lastPosition.copy(this._position);
         this.observables.position$.next(this._position.clone());
@@ -504,7 +527,7 @@ export default class Unit<
       this._position.copy(test);
       this.updateGroundAlignment(test);
 
-      if (this.checkCollision()) {
+      if (this.checkCollision() >= COLLISION_TYPE.BLOCKED) {
         hi = mid;
       } else {
         lo = mid;
@@ -521,7 +544,7 @@ export default class Unit<
     this._position.copy(safePos);
     this.updateGroundAlignment(safePos);
 
-    if (!this.checkCollision()) {
+    if (this.checkCollision() < COLLISION_TYPE.BLOCKED) {
       this.root.position.copy(this._position);
       this.lastPosition.copy(this._position);
       this.observables.position$.next(this._position.clone());
@@ -542,7 +565,7 @@ export default class Unit<
         const test = from.clone().addScaledVector(axisDelta, mid);
         this._position.copy(test);
         this.updateGroundAlignment(test);
-        if (this.checkCollision()) ahi = mid;
+        if (this.checkCollision() >= COLLISION_TYPE.BLOCKED) ahi = mid;
         else alo = mid;
       }
       const slidePos = from
@@ -551,7 +574,7 @@ export default class Unit<
         .add(axisDelta.clone().normalize().multiplyScalar(-epsilon));
       this._position.copy(slidePos);
       this.updateGroundAlignment(slidePos);
-      return !this.checkCollision();
+      return this.checkCollision() < COLLISION_TYPE.BLOCKED;
     };
 
     if (axisTry('x') || axisTry('z')) {
@@ -591,10 +614,8 @@ export default class Unit<
 
   getModuleByType<T extends UnitModule>(
     ModuleClass: AbstractConstructor<T>
-  ): T | undefined {
-    return Object.values(this.modules).find(m => m instanceof ModuleClass) as
-      | T
-      | undefined;
+  ): T {
+    return Object.values(this.modules).find(m => m instanceof ModuleClass) as T;
   }
 
   hasModuleType(ModuleClass: typeof UnitModule | any) {
@@ -611,7 +632,7 @@ export default class Unit<
     const lastYaw = this._rotation.y;
     this._rotation.y = yaw;
     this.updateGroundAlignment();
-    if (this.checkCollision()) {
+    if (this.checkCollision() >= COLLISION_TYPE.BLOCKED) {
       this._rotation.y = lastYaw;
     }
     this.observables.rotation$.next(this._rotation.clone());

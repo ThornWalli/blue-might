@@ -13,8 +13,9 @@ import {
 } from 'three';
 import type Map from '../Map';
 import { debounceTime, Subscription } from 'rxjs';
-import { disposeObject3D } from '../../utils/object';
+import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import { TILE_TYPE, TILE_COSTS, TILE_INDEX } from '../../utils/pathfinding';
+import { COLLISION_TYPE } from '../unitModule/Collision';
 
 export default class GroundNavigator {
   debug = false;
@@ -24,6 +25,10 @@ export default class GroundNavigator {
   private gridSize: number;
   private grid: Grid;
 
+  addCollider(collider: Object3D) {
+    this.colliders.push(collider);
+    this.updateWalkabilityAroundObject(collider);
+  }
   private useSphere: boolean;
   private sphere = new Sphere(undefined, 1 / 2);
   private box = new Box3();
@@ -59,10 +64,16 @@ export default class GroundNavigator {
       size.divideScalar(this.gridSize).floor(),
       this.gridSize,
       (options, debug) => this.isWalkable(options, debug),
-      node =>
-        node.walkable
-          ? (this.getTileTypeAtNode(node) ?? TILE_TYPE.GRASS)
-          : TILE_TYPE.BLOCKED
+      node => {
+        if (node.walkable.value) {
+          if (node.walkable.collisionType === COLLISION_TYPE.SOFT) {
+            return TILE_TYPE.SOFT;
+          }
+          return this.getTileTypeAtNode(node) ?? TILE_TYPE.GRASS;
+        } else {
+          return TILE_TYPE.BLOCKED;
+        }
+      }
     );
 
     if (this.debug) {
@@ -91,7 +102,7 @@ export default class GroundNavigator {
   }
 
   setColliders(colliders: Object3D[]) {
-    this.colliders = colliders;
+    this.colliders = [...colliders];
     this.grid.update();
   }
 
@@ -115,9 +126,14 @@ export default class GroundNavigator {
     this.sphere.center.copy(pos);
     // this.sphere.radius = this.gridSize / 2;
 
+    let collisionType = COLLISION_TYPE.NONE;
+
     for (const collider of this.colliders) {
       if (excludeObjects.includes(collider)) continue; // Eigene Unit ignorieren
-      if (collider.userData.ignorePathfinding) continue; // Zusätzliche Ignorier-Option
+      if (collider.userData[OBJECT_USER_DATA.IGNORE_PATHFINDING]) continue; // Zusätzliche Ignorier-Option
+
+      collisionType =
+        collider.userData[OBJECT_USER_DATA.COLLISION_TYPE] ?? collisionType;
 
       const box = this.box.setFromObject(collider);
       if (this.useSphere) {
@@ -138,7 +154,6 @@ export default class GroundNavigator {
       }
     }
 
-    // Debug-Handling (bleibt gleich)
     if (debug && this.debugState.checkDebugMeshes) {
       const MAX_DEBUG = Math.max(1000, this.getGrid().getNodes().length);
       if (this.debugState.isWalkableChecks.length < MAX_DEBUG) {
@@ -146,39 +161,31 @@ export default class GroundNavigator {
       }
     }
 
-    return walkable;
+    return { value: walkable, collisionType };
   }
 
   updateWalkabilityAroundObject(object: Object3D) {
-    // Vorherige Zellen sammeln
     const previous = this.occupiedByObject.get(object) || [];
 
-    // Neue Zellen berechnen: Erweitere AABB konsistent mit isWalkable
     const aabb = new Box3().setFromObject(object);
     if (this.useSphere) {
       aabb.expandByScalar(this.sphere.radius);
     } else {
       const colliderSize = aabb.getSize(new Vector3());
-      const buffer = Math.max(colliderSize.x, colliderSize.z) / 4; // Gleicher buffer wie in isWalkable
+      const buffer = Math.max(colliderSize.x, colliderSize.z) / 4;
       aabb.expandByScalar(buffer);
     }
     const cells = this.worldToGridCellsInAABB(aabb);
-
-    // Alle betroffenen Zellen sammeln (previous + new)
     const allCells = new Set([...previous, ...cells]);
     const nodes = Array.from(allCells).map(cell =>
       this.grid.getNode(cell.x, cell.z)
     );
-
-    // Grid nur für betroffene Nodes aktualisieren
     this.grid.update(nodes);
 
-    // Speichere neue Zellen
     this.occupiedByObject.set(object, cells);
   }
 
   getNodesAroundObject(object: Object3D, box: Box3 = new Box3()) {
-    // Neue Zellen berechnen: Erweitere AABB konsistent mit isWalkable
     const aabb = box.setFromObject(object);
     if (this.useSphere) {
       aabb.expandByScalar(this.sphere.radius);
@@ -197,52 +204,13 @@ export default class GroundNavigator {
     return nodes;
   }
 
-  // updateWalkabilityAroundObject(object: Object3D) {
-  //   // Vorherige Zellen sammeln
-  //   const previous = this.occupiedByObject.get(object) || [];
-
-  //   // Neue Zellen berechnen: Erweitere AABB um Sphere-Radius
-  //   const aabb = new Box3().setFromObject(object);
-  //   if (this.useSphere) {
-  //     aabb.expandByScalar(this.sphere.radius);
+  // private isCellOccupiedByOthers(x: number, z: number, self: Object3D) {
+  //   for (const [obj, cells] of this.occupiedByObject.entries()) {
+  //     if (obj === self) continue;
+  //     if (cells.some(c => c.x === x && c.z === z)) return true;
   //   }
-  //   const cells = this.worldToGridCellsInAABB(aabb);
-
-  //   // Alle betroffenen Zellen sammeln (previous + new)
-  //   const allCells = new Set([...previous, ...cells]);
-  //   const nodes = Array.from(allCells).map(cell =>
-  //     this.grid.getNode(cell.x, cell.z)
-  //   );
-
-  //   // Grid nur für betroffene Nodes aktualisieren (verwendet isWalkable)
-  //   this.grid.update(nodes);
-
-  //   // Speichere neue Zellen
-  //   this.occupiedByObject.set(object, cells);
+  //   return false;
   // }
-
-  // getNodesAroundObject(object: Object3D, box: Box3 = new Box3()) {
-  //   // Neue Zellen berechnen: Erweitere AABB um Sphere-Radius
-  //   const aabb = box.setFromObject(object);
-  //   if (this.useSphere) {
-  //     aabb.expandByScalar(this.sphere.radius);
-  //   }
-  //   const cells = this.worldToGridCellsInAABB(aabb);
-
-  //   // Alle betroffenen Zellen sammeln (previous + new)
-  //   const allCells = new Set([...cells]);
-  //   const nodes = Array.from(allCells).map(cell =>
-  //     this.grid.getNode(cell.x, cell.z)
-  //   );
-  //   return nodes;
-  // }
-  private isCellOccupiedByOthers(x: number, z: number, self: Object3D) {
-    for (const [obj, cells] of this.occupiedByObject.entries()) {
-      if (obj === self) continue;
-      if (cells.some(c => c.x === x && c.z === z)) return true;
-    }
-    return false;
-  }
 
   worldToGridCellsInAABB(aabb: Box3) {
     const minX = Math.floor(
@@ -283,6 +251,7 @@ export default class GroundNavigator {
         .flat();
 
       this.grid.update(affectedNodes, excludeObjects);
+      console.log(affectedNodes);
     }
 
     try {
@@ -290,23 +259,10 @@ export default class GroundNavigator {
       const e = this.toNodePosition(end.x, end.z)!;
 
       const startNode = this.grid.getNode(s.x, s.y);
-      startNode.walkable = true;
-
-      // const paths = await new Promise<{ x: number; y: number }[]>(resolve => {
-      //   const easystar = createEasyStarInstance();
-      //   easystar.setGrid(this.grid.toMatrix());
-      //   easystar.findPath(s.x, s.y, e.x, e.y, path => resolve(path || []));
-      //   easystar.calculate();
-      // });
-
-      // return paths.map(n => {
-      //   const p = this.grid.toWorld(n.x, n.y);
-      //   return new Vector3(
-      //     p.x,
-      //     this.map.modules.ground.getAvgHeightAt(p.x, p.y),
-      //     p.y
-      //   );
-      // });
+      startNode.walkable = {
+        value: true,
+        collisionType: COLLISION_TYPE.NONE
+      };
 
       const paths = await new Promise<{ x: number; y: number }[]>(resolve => {
         const easystar = createEasyStarInstance();
@@ -318,18 +274,17 @@ export default class GroundNavigator {
       let waypoints = paths.map(n => {
         const p = this.grid.toWorld(n.x, n.y);
         return new Vector3(
-          Math.round(p.x * 1000) / 1000, // Runde X auf 3 Dezimalen
-          this.map.modules.ground.getHeightAt(p.x, p.y),
-          Math.round(p.y * 1000) / 1000 // Runde Z auf 3 Dezimalen
+          Math.round(p.x * 1000) / 1000,
+          this.map.modules.ground.getSurfaceHeightAt(p.x, p.y),
+          Math.round(p.y * 1000) / 1000
         );
       });
 
-      // Entferne Duplikate und zu nahe Punkte
       waypoints = waypoints.filter((point, index, arr) => {
         if (index === 0) return true;
         const prev = arr[index - 1]!;
         const dist = Math.hypot(point.x - prev.x, point.z - prev.z);
-        return dist > 0.01; // Entferne, wenn Distanz < 0.01 (fast identisch)
+        return dist > 0.01;
       });
 
       return waypoints;
@@ -426,42 +381,13 @@ export default class GroundNavigator {
     });
   }
 
-  // removeDebugGridObjects() {
-  //   if (this.debugGridMeshes) {
-  //     disposeObject3D(this.debugGridMeshes.valid);
-  //     disposeObject3D(this.debugGridMeshes.invalid);
-  //   }
-  //   this.debugGridMeshes = undefined;
-  // }
-
-  // resetDebugObjects() {
-  //   if (this.lastDebugGridPositions) {
-  //     const { valids, invalids } = this.lastDebugGridPositions;
-
-  //     const matrix = new Matrix4();
-  //     valids.forEach((_position: Vector3, index: number) => {
-  //       this.debugGridMeshes?.valid.setMatrixAt(index, matrix);
-  //     });
-
-  //     this.debugGridMeshes!.valid.instanceMatrix.needsUpdate = true;
-
-  //     invalids.forEach((_position: Vector3, index: number) => {
-  //       this.debugGridMeshes?.invalid.setMatrixAt(index, matrix);
-  //     });
-
-  //     this.debugGridMeshes!.invalid.instanceMatrix.needsUpdate = true;
-  //     this.lastDebugGridPositions = undefined;
-  //   }
-  // }
-
   //#endregion
 
   toWorldPosition(nodeX: number, nodeY: number, grid?: Grid) {
     const worldPosition = (grid || this.grid).toWorld(nodeX, nodeY);
     const x = worldPosition.x;
     const z = worldPosition.y;
-
-    const y = this.map.modules.ground.getAvgHeightAt(x, z);
+    const y = this.map.modules.ground.getSurfaceHeightAt(x, z);
 
     return new Vector3(x, y, z);
   }
@@ -483,26 +409,34 @@ export default class GroundNavigator {
   }
 
   getTileTypeAtNode(node: GridNode) {
-    const map = this.map;
-    return map.modules.ground.pathfinderTileTypes[node.y]?.[node.x];
+    return this.map.modules.ground.pathfinderTileTypes[node.y]?.[node.x];
   }
 
   getDebugPositions() {
-    const grid = this.getGrid();
-    const valids: Vector3[] = [];
-    const invalids: Vector3[] = [];
+    return this.getGrid()
+      ?.getNodes()
+      .reduce(
+        (
+          {
+            valids,
+            invalids
+          }: {
+            valids: Vector3[];
+            invalids: Vector3[];
+          },
+          node
+        ) => {
+          const pos = this.toWorldPosition(node.x, node.y);
 
-    grid?.getNodes().forEach(node => {
-      const pos = this.toWorldPosition(node.x, node.y);
-
-      if (node.walkable) {
-        valids.push(pos);
-      } else {
-        invalids.push(pos);
-      }
-    });
-
-    return { valids, invalids };
+          if (node.walkable.value) {
+            valids.push(pos);
+          } else {
+            invalids.push(pos);
+          }
+          return { valids, invalids };
+        },
+        { valids: [], invalids: [] }
+      );
   }
   //#endregion
 }
