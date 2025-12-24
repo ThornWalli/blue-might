@@ -33,7 +33,7 @@ export default class BlueMight<
         name: 'BlueMight',
 
         moduleOptions: {
-          helicopter: {
+          movable: {
             gearsHeight: 0.15
           },
           collision: {
@@ -79,10 +79,10 @@ export default class BlueMight<
     this.setMaterialReady();
 
     this.subscription.add(
-      this.modules.helicopter.observables.gearsActive$
+      this.modules.movable.observables.gearsActive$
         .pipe(filter(gearsActive => gearsActive))
         .subscribe(() => {
-          if (!this.modules.helicopter.getGearsOpened()) {
+          if (!this.modules.movable.getGearsOpened()) {
             this.modules.animation.playAction('land_gears', { reverse: true });
           } else {
             this.modules.animation.playAction('land_gears');
@@ -92,9 +92,9 @@ export default class BlueMight<
 
     this.subscription.add(
       combineLatest([
-        this.modules.helicopter.observables.active$,
-        this.modules.helicopter.observables.powerInfo$,
-        this.modules.helicopter.observables.flightStatus$
+        this.modules.movable.observables.active$,
+        this.modules.movable.observables.powerInfo$,
+        this.modules.movable.observables.flightStatus$
       ]).subscribe(([_active, powerInfo]) => {
         const action = this.modules.animation.getAction('rotor_run');
         if (action) {

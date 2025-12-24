@@ -2,7 +2,7 @@ import {
   GROUND_ADJUSTMENT_MODE,
   type UnitConstructorOptions
 } from '../../Unit';
-import HelicopterUnitModule from '../../unitModule/moveable/Helicopter';
+import HelicopterUnitModule from '../../unitModule/movable/Helicopter';
 import type PlayerUnitModule from '../../unitModule/Player';
 import VehicleUnit, {
   type VehicleUnitModuleList,
@@ -13,7 +13,7 @@ import VehicleUnit, {
 export type HelicopterUnitOptions = VehicleUnitOptions;
 
 export type HelicopterUnitModules = VehicleUnitModules & {
-  helicopter: HelicopterUnitModule;
+  movable: HelicopterUnitModule;
   player: PlayerUnitModule;
 };
 

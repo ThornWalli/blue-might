@@ -166,7 +166,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     raycaster.far = maxDistance; // Maximale Distanz
     raycaster.set(this.surfaceData.position, this.surfaceData.direction);
 
-    const allMeshes = this.map.modules.units.getAllMeshes(ignoredUnits); // Du musst diese Funktion hinzufügen oder die Meshes sammeln
+    const allMeshes = this.map.modules.units.getAllMeshes(ignoredUnits);
 
     // this.root!.traverse(child => {
     //   if (child instanceof Mesh) {
@@ -176,11 +176,16 @@ export default class GroundModule extends MapModule<State, Observables> {
 
     const intersections = raycaster.intersectObjects(allMeshes, true);
 
+    const groundHeight = this.getHeightAt(x, z);
+
     if (intersections.length > 0) {
+      if (intersections[0]!.point.y - groundHeight > 1) {
+        return groundHeight;
+      }
       return intersections[0]!.point.y;
     }
 
-    return this.getHeightAt(x, z);
+    return groundHeight;
   }
 
   private createRaycaster() {

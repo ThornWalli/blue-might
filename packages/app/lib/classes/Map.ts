@@ -77,6 +77,8 @@ export default class Map<
     this.root.name = 'map';
 
     this.description = description;
+
+    this.debug = { ...this.debug, ...description.debug };
   }
 
   async setup() {
@@ -142,7 +144,7 @@ export default class Map<
 
   destroy() {
     this.subscription.unsubscribe();
-    this.app.renderer.scene.remove(this.root);
+    this.app.getScene().remove(this.root);
     this.root.remove();
     Object.values(this.modules).forEach(module => module.destroy());
   }
@@ -194,6 +196,7 @@ export default class Map<
 }
 
 export interface MapDescription {
+  debug?: { [key: string]: boolean };
   name: string;
   textures: {
     backgroundTexture: string;

@@ -18,6 +18,7 @@ export type WalkableFunction = (
 };
 
 export interface GridNode {
+  index: number;
   walkable: {
     value: boolean;
     collisionType: COLLISION_TYPE;
@@ -77,6 +78,7 @@ export default class Grid {
 
     this.nodes = new Array(this.width * this.height).fill(0).map((_, i) => {
       return {
+        index: i,
         walkable: {
           value: true,
           collisionType: COLLISION_TYPE.NONE

@@ -48,6 +48,7 @@ import type { Vector3 } from 'three';
 import BmButton from '../Button.vue';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
+import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 
 const $props = defineProps<{
   app: App;
@@ -127,7 +128,7 @@ function onClickUseVehicle() {
     const player = app.modules.player.getCurrentPlayer();
 
     if (!player) return;
-    player.modules.vehicle.setVehicle(u);
+    player.modules.vehicle.setVehicle(u as MovableUnit);
     u.getModuleByType(PlayerUnitModule)?.setPlayer(player);
     unit.value = u;
   }

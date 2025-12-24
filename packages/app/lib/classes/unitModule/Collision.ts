@@ -86,7 +86,7 @@ export default class CollisionUnitModule<
       );
 
       const map = unit.getMap();
-      if (this.debugHelper && map) map.app.renderer.scene.add(this.debugHelper);
+      if (this.debugHelper && map) map.app.getScene().add(this.debugHelper);
     }
   }
 

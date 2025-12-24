@@ -13,11 +13,11 @@ import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import PathfindingModule from '@blue-might/app/lib/classes/mapModule/Pathfinding';
-import GroundVehicleUnitModule from '@blue-might/app/lib/classes/unitModule/movable/GroundVehicle';
-import PathfindingUnitModule from '@blue-might/app/lib/classes/unitModule/Pathfinding';
-import { BlueMight, Tank_1, Tree_1 } from '@blue-might/units';
+import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/movable/Helicopter';
+
+import { BlueMight } from '@blue-might/units';
 import { Subscription } from 'rxjs';
-import { Euler, Vector3 } from 'three';
+import { Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
 
 const DebugAppComponent = defineAsyncComponent(() => import('./DebugApp.vue'));
@@ -32,27 +32,14 @@ const playerUnitId = 'blue-might-1';
 
 const map: Partial<MapDescription> = {
   units: [
-    new Tank_1({
-      id: 'tank-1',
-      position: new Vector3(0, 0, 0),
-      rotation: new Euler(0, 0, 0),
-      moduleStates: {
-        [GroundVehicleUnitModule.TYPE]: {
-          active: true
-        }
-      },
-      debug: {
-        [PathfindingUnitModule.TYPE]: true
-      }
-    }),
     new BlueMight({
       id: 'blue-might-1',
-      position: new Vector3(2, 0, 0)
-    }),
-    new Tree_1({
-      id: 'tree-1',
-      position: new Vector3(-0.17, 0, 2.83),
-      rotation: new Euler(0, 0, 0)
+      position: new Vector3(0, 0, 0),
+      moduleStates: {
+        [HelicopterUnitModule.TYPE]: {
+          active: true
+        }
+      }
     })
   ]
 };

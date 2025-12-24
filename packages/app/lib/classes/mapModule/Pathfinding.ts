@@ -4,7 +4,7 @@ import MapModule, {
   type MapModuleState
 } from '../MapModule';
 import GroundNavigator from '../pathfinding/GroundNavigator';
-import AirNavigator from '../pathfinding/AirNavigator';
+import AirNavigator, { VehicleType } from '../pathfinding/AirNavigator';
 import CollisionUnitModule from '../unitModule/Collision';
 import type { Subscription } from 'rxjs';
 import { filter, throttleTime } from 'rxjs';
@@ -82,7 +82,22 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       this.debug
     );
 
-    this.airNavigation = new AirNavigator(this.map, this.colliders.slice());
+    this.airNavigation = new AirNavigator(
+      this.map,
+      this.colliders.slice(),
+      VehicleType.HELICOPTER,
+      3,
+      [],
+      {
+        gridSize: 1 / 3,
+        size: new Vector2(
+          this.map.modules.ground.state.terrainWidth,
+          this.map.modules.ground.state.terrainHeight
+        ),
+        sphere: false
+      },
+      this.debug
+    );
 
     if (this.debug) {
       this.groundNavigationLarge.setupDebugGridObjects();
@@ -116,20 +131,12 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     const collisionModule = unit.getModuleByType(CollisionUnitModule);
     if (collisionModule?.options.disabled) return;
     this.units.push(unit);
-    // this.addToColliders(
-    //   unit.getModuleByType(CollisionUnitModule)!.getCollisionObject()
-    // );
-
     this.groundNavigationSmall?.addCollider(
       unit.modules.collision.getCollisionObject()
     );
     this.groundNavigationLarge?.addCollider(
       unit.modules.collision.getCollisionObject()
     );
-
-    // this.groundNavigationSmall?.updateWalkabilityAroundObject(unit.root);
-    // this.groundNavigationLarge?.updateWalkabilityAroundObject(unit.root);
-
     this.unitSubscriptions.set(
       unit,
       unit.observables.position$.pipe(throttleTime(250)).subscribe(() => {

@@ -35,13 +35,13 @@ export default class Human_1<
     this.setMaterialReady();
     this.modules.animation.playAction('idle');
     this.subscription.add(
-      (this as FigureUnit).modules.figure.observables.move$.subscribe(() => {
+      (this as FigureUnit).modules.movable.observables.move$.subscribe(() => {
         this.modules.animation.stopAction('idle');
         this.modules.animation.playAction('walk');
       })
     );
     this.subscription.add(
-      (this as FigureUnit).modules.figure.observables.stop$.subscribe(() => {
+      (this as FigureUnit).modules.movable.observables.stop$.subscribe(() => {
         this.modules.animation.stopAction('walk');
         this.modules.animation.playAction('idle');
       })

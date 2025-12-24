@@ -1,5 +1,5 @@
 import type { UnitConstructorOptions, UnitOptions } from '../Unit';
-import FigureUnitModule from '../unitModule/moveable/Figure';
+import FigureUnitModule from '../unitModule/movable/Figure';
 import MovableUnit, {
   type MovableUnitModuleList,
   type MovableUnitModules
@@ -11,7 +11,7 @@ import { COLLISION_TYPE } from '../unitModule/Collision';
 export interface FigureUnitOptions extends UnitOptions {}
 
 export type FigureUnitModules = MovableUnitModules & {
-  figure: FigureUnitModule;
+  movable: FigureUnitModule;
   patrol: PatrolUnitModule;
 };
 

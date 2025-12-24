@@ -5,13 +5,14 @@ import UnitModule, {
   type UnitModuleOptions,
   type UnitModuleState
 } from '../UnitModule';
-import GroundVehicleUnitModule from './moveable/GroundVehicle';
-import HelicopterUnitModule from './moveable/Helicopter';
+import GroundVehicleUnitModule from './movable/GroundVehicle';
+import HelicopterUnitModule from './movable/Helicopter';
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 import { Subject } from 'rxjs';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
-import FigureUnitModule from './moveable/Figure';
+import FigureUnitModule from './movable/Figure';
+import type MovableUnitModule from './Movable';
 
 declare module '../../utils/object' {
   interface ObjectUserData {
@@ -72,16 +73,34 @@ export default class PathfindingUnitModule extends UnitModule<
     return this.state.currentPath !== null;
   }
 
-  private moveAirVehicle(unit: Unit, target: Vector3) {
+  private async moveAirVehicle(unit: Unit, target: Vector3) {
     const airNavigator = unit.getMap()?.modules.pathfinding.getAirNavigator();
 
     if (!airNavigator) throw new Error('AirNavigator not initialized');
 
-    const path = airNavigator.findPath(unit.getPosition(), target);
-
-    if (path) return;
+    const path = await airNavigator.findPath(unit.getPosition(), target);
+    // debugger;
+    if (!path) return;
 
     this.state.currentPath = path;
+
+    if (this.debug) {
+      this.updateDebugPathLine(unit);
+
+      const subscription = this.observables.moveComplete$.subscribe(() => {
+        subscription.unsubscribe();
+        this.updateDebugPathLine(unit);
+      });
+    }
+
+    this.observables.moveStart$.next();
+
+    return new Promise<boolean>(resolve => {
+      const subscription = this.observables.moveComplete$.subscribe(() => {
+        subscription.unsubscribe();
+        resolve(true);
+      });
+    });
   }
 
   private async moveGroundVehicle(unit: Unit, target: Vector3) {
@@ -155,9 +174,7 @@ export default class PathfindingUnitModule extends UnitModule<
     const target = currentPath[0]!;
     const unit = this.getUnit();
 
-    const gv = unit.getModule<GroundVehicleUnitModule>(
-      GroundVehicleUnitModule.TYPE
-    );
+    const gv = unit.getModule<MovableUnitModule>(GroundVehicleUnitModule.TYPE);
     const fig = unit.getModule<FigureUnitModule>(FigureUnitModule.TYPE);
     if (gv) {
       const pos = unit.getPosition();
@@ -302,7 +319,7 @@ export default class PathfindingUnitModule extends UnitModule<
           linewidth: 2
         })
       );
-      unit.getMap()?.app.renderer.scene.add(this.debugPathLine);
+      unit.getMap()?.app.getScene().add(this.debugPathLine);
     } else {
       this.debugPathLine.geometry.setFromPoints(
         path.map(p => new Vector3(p.x, p.y + 0.1, p.z))

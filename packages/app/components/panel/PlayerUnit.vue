@@ -102,13 +102,13 @@ import {
 import { Vector3 } from 'three';
 import { ICON } from '@blue-might/app/utils/icons';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/moveable/Helicopter';
+import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/Helicopter';
 import HelicopterUnit from '@blue-might/app/lib/classes/unit/vehicle/Helicopter';
 import type { PowerInfo } from '@blue-might/app/lib/classes/unitModule/Movable';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import BaseButton from '../base/Button.vue';
 
-import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/moveable/Helicopter';
+import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/movable/Helicopter';
 import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
 
 const $props = defineProps<{
@@ -330,11 +330,10 @@ function onClickFocusUnit() {
 }
 
 function onClickGears() {
-  const helicopter = player.value?.modules.vehicle.getVehicle();
-  if (!(helicopter instanceof HelicopterUnit)) return;
+  const vehicleUnit = player.value?.modules.vehicle.getVehicle();
+  if (!(vehicleUnit instanceof HelicopterUnit)) return;
 
-  const helicopterModule =
-    helicopter.getModuleByType<HelicopterUnitModule>(HelicopterUnitModule);
+  const helicopterModule = vehicleUnit.modules.vehicle;
   if (!helicopterModule) return;
 
   helicopterModule.toggleGears();

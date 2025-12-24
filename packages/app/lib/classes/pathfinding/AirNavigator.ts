@@ -1,101 +1,81 @@
-import type { Object3D } from 'three';
-import { Vector3 } from 'three';
-import { lineOfSight } from '../../utils/pathfinding';
+import type { Vector3, Box3, Object3D, Vector2 } from 'three';
 import type Map from '../Map';
+import { TILE_TYPE } from '../../utils/pathfinding';
+import BaseNavigator from '../abstract/BaseNavigator';
+import type { GridNode } from './Grid';
+import { COLLISION_TYPE } from '../unitModule/Collision';
 
-export default class AirNavigator {
-  private map: Map;
-  private colliders: Object3D[];
-  private nodes: Vector3[];
-  private graph: { [key: number]: number[] };
+export enum VehicleType {
+  AIRPLANE = 'airplane',
+  HELICOPTER = 'helicopter'
+}
+
+export default class AirNavigator extends BaseNavigator {
   private flightHeight: number;
+  private vehicleType: VehicleType;
+  private runways: Box3[] = [];
+
   constructor(
     map: Map,
     colliders: Object3D[],
-    spacing = 80,
-    flightHeight = 30,
-    worldW = 400,
-    worldH = 400
+    vehicleType: VehicleType,
+    flightHeight = 1,
+    runways: Box3[] = [],
+    options: { gridSize: number; size: Vector2; sphere: boolean },
+    debug = false
   ) {
-    this.map = map;
-    this.colliders = colliders;
-
-    this.nodes = [];
-    this.graph = {};
+    super(map, colliders, options, debug);
     this.flightHeight = flightHeight;
-
-    for (let x = 0; x < worldW; x += spacing) {
-      for (let z = 0; z < worldH; z += spacing) {
-        const y =
-          this.map.modules.ground.getSurfaceHeightAt(x, z) + flightHeight;
-        const node = new Vector3(x, y, z);
-        this.nodes.push(node);
-      }
-    }
-
-    // edges
-    for (let i = 0; i < this.nodes.length; i++) {
-      this.graph[i] = [];
-      for (let j = 0; j < this.nodes.length; j++) {
-        if (i === j) continue;
-        if (lineOfSight(this.nodes[i]!, this.nodes[j]!, this.colliders)) {
-          this.graph[i]!.push(j);
-        }
-      }
-    }
+    this.vehicleType = vehicleType;
+    this.runways = runways;
   }
 
-  findClosestNode(pos: Vector3) {
-    let best = 0;
-    let bestDist = Infinity;
-
-    for (let i = 0; i < this.nodes.length; i++) {
-      const d = pos.distanceTo(this.nodes[i]!);
-      if (d < bestDist) {
-        bestDist = d;
-        best = i;
-      }
-    }
-    return best;
+  protected getHeightAt(x: number, z: number): number {
+    return this.map.modules.ground.getSurfaceHeightAt(x, z) + this.flightHeight;
   }
 
-  findPath(start: Vector3, end: Vector3) {
-    const s = this.findClosestNode(start);
-    const e = this.findClosestNode(end);
+  protected isWalkableExtra(
+    _pos: Vector3,
+    _excludeObjects: Object3D[]
+  ): { value: boolean; collisionType: COLLISION_TYPE } {
+    // Luft-spezifische Prüfung (z.B. zusätzliche Kollisionen in der Luft)
+    // Beispiel: Prüfe auf Luft-Objekte
+    const walkable = true;
+    const collisionType = COLLISION_TYPE.NONE;
+    // ... (deine Luft-Kollisionslogik hier)
+    return { value: walkable, collisionType };
+  }
 
-    const visited = new Set();
-    const parent: {
-      [key: number]: number;
-    } = {};
-    const queue = [s];
+  protected getTileTypeAtNode(_node: GridNode) {
+    // Luft hat keine spezifischen Tile-Typen, oder erweitere
+    return TILE_TYPE.GRASS; // Oder passe an
+  }
 
-    visited.add(s);
-
-    while (queue.length > 0) {
-      const current = queue.shift();
-      if (current === e) break;
-
-      for (const n of this.graph[current!]!) {
-        if (!visited.has(n)) {
-          visited.add(n);
-          parent[n] = current!;
-          queue.push(n);
-        }
-      }
+  // Spezielle Start/Landung für Fahrzeugtypen
+  canTakeOff(pos: Vector3): boolean {
+    if (this.vehicleType === VehicleType.HELICOPTER) {
+      const { x, y } = this.toNodePosition(pos.z, pos.x);
+      return this.isWalkable({
+        grid: this.getGrid(),
+        x,
+        y,
+        excludeObjects: []
+      }).value;
+    } else if (this.vehicleType === VehicleType.AIRPLANE) {
+      return this.runways.some(runway => runway.containsPoint(pos)); // Nur auf Runways
     }
+    return false;
+  }
 
-    if (!parent[e]) return null;
+  canLand(pos: Vector3): boolean {
+    return this.canTakeOff(pos); // Gleiche Logik
+  }
 
-    // reconstruct
-    const path = [];
-    let c = e;
-
-    while (c !== s) {
-      path.push(this.nodes[c]);
-      c = parent[c]!;
-    }
-    path.push(this.nodes[s]);
-
-    return path.filter(node => !!node).reverse();
+  override getDebugPositions(nodes: GridNode[]) {
+    return nodes.map(node => {
+      const position = this.toWorldPosition(node.x, node.y);
+      position.setY(position.y + this.flightHeight);
+      return { walkable: node.walkable.value, index: node.index, position };
+    });
   }
 }

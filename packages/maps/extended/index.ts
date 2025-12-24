@@ -12,6 +12,7 @@ import {
   Tree_1,
   Soldat_1
 } from '@blue-might/units';
+import PathfindingModule from '@blue-might/app/lib/classes/mapModule/Pathfinding';
 
 const desc: MapDescription = {
   name: 'Extended Map',
@@ -20,6 +21,11 @@ const desc: MapDescription = {
     backgroundTexture,
     foregroundTexture
   },
+
+  debug: {
+    [PathfindingModule.TYPE]: true
+  },
+
   units: [
     new Tree_1({
       position: new Vector3(37, 0, -23) // 3+34, 9-32
@@ -43,7 +49,7 @@ const desc: MapDescription = {
     new Tank_1({
       position: new Vector3(37.5, 0, -30), // 6.5+34, 2-32
       moduleStates: {
-        groundVehicle: {
+        movable: {
           active: true
         },
         patrol: {

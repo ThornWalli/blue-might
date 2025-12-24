@@ -154,7 +154,7 @@ export default class PatrolUnitModule extends UnitModule<
   //#region debug
   private debugLine: Line | null = null;
   private setupDebug() {
-    const scene = this.getUnit().getMap()?.app.renderer.scene;
+    const scene = this.getUnit().getMap()?.app.getScene();
     let worldPath = this.getWorldPath();
     worldPath = [...worldPath, worldPath[0]!];
 

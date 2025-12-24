@@ -40,7 +40,7 @@ const desc: MapDescription = {
     new Tank_1({
       position: new Vector3(6.5, 0, 2),
       moduleStates: {
-        groundVehicle: {
+        movable: {
           active: true
         },
         patrol: {

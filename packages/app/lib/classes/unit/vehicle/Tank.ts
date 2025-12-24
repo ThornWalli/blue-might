@@ -9,7 +9,7 @@ import VehicleUnit, {
 export type TankUnitOptions = VehicleUnitOptions;
 
 export type TankUnitModules = VehicleUnitModules & {
-  vehicle: TankUnitModule;
+  movable: TankUnitModule;
 };
 
 export type TankUnitModuleList = (typeof TankUnitModule)[] &

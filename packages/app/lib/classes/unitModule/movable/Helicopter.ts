@@ -40,7 +40,6 @@ export enum FLIGHT_STATUS {
 }
 
 export interface HelicopterUnitModuleState extends MovableUnitModuleState {
-  velocity: Vector3; // includes y
   tilt: Vector3; // x=pitch, y=unused, z=roll (right-handed; adjust as needed)
   groundNormal: Vector3;
   isAirborne?: boolean;
@@ -59,12 +58,26 @@ export default class HelicopterUnitModule<
   Obervables extends HelicopterUnitObservables = HelicopterUnitObservables,
   U extends HelicopterUnit = HelicopterUnit
 > extends MovableUnitModule<Options, State, Obervables, U> {
-  getTilt() {
-    return this.state.tilt;
-  }
-  static override TYPE = 'helicopter';
-  private _dir = new Vector3();
   private _right = new Vector3();
+
+  override getControls() {
+    const human = super.getControls();
+    const ai = this.getAIControls();
+    if (!ai) return human;
+
+    return {
+      up: ai.up ?? human.up,
+      down: ai.down ?? human.down,
+      left: ai.left ?? human.left,
+      right: ai.right ?? human.right,
+      space: ai.space ?? human.space,
+      gear: ai.gear ?? human.gear,
+      landing: ai.landing ?? human.landing,
+      modifier: ai.modifier ?? human.modifier,
+      rotateLeft: ai.rotateLeft ?? human.rotateLeft,
+      rotateRight: ai.rotateRight ?? human.rotateRight
+    };
+  }
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {
     super(
@@ -85,7 +98,6 @@ export default class HelicopterUnitModule<
       } as Options,
       {
         ...state,
-        velocity: state.velocity ?? new Vector3(0, 0, 0),
         tilt: state.tilt ?? new Vector3(0, 0, 0),
         groundNormal: state.groundNormal ?? new Vector3(0, 1, 0),
         controls: {
@@ -193,10 +205,13 @@ export default class HelicopterUnitModule<
     return this.state.gearsActive && this.state.gearsOpened ? 0.2 : 0.6;
   }
 
-  lastPosition = new Vector3();
   override update({ delta, time }: AnimationLoopValue): void {
     super.update({ delta, time });
+    this.moveUpdate({ delta });
+  }
 
+  lastPosition = new Vector3();
+  moveUpdate({ delta }: { delta: number }) {
     const unit = this.getUnit();
 
     const controls = this.getControls();
@@ -443,13 +458,10 @@ export default class HelicopterUnitModule<
     unit.setPitch(tilt.x);
     unit.setRoll(-tilt.z);
   }
+  getTilt() {
+    return this.state.tilt;
+  }
 
-  getTmpDirection() {
-    return this._dir;
-  }
-  setTmpDirection(x: number, y: number, z: number) {
-    this._dir.set(x, y, z);
-  }
   getTmpRight() {
     return this._right;
   }

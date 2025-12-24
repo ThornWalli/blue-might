@@ -71,9 +71,7 @@ onMounted(() => {
   const vehicleModule$ = vehicle$.pipe(
     filter(vehicle => vehicle?.hasModuleType(MovableUnitModule) ?? false),
     switchMap(
-      vehicle =>
-        of(vehicle?.getModuleByType<MovableUnitModule>(MovableUnitModule)) ??
-        EMPTY
+      vehicle => of((vehicle as MovableUnit)?.modules.movable) ?? EMPTY
     ),
     filter(Boolean)
   );

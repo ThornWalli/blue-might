@@ -2,7 +2,7 @@ import { Vector3 } from 'three';
 import GroundVehicleUnitModule, {
   type GroundVehicleUnitModuleOptions,
   type GroundVehicleUnitModuleState
-} from './moveable/GroundVehicle';
+} from './movable/GroundVehicle';
 import type { AnimationLoopValue } from '../Renderer';
 import type TankUnit from '../unit/vehicle/Tank';
 

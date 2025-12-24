@@ -157,6 +157,10 @@ export class BaseApp<
     });
     this.renderer.destroy();
   }
+
+  getScene() {
+    return this.renderer.scene;
+  }
 }
 
 interface AppPlaygroundModules extends AppModules {

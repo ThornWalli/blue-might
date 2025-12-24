@@ -8,7 +8,6 @@ import type {
 } from '../Movable';
 import MovableUnitModule from '../Movable';
 import type MovableUnit from '../../unit/Movable';
-import type { ControlState } from '../../playerModule/Controls';
 
 export type GroundVehicleUnitModuleObservables = MovableUnitModuleObservables;
 
@@ -22,7 +21,6 @@ export interface GroundVehicleUnitModuleOptions
 }
 
 export interface GroundVehicleUnitModuleState extends MovableUnitModuleState {
-  velocity: Vector3;
   tilt: Vector3;
   groundNormal: Vector3;
 }
@@ -35,8 +33,6 @@ export default class GroundVehicleUnitModule<
     GroundVehicleUnitModuleObservables = GroundVehicleUnitModuleObservables,
   U extends MovableUnit = MovableUnit
 > extends MovableUnitModule<Options, State, Obervables, U> {
-  static override TYPE = 'groundVehicle';
-  private _dir = new Vector3();
   private _rotDir = new Vector3();
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {
@@ -53,7 +49,6 @@ export default class GroundVehicleUnitModule<
       },
       {
         ...state,
-        velocity: state.velocity ?? new Vector3(0, 0, 0),
         tilt: state.tilt ?? new Vector3(0, 0, 0),
         groundNormal: state.groundNormal ?? new Vector3(0, 1, 0)
       },
@@ -66,22 +61,6 @@ export default class GroundVehicleUnitModule<
     this.moveUpdate({ delta });
   }
 
-  private _aiControls?: ControlState;
-  setAutopilotControls(controls?: ControlState) {
-    this._aiControls = controls;
-  }
-  clearAutopilotControls() {
-    this._aiControls = undefined;
-  }
-  getVelocity() {
-    return this.state.velocity;
-  }
-  getTmpDirection() {
-    return this._dir;
-  }
-  setTmpDirection(x: number, y: number, z: number) {
-    this._dir.set(x, y, z);
-  }
   getTmpRotationDirection() {
     return this._rotDir;
   }
@@ -91,7 +70,7 @@ export default class GroundVehicleUnitModule<
 
   override getControls() {
     const human = super.getControls();
-    const ai = this._aiControls;
+    const ai = this.getAIControls();
     if (!ai) return human;
 
     return {
@@ -115,7 +94,7 @@ export default class GroundVehicleUnitModule<
     const friction = this.options.friction;
 
     const controls = this.getControls();
-    const aiActive = !!this._aiControls;
+    const aiActive = !!this.getAIControls();
 
     const eps = 1e-4;
     if (

@@ -161,9 +161,11 @@ export default class ShootModule extends MapModule<State, Observables> {
         const moveDistance = direction.length() * shootSpeed;
         if (distanceToIntersection <= moveDistance) {
           if (intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]) {
-            const unit = this.map.app.renderer.scene.getObjectById(
-              intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
-            )?.userData.unit as Unit;
+            const unit = this.map.app
+              .getScene()
+              .getObjectById(
+                intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
+              )?.userData.unit as Unit;
             this.hitUnit(unit, shoot);
           }
           this.spawnDustAt(point, normal, intersection.object);

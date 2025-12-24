@@ -39,7 +39,7 @@ onUnmounted(() => {
 const map: MapDescription = defu($props.map ?? {}, {
   ...debugMap,
   units: [...debugMap.units]
-});
+}) as MapDescription;
 
 const AppComponent = defineAsyncComponent(
   () => import('@blue-might/app/components/App.vue')

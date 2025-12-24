@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
@@ -6,6 +7,8 @@ import UnitModule, {
 import type { AnimationLoopValue } from '../Renderer';
 import type MovableUnit from '../unit/Movable';
 import { ReplaySubject, Subject } from 'rxjs';
+import type { ControlState } from '../playerModule/Controls';
+import { Vector3 } from 'three';
 
 export interface PowerInfo {
   flightPower: number;
@@ -27,6 +30,7 @@ export interface MovableUnitModuleObservables extends UnitModuleObservables {
 export interface MovableUnitModuleOptions extends UnitModuleOptions {}
 
 export interface MovableUnitModuleState extends UnitModuleState {
+  velocity: Vector3;
   active: boolean;
   rawPower: number;
   maxPower: number;
@@ -45,6 +49,7 @@ export default class MovableUnitModule<
   U extends MovableUnit = MovableUnit
 > extends UnitModule<Options, State, Obervables, U> {
   static override TYPE = 'movable';
+  private _dir = new Vector3();
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {
     super(
@@ -54,6 +59,7 @@ export default class MovableUnitModule<
       },
       {
         ...state,
+        velocity: state.velocity ?? new Vector3(0, 0, 0),
         active: state.active ?? false,
         rawPower: state.rawPower ?? 0,
         maxPower: state.maxPower ?? 1,
@@ -81,11 +87,50 @@ export default class MovableUnitModule<
     //#endregion
   }
 
+  getAIControls() {
+    return this._aiControls;
+  }
+
+  private _aiControls?: ControlState;
+  setAutopilotControls(controls?: ControlState) {
+    this._aiControls = controls;
+    if (controls) {
+      // Automatisch starten, wenn AI aktiv
+      this.turnOn();
+    } else {
+      // Optional: Stoppen, wenn AI deaktiviert
+      this.turnOff();
+    }
+  }
+  clearAutopilotControls() {
+    if (!this._aiControls) return;
+    this._aiControls = undefined;
+    this.turnOff(); // Stoppen, wenn AI entfernt
+  }
+
   getControls() {
     const unit = this.getUnit() as U;
-    return (
-      unit.modules.player.getPlayer()?.modules.controls.getControls() ?? {}
-    );
+    const human =
+      unit.modules.player.getPlayer()?.modules.controls.getControls() ?? {};
+    const ai = this._aiControls;
+    if (!ai || !this.hasMinPower()) {
+      // Keine AI-Controls, wenn keine Power oder kein AI
+      return human;
+    }
+
+    // AI-Controls nur anwenden, wenn genug Power da ist
+    return {
+      up: ai.up ?? human.up,
+      down: ai.down ?? human.down,
+      left: ai.left ?? human.left,
+      right: ai.right ?? human.right,
+      space: ai.space ?? human.space,
+      gear: ai.gear ?? human.gear,
+      landing: ai.landing ?? human.landing,
+      modifier: ai.modifier ?? human.modifier,
+      rotateLeft: ai.rotateLeft ?? human.rotateLeft,
+      rotateRight: ai.rotateRight ?? human.rotateRight
+    };
   }
 
   override update({ delta: _delta }: AnimationLoopValue): void {
@@ -173,5 +218,16 @@ export default class MovableUnitModule<
 
   turnOff() {
     this.setActive(false);
+  }
+
+  getTmpDirection() {
+    return this._dir;
+  }
+  setTmpDirection(x: number, y: number, z: number) {
+    this._dir.set(x, y, z);
+  }
+
+  getVelocity() {
+    return this.state.velocity;
   }
 }

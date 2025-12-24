@@ -20,16 +20,8 @@ export interface FigureUnitModuleOptions extends MovableUnitModuleOptions {
 }
 
 export interface FigureUnitModuleState extends MovableUnitModuleState {
-  velocity: Vector3;
   isGrounded: boolean;
   jumpCooldown: number;
-  autopilotControls?: {
-    up: boolean;
-    down: boolean;
-    left: boolean;
-    right: boolean;
-    space: boolean;
-  };
 }
 
 export default class FigureUnitModule extends MovableUnitModule<
@@ -38,9 +30,6 @@ export default class FigureUnitModule extends MovableUnitModule<
   FigureUnitObservables,
   FigureUnit
 > {
-  static override TYPE = 'figure';
-
-  private _dir = new Vector3();
   private moveState = getDefaultMoveState();
 
   constructor(
@@ -62,31 +51,11 @@ export default class FigureUnitModule extends MovableUnitModule<
       },
       {
         ...state,
-        velocity: state.velocity ?? new Vector3(0, 0, 0),
         isGrounded: state.isGrounded ?? true,
         jumpCooldown: state.jumpCooldown ?? 0
       },
       debug
     );
-  }
-
-  setAutopilotControls(controls: {
-    up: boolean;
-    down: boolean;
-    left: boolean;
-    right: boolean;
-    space: boolean;
-  }) {
-    this.state.autopilotControls = controls;
-  }
-
-  clearAutopilotControls() {
-    this.state.autopilotControls = undefined;
-  }
-
-  override getControls() {
-    // Verwende Autopilot-Controls, falls gesetzt, sonst manuelle Controls
-    return this.state.autopilotControls || super.getControls();
   }
 
   override update({ delta, time }: AnimationLoopValue): void {
@@ -121,7 +90,7 @@ export default class FigureUnitModule extends MovableUnitModule<
     }
 
     // 1. Richtung aus Yaw
-    const forward = unit.getForwardXZFromYaw(this._dir);
+    const forward = unit.getForwardXZFromYaw(this.getTmpDirection());
 
     // 2. Beschleunigung
     let accelX = 0;
