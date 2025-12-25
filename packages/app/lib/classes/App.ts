@@ -12,7 +12,7 @@ import AssetLoader from './AssetLoader';
 import CursorAppModule from './appModule/Cursor';
 import PlayerAppModule from './appModule/Player';
 import MapAppModule from './appModule/Map';
-import type { MapDescription } from './Map';
+import type { MapDescription, ModuleDebug as MapModuleDebug } from './Map';
 import SelectionAppModule from './appModule/Selection';
 import type Unit from './Unit';
 import UnitFocusAppModule from './appModule/UnitFocus';
@@ -53,9 +53,7 @@ export interface AppConfig {
   mode?: APP_MODE;
   rendererOptions: RendererOptions;
   debug?: {
-    map?: {
-      [key: string]: boolean;
-    };
+    map?: Partial<MapModuleDebug>;
   };
 }
 
@@ -137,7 +135,7 @@ export class BaseApp<
 
   async enterMap(desc: MapDescription) {
     const map = await this.loadMap(desc);
-    map.setDebug(this.config.debug?.map ?? {});
+    map.setModuleDebug(this.config.debug?.map ?? {});
     await this.modules.map.setMap(map);
     console.log('Map loaded', map);
   }

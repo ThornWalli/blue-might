@@ -13,7 +13,7 @@ import VehicleUnit, {
 export type HelicopterUnitOptions = VehicleUnitOptions;
 
 export type HelicopterUnitModules = VehicleUnitModules & {
-  movable: HelicopterUnitModule;
+  helicopter: HelicopterUnitModule;
   player: PlayerUnitModule;
 };
 

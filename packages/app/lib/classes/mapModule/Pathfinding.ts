@@ -10,6 +10,12 @@ import type { Subscription } from 'rxjs';
 import { filter, throttleTime } from 'rxjs';
 import type Unit from '../Unit';
 
+declare module '../Map' {
+  interface ModuleDebug {
+    pathfinding: boolean;
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Observables extends MapModuleObservables {}
 
@@ -86,7 +92,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       this.map,
       this.colliders.slice(),
       VehicleType.HELICOPTER,
-      3,
+      1.4,
       [],
       {
         gridSize: 1 / 3,

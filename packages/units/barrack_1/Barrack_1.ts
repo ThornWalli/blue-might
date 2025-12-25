@@ -32,6 +32,7 @@ export default class Barrack_1<
   }
 
   override async afterSetup(_context: SetupContext) {
+    await super.afterSetup(_context);
     this.setMaterialReady();
   }
 

@@ -4,6 +4,7 @@ import type {
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 
+import type { MeshStandardMaterial } from 'three';
 import { Vector2, Vector3, Mesh, SkinnedMesh, Object3D } from 'three';
 import baseGlb from './assets/stationary_gun_1.glb?url';
 import BuildingUnit, {
@@ -90,6 +91,11 @@ export default class StationaryGun_1 extends BuildingUnit<
             weapons: (options.moduleOptions?.gun as GunUnitModuleOptions)
               ?.weapons ?? [new weapons.default()],
             ...options.moduleOptions?.gun
+          },
+          collision: {
+            ...options.moduleOptions?.collision,
+            targetName: 'head',
+            targetChildIndex: 1
           }
         }
       },
@@ -125,6 +131,7 @@ export default class StationaryGun_1 extends BuildingUnit<
   }
 
   override async afterSetup(_context: SetupContext) {
+    await super.afterSetup(_context);
     this.setMaterialReady();
   }
 
@@ -161,6 +168,18 @@ export default class StationaryGun_1 extends BuildingUnit<
         child.castShadow = true;
         child.receiveShadow = false;
 
+        if ((child.material as MeshStandardMaterial).name === 'primary') {
+          child.material.color.set(
+            this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
+          );
+          child.material.needsUpdate = true;
+        }
+        if ((child.material as MeshStandardMaterial).name === 'secondary') {
+          child.material.color.set(
+            this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
+          );
+          child.material.needsUpdate = true;
+        }
         // (child.material as MeshLambertMaterial).wireframe = true;
       }
     });

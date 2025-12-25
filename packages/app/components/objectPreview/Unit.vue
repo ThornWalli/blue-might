@@ -24,6 +24,9 @@ import type { AnimationLoopValue } from '../../lib/classes/Renderer';
 import BmObjectPreview from '../ObjectPreview.vue';
 import { units } from '@blue-might/units';
 import type Unit from '@blue-might/app/lib/classes/Unit';
+import type { UnitConstructorOptions } from '@blue-might/app/lib/classes/Unit';
+import type Faction from '@blue-might/app/lib/classes/Faction';
+import FactionUnitModule from '@blue-might/app/lib/classes/unitModule/Faction';
 
 const $props = defineProps<{
   app: App;
@@ -54,9 +57,18 @@ const unitInstance = ref<Raw<Unit> | null>(null);
 async function setup(data: UnitPreview) {
   const UnitClass = (await units[
     data.type as keyof typeof units
-  ]) as unknown as { new (): Unit };
+  ]) as unknown as { new (options: Partial<UnitConstructorOptions>): Unit };
 
-  unitInstance.value = markRaw(new UnitClass() as Unit);
+  unitInstance.value = markRaw(
+    new UnitClass({
+      preview: true,
+      moduleStates: {
+        [FactionUnitModule.TYPE]: {
+          faction: $props.modelValue.faction
+        }
+      }
+    }) as Unit
+  );
 
   const instance = unitInstance.value;
   await instance.setup({});
@@ -92,6 +104,7 @@ root.value = markRaw(await setup($props.modelValue));
 <script lang="ts">
 export interface UnitPreview {
   type: string;
+  faction: Faction;
   action: string;
 }
 </script>

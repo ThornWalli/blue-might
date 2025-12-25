@@ -128,6 +128,7 @@ export default class StationaryGun_2 extends BuildingUnit<
   }
 
   override async afterSetup(_context: SetupContext) {
+    await super.afterSetup(_context);
     this.setMaterialReady();
   }
 

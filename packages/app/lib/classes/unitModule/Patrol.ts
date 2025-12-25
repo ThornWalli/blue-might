@@ -9,6 +9,18 @@ import { Subject } from 'rxjs';
 import { disposeObject3D } from '../../utils/object';
 import type PathfindingUnitModule from './Pathfinding';
 
+declare module '../Unit' {
+  interface ModuleStates {
+    patrol: Partial<PatrolUnitModuleState>;
+  }
+  interface ModuleOptions {
+    patrol: Partial<PatrolUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    patrol: boolean;
+  }
+}
+
 interface Observables extends UnitModuleObservables {
   start$: Subject<void>;
   stop$: Subject<void>;
@@ -17,22 +29,28 @@ interface Observables extends UnitModuleObservables {
   abort$: Subject<void>;
 }
 
-interface Options extends UnitModuleOptions {
+export interface PatrolUnitModuleOptions extends UnitModuleOptions {
   path: [number, number][];
 }
 
-interface State extends UnitModuleState {
+export interface PatrolUnitModuleState extends UnitModuleState {
   active: boolean;
 }
 
 export default class PatrolUnitModule extends UnitModule<
-  Options,
-  State,
+  PatrolUnitModuleOptions,
+  PatrolUnitModuleState,
   Observables
 > {
+  static override PREVIEW = false;
   static override TYPE = 'patrol';
 
-  constructor(unit: Unit, options: Options, state: State, debug: boolean) {
+  constructor(
+    unit: Unit,
+    options: PatrolUnitModuleOptions,
+    state: PatrolUnitModuleState,
+    debug: boolean
+  ) {
     super(
       unit,
       { ...options, path: options.path ?? [] },
@@ -126,13 +144,19 @@ export default class PatrolUnitModule extends UnitModule<
     pathfinding: PathfindingUnitModule
   ) {
     if (!this.state.active || index >= worldPath.length) {
-      // Ende der Patrol oder Abbruch
       return;
+    }
+
+    let nextIndex = index;
+    if (nextIndex >= worldPath.length) {
+      nextIndex = 0;
+      this.observables.loop$.next();
     }
 
     const point = worldPath[index]!;
     try {
       if (!(await pathfinding.move(point))) {
+        this.stopPatrol();
         return;
       }
     } catch (error) {

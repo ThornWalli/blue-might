@@ -2,6 +2,11 @@ import MapModule, {
   type MapModuleObservables,
   type MapModuleState
 } from '../MapModule';
+declare module '../Map' {
+  interface ModuleDebug {
+    effect: boolean;
+  }
+}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Observables extends MapModuleObservables {}

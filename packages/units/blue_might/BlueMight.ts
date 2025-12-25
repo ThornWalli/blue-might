@@ -6,6 +6,7 @@ import type {
 
 import baseGlb from './assets/blue_might.glb?url';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
+import type { MeshStandardMaterial } from 'three';
 import { Mesh, SkinnedMesh, LoopRepeat, LoopOnce } from 'three';
 import HelicopterUnit, {
   type HelicopterUnitModuleList,
@@ -33,10 +34,13 @@ export default class BlueMight<
         name: 'BlueMight',
 
         moduleOptions: {
-          movable: {
+          ...options.moduleOptions,
+          helicopter: {
+            ...options.moduleOptions?.helicopter,
             gearsHeight: 0.15
           },
           collision: {
+            ...options.moduleOptions?.collision,
             targetName: 'base',
             targetChildIndex: 1
           }
@@ -65,6 +69,7 @@ export default class BlueMight<
   };
 
   override async afterSetup(_context: SetupContext) {
+    await super.afterSetup(_context);
     Object.entries(this.animationSettings).forEach(
       ([name, { clampWhenFinished, loop, duration }]) => {
         const action = this.modules.animation.getAction(name);
@@ -79,10 +84,10 @@ export default class BlueMight<
     this.setMaterialReady();
 
     this.subscription.add(
-      this.modules.movable.observables.gearsActive$
+      this.modules.helicopter.observables.gearsActive$
         .pipe(filter(gearsActive => gearsActive))
         .subscribe(() => {
-          if (!this.modules.movable.getGearsOpened()) {
+          if (!this.modules.helicopter.getGearsOpened()) {
             this.modules.animation.playAction('land_gears', { reverse: true });
           } else {
             this.modules.animation.playAction('land_gears');
@@ -92,9 +97,9 @@ export default class BlueMight<
 
     this.subscription.add(
       combineLatest([
-        this.modules.movable.observables.active$,
-        this.modules.movable.observables.powerInfo$,
-        this.modules.movable.observables.flightStatus$
+        this.modules.helicopter.observables.active$,
+        this.modules.helicopter.observables.powerInfo$,
+        this.modules.helicopter.observables.flightStatus$
       ]).subscribe(([_active, powerInfo]) => {
         const action = this.modules.animation.getAction('rotor_run');
         if (action) {
@@ -124,6 +129,13 @@ export default class BlueMight<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
+
+        if ((child.material as MeshStandardMaterial).name === 'primary') {
+          child.material.color.set(
+            this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
+          );
+          child.material.needsUpdate = true;
+        }
       }
     });
 

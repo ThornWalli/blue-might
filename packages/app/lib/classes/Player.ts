@@ -3,14 +3,22 @@ import { ReplaySubject, type SubscriptionLike } from 'rxjs';
 import { Subscription } from 'rxjs';
 import VehicleModule from './playerModule/Vehicle';
 import type MovableUnit from './unit/Movable';
-import type ControlsModule from './playerModule/Controls';
+import ControlsModule from './playerModule/Controls';
 import PlayerUnitModule from './unitModule/Player';
+import FactionModule from './playerModule/Faction';
+import type App from './App';
+import type { PlayerModuleState } from './PlayerModule';
 
-export type PlayerModuleList = (typeof VehicleModule)[];
+export type PlayerModuleList = (
+  | typeof VehicleModule
+  | typeof ControlsModule
+  | typeof FactionModule
+)[];
 
 export interface PlayerModules {
   vehicle: VehicleModule;
   controls: ControlsModule;
+  faction: FactionModule;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -19,6 +27,7 @@ export interface PlayerState {}
 export interface PlayerConstructorOptions {
   id?: string;
   name: string;
+  moduleStates?: { [key: string]: PlayerModuleState };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -40,10 +49,11 @@ export default class Player<
   subscription = new Subscription();
 
   constructor(
-    { id, name }: PlayerConstructorOptions,
+    public app: App,
+    { id, name, moduleStates }: PlayerConstructorOptions,
     protected moduleList: unknown[] = []
   ) {
-    moduleList.push(VehicleModule);
+    moduleList.push(ControlsModule, VehicleModule, FactionModule);
 
     this.id = id || crypto.randomUUID();
     this.name = name || 'Player';
@@ -56,8 +66,10 @@ export default class Player<
     };
 
     const preparedModules = (moduleList as ModuleList).map(ModuleClass => {
+      const state = moduleStates?.[ModuleClass.TYPE] ?? {};
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const moduleInstance = new (ModuleClass as any)(this, this.debug);
+      const moduleInstance = new (ModuleClass as any)(this, state, this.debug);
       return [ModuleClass.TYPE, moduleInstance];
     });
     this.modules = Object.fromEntries(preparedModules);

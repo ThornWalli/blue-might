@@ -3,6 +3,7 @@ import type {
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
+import type { MeshStandardMaterial } from 'three';
 import { Mesh, LoopRepeat, SkinnedMesh } from 'three';
 import baseGlb from './assets/control_tower_1.glb?url';
 import BuildingUnit, {
@@ -32,6 +33,7 @@ export default class ControlTower_1<
   }
 
   override async afterSetup(_context: SetupContext) {
+    await super.afterSetup(_context);
     const action = this.modules.animation.getAction('radar');
     if (action) {
       action.clampWhenFinished = false;
@@ -52,6 +54,20 @@ export default class ControlTower_1<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
+        console.log((child.material as MeshStandardMaterial).name);
+
+        if ((child.material as MeshStandardMaterial).name === 'primary') {
+          child.material.color.set(
+            this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
+          );
+          child.material.needsUpdate = true;
+        }
+        if ((child.material as MeshStandardMaterial).name === 'secondary') {
+          child.material.color.set(
+            this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
+          );
+          child.material.needsUpdate = true;
+        }
       }
     });
 

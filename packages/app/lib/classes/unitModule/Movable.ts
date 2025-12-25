@@ -10,6 +10,18 @@ import { ReplaySubject, Subject } from 'rxjs';
 import type { ControlState } from '../playerModule/Controls';
 import { Vector3 } from 'three';
 
+declare module '../Unit' {
+  interface ModuleStates {
+    movable: Partial<MovableUnitModuleState>;
+  }
+  interface ModuleOptions {
+    movable: Partial<MovableUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    movable: boolean;
+  }
+}
+
 export interface PowerInfo {
   flightPower: number;
   currentPower: number;
@@ -204,6 +216,7 @@ export default class MovableUnitModule<
   }
 
   setActive(value: boolean) {
+    if (this.state.active === value) return;
     this.state.active = value;
     this.observables.active$.next(this.state.active);
   }

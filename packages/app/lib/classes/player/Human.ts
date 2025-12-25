@@ -1,19 +1,20 @@
+import type App from '../App';
 import Player, {
   type PlayerConstructorOptions,
   type PlayerModuleList,
   type PlayerModules
 } from '../Player';
-import ControlsModule from '../playerModule/Controls';
 
-export interface Modules extends PlayerModules {
-  controls: ControlsModule;
-}
+export type Modules = PlayerModules;
 
-export type ModuleList = [typeof ControlsModule] & PlayerModuleList;
+export type ModuleList = PlayerModuleList;
 
 export class HumanPlayer extends Player<Modules, ModuleList> {
-  constructor(options: PlayerConstructorOptions, moduleList: unknown[] = []) {
-    moduleList.push(ControlsModule);
-    super(options, moduleList);
+  constructor(
+    app: App,
+    options: PlayerConstructorOptions,
+    moduleList: ModuleList[] = []
+  ) {
+    super(app, options, moduleList);
   }
 }

@@ -6,16 +6,21 @@ import GroundVehicleUnitModule, {
 import type { AnimationLoopValue } from '../Renderer';
 import type TankUnit from '../unit/vehicle/Tank';
 
-type Options = GroundVehicleUnitModuleOptions;
-type State = GroundVehicleUnitModuleState & {
+export type TankUnitModuleOptions = GroundVehicleUnitModuleOptions;
+export type TankUnitModuleState = GroundVehicleUnitModuleState & {
   rotationVelocity: Vector3;
 };
 
 export default class TankUnitModule extends GroundVehicleUnitModule<
-  Options,
-  State
+  TankUnitModuleOptions,
+  TankUnitModuleState
 > {
-  constructor(unit: TankUnit, options: Options, state: State, debug: boolean) {
+  constructor(
+    unit: TankUnit,
+    options: TankUnitModuleOptions,
+    state: TankUnitModuleState,
+    debug: boolean
+  ) {
     super(
       unit,
       {

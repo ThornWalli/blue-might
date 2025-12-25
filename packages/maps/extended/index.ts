@@ -10,10 +10,24 @@ import {
   LandingPort_1,
   Tank_1,
   Tree_1,
-  Soldat_1
+  Soldat_1,
+  StationaryGun_1
 } from '@blue-might/units';
-import PathfindingModule from '@blue-might/app/lib/classes/mapModule/Pathfinding';
+import Faction from '@blue-might/app/lib/classes/Faction';
+import { weapons } from '@blue-might/weapon';
 
+const blueFaction = new Faction({
+  id: 'blue-faction',
+  name: 'Blue Faction',
+  colors: [0x0055aa, 0xcccccc]
+});
+const enemyFaction = new Faction({
+  id: 'enemy-faction',
+  name: 'Enemy Faction',
+  colors: [0x205010, 0xa0b0a0]
+});
+
+export const playerFaction = blueFaction;
 const desc: MapDescription = {
   name: 'Extended Map',
   textures: {
@@ -23,8 +37,10 @@ const desc: MapDescription = {
   },
 
   debug: {
-    [PathfindingModule.TYPE]: true
+    pathfinding: false
   },
+
+  factions: [blueFaction, enemyFaction],
 
   units: [
     new Tree_1({
@@ -34,21 +50,77 @@ const desc: MapDescription = {
       position: new Vector3(36.5, 0, -22) // 2.5+34, 10-32
     }),
     new LandingPort_1({
-      position: new Vector3(43.5, 0, -26.5) // 9.5+34, 5.5-32
+      position: new Vector3(43.5, 0, -26.5),
+      moduleDebug: {
+        collision: true
+      }
     }),
     new LandingPort_1({
-      position: new Vector3(31, 0, -22) // -3+34, 10-32
+      position: new Vector3(41.5, 0, -26.5),
+      moduleDebug: {
+        collision: true
+      }
     }),
-    new Tank_1({
-      id: 'tank-1',
-      position: new Vector3(38.83, 0, -30) // 7.5+34, 2-32
-    }),
-    new Tank_1({
-      position: new Vector3(38.17, 0, -30) // 8.5+34, 2-32
-    }),
-    new Tank_1({
-      position: new Vector3(37.5, 0, -30), // 6.5+34, 2-32
+    new ControlTower_1({
+      position: new Vector3(37, 0, -27),
       moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
+      }
+    }),
+    new Barrack_1({
+      position: new Vector3(44, 0, -31),
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
+      }
+    }),
+    new BlueMight({
+      id: 'blue-might-1',
+      position: new Vector3(43.5, 0, -26.5), // 34+9.5, -32+5.5
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
+      },
+      moduleDebug: {
+        collision: true
+      }
+    }),
+    new Tank_1({
+      moduleDebug: {
+        collision: true
+      },
+      id: 'tank-1',
+      position: new Vector3(38.83, 0, -30),
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
+      }
+    }),
+    new Tank_1({
+      moduleDebug: {
+        collision: true
+      },
+      position: new Vector3(38.17, 0, -30),
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
+      }
+    }),
+    new Tank_1({
+      moduleDebug: {
+        collision: true
+      },
+      position: new Vector3(37.5, 0, -30),
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        },
         movable: {
           active: true
         },
@@ -71,20 +143,13 @@ const desc: MapDescription = {
         }
       }
     }),
-    new ControlTower_1({
-      position: new Vector3(37, 0, -27) // 5+34, 5-32
-    }),
-    new BlueMight({
-      id: 'blue-might-1',
-      position: new Vector3(43.5, 0, -26.5) // 34+9.5, -32+5.5
-    }),
-    new Barrack_1({
-      position: new Vector3(44, 0, -31) // 34+10.5, -32+1
-    }),
     new Soldat_1({
       id: 'soldat-1',
       position: new Vector3(44.83, 0, -28.17),
       moduleStates: {
+        faction: {
+          faction: blueFaction
+        },
         patrol: {
           active: false
         }
@@ -106,6 +171,9 @@ const desc: MapDescription = {
       id: 'soldat-2',
       position: new Vector3(37.5, 0, -27.83),
       moduleStates: {
+        faction: {
+          faction: blueFaction
+        },
         patrol: {
           active: false
         }
@@ -118,6 +186,22 @@ const desc: MapDescription = {
             [36.5, -26.5],
             [36.5, -27.5]
           ]
+        }
+      }
+    }),
+    new StationaryGun_1({
+      moduleDebug: {
+        collision: true
+      },
+      position: new Vector3(45.17, 1, -25.83),
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
+      },
+      moduleOptions: {
+        gun: {
+          weapons: [new weapons.default()]
         }
       }
     })

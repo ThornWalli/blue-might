@@ -12,7 +12,19 @@ import type { AnimationLoopValue } from '../Renderer';
 import { Subject } from 'rxjs';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import FigureUnitModule from './movable/Figure';
-import type MovableUnitModule from './Movable';
+import MovableUnitModule from './Movable';
+
+declare module '../Unit' {
+  interface ModuleStates {
+    pathfinding: Partial<PathfindingUnitModuleState>;
+  }
+  interface ModuleOptions {
+    pathfinding: Partial<PathfindingUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    pathfinding: boolean;
+  }
+}
 
 declare module '../../utils/object' {
   interface ObjectUserData {
@@ -27,21 +39,26 @@ interface Observables extends UnitModuleObservables {
   moveComplete$: Subject<void>;
 }
 
-type Options = UnitModuleOptions;
-interface State extends UnitModuleState {
+export type PathfindingUnitModuleOptions = UnitModuleOptions;
+export interface PathfindingUnitModuleState extends UnitModuleState {
   currentPath: Vector3[] | null;
 }
 
 export default class PathfindingUnitModule extends UnitModule<
-  Options,
-  State,
+  PathfindingUnitModuleOptions,
+  PathfindingUnitModuleState,
   Observables
 > {
   static override TYPE = 'pathfinding';
 
   debugPathLine?: Line;
 
-  constructor(unit: Unit, options: Options, state: State, debug: boolean) {
+  constructor(
+    unit: Unit,
+    options: PathfindingUnitModuleOptions,
+    state: PathfindingUnitModuleState,
+    debug: boolean
+  ) {
     super(unit, options, state, debug);
 
     this.state = {
@@ -73,16 +90,77 @@ export default class PathfindingUnitModule extends UnitModule<
     return this.state.currentPath !== null;
   }
 
+  simplifyPath(path: Vector3[], tolerance = 0.1): Vector3[] {
+    if (path.length <= 2) {
+      return path;
+    }
+
+    const simplifiedPath: Vector3[] = [path[0]!.clone()];
+    let horizontalSimplificationStarted = false;
+    let lastHorizontalDirection: Vector3 | null = null;
+
+    for (let i = 1; i < path.length - 1; i++) {
+      const p_prev = path[i - 1]!;
+      const p_curr = path[i]!;
+      const p_next = path[i + 1]!;
+
+      const isVerticalMove = Math.abs(p_curr.y - p_next.y) > 0.01;
+
+      if (!horizontalSimplificationStarted) {
+        simplifiedPath.push(p_curr.clone());
+        if (!isVerticalMove) {
+          horizontalSimplificationStarted = true;
+        }
+      } else {
+        if (!lastHorizontalDirection) {
+          const p_prev_xz = p_prev.clone();
+          p_prev_xz.y = 0;
+          const p_curr_xz = p_curr.clone();
+          p_curr_xz.y = 0;
+          lastHorizontalDirection = new Vector3()
+            .subVectors(p_curr_xz, p_prev_xz)
+            .normalize();
+        }
+
+        const p_curr_xz = p_curr.clone();
+        p_curr_xz.y = 0;
+        const p_next_xz = p_next.clone();
+        p_next_xz.y = 0;
+        const currentHorizontalDirection = new Vector3()
+          .subVectors(p_next_xz, p_curr_xz)
+          .normalize();
+
+        if (
+          lastHorizontalDirection.dot(currentHorizontalDirection) <
+          1.0 - tolerance
+        ) {
+          simplifiedPath.push(p_curr.clone());
+          lastHorizontalDirection.copy(currentHorizontalDirection);
+        }
+      }
+    }
+
+    simplifiedPath.push(path[path.length - 1]!.clone());
+
+    return simplifiedPath;
+  }
+
   private async moveAirVehicle(unit: Unit, target: Vector3) {
+    this.state.currentPath = null;
+
     const airNavigator = unit.getMap()?.modules.pathfinding.getAirNavigator();
 
     if (!airNavigator) throw new Error('AirNavigator not initialized');
 
     const path = await airNavigator.findPath(unit.getPosition(), target);
-    // debugger;
-    if (!path) return;
 
-    this.state.currentPath = path;
+    if (!path || path.length <= 1) return;
+
+    path.shift();
+
+    this.state.currentPath = this.simplifyPath(path, 1.0);
+
+    this.yawIntegral = 0;
 
     if (this.debug) {
       this.updateDebugPathLine(unit);
@@ -106,7 +184,7 @@ export default class PathfindingUnitModule extends UnitModule<
   private async moveGroundVehicle(unit: Unit, target: Vector3) {
     const groundNavigator = unit
       .getMap()
-      ?.modules.pathfinding.getGroundNavigatorForUnit(unit); // Neu: Passendes Grid wählen
+      ?.modules.pathfinding.getGroundNavigatorForUnit(unit);
 
     if (!groundNavigator) throw new Error('GroundNavigator not initialized');
 
@@ -115,16 +193,13 @@ export default class PathfindingUnitModule extends UnitModule<
         'PathfindingUnitModule: Already moving, shortening path to current waypoint'
       );
       this.state.currentPath = this.state.currentPath.slice(0, 1);
-      return false; // Bereits ein Pfad aktiv
+      return false;
     }
 
     const path = await groundNavigator.findPath(unit.getPosition(), target, [
       unit.modules.collision.getCollisionObject()
     ]);
 
-    // console.log('Found path:', [...path]);
-    // path[0] = unit.getPosition().clone(); // Startpunkt an aktuelle Position anpassen
-    // path[path.length - 1] = target.clone(); // Endpunkt an Zielposition anpassen
     if (!path) return false;
 
     this.state.currentPath = path;
@@ -161,65 +236,21 @@ export default class PathfindingUnitModule extends UnitModule<
     return unit.hasModuleType(HelicopterUnitModule);
   }
 
+  yawIntegral = 0;
+
   override update({ delta }: AnimationLoopValue): void {
     const currentPath = this.state.currentPath;
     if (!currentPath || currentPath.length === 0) {
-      const gvNone = this.getUnit().getModule<GroundVehicleUnitModule>(
-        GroundVehicleUnitModule.TYPE
-      );
-      gvNone?.clearAutopilotControls();
       return;
     }
 
     const target = currentPath[0]!;
     const unit = this.getUnit();
+    let shiftThreshold = 0.1;
 
-    const gv = unit.getModule<MovableUnitModule>(GroundVehicleUnitModule.TYPE);
-    const fig = unit.getModule<FigureUnitModule>(FigureUnitModule.TYPE);
-    if (gv) {
-      const pos = unit.getPosition();
-      const dx = target.x - pos.x;
-      const dz = target.z - pos.z;
+    const movableModule = unit.getModuleByType(MovableUnitModule);
 
-      // Vorwärtsrichtung = +Z
-      const desiredYaw = Math.atan2(dx, dz);
-      const currentYaw = unit.getYaw();
-
-      let diff = desiredYaw - currentYaw;
-      while (diff > Math.PI) diff -= Math.PI * 2;
-      while (diff < -Math.PI) diff += Math.PI * 2;
-
-      const dist = Math.hypot(dx, dz);
-
-      const yawDeadzone = 0.03;
-      const stopDist = 0.08;
-
-      const turnLeft = diff > yawDeadzone;
-      const turnRight = diff < -yawDeadzone;
-
-      // WICHTIG: vorwärts fahren, solange wir nicht quasi am Wegpunkt sind
-      const goForward = dist > stopDist;
-
-      gv.setAutopilotControls({
-        up: goForward || turnLeft || turnRight, // fahre auch während des Drehens
-        down: false,
-        left: turnLeft,
-        right: turnRight,
-        space: false
-      });
-
-      // Kickstart, falls wir trotz up nicht ins Rollen kommen
-      const velLenSq = gv.getVelocity().lengthSq();
-      if (velLenSq < 1e-6 && (goForward || turnLeft || turnRight)) {
-        const forward = unit.getForwardXZFromYaw(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          new (unit.getPosition().constructor as any)(0, 0, 0)
-        );
-        // kleiner Initial-Impuls; eigentliche Beschleunigung macht moveUpdate
-        gv.getVelocity().addScaledVector(forward, 0.01);
-      }
-    } else if (fig) {
-      // Neue Logik für Figuren: Ähnlich wie Fahrzeuge, aber ohne Kickstart (Figuren beschleunigen selbst)
+    if (movableModule instanceof GroundVehicleUnitModule) {
       const pos = unit.getPosition();
       const dx = target.x - pos.x;
       const dz = target.z - pos.z;
@@ -232,38 +263,162 @@ export default class PathfindingUnitModule extends UnitModule<
       while (diff < -Math.PI) diff += Math.PI * 2;
 
       const dist = Math.hypot(dx, dz);
-      const yawDeadzone = 0.03;
-      const stopDist = 0.08;
 
-      const turnLeft = diff > yawDeadzone;
-      const turnRight = diff < -yawDeadzone;
+      const stopDist = 0.08;
+      const yawDeadzone = 0.1;
+      const maxTurnFactor = 0.5;
+
+      const turnFactor = Math.min(Math.abs(diff) / 1.0, maxTurnFactor);
+      const turnLeft = diff > yawDeadzone ? turnFactor : 0;
+      const turnRight = diff < -yawDeadzone ? turnFactor : 0;
+
       const goForward = dist > stopDist;
 
-      fig.setAutopilotControls({
+      movableModule.setAutopilotControls({
         up: goForward || turnLeft || turnRight,
         down: false,
         left: turnLeft,
         right: turnRight,
         space: false
       });
+
+      const velLenSq = movableModule.getVelocity().lengthSq();
+      if (velLenSq < 1e-6 && (goForward || turnLeft || turnRight)) {
+        const forward = unit.getForwardXZFromYaw(new Vector3(0, 0, 0));
+
+        movableModule.getVelocity().addScaledVector(forward, 0.01);
+      }
+    } else if (movableModule instanceof FigureUnitModule) {
+      const pos = unit.getPosition();
+      const dx = target.x - pos.x;
+      const dz = target.z - pos.z;
+
+      const desiredYaw = Math.atan2(dx, dz);
+      const currentYaw = unit.getYaw();
+
+      let diff = desiredYaw - currentYaw;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+
+      const dist = Math.hypot(dx, dz);
+      const yawDeadzone = 0.03;
+      const stopDist = 0.05;
+
+      const turnLeft = diff > yawDeadzone;
+      const turnRight = diff < -yawDeadzone;
+      const goForward = dist > stopDist;
+
+      movableModule.setAutopilotControls({
+        up: goForward || turnLeft || turnRight,
+        down: false,
+        left: turnLeft,
+        right: turnRight,
+        space: false
+      });
+    } else if (movableModule instanceof HelicopterUnitModule) {
+      if (!movableModule.hasMinPower()) {
+        movableModule.setAutopilotControls({
+          space: true
+        });
+        return;
+      }
+
+      const pos = unit.getPosition();
+      const dx = target.x - pos.x;
+      const dz = target.z - pos.z;
+      const distXZ = Math.hypot(dx, dz);
+
+      const desiredYaw = Math.atan2(dx, dz);
+      const currentYaw = unit.getYaw();
+      const diff =
+        ((desiredYaw - currentYaw + Math.PI) % (Math.PI * 2)) - Math.PI;
+
+      const yawDeadzone = 0.1;
+      const maxTurnFactor = 0.8;
+
+      const integralGain = 0.05;
+      this.yawIntegral = (this.yawIntegral || 0) + diff * delta * integralGain;
+      const turnFactor = Math.min(
+        Math.abs(diff) / 1.0 + Math.abs(this.yawIntegral),
+        maxTurnFactor
+      );
+
+      const turnLeft = diff > yawDeadzone ? turnFactor : 0;
+      const turnRight = diff < -yawDeadzone ? turnFactor : 0;
+
+      const heightDiff = target.y - pos.y;
+      const heightDeadzone = 0.5;
+      const heightReached = Math.abs(heightDiff) <= heightDeadzone;
+      const space = !heightReached && heightDiff > heightDeadzone;
+      const modifier = !heightReached && heightDiff < -heightDeadzone;
+
+      const shouldToggleGears = heightReached && movableModule.getGearsOpened();
+
+      const stopDist = 0.5; // Verkleinern, um präziser anzukommen
+      const brakingDist = 4.0;
+      const isTurning = turnLeft > 0 || turnRight > 0;
+      let goForward = 0;
+
+      const largeTurnThreshold = Math.PI / 4;
+
+      if (Math.abs(diff) > largeTurnThreshold && isTurning) {
+        goForward = 0; // Korrekt: Erst drehen bei großen Winkeln
+      } else if (heightReached) {
+        // Wenn die Distanz größer als die Bremsdistanz ist, voller Schub.
+        if (distXZ > brakingDist) {
+          goForward = 1.0;
+        }
+        // Wenn die Distanz größer als die Stopp-Distanz ist, skaliere den Schub.
+        // Dies ist die Hauptlogik für das Anfahren und Bremsen.
+        else if (distXZ > stopDist) {
+          const brakingFactor = (distXZ - stopDist) / (brakingDist - stopDist);
+          goForward = Math.max(0.2, brakingFactor); // Minimaler Schub von 0.2, um nicht stecken zu bleiben
+        }
+      }
+
+      if (isTurning && goForward > 0) {
+        const turnPenalty = 1.0 - Math.min(turnFactor, 1.0) * 0.75;
+        goForward *= turnPenalty;
+      }
+
+      shiftThreshold = currentPath.length === 1 ? 0.2 : 0.8;
+
+      movableModule.setAutopilotControls({
+        up: goForward,
+        space: space,
+        modifier: modifier,
+        rotateLeft: turnLeft,
+        rotateRight: turnRight,
+        gear: shouldToggleGears, // Befehl zum Einfahren der Gears geben
+
+        down: false,
+        left: false,
+        right: false,
+        landing: false,
+        pitchUp: false,
+        pitchDown: false
+      });
     } else {
-      // Air vehicles bewegen wir weiterhin per Lerp
       const step = 4 * delta;
       const position = unit.getPosition();
       position.lerp(target, step);
       unit.setPosition(position);
     }
 
-    // Wegpunkt entfernen, wenn erreicht
     const posNow = unit.getPosition();
-    const _distance = posNow.distanceTo(target); // Vollständige Distanz (für Logs/Debug)
     const horizontalDistance = Math.hypot(
       target.x - posNow.x,
       target.z - posNow.z
-    ); // Nur x/z
+    );
+    const distanceToCheck = horizontalDistance;
 
-    // Verwende horizontale Distanz für unebenes Terrain
-    if (horizontalDistance < 0.1 || this.lastTargetDistanceCounter >= 100) {
+    if (
+      distanceToCheck < shiftThreshold ||
+      this.lastTargetDistanceCounter >= 100
+    ) {
+      if (this.lastTargetDistanceCounter >= 100) {
+        console.warn('Pathfinding stuck, forcing next waypoint!');
+      }
       this.lastTargetDistanceCounter = 0;
       currentPath.shift();
       if (currentPath.length === 0) {
@@ -271,14 +426,38 @@ export default class PathfindingUnitModule extends UnitModule<
           GroundVehicleUnitModule.TYPE
         );
         const fig2 = unit.getModule<FigureUnitModule>(FigureUnitModule.TYPE);
+        const heli2 = unit.getModule<HelicopterUnitModule>(
+          HelicopterUnitModule.TYPE
+        );
         gv2?.clearAutopilotControls();
         fig2?.clearAutopilotControls();
+
+        if (heli2) {
+          const shouldLand = false; // Hier könnte eine Option aus dem move-Befehl kommen
+          const shouldToggleGearsForLanding =
+            shouldLand && !heli2.getGearsOpened();
+
+          heli2.setAutopilotControls({
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+            space: false,
+            landing: shouldLand,
+            gear: shouldToggleGearsForLanding, // Befehl zum Ausfahren der Gears geben
+
+            modifier: false,
+            rotateLeft: false,
+            rotateRight: false,
+            pitchUp: false,
+            pitchDown: false
+          });
+        }
         this.state.currentPath = null;
         this.observables.moveComplete$.next();
       }
     }
 
-    // Prüfe auf Stagnation (keine horizontale Bewegung)
     if (
       this.lastTargetDistance &&
       this.lastTargetDistance === horizontalDistance

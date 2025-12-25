@@ -40,7 +40,8 @@ export default class LandingPort_1 extends LandingPortUnit {
     );
   }
 
-  override afterSetup(_context: SetupContext): void {
+  override async afterSetup(_context: SetupContext): Promise<void> {
+    await super.afterSetup(_context);
     this.setMaterialReady();
   }
 
@@ -56,7 +57,9 @@ export default class LandingPort_1 extends LandingPortUnit {
     const height = 0.025;
     const boxMesh = new Mesh(
       new BoxGeometry(1, height, 1),
-      new MeshLambertMaterial({})
+      new MeshLambertMaterial({
+        color: 0xd9d9d9
+      })
     );
     boxMesh.receiveShadow = true;
     boxMesh.position.set(0, height / 2, 0);

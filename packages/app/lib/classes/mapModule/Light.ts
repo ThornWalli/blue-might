@@ -8,6 +8,11 @@ import MapModule, {
   type MapModuleObservables,
   type MapModuleState
 } from '../MapModule';
+declare module '../Map' {
+  interface ModuleDebug {
+    light: boolean;
+  }
+}
 
 type Observables = MapModuleObservables;
 

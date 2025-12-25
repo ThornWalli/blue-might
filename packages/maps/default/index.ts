@@ -9,6 +9,14 @@ import { Barrack_1, ControlTower_1 } from '@blue-might/units';
 import BlueMight from '@blue-might/units/blue_might/BlueMight';
 import Tree_1 from '@blue-might/units/tree_1/Tree_1';
 import Soldat_1 from '@blue-might/units/soldat_1/Soldat_1';
+import Faction from '@blue-might/app/lib/classes/Faction';
+
+const blueFaction = new Faction({
+  id: 'blue-faction',
+  name: 'Blue Faction',
+  colors: [0x0055aa]
+});
+export const playerFaction = blueFaction;
 
 const desc: MapDescription = {
   name: 'Default Map',
@@ -17,6 +25,7 @@ const desc: MapDescription = {
     backgroundTexture,
     foregroundTexture
   },
+  factions: [blueFaction],
   units: [
     new Tree_1({
       position: new Vector3(3, 0, 9)
@@ -67,7 +76,12 @@ const desc: MapDescription = {
     }),
     new BlueMight({
       id: 'blue-might-1',
-      position: new Vector3(9.5, 0, 5.5)
+      position: new Vector3(9.5, 0, 5.5),
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
+      }
     }),
     new Barrack_1({
       position: new Vector3(10.5, 0, 1)

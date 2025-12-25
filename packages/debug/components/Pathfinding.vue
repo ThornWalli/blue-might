@@ -1,7 +1,7 @@
 <template>
   <div>
     <debug-app-component
-      :config="{ debug: { map: { [PathfindingModule.TYPE]: true } } }"
+      :config="{ debug: { map: { pathfinding: true } } }"
       :on-setup="onSetup"
       :player-unit="playerUnitId"
       :map="map" />
@@ -12,9 +12,7 @@
 import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import PathfindingModule from '@blue-might/app/lib/classes/mapModule/Pathfinding';
-import GroundVehicleUnitModule from '@blue-might/app/lib/classes/unitModule/movable/GroundVehicle';
-import PathfindingUnitModule from '@blue-might/app/lib/classes/unitModule/Pathfinding';
+
 import { BlueMight, Tank_1, Tree_1 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Euler, Vector3 } from 'three';
@@ -37,12 +35,12 @@ const map: Partial<MapDescription> = {
       position: new Vector3(0, 0, 0),
       rotation: new Euler(0, 0, 0),
       moduleStates: {
-        [GroundVehicleUnitModule.TYPE]: {
+        movable: {
           active: true
         }
       },
-      debug: {
-        [PathfindingUnitModule.TYPE]: true
+      moduleDebug: {
+        pathfinding: true
       }
     }),
     new BlueMight({

@@ -11,6 +11,18 @@ import MovableUnitModule, {
 } from '../Movable';
 import type HelicopterUnit from '../../unit/vehicle/Helicopter';
 
+declare module '../../Unit' {
+  interface ModuleStates {
+    helicopter: Partial<HelicopterUnitModuleState>;
+  }
+  interface ModuleOptions {
+    helicopter: Partial<HelicopterUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    helicopter: boolean;
+  }
+}
+
 interface HelicopterUnitObservables extends MovableUnitModuleObservables {
   flightStatus$: ReplaySubject<FLIGHT_STATUS>;
   gearsActive$: ReplaySubject<boolean>;
@@ -58,6 +70,7 @@ export default class HelicopterUnitModule<
   Obervables extends HelicopterUnitObservables = HelicopterUnitObservables,
   U extends HelicopterUnit = HelicopterUnit
 > extends MovableUnitModule<Options, State, Obervables, U> {
+  static override TYPE = 'helicopter';
   private _right = new Vector3();
 
   override getControls() {
@@ -87,7 +100,7 @@ export default class HelicopterUnitModule<
         gearsHeight: options.gearsHeight ?? 0,
         maxSpeed: options.maxSpeed ?? 25,
         acceleration: options.acceleration ?? 10,
-        yawSpeed: options.yawSpeed ?? 3,
+        yawSpeed: options.yawSpeed ?? 5,
         pitchPower: options.pitchPower ?? 1,
         rollPower: options.rollPower ?? 0.75,
         friction: options.friction ?? 0.96,
@@ -131,8 +144,8 @@ export default class HelicopterUnitModule<
     //#endregion
   }
 
-  override async setup() {
-    await super.setup();
+  override async afterSetup() {
+    await super.afterSetup();
 
     const unit = this.getUnit();
 
@@ -196,15 +209,15 @@ export default class HelicopterUnitModule<
     }
     return 0;
   }
-
   getMaxPitch() {
-    return this.state.gearsActive && this.state.gearsOpened ? 0.2 : 0.6;
+    // Wenn die Gears gerade animiert werden ODER ausgefahren sind, begrenze die Neigung stark.
+    return this.state.gearsActive || this.state.gearsOpened ? 0.2 : 0.6;
   }
 
   getMaxRoll() {
-    return this.state.gearsActive && this.state.gearsOpened ? 0.2 : 0.6;
+    // Wenn die Gears gerade animiert werden ODER ausgefahren sind, begrenze die Neigung stark.
+    return this.state.gearsActive || this.state.gearsOpened ? 0.2 : 0.6;
   }
-
   override update({ delta, time }: AnimationLoopValue): void {
     super.update({ delta, time });
     this.moveUpdate({ delta });
@@ -216,6 +229,10 @@ export default class HelicopterUnitModule<
 
     const controls = this.getControls();
     const active = this.state.active;
+
+    if (controls.gear) {
+      this.toggleGears();
+    }
 
     const friction = this.options.friction;
     const maxSpeed = this.options.maxSpeed;
@@ -238,14 +255,41 @@ export default class HelicopterUnitModule<
     if (active) {
       // Inputs
       const pitchInput = canRollPitch
-        ? (controls.up ? 1 : 0) - (controls.down ? 1 : 0)
+        ? (typeof controls.up === 'number'
+            ? controls.up
+            : controls.up
+              ? 1
+              : 0) -
+          (typeof controls.down === 'number'
+            ? controls.down
+            : controls.down
+              ? 1
+              : 0)
         : 0;
       const rollInput = canRollPitch
-        ? (controls.left ? 1 : 0) - (controls.right ? 1 : 0)
+        ? (typeof controls.left === 'number'
+            ? controls.left
+            : controls.left
+              ? 1
+              : 0) -
+          (typeof controls.right === 'number'
+            ? controls.right
+            : controls.right
+              ? 1
+              : 0)
         : 0;
       // Yaw: invertiere, wenn deine Welt rechtsdrehend ist
       const yawInput =
-        (controls.rotateLeft ? 1 : 0) - (controls.rotateRight ? 1 : 0);
+        (typeof controls.rotateLeft === 'number'
+          ? controls.rotateLeft
+          : controls.rotateLeft
+            ? 1
+            : 0) -
+        (typeof controls.rotateRight === 'number'
+          ? controls.rotateRight
+          : controls.rotateRight
+            ? 1
+            : 0);
 
       // Tilt integrate
       tilt.x += pitchInput * pitchPower * delta;
@@ -265,9 +309,9 @@ export default class HelicopterUnitModule<
       }
 
       // Smooth Yaw via angular velocity (zeitbasiert, weniger snappy)
-      const yawDamp = 2.0; // kleiner = träger
+      const yawDamp = 3.5;
       const yawFriction = Math.exp(-yawDamp * delta);
-      const maxYawVel = 2.0; // niedriger für kontrollierbare Drehung
+      const maxYawVel = 2.5; // Erhöht von 2.0 für höhere maximale Drehgeschwindigkeit
 
       // nutze delta im angular accel
       this.state.yawVelocity! += yawInput * yawAccel * delta;
@@ -458,6 +502,7 @@ export default class HelicopterUnitModule<
     unit.setPitch(tilt.x);
     unit.setRoll(-tilt.z);
   }
+
   getTilt() {
     return this.state.tilt;
   }

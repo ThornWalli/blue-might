@@ -12,6 +12,18 @@ import { ReplaySubject } from 'rxjs';
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 
+declare module '../Unit' {
+  interface ModuleStates {
+    animation: Partial<AnimationUnitModuleState>;
+  }
+  interface ModuleOptions {
+    animation: Partial<AnimationUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    animation: boolean;
+  }
+}
+
 type Actions = { [key: string]: AnimationAction };
 
 interface Observables extends UnitModuleObservables {
@@ -22,13 +34,13 @@ interface Observables extends UnitModuleObservables {
   addAction$: Subject<AnimationAction>;
 }
 
-type Options = UnitModuleOptions;
+export type AnimationUnitModuleOptions = UnitModuleOptions;
 
-type State = UnitModuleState;
+export type AnimationUnitModuleState = UnitModuleState;
 
 export class AnimationUnitModule extends UnitModule<
-  Options,
-  State,
+  AnimationUnitModuleOptions,
+  AnimationUnitModuleState,
   Observables
 > {
   static override TYPE = 'animation';
@@ -48,7 +60,12 @@ export class AnimationUnitModule extends UnitModule<
     return this.action;
   }
 
-  constructor(unit: Unit, options: Options, state: State, debug: boolean) {
+  constructor(
+    unit: Unit,
+    options: AnimationUnitModuleOptions,
+    state: AnimationUnitModuleState,
+    debug: boolean
+  ) {
     super(unit, options, state, debug);
 
     this.action = null;

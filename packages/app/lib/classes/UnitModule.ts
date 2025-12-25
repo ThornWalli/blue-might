@@ -28,6 +28,8 @@ export default abstract class UnitModule<
   Obervables extends UnitModuleObservables = UnitModuleObservables,
   U extends Unit = Unit
 > extends Module<State, Obervables> {
+  static PREVIEW = true;
+
   constructor(
     private _unit: U,
     public options: Options = {} as Options,

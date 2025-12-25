@@ -17,6 +17,7 @@ import { filter, Subscription, map as rxjsMap } from 'rxjs';
 
 import { onUnmounted, defineAsyncComponent, markRaw } from 'vue';
 import { defu } from 'defu';
+import type Faction from '@blue-might/app/lib/classes/Faction';
 const subscription = new Subscription();
 
 const $props = defineProps<{
@@ -38,6 +39,7 @@ onUnmounted(() => {
 
 const map: MapDescription = defu($props.map ?? {}, {
   ...debugMap,
+  factions: [...debugMap.factions],
   units: [...debugMap.units]
 }) as MapDescription;
 
@@ -46,10 +48,12 @@ const AppComponent = defineAsyncComponent(
 );
 
 async function onSetupApp(app: App) {
-  await setupPlayer(app);
-
   subscription.add(
-    app.modules.map.observables.map$.subscribe(map => {
+    app.modules.map.observables.map$.subscribe(async map => {
+      await setupPlayer(
+        app,
+        map.modules.faction.getFactionById('blue-faction')!
+      );
       if (!map) return;
       $props.onSetup({
         app,
@@ -58,15 +62,12 @@ async function onSetupApp(app: App) {
     })
   );
 }
-
-async function setupPlayer(app: App) {
-  const player = await app.modules.player.addPlayer(
-    markRaw(
-      new HumanPlayer({
-        name: 'Player'
-      })
-    )
-  );
+async function setupPlayer(app: App, faction: Faction) {
+  let player = new HumanPlayer(app, {
+    name: 'Player'
+  });
+  player.modules.faction.setFaction(faction);
+  player = await app.modules.player.addPlayer(markRaw(player));
   if ($props.playerUnit) {
     subscription.add(
       app.modules.map.observables.map$
@@ -79,6 +80,7 @@ async function setupPlayer(app: App) {
         .subscribe(vehicle => player.modules.vehicle.setVehicle(vehicle))
     );
   }
+  return player;
 }
 </script>
 

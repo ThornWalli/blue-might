@@ -10,15 +10,27 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import type Unit from '../Unit';
 import { ReplaySubject } from 'rxjs';
 
+declare module '../Unit' {
+  interface ModuleStates {
+    player: Partial<PlayerUnitModuleState>;
+  }
+  interface ModuleOptions {
+    player: Partial<PlayerUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    player: boolean;
+  }
+}
+
 interface Observables extends UnitModuleObservables {
   player$: ReplaySubject<Player | null>;
 }
-type Options = UnitModuleOptions;
-type State = UnitModuleState;
+export type PlayerUnitModuleOptions = UnitModuleOptions;
+export type PlayerUnitModuleState = UnitModuleState;
 
 export default class PlayerUnitModule extends UnitModule<
-  Options,
-  State,
+  PlayerUnitModuleOptions,
+  PlayerUnitModuleState,
   Observables
 > {
   hasPlayer() {
@@ -29,7 +41,12 @@ export default class PlayerUnitModule extends UnitModule<
   root: Object3D;
   private _player: Player | null = null;
 
-  constructor(unit: Unit, options: Options, state: State, debug: boolean) {
+  constructor(
+    unit: Unit,
+    options: PlayerUnitModuleOptions,
+    state: PlayerUnitModuleState,
+    debug: boolean
+  ) {
     super(unit, options, state, debug);
 
     //#region observables

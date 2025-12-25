@@ -14,6 +14,11 @@ import {
 } from '@blue-might/app/lib/utils/dustCone';
 import type Projectile from '../Projectile';
 import { getGlb } from '@blue-might/weapon/projectile';
+declare module '../Map' {
+  interface ModuleDebug {
+    shoot: boolean;
+  }
+}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Observables extends MapModuleObservables {}
@@ -25,6 +30,7 @@ interface ShootDescription {
   projectile: Projectile;
   object: Object3D;
   ignoredObjects: Object3D[];
+  startPosition: Vector3;
 }
 
 export default class ShootModule extends MapModule<State, Observables> {
@@ -133,7 +139,8 @@ export default class ShootModule extends MapModule<State, Observables> {
     this.shoots.push({
       projectile,
       object: obj,
-      ignoredObjects: ignoredObjects ?? []
+      ignoredObjects: ignoredObjects ?? [],
+      startPosition: position.clone()
     });
   }
 
@@ -176,8 +183,11 @@ export default class ShootModule extends MapModule<State, Observables> {
       }
 
       if (obj.position.length() > 20) {
-        obj.parent?.remove(obj);
-        return false;
+        const distanceFromStart = obj.position.distanceTo(shoot.startPosition);
+        if (distanceFromStart > 20) {
+          obj.parent?.remove(obj);
+          return false;
+        }
       }
       return true;
     });

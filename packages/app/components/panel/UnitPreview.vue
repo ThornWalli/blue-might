@@ -109,6 +109,7 @@ const previewOptions = computed(() => {
   if (!unit.value) return null;
   return {
     type: unit.value.key,
+    faction: unit.value.modules.faction.getFaction(),
     action: 'idle'
   };
 });

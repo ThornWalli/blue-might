@@ -22,12 +22,12 @@ export default abstract class BaseNavigator {
   public debug = false;
   private subscription = new Subscription();
   public map: Map;
-  private colliders: Object3D[];
+  colliders: Object3D[];
   private gridSize: number;
   private grid: Grid;
-  private useSphere: boolean;
-  private sphere = new Sphere(undefined, 1 / 2);
-  private box = new Box3();
+  useSphere: boolean;
+  sphere = new Sphere(undefined, 1 / 2);
+  box = new Box3();
   private occupiedByObject = new globalThis.Map<
     Object3D,
     { x: number; z: number }[]
@@ -294,7 +294,7 @@ export default abstract class BaseNavigator {
 
   //#region Debug
 
-  private debugState: {
+  debugState: {
     isWalkableChecks: { pos: Vector3; walkable: boolean }[];
     checkDebugMeshes?: { valid: InstancedMesh; invalid: InstancedMesh };
   } = {

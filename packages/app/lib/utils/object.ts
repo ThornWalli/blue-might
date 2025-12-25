@@ -1,4 +1,4 @@
-import type { Mesh, Material, Object3D, Texture } from 'three';
+import { Mesh, type Material, type Object3D, type Texture } from 'three';
 
 export interface ObjectName {
   BASE: 'base';
@@ -61,4 +61,23 @@ export function disposeMaterial(material: Material): void {
     }
   }
   material.dispose();
+}
+
+// Hilfsfunktion, um alle Meshes der Map zu sammeln (füge das zur Map-Klasse hinzu)
+export function getAllMeshes(object: Object3D) {
+  const meshes: Object3D[] = [];
+  object.traverse(child => {
+    if (child instanceof Mesh) {
+      meshes.push(child);
+    }
+  });
+  return meshes;
+}
+
+export function disableRaycaster(object: Object3D) {
+  object.traverse(child => {
+    if (child instanceof Mesh) {
+      child.raycast = () => false;
+    }
+  });
 }

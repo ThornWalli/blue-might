@@ -11,6 +11,13 @@ import type { Object3D } from 'three';
 import { Group, Mesh, SkinnedMesh } from 'three';
 import type { IntersectionListener } from '../rendererModule/Intersection';
 import { OBJECT_USER_DATA } from '../../utils/object';
+import BuildingUnit from '../unit/Building';
+
+declare module '../Map' {
+  interface ModuleDebug {
+    units: boolean;
+  }
+}
 
 interface Observables extends MapModuleObservables {
   addUnit$: Subject<Unit>;
@@ -110,7 +117,26 @@ export default class UnitsModule extends MapModule<State, Observables> {
   }
 
   async setupUnits(units: Unit[]) {
-    await Promise.all(units.map(unit => this.add(unit)));
+    const { buildings, others } = units.reduce<{
+      buildings: BuildingUnit[];
+      others: Unit[];
+    }>(
+      (result, unit) => {
+        if (unit instanceof BuildingUnit) {
+          result.buildings.push(unit);
+        } else {
+          result.others.push(unit);
+        }
+        return result;
+      },
+      {
+        buildings: [],
+        others: []
+      }
+    );
+
+    await Promise.all(buildings.map(unit => this.add(unit)));
+    await Promise.all(others.map(unit => this.add(unit)));
   }
 
   async add(unit: Unit) {
@@ -120,6 +146,13 @@ export default class UnitsModule extends MapModule<State, Observables> {
     };
     await unit.setup(context);
     await unit.afterSetup(context);
+
+    // const position = unit.getPosition().clone();
+    // // position.setY(
+    // //   this.map.modules.ground.getSurfaceHeightAt(position.x, position.z, [unit])
+    // // );
+    // unit.setPosition(position);
+    // console.log(unit, 'Position:', position);
 
     unit.subscription.add(
       unit.observables.position$
@@ -168,21 +201,6 @@ export default class UnitsModule extends MapModule<State, Observables> {
   }
 
   //#endregion
-
-  // Hilfsfunktion, um alle Meshes der Map zu sammeln (füge das zur Map-Klasse hinzu)
-  getAllMeshes(ignoredUnits: Unit[] = []): Object3D[] {
-    const meshes: Object3D[] = [];
-    this.state.units.forEach(unit => {
-      if (!ignoredUnits.includes(unit)) {
-        unit.root?.traverse(child => {
-          if (child instanceof Mesh) {
-            meshes.push(child);
-          }
-        });
-      }
-    });
-    return meshes;
-  }
 }
 
 function getMeshes(obj: Object3D): Mesh[] {

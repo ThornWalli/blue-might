@@ -17,6 +17,18 @@ import { OBB } from 'three/examples/jsm/math/OBB.js';
 import type Unit from '../Unit';
 import { OBJECT_USER_DATA } from '../../utils/object';
 
+declare module '../Unit' {
+  interface ModuleStates {
+    collision: Partial<CollisionUnitModuleState>;
+  }
+  interface ModuleOptions {
+    collision: Partial<CollisionUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    collision: boolean;
+  }
+}
+
 declare module '../../utils/object' {
   interface ObjectUserData {
     COLLISION_TYPE: string;
@@ -129,9 +141,10 @@ export default class CollisionUnitModule<
 
   setupLocalOBB() {
     const object = this.getCollisionObject();
-
     object.updateMatrixWorld(true);
+
     const aabb = new Box3().setFromObject(object);
+
     const size = new Vector3();
     aabb.getSize(size);
 
@@ -145,7 +158,6 @@ export default class CollisionUnitModule<
   refreshWorldOBB() {
     const unit = this.getUnit();
     const object = this.getCollisionObject();
-
     // Lokale OBB bleibt vom Mesh/AABB abgeleitet
     // Für die Welt-OBB: nur Yaw berücksichtigen, Pitch/Roll ignorieren
     // und die Y-Position stabil halten (z. B. die aktuelle _position.y).

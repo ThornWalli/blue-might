@@ -15,6 +15,24 @@ export default class Module<
 > {
   static TYPE: string;
 
+  static get TYPES() {
+    const types = [];
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let current = this;
+
+    while (current && current !== Function.prototype) {
+      if (
+        Object.prototype.hasOwnProperty.call(current, 'TYPE') &&
+        current.TYPE
+      ) {
+        types.push(current.TYPE);
+      }
+      current = Object.getPrototypeOf(current);
+    }
+
+    return types;
+  }
+
   protected state: State = {} as State;
 
   subscription = new Subscription();

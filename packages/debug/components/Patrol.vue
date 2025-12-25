@@ -9,13 +9,12 @@
 </template>
 
 <script setup lang="ts">
+import type { AppConfig } from '@blue-might/app/lib/classes/App';
 import type App from '@blue-might/app/lib/classes/App';
+import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import PathfindingModule from '@blue-might/app/lib/classes/mapModule/Pathfinding';
-import GroundVehicleUnitModule from '@blue-might/app/lib/classes/unitModule/movable/GroundVehicle';
-import PathfindingUnitModule from '@blue-might/app/lib/classes/unitModule/Pathfinding';
-import PatrolUnitModule from '@blue-might/app/lib/classes/unitModule/Patrol';
+
 import { BlueMight, Soldat_1, Tank_1, Tree_1 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Euler, Vector3 } from 'three';
@@ -31,12 +30,25 @@ onUnmounted(() => {
 
 const playerUnitId = 'tank-1';
 
-const config = {
+const config: Partial<AppConfig> = {
   debug: {
-    map: { [PathfindingModule.TYPE]: true }
+    map: { pathfinding: true }
   }
 };
+
+const blueFaction = new Faction({
+  id: 'blue-faction',
+  name: 'Blue Faction',
+  colors: [0x0055aa, 0xcccccc]
+});
+const enemyFaction = new Faction({
+  id: 'enemy-faction',
+  name: 'Enemy Faction',
+  colors: [0x205010, 0xa0b0a0]
+});
+
 const map: Partial<MapDescription> = {
+  factions: [blueFaction, enemyFaction],
   units: [
     new Tree_1({
       id: 'tree-1',
@@ -46,24 +58,32 @@ const map: Partial<MapDescription> = {
 
     new BlueMight({
       id: 'blue-might-1',
-      debug: {
-        [PathfindingUnitModule.TYPE]: true,
-        [PatrolUnitModule.TYPE]: true
+      moduleDebug: {
+        pathfinding: true,
+        patrol: true
       },
       position: new Vector3(2, 0, 0),
       moduleOptions: {
-        [PatrolUnitModule.TYPE]: {
+        patrol: {
           path: [
-            [2.83, 4.5],
-            [-2.83, 4.5]
+            // [2.83, 4.5],
+            // [-2.83, 4.5]
+
+            [4.83, 5.17],
+            [-4.5, 5.17],
+            [-4.17, -1.5],
+            [3.5, -1.83]
           ]
         }
       },
       moduleStates: {
-        [GroundVehicleUnitModule.TYPE]: {
-          active: false
+        faction: {
+          faction: blueFaction
         },
-        [PatrolUnitModule.TYPE]: {
+        movable: {
+          active: true
+        },
+        patrol: {
           active: true
         }
       }
@@ -72,12 +92,12 @@ const map: Partial<MapDescription> = {
       id: 'tank-1',
       position: new Vector3(0, 0, 0),
       rotation: new Euler(0, 0, 0),
-      debug: {
-        [PathfindingUnitModule.TYPE]: true,
-        [PatrolUnitModule.TYPE]: true
+      moduleDebug: {
+        pathfinding: true,
+        patrol: true
       },
       moduleOptions: {
-        [PatrolUnitModule.TYPE]: {
+        patrol: {
           path: [
             [2.83, 2.83],
             [-2.83, 2.83],
@@ -87,10 +107,13 @@ const map: Partial<MapDescription> = {
         }
       },
       moduleStates: {
-        [GroundVehicleUnitModule.TYPE]: {
+        faction: {
+          faction: blueFaction
+        },
+        movable: {
           active: false
         },
-        [PatrolUnitModule.TYPE]: {
+        patrol: {
           active: true
         }
       }
@@ -103,11 +126,11 @@ const map: Partial<MapDescription> = {
           position: new Vector3(1 + i * 0.2, 0, 1),
           rotation: new Euler(0, 0, 0),
 
-          debug: {
-            [PathfindingUnitModule.TYPE]: true
+          moduleDebug: {
+            pathfinding: true
           },
           moduleOptions: {
-            [PatrolUnitModule.TYPE]: {
+            patrol: {
               path: [
                 [2.83, 0.5],
                 [-2.83, 0.5]
@@ -115,7 +138,7 @@ const map: Partial<MapDescription> = {
             }
           },
           moduleStates: {
-            [PatrolUnitModule.TYPE]: {
+            patrol: {
               active: true
             }
           }
@@ -130,7 +153,7 @@ const map: Partial<MapDescription> = {
           rotation: new Euler(0, 0, 0),
 
           moduleOptions: {
-            [PatrolUnitModule.TYPE]: {
+            patrol: {
               path: [
                 [-2.83, 0.5],
                 [2.83, 0.5]
@@ -138,7 +161,7 @@ const map: Partial<MapDescription> = {
             }
           },
           moduleStates: {
-            [PatrolUnitModule.TYPE]: {
+            patrol: {
               active: true
             }
           }

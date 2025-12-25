@@ -9,12 +9,14 @@
 
 <script setup lang="ts">
 import type App from '@blue-might/app/lib/classes/App';
+import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import type Weapon from '@blue-might/app/lib/classes/Weapon';
 
 import {
   BlueMight,
+  LandingPort_1,
   StationaryGun_1,
   StationaryGun_2,
   Tank_1
@@ -36,21 +38,36 @@ onUnmounted(() => {
   if (gui) gui.destroy();
 });
 
+const blueFaction = new Faction({
+  id: 'blue-faction',
+  name: 'Blue Faction',
+  colors: [0x0055aa, 0xcccccc]
+});
+const enemyFaction = new Faction({
+  id: 'enemy-faction',
+  name: 'Enemy Faction',
+  colors: [0x205010, 0xa0b0a0]
+});
+
 const unitWeapons: Weapon[] = [new weapons.default(), new weapons.default()];
 
 const unitA = new StationaryGun_1({
   id: 'stationary-gun-1',
   position: new Vector3(0, 0, 0),
+  moduleDebug: {
+    collision: true
+  },
   moduleOptions: {
     gun: {
       weapons: unitWeapons.slice(0, 1),
       enableAutoAim: true,
       enableShootInterval: false,
-      shootInterval: 200,
-
-      shotsPerSecond: 10,
-      shootSpeed: 0.3,
-      spreadAmount: 0.1
+      shootInterval: 200
+    }
+  },
+  moduleStates: {
+    faction: {
+      faction: blueFaction
     }
   }
 });
@@ -58,16 +75,20 @@ const unitA = new StationaryGun_1({
 const unitB = new StationaryGun_2({
   id: 'stationary-gun-2',
   position: new Vector3(1, 0, 1),
+  moduleDebug: {
+    collision: true
+  },
   moduleOptions: {
     gun: {
       weapons: unitWeapons.slice(),
       enableAutoAim: true,
       enableShootInterval: false,
-      shootInterval: 200,
-
-      shotsPerSecond: 10,
-      shootSpeed: 0.3,
-      spreadAmount: 0.1
+      shootInterval: 200
+    }
+  },
+  moduleStates: {
+    faction: {
+      faction: blueFaction
     }
   }
 });
@@ -75,9 +96,14 @@ const unitB = new StationaryGun_2({
 const playerUnitId = 'stationary-gun-1';
 
 const map: Partial<MapDescription> = {
+  factions: [blueFaction, enemyFaction],
   units: [
     unitA,
     unitB,
+
+    new LandingPort_1({
+      position: new Vector3(0, 0, 2)
+    }),
     new Tank_1({
       id: 'tank-1',
       position: new Vector3(-2, 0, 0),

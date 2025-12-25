@@ -10,6 +10,7 @@ const desc: MapDescription = {
     backgroundTexture,
     foregroundTexture
   },
+  factions: [],
   units: []
 };
 export default desc;

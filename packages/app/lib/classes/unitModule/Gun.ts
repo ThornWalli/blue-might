@@ -10,6 +10,18 @@ import type { Object3D } from 'three';
 import { Subject } from 'rxjs';
 import type Weapon from '../Weapon';
 
+declare module '../Unit' {
+  interface ModuleStates {
+    gun: Partial<GunUnitModuleState>;
+  }
+  interface ModuleOptions {
+    gun: Partial<GunUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    gun: boolean;
+  }
+}
+
 export interface GunUnitModuleObservables extends UnitModuleObservables {
   active$: Subject<boolean>;
   shoot$: Subject<{ index: number }>;

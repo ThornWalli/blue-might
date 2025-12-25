@@ -13,6 +13,8 @@ import PathfindingModule from './mapModule/Pathfinding';
 import ShootModule from './mapModule/Shoot';
 import EffectModule from './mapModule/Effect';
 import { COLLISION_TYPE } from './unitModule/Collision';
+import FactionModule from './mapModule/Faction';
+import type Faction from './Faction';
 
 type MapModuleList = (
   | typeof UnitsModule
@@ -20,6 +22,7 @@ type MapModuleList = (
   | typeof LightModule
   | typeof PathfindingModule
   | typeof ShootModule
+  | typeof FactionModule
   | typeof EffectModule
 )[];
 
@@ -29,27 +32,24 @@ interface MapModules {
   light: LightModule;
   pathfinding: PathfindingModule;
   shoot: ShootModule;
+  faction: FactionModule;
   effect: EffectModule;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface MapState {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-explicit-any
+export interface ModuleDebug extends Record<any, boolean> {}
+
 export default class Map<
   Modules extends MapModules = MapModules,
   ModuleList extends MapModuleList = MapModuleList
 > {
   //#region debug
-  private debug: { [key: string]: boolean } = {
-    [PathfindingModule.TYPE]: false,
-    [GroundModule.TYPE]: false,
-    [LightModule.TYPE]: false,
-    [UnitsModule.TYPE]: false,
-    [ShootModule.TYPE]: false,
-    [EffectModule.TYPE]: false
-  };
-  setDebug(debug: { [key: string]: boolean }) {
-    this.debug = { ...this.debug, ...debug };
+  private moduleDebug: Partial<ModuleDebug> = {};
+  setModuleDebug(debug: Partial<ModuleDebug>) {
+    this.moduleDebug = { ...this.moduleDebug, ...debug };
   }
   //#endregion
 
@@ -78,7 +78,7 @@ export default class Map<
 
     this.description = description;
 
-    this.debug = { ...this.debug, ...description.debug };
+    this.moduleDebug = { ...this.moduleDebug, ...description.debug };
   }
 
   async setup() {
@@ -100,13 +100,14 @@ export default class Map<
       LightModule,
       PathfindingModule,
       ShootModule,
+      FactionModule,
       EffectModule
     );
 
     const preparedModules = moduleList.map(ModuleClass => {
       const moduleInstance = new ModuleClass(
         this,
-        this.debug && (this.debug[ModuleClass.TYPE] ?? false)
+        this.moduleDebug && (this.moduleDebug[ModuleClass.TYPE] ?? false)
       );
       return [ModuleClass.TYPE, moduleInstance];
     });
@@ -187,6 +188,7 @@ export default class Map<
       cm2.refreshDebugHelper(); // Nur für debug, sonst weglassen
 
       if (cm1.worldOBB.intersectsOBB(cm2.worldOBB)) {
+        console.log('Kollision erkannt:', cm2.getCollisionType());
         return cm2.getCollisionType();
       }
     }
@@ -196,7 +198,7 @@ export default class Map<
 }
 
 export interface MapDescription {
-  debug?: { [key: string]: boolean };
+  debug?: Partial<ModuleDebug>;
   name: string;
   textures: {
     backgroundTexture: string;
@@ -204,4 +206,5 @@ export interface MapDescription {
     heightMap: string;
   };
   units: Unit[];
+  factions: Faction[];
 }

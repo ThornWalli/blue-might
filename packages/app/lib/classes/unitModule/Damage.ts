@@ -16,14 +16,26 @@ import assetLoader from '@blue-might/app/services/assetLoader';
 import { LOADER } from '../AssetLoader';
 import { Particle } from '../Particle';
 import type { AnimationLoopValue } from '../Renderer';
-import { disposeObject3D } from '../../utils/object';
+import { disableRaycaster, disposeObject3D } from '../../utils/object';
+
+declare module '../Unit' {
+  interface ModuleStates {
+    damage: Partial<DamageUnitModuleState>;
+  }
+  interface ModuleOptions {
+    damage: Partial<DamageUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    damage: boolean;
+  }
+}
 
 interface Observables extends UnitModuleObservables {
   destroyed$: ReplaySubject<void>;
   damage$: ReplaySubject<number>;
 }
-type Options = UnitModuleOptions;
-interface State extends UnitModuleState {
+export type DamageUnitModuleOptions = UnitModuleOptions;
+export interface DamageUnitModuleState extends UnitModuleState {
   damage: number;
 }
 
@@ -34,8 +46,8 @@ enum DamageLevel {
 }
 
 export default class DamageUnitModule extends UnitModule<
-  Options,
-  State,
+  DamageUnitModuleOptions,
+  DamageUnitModuleState,
   Observables
 > {
   static override TYPE = 'damage';
@@ -48,7 +60,12 @@ export default class DamageUnitModule extends UnitModule<
   } | null = null;
   private particles: Particle[] = [];
 
-  constructor(unit: Unit, options: Options, state: State, debug?: boolean) {
+  constructor(
+    unit: Unit,
+    options: DamageUnitModuleOptions,
+    state: DamageUnitModuleState,
+    debug?: boolean
+  ) {
     super(
       unit,
       {
@@ -161,6 +178,7 @@ export default class DamageUnitModule extends UnitModule<
 
     p.sprite.material.opacity = 0.6;
 
+    disableRaycaster(p.sprite);
     this.root?.add(p.sprite);
     this.particles.push(p);
   }
@@ -179,6 +197,7 @@ export default class DamageUnitModule extends UnitModule<
       (Math.random() - 0.5) * 0.2
     );
 
+    disableRaycaster(p.sprite);
     this.root?.add(p.sprite);
     this.particles.push(p);
   }

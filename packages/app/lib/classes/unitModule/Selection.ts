@@ -6,20 +6,37 @@ import UnitModule, {
 } from '../UnitModule';
 import type Unit from '../Unit';
 
+declare module '../Unit' {
+  interface ModuleStates {
+    selection: Partial<SelectionUnitModuleState>;
+  }
+  interface ModuleOptions {
+    selection: Partial<SelectionUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    selection: boolean;
+  }
+}
+
 interface Obervables extends UnitModuleObservables {
   select$: Subject<boolean>;
 }
 
-type Options = UnitModuleOptions;
-type State = UnitModuleState;
+export type SelectionUnitModuleOptions = UnitModuleOptions;
+export type SelectionUnitModuleState = UnitModuleState;
 export default class SelectionUnitModule extends UnitModule<
-  Options,
-  State,
+  SelectionUnitModuleOptions,
+  SelectionUnitModuleState,
   Obervables
 > {
   static override TYPE = 'selection';
 
-  constructor(unit: Unit, options: Options, state: State, debug: boolean) {
+  constructor(
+    unit: Unit,
+    options: SelectionUnitModuleOptions,
+    state: SelectionUnitModuleState,
+    debug: boolean
+  ) {
     super(unit, options, state, debug);
     //#region observables
     this.observables.select$ = new Subject<boolean>();

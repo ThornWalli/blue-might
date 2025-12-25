@@ -6,15 +6,35 @@ import UnitModule, {
 } from '../UnitModule';
 import type Unit from '../Unit';
 
-type Options = UnitModuleOptions;
-type State = UnitModuleState;
+declare module '../Unit' {
+  interface ModuleStates {
+    landingPort: Partial<LandingPortUnitModuleState>;
+  }
+  interface ModuleOptions {
+    landingPort: Partial<LandingPortUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    landingPort: boolean;
+  }
+}
 
-export default class LandingPortUnitModule extends UnitModule<Options, State> {
+export type LandingPortUnitModuleOptions = UnitModuleOptions;
+export type LandingPortUnitModuleState = UnitModuleState;
+
+export default class LandingPortUnitModule extends UnitModule<
+  LandingPortUnitModuleOptions,
+  LandingPortUnitModuleState
+> {
   static override TYPE = 'landing_port';
 
   root: Object3D;
 
-  constructor(unit: Unit, options: Options, state: State, debug: boolean) {
+  constructor(
+    unit: Unit,
+    options: LandingPortUnitModuleOptions,
+    state: LandingPortUnitModuleState,
+    debug: boolean
+  ) {
     super(unit, options, state, debug);
 
     this.root = new Object3D();

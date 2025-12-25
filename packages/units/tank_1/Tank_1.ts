@@ -10,6 +10,7 @@ import TankUnit, {
 
 import baseGlb from './assets/tank_1.glb?url';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
+import type { MeshStandardMaterial } from 'three';
 import { Mesh, SkinnedMesh } from 'three';
 
 export type Options = TankUnitOptions;
@@ -40,7 +41,8 @@ export default class Tank_1<
     );
   }
 
-  override afterSetup(_context: SetupContext): void {
+  override async afterSetup(_context: SetupContext) {
+    await super.afterSetup(_context);
     this.setMaterialReady();
   }
 
@@ -53,6 +55,19 @@ export default class Tank_1<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
+
+        if ((child.material as MeshStandardMaterial).name === 'primary') {
+          child.material.color.set(
+            this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
+          );
+          child.material.needsUpdate = true;
+        }
+        if ((child.material as MeshStandardMaterial).name === 'secondary') {
+          child.material.color.set(
+            this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
+          );
+          child.material.needsUpdate = true;
+        }
       }
     });
 

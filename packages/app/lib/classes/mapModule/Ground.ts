@@ -20,6 +20,13 @@ import { filter, map, Subject } from 'rxjs';
 import type Map from '../Map';
 import { getCostsFromImage, TILE_TYPE } from '../../utils/pathfinding';
 import type Unit from '../Unit';
+import { getAllMeshes } from '../../utils/object';
+import BuildingUnit from '../unit/Building';
+declare module '../Map' {
+  interface ModuleDebug {
+    ground: boolean;
+  }
+}
 
 interface Observables extends MapModuleObservables {
   select$: Subject<Vector2>;
@@ -166,14 +173,60 @@ export default class GroundModule extends MapModule<State, Observables> {
     raycaster.far = maxDistance; // Maximale Distanz
     raycaster.set(this.surfaceData.position, this.surfaceData.direction);
 
-    const allMeshes = this.map.modules.units.getAllMeshes(ignoredUnits);
+    const allMeshes: Object3D[] = [];
+    this.map.modules.units.getUnits().forEach(unit => {
+      if (!ignoredUnits.includes(unit)) {
+        allMeshes.push(...getAllMeshes(unit.root));
+      }
+    });
 
     // this.root!.traverse(child => {
     //   if (child instanceof Mesh) {
     //     allMeshes.push(child);
     //   }
     // });
+    const intersections = raycaster.intersectObjects(allMeshes, true);
 
+    const groundHeight = this.getHeightAt(x, z);
+    if (intersections.length > 0) {
+      if (intersections[0]!.point.y - groundHeight > 1) {
+        return groundHeight;
+      }
+      return intersections[0]!.point.y;
+    }
+
+    return groundHeight;
+  }
+
+  getTerrainHeightAt(
+    x: number | Vector2,
+    z?: number,
+    ignoredUnits: Unit[] = [],
+    maxDistance = 100
+  ): number {
+    if (x instanceof Vector2) {
+      z = x.y;
+      x = x.x;
+    }
+
+    this.surfaceData.position.set(x, 50, z!);
+
+    const raycaster = this.surfaceData.raycaster;
+    raycaster.far = maxDistance; // Maximale Distanz
+    raycaster.set(this.surfaceData.position, this.surfaceData.direction);
+
+    const allMeshes: Object3D[] = [];
+    this.map.modules.units.getUnits().forEach(unit => {
+      if (!ignoredUnits.includes(unit) && unit instanceof BuildingUnit) {
+        allMeshes.push(...getAllMeshes(unit.root));
+      }
+    });
+
+    // this.root!.traverse(child => {
+    //   if (child instanceof Mesh) {
+    //     allMeshes.push(child);
+    //   }
+    // });
     const intersections = raycaster.intersectObjects(allMeshes, true);
 
     const groundHeight = this.getHeightAt(x, z);
@@ -184,7 +237,6 @@ export default class GroundModule extends MapModule<State, Observables> {
       }
       return intersections[0]!.point.y;
     }
-
     return groundHeight;
   }
 

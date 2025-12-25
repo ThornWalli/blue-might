@@ -22,8 +22,8 @@ export default class ControlsModule extends PlayerModule<State, Observables> {
     controls: {}
   };
 
-  constructor(player: Player, debug?: boolean) {
-    super(player, {} as State, debug);
+  constructor(player: Player, state: State, debug?: boolean) {
+    super(player, state, debug);
 
     //#region observables
     this.observables.controls$ = new ReplaySubject<ControlState>();
@@ -103,13 +103,15 @@ export interface ControlState {
   gear?: boolean;
   landing?: boolean;
   modifier?: boolean;
-  rotateLeft?: boolean;
-  rotateRight?: boolean;
-  up?: boolean;
-  down?: boolean;
-  left?: boolean;
-  right?: boolean;
+  rotateLeft?: boolean | number;
+  rotateRight?: boolean | number;
+  up?: boolean | number;
+  down?: boolean | number;
+  left?: boolean | number;
+  right?: boolean | number;
   space?: boolean;
+  pitchUp?: boolean;
+  pitchDown?: boolean;
 }
 
 export enum Controls {
