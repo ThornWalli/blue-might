@@ -15,6 +15,7 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
   TankUnitModuleOptions,
   TankUnitModuleState
 > {
+  static override TYPE = 'tank';
   constructor(
     unit: TankUnit,
     options: TankUnitModuleOptions,
@@ -25,8 +26,8 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
       unit,
       {
         ...options,
-        turnSpeed: options.turnSpeed ?? 10,
-        turnMovementSpeed: 0
+        turnSpeed: options.turnSpeed ?? 4,
+        acceleration: options.acceleration ?? 6
       },
       {
         ...state,

@@ -94,7 +94,7 @@ const desc: MapDescription = {
         collision: true
       },
       id: 'tank-1',
-      position: new Vector3(38.83, 0, -30),
+      position: new Vector3(38.83, 0, -30.17),
       moduleStates: {
         faction: {
           faction: blueFaction
@@ -105,7 +105,7 @@ const desc: MapDescription = {
       moduleDebug: {
         collision: true
       },
-      position: new Vector3(38.17, 0, -30),
+      position: new Vector3(38.17, 0, -30.17),
       moduleStates: {
         faction: {
           faction: blueFaction
@@ -116,7 +116,7 @@ const desc: MapDescription = {
       moduleDebug: {
         collision: true
       },
-      position: new Vector3(37.5, 0, -30),
+      position: new Vector3(37.5, 0, -30.17),
       moduleStates: {
         faction: {
           faction: blueFaction

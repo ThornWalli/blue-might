@@ -4,7 +4,6 @@ import { Subscription } from 'rxjs';
 import VehicleModule from './playerModule/Vehicle';
 import type MovableUnit from './unit/Movable';
 import ControlsModule from './playerModule/Controls';
-import PlayerUnitModule from './unitModule/Player';
 import FactionModule from './playerModule/Faction';
 import type App from './App';
 import type { PlayerModuleState } from './PlayerModule';
@@ -65,13 +64,33 @@ export default class Player<
       }>(1)
     };
 
-    const preparedModules = (moduleList as ModuleList).map(ModuleClass => {
-      const state = moduleStates?.[ModuleClass.TYPE] ?? {};
+    const preparedModules = (moduleList as ModuleList)
+      .map(ModuleClass => {
+        const types = ModuleClass.TYPES;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const moduleInstance = new (ModuleClass as any)(this, state, this.debug);
-      return [ModuleClass.TYPE, moduleInstance];
-    });
+        const { state } = types.reduce<{
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          state: any;
+        }>(
+          (acc, type) => {
+            acc.state = {
+              ...acc.state,
+              ...(moduleStates?.[type] ?? {})
+            };
+            return acc;
+          },
+          { state: {} }
+        );
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const moduleInstance = new (ModuleClass as any)(
+          this,
+          state,
+          this.debug
+        );
+        return ModuleClass.TYPES.map(type => [type, moduleInstance]);
+      })
+      .flat();
     this.modules = Object.fromEntries(preparedModules);
   }
 
@@ -106,10 +125,7 @@ export default class Player<
 
   setVehicle(unit: MovableUnit | null) {
     if (this.modules.vehicle.hasVehicle()) {
-      this.modules.vehicle
-        .getVehicle()
-        ?.getModuleByType(PlayerUnitModule)
-        .setPlayer(null);
+      this.modules.vehicle.getVehicle()?.modules.player.setPlayer(null);
     }
     this.modules.vehicle.setVehicle(unit);
   }

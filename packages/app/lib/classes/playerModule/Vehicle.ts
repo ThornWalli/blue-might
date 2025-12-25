@@ -6,7 +6,6 @@ import type {
 import PlayerModule from '../PlayerModule';
 import type Player from '../Player';
 import type Unit from '../Unit';
-import PlayerUnitModule from '../unitModule/Player';
 import type MovableUnit from '../unit/Movable';
 
 interface Observables extends PlayerModuleObservables {
@@ -46,11 +45,11 @@ export default class VehicleModule extends PlayerModule<State, Observables> {
 
   setVehicle(vehicle: MovableUnit | null) {
     const last = this.state.vehicle;
-    last?.getModuleByType(PlayerUnitModule).setPlayer(null);
+    last?.modules.player.setPlayer(null);
 
     this.state.vehicle = vehicle;
 
-    vehicle?.getModuleByType(PlayerUnitModule).setPlayer(this.player);
+    vehicle?.modules.player.setPlayer(this.player);
 
     this.observables.vehicle$.next({ current: vehicle, last });
   }

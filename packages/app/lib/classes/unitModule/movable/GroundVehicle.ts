@@ -9,6 +9,17 @@ import type {
 import MovableUnitModule from '../Movable';
 import type MovableUnit from '../../unit/Movable';
 
+declare module '../../Unit' {
+  interface ModuleStates {
+    groundVehicle: Partial<GroundVehicleUnitModuleState>;
+  }
+  interface ModuleOptions {
+    groundVehicle: Partial<GroundVehicleUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    groundVehicle: boolean;
+  }
+}
 export type GroundVehicleUnitModuleObservables = MovableUnitModuleObservables;
 
 export interface GroundVehicleUnitModuleOptions

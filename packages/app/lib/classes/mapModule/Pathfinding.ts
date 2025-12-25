@@ -5,7 +5,6 @@ import MapModule, {
 } from '../MapModule';
 import GroundNavigator from '../pathfinding/GroundNavigator';
 import AirNavigator, { VehicleType } from '../pathfinding/AirNavigator';
-import CollisionUnitModule from '../unitModule/Collision';
 import type { Subscription } from 'rxjs';
 import { filter, throttleTime } from 'rxjs';
 import type Unit from '../Unit';
@@ -134,7 +133,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
 
   addUnit(unit: Unit) {
     if (this.units.includes(unit)) return;
-    const collisionModule = unit.getModuleByType(CollisionUnitModule);
+    const collisionModule = unit.modules.collision;
     if (collisionModule?.options.disabled) return;
     this.units.push(unit);
     this.groundNavigationSmall?.addCollider(

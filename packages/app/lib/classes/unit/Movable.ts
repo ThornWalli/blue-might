@@ -31,8 +31,8 @@ export default class MovableUnit<
     moduleList: unknown[] = []
   ) {
     if (
-      !(moduleList as ModuleList).find(
-        test => test.TYPE === MovableUnitModule.TYPE
+      !(moduleList as ModuleList).find(test =>
+        test.TYPES.includes(MovableUnitModule.TYPE)
       )
     ) {
       moduleList.push(MovableUnitModule);

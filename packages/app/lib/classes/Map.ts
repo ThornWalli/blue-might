@@ -104,13 +104,15 @@ export default class Map<
       EffectModule
     );
 
-    const preparedModules = moduleList.map(ModuleClass => {
-      const moduleInstance = new ModuleClass(
-        this,
-        this.moduleDebug && (this.moduleDebug[ModuleClass.TYPE] ?? false)
-      );
-      return [ModuleClass.TYPE, moduleInstance];
-    });
+    const preparedModules = moduleList
+      .map(ModuleClass => {
+        const moduleInstance = new ModuleClass(
+          this,
+          this.moduleDebug && (this.moduleDebug[ModuleClass.TYPE] ?? false)
+        );
+        return ModuleClass.TYPES.map(type => [type, moduleInstance]);
+      })
+      .flat();
     this.modules = Object.fromEntries(preparedModules);
 
     await Promise.all(
@@ -188,7 +190,6 @@ export default class Map<
       cm2.refreshDebugHelper(); // Nur für debug, sonst weglassen
 
       if (cm1.worldOBB.intersectsOBB(cm2.worldOBB)) {
-        console.log('Kollision erkannt:', cm2.getCollisionType());
         return cm2.getCollisionType();
       }
     }

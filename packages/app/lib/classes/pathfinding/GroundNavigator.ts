@@ -5,9 +5,8 @@ import { COLLISION_TYPE } from '../unitModule/Collision';
 import BaseNavigator from '../abstract/BaseNavigator';
 import type { GridNode } from './Grid';
 import type Grid from './Grid';
-import HelicopterUnitModule, {
-  FLIGHT_STATUS
-} from '../unitModule/movable/Helicopter';
+import type HelicopterUnitModule from '../unitModule/movable/Helicopter';
+import { FLIGHT_STATUS } from '../unitModule/movable/Helicopter';
 import { OBJECT_USER_DATA } from '../../utils/object';
 import type Unit from '../Unit';
 
@@ -40,8 +39,8 @@ export default class GroundNavigator extends BaseNavigator {
     // Filtere Colliders: Ignoriere fliegende Helicopters (nur gelandete blockieren)
     const filteredColliders = this.colliders.filter(collider => {
       const unit = collider.userData.unit as Unit;
-      if (unit?.hasModuleType(HelicopterUnitModule)) {
-        const heliModule = unit.getModuleByType(HelicopterUnitModule);
+      if (unit && 'helicopter' in unit.modules) {
+        const heliModule = unit.modules.helicopter as HelicopterUnitModule;
         return heliModule.getFlightStatus() === FLIGHT_STATUS.LANDED; // Nur gelandete berücksichtigen
       }
       return true; // Andere Colliders (Infantry, GroundVehicle, etc.) immer berücksichtigen

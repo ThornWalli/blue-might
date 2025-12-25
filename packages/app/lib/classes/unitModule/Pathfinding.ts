@@ -12,7 +12,7 @@ import type { AnimationLoopValue } from '../Renderer';
 import { Subject } from 'rxjs';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import FigureUnitModule from './movable/Figure';
-import MovableUnitModule from './Movable';
+import type MovableUnit from '../unit/Movable';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -245,10 +245,10 @@ export default class PathfindingUnitModule extends UnitModule<
     }
 
     const target = currentPath[0]!;
-    const unit = this.getUnit();
+    const unit = this.getUnit() as MovableUnit;
     let shiftThreshold = 0.1;
 
-    const movableModule = unit.getModuleByType(MovableUnitModule);
+    const movableModule = unit.modules.movable;
 
     if (movableModule instanceof GroundVehicleUnitModule) {
       const pos = unit.getPosition();
@@ -422,13 +422,19 @@ export default class PathfindingUnitModule extends UnitModule<
       this.lastTargetDistanceCounter = 0;
       currentPath.shift();
       if (currentPath.length === 0) {
-        const gv2 = unit.getModule<GroundVehicleUnitModule>(
-          GroundVehicleUnitModule.TYPE
-        );
-        const fig2 = unit.getModule<FigureUnitModule>(FigureUnitModule.TYPE);
-        const heli2 = unit.getModule<HelicopterUnitModule>(
-          HelicopterUnitModule.TYPE
-        );
+        const gv2 =
+          'groundVehicle' in unit.modules
+            ? (unit.modules.groundVehicle as GroundVehicleUnitModule)
+            : undefined;
+        const fig2 =
+          'figure' in unit.modules
+            ? (unit.modules.figure as FigureUnitModule)
+            : undefined;
+        const heli2 =
+          'helicopter' in unit.modules
+            ? (unit.modules.helicopter as HelicopterUnitModule)
+            : undefined;
+
         gv2?.clearAutopilotControls();
         fig2?.clearAutopilotControls();
 

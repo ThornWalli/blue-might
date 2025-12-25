@@ -11,6 +11,7 @@ import BuildingUnit, {
   type BuildingUnitModules,
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
+import { replaceColors } from '@blue-might/app/lib/utils/object';
 
 export type Options = BuildingUnitOptions;
 
@@ -56,18 +57,19 @@ export default class ControlTower_1<
         child.receiveShadow = false;
         console.log((child.material as MeshStandardMaterial).name);
 
-        if ((child.material as MeshStandardMaterial).name === 'primary') {
-          child.material.color.set(
-            this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-          );
-          child.material.needsUpdate = true;
-        }
-        if ((child.material as MeshStandardMaterial).name === 'secondary') {
-          child.material.color.set(
-            this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-          );
-          child.material.needsUpdate = true;
-        }
+        replaceColors(
+          [
+            [
+              'primary',
+              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
+            ],
+            [
+              'secondary',
+              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
+            ]
+          ],
+          child
+        );
       }
     });
 

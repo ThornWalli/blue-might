@@ -70,11 +70,7 @@ onMounted(() => {
 
   const vehicleModule$ = vehicle$.pipe(
     filter(vehicle => vehicle?.hasModuleType(MovableUnitModule) ?? false),
-    switchMap(
-      vehicle =>
-        of((vehicle as MovableUnit)?.getModuleByType(MovableUnitModule)) ??
-        EMPTY
-    ),
+    switchMap(vehicle => of((vehicle as MovableUnit).modules.movable ?? EMPTY)),
     filter(Boolean)
   );
 
@@ -99,7 +95,7 @@ function onClickUnitActive(e: Event) {
   (e.target as HTMLButtonElement).blur();
   const unit = $props.app.modules.selection.getSelectedUnit() as MovableUnit;
   if (!unit) return;
-  const vehicleModule = unit.getModuleByType(MovableUnitModule);
+  const vehicleModule = unit.modules.movable;
 
   if (vehicleModule.isTurnOn()) {
     vehicleModule.turnOff();

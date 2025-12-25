@@ -4,7 +4,6 @@ import type {
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 
-import type { MeshStandardMaterial } from 'three';
 import { Vector2, Vector3, Mesh, SkinnedMesh, Object3D } from 'three';
 import baseGlb from './assets/stationary_gun_1.glb?url';
 import BuildingUnit, {
@@ -24,6 +23,7 @@ import { playSound } from '@blue-might/debug/utils';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import { createBarrelTargetShoot } from './utils';
 import { getSfx } from '@blue-might/weapon/projectile';
+import { replaceColors } from '@blue-might/app/lib/utils/object';
 
 interface State {
   active: boolean;
@@ -168,19 +168,19 @@ export default class StationaryGun_1 extends BuildingUnit<
         child.castShadow = true;
         child.receiveShadow = false;
 
-        if ((child.material as MeshStandardMaterial).name === 'primary') {
-          child.material.color.set(
-            this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-          );
-          child.material.needsUpdate = true;
-        }
-        if ((child.material as MeshStandardMaterial).name === 'secondary') {
-          child.material.color.set(
-            this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-          );
-          child.material.needsUpdate = true;
-        }
-        // (child.material as MeshLambertMaterial).wireframe = true;
+        replaceColors(
+          [
+            [
+              'primary',
+              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
+            ],
+            [
+              'secondary',
+              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
+            ]
+          ],
+          child
+        );
       }
     });
 
@@ -194,12 +194,10 @@ export default class StationaryGun_1 extends BuildingUnit<
   }
 
   private getControls() {
-    if (!this.hasModuleType(PlayerUnitModule)) return {};
+    if (!this.modules.player) return {};
 
     return (
-      this.getModuleByType(PlayerUnitModule)
-        ?.getPlayer()
-        ?.modules.controls.getControls() ?? {}
+      this.modules.player?.getPlayer()?.modules.controls.getControls() ?? {}
     );
   }
 

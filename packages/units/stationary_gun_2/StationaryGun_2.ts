@@ -23,6 +23,7 @@ import { playSound } from '@blue-might/debug/utils';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import { createBarrelTargetShoot } from '../stationary_gun_1/utils';
 import { getSfx } from '@blue-might/weapon/projectile';
+import { replaceColors } from '@blue-might/app/lib/utils/object';
 
 interface State {
   active: boolean;
@@ -92,6 +93,11 @@ export default class StationaryGun_2 extends BuildingUnit<
             weapons: (options.moduleOptions?.gun as GunUnitModuleOptions)
               ?.weapons ?? [new weapons.default(), new weapons.default()],
             ...options.moduleOptions?.gun
+          },
+          collision: {
+            ...options.moduleOptions?.collision,
+            targetName: 'head',
+            targetChildIndex: 1
           }
         }
       },
@@ -188,6 +194,19 @@ export default class StationaryGun_2 extends BuildingUnit<
         child.castShadow = true;
         child.receiveShadow = false;
 
+        replaceColors(
+          [
+            [
+              'primary',
+              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
+            ],
+            [
+              'secondary',
+              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
+            ]
+          ],
+          child
+        );
         // (child.material as MeshLambertMaterial).wireframe = true;
       }
     });
@@ -202,12 +221,10 @@ export default class StationaryGun_2 extends BuildingUnit<
   }
 
   private getControls() {
-    if (!this.hasModuleType(PlayerUnitModule)) return {};
+    if (!this.modules.player) return {};
 
     return (
-      this.getModuleByType(PlayerUnitModule)
-        ?.getPlayer()
-        ?.modules.controls.getControls() ?? {}
+      this.modules.player?.getPlayer()?.modules.controls.getControls() ?? {}
     );
   }
 

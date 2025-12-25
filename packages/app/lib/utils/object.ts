@@ -1,4 +1,11 @@
-import { Mesh, type Material, type Object3D, type Texture } from 'three';
+import {
+  type MeshStandardMaterial,
+  type SkinnedMesh,
+  Mesh,
+  type Material,
+  type Object3D,
+  type Texture
+} from 'three';
 
 export interface ObjectName {
   BASE: 'base';
@@ -78,6 +85,19 @@ export function disableRaycaster(object: Object3D) {
   object.traverse(child => {
     if (child instanceof Mesh) {
       child.raycast = () => false;
+    }
+  });
+}
+
+export function replaceColors(
+  colorReplace: [string, number][],
+  object: Mesh | SkinnedMesh
+) {
+  colorReplace.forEach(([name, color]) => {
+    const material = object.material as MeshStandardMaterial;
+    if (material.name === name) {
+      material.color.set(color);
+      material.needsUpdate = true;
     }
   });
 }

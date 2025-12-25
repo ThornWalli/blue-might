@@ -54,9 +54,6 @@ const unitWeapons: Weapon[] = [new weapons.default(), new weapons.default()];
 const unitA = new StationaryGun_1({
   id: 'stationary-gun-1',
   position: new Vector3(0, 0, 0),
-  moduleDebug: {
-    collision: true
-  },
   moduleOptions: {
     gun: {
       weapons: unitWeapons.slice(0, 1),
@@ -75,9 +72,6 @@ const unitA = new StationaryGun_1({
 const unitB = new StationaryGun_2({
   id: 'stationary-gun-2',
   position: new Vector3(1, 0, 1),
-  moduleDebug: {
-    collision: true
-  },
   moduleOptions: {
     gun: {
       weapons: unitWeapons.slice(),

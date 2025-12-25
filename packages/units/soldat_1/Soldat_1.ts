@@ -3,7 +3,6 @@ import type {
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import type { MeshStandardMaterial } from 'three';
 import { Mesh, SkinnedMesh } from 'three';
 import baseGlb from './assets/soldat_1.glb?url';
 import FigureUnit, {
@@ -11,7 +10,7 @@ import FigureUnit, {
   type FigureUnitModules,
   type FigureUnitOptions
 } from '@blue-might/app/lib/classes/unit/Figure';
-import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
+import { replaceColors } from '@blue-might/app/lib/utils/object';
 
 export type Options = FigureUnitOptions;
 
@@ -38,20 +37,16 @@ export default class Human_1<
     this.setMaterialReady();
     this.modules.animation.playAction('idle');
     this.subscription.add(
-      (this as FigureUnit)
-        .getModuleByType(MovableUnitModule)
-        .observables.move$.subscribe(() => {
-          this.modules.animation.stopAction('idle');
-          this.modules.animation.playAction('walk');
-        })
+      (this as FigureUnit).modules.movable.observables.move$.subscribe(() => {
+        this.modules.animation.stopAction('idle');
+        this.modules.animation.playAction('walk');
+      })
     );
     this.subscription.add(
-      (this as FigureUnit)
-        .getModuleByType(MovableUnitModule)
-        .observables.stop$.subscribe(() => {
-          this.modules.animation.stopAction('walk');
-          this.modules.animation.playAction('idle');
-        })
+      (this as FigureUnit).modules.movable.observables.stop$.subscribe(() => {
+        this.modules.animation.stopAction('walk');
+        this.modules.animation.playAction('idle');
+      })
     );
   }
 
@@ -66,12 +61,20 @@ export default class Human_1<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-        if ((child.material as MeshStandardMaterial).name === 'primary') {
-          child.material.color.set(
-            this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-          );
-          child.material.needsUpdate = true;
-        }
+
+        replaceColors(
+          [
+            [
+              'primary',
+              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
+            ],
+            [
+              'secondary',
+              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
+            ]
+          ],
+          child
+        );
       }
     });
 

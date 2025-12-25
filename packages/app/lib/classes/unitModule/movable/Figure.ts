@@ -8,6 +8,18 @@ import MovableUnitModule, {
 } from '../Movable';
 import type FigureUnit from '../../unit/Figure'; // Annahme: Es gibt eine FigureUnit-Klasse
 
+declare module '../../Unit' {
+  interface ModuleStates {
+    figure: Partial<FigureUnitModuleState>;
+  }
+  interface ModuleOptions {
+    figure: Partial<FigureUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    figure: boolean;
+  }
+}
+
 export type FigureUnitObservables = MovableUnitModuleObservables;
 
 export interface FigureUnitModuleOptions extends MovableUnitModuleOptions {

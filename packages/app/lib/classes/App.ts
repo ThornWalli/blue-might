@@ -101,10 +101,12 @@ export class BaseApp<
     if (this.ready) return;
 
     //#region Modules
-    const preparedModules = this.moduleList.map(ModuleClass => {
-      const moduleInstance = new ModuleClass(this);
-      return [ModuleClass.TYPE, moduleInstance];
-    });
+    const preparedModules = this.moduleList
+      .map(ModuleClass => {
+        const moduleInstance = new ModuleClass(this);
+        return ModuleClass.TYPES.map(type => [type, moduleInstance]);
+      })
+      .flat();
     this.modules = Object.fromEntries(preparedModules);
     //#endregion
 

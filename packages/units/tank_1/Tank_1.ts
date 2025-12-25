@@ -10,8 +10,8 @@ import TankUnit, {
 
 import baseGlb from './assets/tank_1.glb?url';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import type { MeshStandardMaterial } from 'three';
 import { Mesh, SkinnedMesh } from 'three';
+import { replaceColors } from '@blue-might/app/lib/utils/object';
 
 export type Options = TankUnitOptions;
 export type Modules = TankUnitModules;
@@ -33,6 +33,7 @@ export default class Tank_1<
         moduleOptions: {
           ...options.moduleOptions,
           collision: {
+            ...options.moduleOptions?.collision,
             targetName: 'base'
           }
         }
@@ -56,18 +57,19 @@ export default class Tank_1<
         child.castShadow = true;
         child.receiveShadow = false;
 
-        if ((child.material as MeshStandardMaterial).name === 'primary') {
-          child.material.color.set(
-            this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-          );
-          child.material.needsUpdate = true;
-        }
-        if ((child.material as MeshStandardMaterial).name === 'secondary') {
-          child.material.color.set(
-            this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-          );
-          child.material.needsUpdate = true;
-        }
+        replaceColors(
+          [
+            [
+              'primary',
+              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
+            ],
+            [
+              'secondary',
+              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
+            ]
+          ],
+          child
+        );
       }
     });
 

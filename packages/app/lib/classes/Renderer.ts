@@ -121,10 +121,12 @@ export default class Renderer<
     this.pixelated = options.pixelated ?? false;
 
     //#region Modules
-    const preparedModules = modules.map(ModuleClass => {
-      const moduleInstance = new ModuleClass(this, {});
-      return [ModuleClass.TYPE, moduleInstance];
-    });
+    const preparedModules = modules
+      .map(ModuleClass => {
+        const moduleInstance = new ModuleClass(this, {});
+        return ModuleClass.TYPES.map(type => [type, moduleInstance]);
+      })
+      .flat();
     this.modules = Object.fromEntries(preparedModules);
     //#endregion
   }

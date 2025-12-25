@@ -198,7 +198,6 @@ export default class Unit<
           state: any;
         }>(
           (acc, type) => {
-            console.log(`Preparing module ${type}`);
             acc.options = {
               ...acc.options,
               ...(moduleOptions?.[type] ?? {})
@@ -212,16 +211,15 @@ export default class Unit<
           { options: {}, state: {} }
         );
 
-        console.log(options, state);
-
         const moduleInstance = new ModuleClass(
           this,
           options,
           state,
           this.moduleDebug[ModuleClass.TYPE] ?? false
         );
-        return [ModuleClass.TYPE, moduleInstance];
-      });
+        return ModuleClass.TYPES.map(type => [type, moduleInstance]);
+      })
+      .flat();
     this.modules = Object.fromEntries(preparedModules);
 
     //#endregion
@@ -249,8 +247,6 @@ export default class Unit<
     this._map = context.map ?? null;
 
     const modules: UnitModule[] = Object.values(this.modules);
-
-    // Setup modules
 
     for (const module of modules) {
       await module.setup();
