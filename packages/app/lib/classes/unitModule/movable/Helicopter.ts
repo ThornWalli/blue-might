@@ -164,7 +164,7 @@ export default class HelicopterUnitModule<
     );
 
     this.subscription.add(
-      fromEvent(unit.modules.animation.mixer, 'finished')
+      fromEvent(unit.modules.animation.getMixer(), 'finished')
         .pipe(
           filter(
             e => e.action === unit.modules.animation.getAction('land_gears')

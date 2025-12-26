@@ -14,7 +14,7 @@ import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 
-import { BlueMight, LandingPort_1 } from '@blue-might/units';
+import { CombatHelicopter_1, LandingPort_1 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
@@ -27,7 +27,7 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
-const playerUnitId = 'blue-might-1';
+const playerUnitId = 'combat-helicopter-1';
 
 const blueFaction = new Faction({
   id: 'blue-faction',
@@ -40,8 +40,8 @@ const map: Partial<MapDescription> = {
     new LandingPort_1({
       position: new Vector3(0, 0, 0)
     }),
-    new BlueMight({
-      id: 'blue-might-1',
+    new CombatHelicopter_1({
+      id: 'combat-helicopter-1',
       position: new Vector3(0, 0, 0),
       moduleDebug: {
         pathfinding: true,

@@ -45,12 +45,12 @@ export class AnimationUnitModule extends UnitModule<
 > {
   static override TYPE = 'animation';
 
-  mixer!: AnimationMixer;
-  actions: Actions = {};
-  animations: AnimationClip[] = [];
+  private mixer!: AnimationMixer;
+  private actions: Actions = {};
+  private animations: AnimationClip[] = [];
   private action: string | null;
-  private activeActionsCount = 0; // Counter für aktive Actions
-  isAnimating = false; // Public Property für externe Checks
+  private activeActionsCount = 0;
+  public isAnimating = false;
 
   override isForceUpdate() {
     return this.isAnimating;
@@ -83,6 +83,15 @@ export class AnimationUnitModule extends UnitModule<
     //#endregion
   }
 
+  override destroy(): void {
+    super.destroy();
+    this.mixer?.stopAllAction();
+  }
+
+  override update({ delta }: AnimationLoopValue) {
+    this.mixer?.update(delta);
+  }
+
   override async setupMesh(context: UnitModuleSetupContext) {
     const animationWrapper = new Object3D();
     animationWrapper.name = OBJECT_NAME.MESH_ANIMATION;
@@ -101,9 +110,8 @@ export class AnimationUnitModule extends UnitModule<
     return context.mesh;
   }
 
-  override destroy(): void {
-    super.destroy();
-    this.mixer?.stopAllAction();
+  getMixer() {
+    return this.mixer;
   }
 
   getAction(name: string) {
@@ -117,19 +125,6 @@ export class AnimationUnitModule extends UnitModule<
 
   setAnimations(animations: AnimationClip[]) {
     this.animations = animations;
-  }
-
-  override update({ delta }: AnimationLoopValue) {
-    this.mixer?.update(delta);
-  }
-
-  activeActions: Set<string> = new Set();
-
-  stopAction(name: string) {
-    const action = this.actions[name];
-    if (!action) return;
-
-    action.stop();
   }
 
   playAction(
@@ -192,5 +187,11 @@ export class AnimationUnitModule extends UnitModule<
       current: name,
       previous: from ?? null
     });
+  }
+  stopAction(name: string) {
+    const action = this.actions[name];
+    if (!action) return;
+
+    action.stop();
   }
 }

@@ -4,11 +4,12 @@ import UnitModule, {
   type UnitModuleOptions,
   type UnitModuleState
 } from '../UnitModule';
-import { Vector3 } from 'three';
-import type { AnimationLoopValue } from '../Renderer';
 import type { Object3D } from 'three';
+import { Vector2, Vector3 } from 'three';
+import type { AnimationLoopValue } from '../Renderer';
 import { Subject } from 'rxjs';
 import type Weapon from '../Weapon';
+import AttackUnitModule from './Attack';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -27,10 +28,15 @@ export interface GunUnitModuleObservables extends UnitModuleObservables {
   shoot$: Subject<{ index: number }>;
   cooldown$: Subject<{ index: number }>;
 }
+
+type AutoAimFunction = (options: {
+  target: Unit;
+  sourcePosition: Vector3;
+  weapon: Weapon;
+  index: number;
+}) => boolean;
 export interface GunUnitModuleOptions extends UnitModuleOptions {
-  enableAutoAim: boolean;
-  enableShootInterval: boolean;
-  shootInterval: number;
+  autoAimFn: AutoAimFunction;
   weapons: Weapon[];
 }
 export interface GunUnitModuleState extends UnitModuleState {
@@ -38,6 +44,8 @@ export interface GunUnitModuleState extends UnitModuleState {
   lastShootTime: number[];
   sourcePositions: Vector3[];
   barrelTargets: Object3D[];
+  autoAimTarget?: Unit;
+  autoAimActive: boolean;
 }
 
 export default class GunUnitModule<
@@ -51,17 +59,17 @@ export default class GunUnitModule<
       unit,
       {
         ...options,
-        weapons: options.weapons ?? {},
-        enableAutoAim: options.enableAutoAim ?? true,
-        enableShootInterval: options.enableShootInterval ?? false,
-        shootInterval: options.shootInterval ?? 200
+        weapons: options.weapons ?? {}
       },
       {
         ...state,
         active: state.active ?? false,
         lastShootTime: state.lastShootTime ?? [],
         sourcePositions: state.sourcePositions ?? [],
-        barrelTargets: state.barrelTargets ?? []
+        barrelTargets: state.barrelTargets ?? [],
+        targetRotation: new Vector2(),
+        autoAimActive: state.autoAimActive ?? true,
+        autoAimTarget: state.autoAimTarget ?? null
       },
       debug
     );
@@ -72,9 +80,20 @@ export default class GunUnitModule<
     this.observables.cooldown$ = new Subject<{ index: number }>();
     //#endregion
   }
+  override async setup() {
+    await super.setup();
+    const attackModule = this.getUnit().getModuleByType(AttackUnitModule);
+    if (attackModule) {
+      this.subscription.add(
+        attackModule.observables.target$.subscribe(target => {
+          this.state.autoAimTarget = target;
+        })
+      );
+    }
+  }
 
   public shoot(position: Vector3, direction: Vector3, weapon: Weapon) {
-    const shootModule = this.getShootModule();
+    const shootModule = this.getUnit().getMap()?.modules.shoot;
     if (!shootModule) return;
 
     shootModule.createShoot(position, direction, weapon.projectile, {
@@ -86,26 +105,7 @@ export default class GunUnitModule<
 
   override update(_v: AnimationLoopValue) {
     this.updateShoot(_v);
-  }
-
-  registerBarrelTarget(object: Object3D) {
-    this.state.barrelTargets.push(object);
-    this.state.sourcePositions.push(new Vector3());
-  }
-  private getBarrelTargetbyIndex(index: number) {
-    return this.state.barrelTargets.at(index) ?? null;
-  }
-  public getWeapon(index: number) {
-    return this.options.weapons.at(index) ?? null;
-  }
-  public getWeapons() {
-    return Object.values(this.options.weapons);
-  }
-
-  public setActive(active: boolean) {
-    if (this.state.active === active) return;
-    this.state.active = active;
-    this.observables.active$.next(active);
+    this.updateAutoAIM();
   }
 
   private updateShoot({ time }: { time: number }) {
@@ -151,52 +151,44 @@ export default class GunUnitModule<
     }
   }
 
-  private autoAIM() {
-    // if (this.options.enableAutoAim) {
-    //   const currentTarget = targetObjs[currentTargetIndex];
-    //   if (currentTarget && gunState.headObj && gunState.barrelObj) {
-    //     // Richtung von sourcePosition zum Target berechnen
-    //     const direction = new Vector3();
-    //     direction
-    //       .subVectors(currentTarget.position, sourcePosition)
-    //       .normalize();
-    //     // Ziel-Rotation berechnen
-    //     const horizontalDirection = new Vector3(
-    //       direction.x,
-    //       0,
-    //       direction.z
-    //     ).normalize();
-    //     gunState.targetRotationY = Math.atan2(
-    //       horizontalDirection.x,
-    //       horizontalDirection.z
-    //     );
-    //     const distanceXZ = Math.sqrt(direction.x ** 2 + direction.z ** 2);
-    //     gunState.targetRotationX = Math.max(
-    //       gunState.minBarrelAngleX,
-    //       Math.min(
-    //         gunState.maxBarrelAngleX,
-    //         -Math.atan2(direction.y, distanceXZ)
-    //       )
-    //     );
-    //     // Interpolation zur Ziel-Rotation
-    //     gunState.headObj.rotation.y = lerp(
-    //       gunState.headObj.rotation.y,
-    //       gunState.targetRotationY,
-    //       gunState.rotationSpeed
-    //     );
-    //     gunState.barrelObj.rotation.x = lerp(
-    //       gunState.barrelObj.rotation.x,
-    //       gunState.targetRotationX,
-    //       gunState.rotationSpeed
-    //     );
-    //   }
-    //   updateSourcePosition();
-    // }
+  private updateAutoAIM() {
+    if (this.state.autoAimActive) {
+      const target = this.state.autoAimTarget;
+      if (target) {
+        this.getWeapons().forEach((weapon, index) => {
+          const sourcePosition = this.state.sourcePositions[index]!;
+          const shoot = this.options.autoAimFn({
+            target,
+            sourcePosition,
+            weapon,
+            index
+          });
+          this.setActive(shoot);
+          this.updateSourcePosition(index);
+        });
+      } else {
+        this.setActive(false);
+      }
+    }
   }
 
-  private getShootModule() {
-    const map = this.getUnit().getMap();
-    if (!map) return null;
-    return map.modules.shoot;
+  registerBarrelTarget(object: Object3D) {
+    this.state.barrelTargets.push(object);
+    this.state.sourcePositions.push(new Vector3());
+  }
+  private getBarrelTargetbyIndex(index: number) {
+    return this.state.barrelTargets.at(index) ?? null;
+  }
+  public getWeapon(index: number) {
+    return this.options.weapons.at(index) ?? null;
+  }
+  public getWeapons() {
+    return Object.values(this.options.weapons);
+  }
+
+  public setActive(active: boolean) {
+    if (this.state.active === active) return;
+    this.state.active = active;
+    this.observables.active$.next(active);
   }
 }

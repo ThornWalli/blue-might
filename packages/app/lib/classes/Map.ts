@@ -189,7 +189,7 @@ export default class Map<
       cm2.refreshWorldOBB();
       cm2.refreshDebugHelper(); // Nur für debug, sonst weglassen
 
-      if (cm1.worldOBB.intersectsOBB(cm2.worldOBB)) {
+      if (cm1.getWorldOBB().intersectsOBB(cm2.getWorldOBB())) {
         return cm2.getCollisionType();
       }
     }

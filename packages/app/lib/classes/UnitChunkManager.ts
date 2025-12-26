@@ -138,4 +138,55 @@ export default class UnitChunkManager {
 
     return visibleChunkKeys;
   }
+
+  getUnitsInRadius(position: Vector3, radius: number): Unit[] {
+    const unitsInRadius: Unit[] = [];
+    const chunkSize = this.size;
+
+    // Berechne die Chunk-Koordinaten des Zentrums (verwende getChunkKey für Konsistenz)
+    const centerPos = position.clone();
+    centerPos.y = 0; // Annahme: y=0 für 2D-Chunks, passe an falls nötig
+    const centerChunkKey = this.getChunkKey(centerPos);
+    const [centerChunkX, centerChunkY, centerChunkZ] = centerChunkKey
+      .split(',')
+      .map(Number) as [number, number, number];
+
+    // Berechne den Radius in Chunks (um alle potenziell relevanten Chunks abzudecken)
+    const chunkRadius = Math.ceil(radius / chunkSize);
+
+    // Durchlaufe alle Chunks im Würfel um das Zentrum (Bounding-Box des Kreises, jetzt 3D)
+    for (let dx = -chunkRadius; dx <= chunkRadius; dx++) {
+      for (let dy = -chunkRadius; dy <= chunkRadius; dy++) {
+        // NEU: y-Schleife hinzufügen
+        for (let dz = -chunkRadius; dz <= chunkRadius; dz++) {
+          // NEU: z-Schleife (falls 3D)
+          const chunkX = centerChunkX + dx;
+          const chunkY = centerChunkY + dy; // NEU: y berücksichtigen
+          const chunkZ = centerChunkZ + dz;
+
+          // Erstelle eine temporäre Position für diesen Chunk und hole den Key
+          const chunkPos = new Vector3(
+            chunkX * chunkSize,
+            chunkY * chunkSize,
+            chunkZ * chunkSize
+          );
+          const chunkKey = this.getChunkKey(chunkPos);
+
+          const chunk = this.chunks.get(chunkKey);
+          if (chunk) {
+            // Filtere Units im Chunk, die tatsächlich im Radius liegen
+            chunk.units.forEach(unit => {
+              const unitPos = unit.getPosition();
+              const distance = position.distanceTo(unitPos);
+              if (distance <= radius) {
+                unitsInRadius.push(unit);
+              }
+            });
+          }
+        }
+      }
+    }
+
+    return unitsInRadius;
+  }
 }

@@ -13,7 +13,7 @@ import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 
-import { BlueMight, Tank_1, Tree_1 } from '@blue-might/units';
+import { CombatHelicopter_1, Tank_1, Tree_1 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Euler, Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
@@ -26,7 +26,7 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
-const playerUnitId = 'blue-might-1';
+const playerUnitId = 'combat-helicopter-1';
 
 const map: Partial<MapDescription> = {
   units: [
@@ -43,8 +43,8 @@ const map: Partial<MapDescription> = {
         pathfinding: true
       }
     }),
-    new BlueMight({
-      id: 'blue-might-1',
+    new CombatHelicopter_1({
+      id: 'combat-helicopter-1',
       position: new Vector3(2, 0, 0)
     }),
     new Tree_1({

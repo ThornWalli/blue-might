@@ -24,14 +24,18 @@ import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import { createBarrelTargetShoot } from './utils';
 import { getSfx } from '@blue-might/weapon/projectile';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
+import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
+import { lerp } from 'three/src/math/MathUtils.js';
 
 interface State {
   active: boolean;
   velocity: Vector2;
-  maxBarrelAngleX: number;
-  minBarrelAngleX: number;
-  targetRotationY: number;
-  targetRotationX: number;
+  minMaxBarrelAngle: [number, number];
+  // maxBarrelAngleX: number;
+  // minBarrelAngleX: number;
+  targetRotation: Vector2;
+  // targetRotationY: number;
+  // targetRotationX: number;
   rotationSpeed: number;
   sourcePositions: [Vector3];
 }
@@ -39,13 +43,19 @@ interface State {
 export type Options = BuildingUnitOptions;
 
 export interface Modules extends BuildingUnitModules {
-  movable: MovableUnitModule;
+  attack: AttackUnitModule;
   gun: GunUnitModule;
   player: PlayerUnitModule;
+  movable: MovableUnitModule;
 }
 
 export type ModuleList = BuildingUnitModuleList &
-  [typeof MovableUnitModule | typeof GunUnitModule | typeof PlayerUnitModule];
+  [
+    | typeof AttackUnitModule
+    | typeof GunUnitModule
+    | typeof PlayerUnitModule
+    | typeof MovableUnitModule
+  ];
 
 export default class StationaryGun_1 extends BuildingUnit<
   BuildingUnitOptions,
@@ -57,11 +67,9 @@ export default class StationaryGun_1 extends BuildingUnit<
   state: State = {
     active: false,
     velocity: new Vector2(0, 0),
-    maxBarrelAngleX: 0.2,
-    minBarrelAngleX: -0.6,
-    targetRotationY: -0.6,
-    targetRotationX: 0,
-    rotationSpeed: 0.05,
+    minMaxBarrelAngle: [-0.6, 0.2],
+    targetRotation: new Vector2(0, -0.6),
+    rotationSpeed: 0.05, //0.05,
     sourcePositions: [new Vector3()]
   };
 
@@ -80,14 +88,63 @@ export default class StationaryGun_1 extends BuildingUnit<
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []
   ) {
-    moduleList.push(MovableUnitModule, GunUnitModule, PlayerUnitModule);
+    moduleList.push(
+      AttackUnitModule,
+      GunUnitModule,
+      PlayerUnitModule,
+      MovableUnitModule
+    );
     super(
       {
         ...options,
-        name: 'StationaryGun 1',
+        name: 'Stationary Gun 1',
         moduleOptions: {
           ...options.moduleOptions,
           gun: {
+            autoAimFn: ({ target, sourcePosition, index }) => {
+              if (target && this.objects.head && this.objects.barrels[index]) {
+                // Richtung von sourcePosition zum Target berechnen
+                const direction = new Vector3();
+                direction
+                  .subVectors(target.getPosition(), sourcePosition)
+                  .normalize();
+                // Ziel-Rotation berechnen
+                const horizontalDirection = new Vector3(
+                  direction.x,
+                  0,
+                  direction.z
+                ).normalize();
+                this.state.targetRotation.setY(
+                  Math.atan2(horizontalDirection.x, horizontalDirection.z)
+                );
+                const distanceXZ = Math.sqrt(
+                  direction.x ** 2 + direction.z ** 2
+                );
+                this.state.targetRotation.setX(
+                  Math.max(
+                    this.state.minMaxBarrelAngle[0],
+                    Math.min(
+                      this.state.minMaxBarrelAngle[1],
+                      -Math.atan2(direction.y, distanceXZ)
+                    )
+                  )
+                );
+                // Interpolation zur Ziel-Rotation
+                this.objects.head.rotation.y = lerp(
+                  this.objects.head.rotation.y,
+                  this.state.targetRotation.y,
+                  this.state.rotationSpeed
+                );
+                this.objects.barrels[index].rotation.x = lerp(
+                  this.objects.barrels[index].rotation.x,
+                  this.state.targetRotation.x,
+                  this.state.rotationSpeed
+                );
+
+                return distanceXZ >= 0.96;
+              }
+              return false;
+            },
             weapons: (options.moduleOptions?.gun as GunUnitModuleOptions)
               ?.weapons ?? [new weapons.default()],
             ...options.moduleOptions?.gun
@@ -221,6 +278,7 @@ export default class StationaryGun_1 extends BuildingUnit<
     if (controls.right) {
       this.state.velocity.x -= 0.005;
     }
+    if (this.modules.gun.state.autoAimActive) return;
     this.modules.gun.setActive(controls.space ?? false);
   }
 
@@ -235,8 +293,8 @@ export default class StationaryGun_1 extends BuildingUnit<
       barrelObj.rotation.x += this.state.velocity.y;
 
       barrelObj.rotation.x = Math.max(
-        this.state.minBarrelAngleX,
-        Math.min(this.state.maxBarrelAngleX, barrelObj.rotation.x)
+        this.state.minMaxBarrelAngle[0],
+        Math.min(this.state.minMaxBarrelAngle[1], barrelObj.rotation.x)
       );
 
       this.state.velocity.multiplyScalar(0.9);

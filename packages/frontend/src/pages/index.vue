@@ -53,7 +53,9 @@ async function setupPlayer(app: App) {
   subscription.add(
     app.modules.map.observables.map$
       .pipe(
-        map(map => map?.modules.units.getById<MovableUnit>('blue-might-1')),
+        map(map =>
+          map?.modules.units.getById<MovableUnit>('combat-helicopter-1')
+        ),
         filter(Boolean)
       )
       .subscribe(vehicle => player.modules.vehicle.setVehicle(vehicle))

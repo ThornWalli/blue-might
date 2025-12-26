@@ -62,6 +62,7 @@ export default class MovableUnitModule<
 > extends UnitModule<Options, State, Obervables, U> {
   static override TYPE = 'movable';
   private _dir = new Vector3();
+  private _aiControls?: ControlState;
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {
     super(
@@ -99,50 +100,13 @@ export default class MovableUnitModule<
     //#endregion
   }
 
-  getAIControls() {
-    return this._aiControls;
-  }
-
-  private _aiControls?: ControlState;
-  setAutopilotControls(controls?: ControlState) {
-    this._aiControls = controls;
-    if (controls) {
-      // Automatisch starten, wenn AI aktiv
-      this.turnOn();
-    } else {
-      // Optional: Stoppen, wenn AI deaktiviert
-      this.turnOff();
-    }
-  }
-  clearAutopilotControls() {
-    if (!this._aiControls) return;
-    this._aiControls = undefined;
-    this.turnOff(); // Stoppen, wenn AI entfernt
-  }
-
-  getControls() {
-    const unit = this.getUnit() as U;
-    const human =
-      unit.modules.player.getPlayer()?.modules.controls.getControls() ?? {};
-    const ai = this._aiControls;
-    if (!ai || !this.hasMinPower()) {
-      // Keine AI-Controls, wenn keine Power oder kein AI
-      return human;
-    }
-
-    // AI-Controls nur anwenden, wenn genug Power da ist
-    return {
-      up: ai.up ?? human.up,
-      down: ai.down ?? human.down,
-      left: ai.left ?? human.left,
-      right: ai.right ?? human.right,
-      space: ai.space ?? human.space,
-      gear: ai.gear ?? human.gear,
-      landing: ai.landing ?? human.landing,
-      modifier: ai.modifier ?? human.modifier,
-      rotateLeft: ai.rotateLeft ?? human.rotateLeft,
-      rotateRight: ai.rotateRight ?? human.rotateRight
-    };
+  override async setup() {
+    this.subscription.add(
+      this.getUnit().modules.damage.observables.destroyed$.subscribe(() => {
+        this.clearAutopilotControls();
+        this.turnOff();
+      })
+    );
   }
 
   override update({ delta: _delta }: AnimationLoopValue): void {
@@ -185,6 +149,63 @@ export default class MovableUnitModule<
     }
   }
 
+  isTurnOn() {
+    return this.getActive() ?? false;
+  }
+
+  turnOn() {
+    this.setActive(true);
+  }
+
+  turnOff() {
+    this.setActive(false);
+  }
+
+  getAIControls() {
+    return this._aiControls;
+  }
+
+  setAutopilotControls(controls?: ControlState) {
+    this._aiControls = controls;
+    if (controls) {
+      // Automatisch starten, wenn AI aktiv
+      this.turnOn();
+    } else {
+      // Optional: Stoppen, wenn AI deaktiviert
+      this.turnOff();
+    }
+  }
+  clearAutopilotControls() {
+    if (!this._aiControls) return;
+    this._aiControls = undefined;
+    this.turnOff(); // Stoppen, wenn AI entfernt
+  }
+
+  getControls() {
+    const unit = this.getUnit() as U;
+    const human =
+      unit.modules.player.getPlayer()?.modules.controls.getControls() ?? {};
+    const ai = this._aiControls;
+    if (!ai || !this.hasMinPower()) {
+      // Keine AI-Controls, wenn keine Power oder kein AI
+      return human;
+    }
+
+    // AI-Controls nur anwenden, wenn genug Power da ist
+    return {
+      up: ai.up ?? human.up,
+      down: ai.down ?? human.down,
+      left: ai.left ?? human.left,
+      right: ai.right ?? human.right,
+      space: ai.space ?? human.space,
+      gear: ai.gear ?? human.gear,
+      landing: ai.landing ?? human.landing,
+      modifier: ai.modifier ?? human.modifier,
+      rotateLeft: ai.rotateLeft ?? human.rotateLeft,
+      rotateRight: ai.rotateRight ?? human.rotateRight
+    };
+  }
+
   hasMinPower() {
     return this.state.rawPower >= this.state.minPower;
   }
@@ -219,18 +240,6 @@ export default class MovableUnitModule<
     if (this.state.active === value) return;
     this.state.active = value;
     this.observables.active$.next(this.state.active);
-  }
-
-  isTurnOn() {
-    return this.getActive() ?? false;
-  }
-
-  turnOn() {
-    this.setActive(true);
-  }
-
-  turnOff() {
-    this.setActive(false);
   }
 
   getTmpDirection() {

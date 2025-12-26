@@ -4,7 +4,7 @@ import type {
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 
-import baseGlb from './assets/blue_might.glb?url';
+import baseGlb from './assets/combat_helicopter_1.glb?url';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh, LoopRepeat, LoopOnce } from 'three';
 import HelicopterUnit, {
@@ -18,11 +18,11 @@ export type Options = HelicopterUnitOptions;
 export type Modules = HelicopterUnitModules;
 export type ModuleList = HelicopterUnitModuleList;
 
-export default class BlueMight<
+export default class CombatHelicopter_1<
   Modules extends HelicopterUnitModules = HelicopterUnitModules,
   ModuleList extends HelicopterUnitModuleList = HelicopterUnitModuleList
 > extends HelicopterUnit<Options, Modules, ModuleList> {
-  static override KEY = 'blue_might';
+  static override KEY = 'combat_helicopter_1';
 
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
@@ -31,7 +31,7 @@ export default class BlueMight<
     super(
       {
         ...options,
-        name: 'BlueMight',
+        name: 'Combat Helicopter 1',
 
         moduleOptions: {
           ...options.moduleOptions,

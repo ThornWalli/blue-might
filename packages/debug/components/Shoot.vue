@@ -13,14 +13,7 @@ import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import type Weapon from '@blue-might/app/lib/classes/Weapon';
-
-import {
-  BlueMight,
-  LandingPort_1,
-  StationaryGun_1,
-  StationaryGun_2,
-  Tank_1
-} from '@blue-might/units';
+import { CombatHelicopter_1, StationaryGun_1, Tank_1 } from '@blue-might/units';
 import { weapons } from '@blue-might/weapon';
 import { Subscription } from 'rxjs';
 import { Euler, Vector3 } from 'three';
@@ -54,38 +47,41 @@ const unitWeapons: Weapon[] = [new weapons.default(), new weapons.default()];
 const unitA = new StationaryGun_1({
   id: 'stationary-gun-1',
   position: new Vector3(0, 0, 0),
+  moduleDebug: {
+    attack: true
+  },
   moduleOptions: {
     gun: {
-      weapons: unitWeapons.slice(0, 1),
-      enableAutoAim: true,
-      enableShootInterval: false,
-      shootInterval: 200
+      weapons: unitWeapons.slice(0, 1)
     }
   },
   moduleStates: {
     faction: {
       faction: blueFaction
+    },
+    gun: {
+      autoAimActive: true
     }
   }
 });
 
-const unitB = new StationaryGun_2({
-  id: 'stationary-gun-2',
-  position: new Vector3(1, 0, 1),
-  moduleOptions: {
-    gun: {
-      weapons: unitWeapons.slice(),
-      enableAutoAim: true,
-      enableShootInterval: false,
-      shootInterval: 200
-    }
-  },
-  moduleStates: {
-    faction: {
-      faction: blueFaction
-    }
-  }
-});
+// const unitB = new StationaryGun_2({
+//   id: 'stationary-gun-2',
+//   position: new Vector3(1, 0, 1),
+//   moduleOptions: {
+//     gun: {
+//       weapons: unitWeapons.slice(),
+//       enableAutoAim: true,
+//       enableShootInterval: false,
+//       shootInterval: 200
+//     }
+//   },
+//   moduleStates: {
+//     faction: {
+//       faction: blueFaction
+//     }
+//   }
+// });
 
 const playerUnitId = 'stationary-gun-1';
 
@@ -93,19 +89,41 @@ const map: Partial<MapDescription> = {
   factions: [blueFaction, enemyFaction],
   units: [
     unitA,
-    unitB,
+    // unitB,
 
-    new LandingPort_1({
-      position: new Vector3(0, 0, 2)
-    }),
+    // new LandingPort_1({
+    //   position: new Vector3(0, 0, 2)
+    // }),
     new Tank_1({
       id: 'tank-1',
       position: new Vector3(-2, 0, 0),
-      rotation: new Euler(0, Math.PI / 4, 0)
+      rotation: new Euler(0, Math.PI / 4, 0),
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
+      }
     }),
-    new BlueMight({
-      id: 'blue-might-1',
-      position: new Vector3(2, 0, 0)
+    new CombatHelicopter_1({
+      id: 'combat-helicopter-1',
+      // position: new Vector3(2, 0, 0),
+      position: new Vector3(5.5, 0, 5.5),
+      moduleOptions: {
+        patrol: {
+          path: [
+            [1.6, 2.4],
+            [-1.6, 2.4]
+          ]
+        }
+      },
+      moduleStates: {
+        patrol: {
+          active: true
+        },
+        faction: {
+          faction: enemyFaction
+        }
+      }
     })
   ]
 };
@@ -126,7 +144,8 @@ function setupGUI({
   const weapon = unitA.modules.gun.getWeapon(0)!;
 
   gui = new GUI();
-  gui.add(unitA.modules.gun.options, 'enableAutoAim').name('Enable Auto Aim');
+
+  gui.add(unitA.modules.gun.state, 'autoAimActive').name('Enable Auto Aim');
 
   // gui.add(weapon, 'enableShootInterval').name('Enable Shoot Interval');
   // gui.add(unit.modules.gun.options, 'shootInterval', 0, 2000, 1);

@@ -1,5 +1,5 @@
 import Soldat_1 from '@blue-might/units/soldat_1/Soldat_1';
-import BlueMight from './blue_might/BlueMight';
+import CombatHelicopter_1 from './blue_might/CombatHelicopter_1';
 import ControlTower_1 from './control_tower_1/ControlTower_1';
 import LandingPort_1 from './landing_port_1/LandingPort_1';
 import Tank_1 from './tank_1/Tank_1';
@@ -12,7 +12,7 @@ export { default as ControlTower_1 } from './control_tower_1/ControlTower_1';
 export { default as Tank_1 } from './tank_1/Tank_1';
 export { default as LandingPort_1 } from './landing_port_1/LandingPort_1';
 export { default as Tree_1 } from './tree_1/Tree_1';
-export { default as BlueMight } from './blue_might/BlueMight';
+export { default as CombatHelicopter_1 } from './blue_might/CombatHelicopter_1';
 export { default as Barrack_1 } from './barrack_1/Barrack_1';
 export { default as StationaryGun_1 } from './stationary_gun_1/StationaryGun_1';
 export { default as StationaryGun_2 } from './stationary_gun_2/StationaryGun_2';
@@ -23,7 +23,7 @@ const units = {
   [Tank_1.KEY]: Tank_1,
   [LandingPort_1.KEY]: LandingPort_1,
   [Tree_1.KEY]: Tree_1,
-  [BlueMight.KEY]: BlueMight,
+  [CombatHelicopter_1.KEY]: CombatHelicopter_1,
   [Barrack_1.KEY]: Barrack_1,
   [Soldat_1.KEY]: Soldat_1,
   [StationaryGun_1.KEY]: StationaryGun_1,

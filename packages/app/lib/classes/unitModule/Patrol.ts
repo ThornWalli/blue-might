@@ -70,6 +70,12 @@ export default class PatrolUnitModule extends UnitModule<
   override async afterSetup() {
     await super.afterSetup();
 
+    this.subscription.add(
+      this.getUnit().modules.damage.observables.destroyed$.subscribe(() => {
+        this.stopPatrol();
+      })
+    );
+
     if (import.meta.hot) {
       import.meta.hot.dispose(() => {
         this.observables.abort$.next();

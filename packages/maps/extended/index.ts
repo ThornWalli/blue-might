@@ -3,7 +3,7 @@ import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import heightMap from './heightMap.png';
 import backgroundTexture from './texture_bg.png';
 import foregroundTexture from './texture_fg.png';
-import BlueMight from '@blue-might/units/blue_might/BlueMight';
+import CombatHelicopter_1 from '@blue-might/units/blue_might/CombatHelicopter_1';
 import {
   Barrack_1,
   ControlTower_1,
@@ -77,8 +77,8 @@ const desc: MapDescription = {
         }
       }
     }),
-    new BlueMight({
-      id: 'blue-might-1',
+    new CombatHelicopter_1({
+      id: 'combat-helicopter-1',
       position: new Vector3(43.5, 0, -26.5), // 34+9.5, -32+5.5
       moduleStates: {
         faction: {

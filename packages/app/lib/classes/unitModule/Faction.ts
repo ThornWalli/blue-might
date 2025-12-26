@@ -6,10 +6,12 @@ import UnitModule, {
 } from '../UnitModule';
 import type Unit from '../Unit';
 import type Faction from '../Faction';
+import { neutralFaction } from '../mapModule/Faction';
 
 declare module '../Unit' {
   interface ModuleStates {
     faction: Partial<FactionUnitModuleState>;
+    friendlyFactions: Faction[];
   }
   interface ModuleOptions {
     faction: Partial<FactionUnitModuleOptions>;
@@ -25,6 +27,7 @@ interface Observables extends UnitModuleObservables {
 export type FactionUnitModuleOptions = UnitModuleOptions;
 export interface FactionUnitModuleState extends UnitModuleState {
   faction: Faction;
+  friendlyFactions: Faction[];
 }
 
 export default class FactionUnitModule extends UnitModule<
@@ -39,7 +42,16 @@ export default class FactionUnitModule extends UnitModule<
     state: FactionUnitModuleState,
     debug?: boolean
   ) {
-    super(unit, options, state, debug);
+    super(
+      unit,
+      options,
+      {
+        ...state,
+        faction: state.faction ?? neutralFaction,
+        friendlyFactions: state.friendlyFactions ?? []
+      },
+      debug
+    );
     //#region observables
     this.observables.faction$ = new Subject<Faction>();
     //#endregion
@@ -52,5 +64,15 @@ export default class FactionUnitModule extends UnitModule<
   setFaction(faction: Faction) {
     this.state.faction = faction;
     this.observables.faction$.next(faction);
+  }
+
+  isFriendlyFaction(faction: Faction) {
+    const neutralFactions =
+      this.getUnit().getMap()?.modules.faction.getNeutralFactions() ?? [];
+    return (
+      neutralFactions.includes(faction) ||
+      this.state.faction === faction ||
+      this.state.friendlyFactions.includes(faction)
+    );
   }
 }

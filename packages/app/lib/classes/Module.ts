@@ -33,7 +33,7 @@ export default class Module<
     return types;
   }
 
-  protected state: State = {} as State;
+  state: State = {} as State;
 
   subscription = new Subscription();
   observables: Observables = {} as Observables;

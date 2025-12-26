@@ -24,6 +24,7 @@ import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import { createBarrelTargetShoot } from '../stationary_gun_1/utils';
 import { getSfx } from '@blue-might/weapon/projectile';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
+import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 
 interface State {
   active: boolean;
@@ -40,13 +41,19 @@ interface State {
 export type Options = BuildingUnitOptions;
 
 export interface Modules extends BuildingUnitModules {
-  movable: MovableUnitModule;
+  attack: AttackUnitModule;
   gun: GunUnitModule;
   player: PlayerUnitModule;
+  movable: MovableUnitModule;
 }
 
 export type ModuleList = BuildingUnitModuleList &
-  [typeof MovableUnitModule | typeof GunUnitModule | typeof PlayerUnitModule];
+  [
+    | typeof AttackUnitModule
+    | typeof GunUnitModule
+    | typeof PlayerUnitModule
+    | typeof MovableUnitModule
+  ];
 
 export default class StationaryGun_2 extends BuildingUnit<
   BuildingUnitOptions,
@@ -82,7 +89,12 @@ export default class StationaryGun_2 extends BuildingUnit<
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []
   ) {
-    moduleList.push(MovableUnitModule, GunUnitModule, PlayerUnitModule);
+    moduleList.push(
+      AttackUnitModule,
+      GunUnitModule,
+      PlayerUnitModule,
+      MovableUnitModule
+    );
     super(
       {
         ...options,

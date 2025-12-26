@@ -15,7 +15,12 @@ import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 
-import { BlueMight, Soldat_1, Tank_1, Tree_1 } from '@blue-might/units';
+import {
+  CombatHelicopter_1,
+  Soldat_1,
+  Tank_1,
+  Tree_1
+} from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Euler, Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
@@ -56,8 +61,8 @@ const map: Partial<MapDescription> = {
       rotation: new Euler(0, 0, 0)
     }),
 
-    new BlueMight({
-      id: 'blue-might-1',
+    new CombatHelicopter_1({
+      id: 'combat-helicopter-1',
       moduleDebug: {
         pathfinding: true,
         patrol: true

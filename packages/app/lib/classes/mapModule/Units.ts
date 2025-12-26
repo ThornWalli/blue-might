@@ -106,16 +106,6 @@ export default class UnitsModule extends MapModule<State, Observables> {
     this.listener.addMeshes(this.getUnits().map(unit => unit.root));
   }
 
-  //#region methods
-
-  getUnits() {
-    return Array.from(this.state.units.values());
-  }
-
-  getUnitById(id: string) {
-    return this.state.units.get(id);
-  }
-
   async setupUnits(units: Unit[]) {
     const { buildings, others } = units.reduce<{
       buildings: BuildingUnit[];
@@ -137,6 +127,34 @@ export default class UnitsModule extends MapModule<State, Observables> {
 
     await Promise.all(buildings.map(unit => this.add(unit)));
     await Promise.all(others.map(unit => this.add(unit)));
+  }
+
+  //#region methods
+
+  override update(v: AnimationLoopValue) {
+    // Sammle Units, die sichtbar sind oder animieren
+    const animatingUnits = this.getUnits().filter(
+      unit =>
+        unit.modules.animation?.isForceUpdate() ||
+        unit.modules.pathfinding?.isForceUpdate()
+    );
+    const unitsToUpdate = new Set([
+      ...this.state.visibleUnits,
+      ...animatingUnits
+    ]);
+
+    // Update nur relevante Units
+    unitsToUpdate.forEach(unit => unit.update(v));
+
+    // this.state.visibleUnits.forEach(unit => unit.update(v));
+  }
+
+  getUnits() {
+    return Array.from(this.state.units.values());
+  }
+
+  getUnitById(id: string) {
+    return this.state.units.get(id);
   }
 
   async add(unit: Unit) {
@@ -180,24 +198,6 @@ export default class UnitsModule extends MapModule<State, Observables> {
 
   getById<U extends Unit = Unit>(id: string): U | undefined {
     return this.state.units.get(id) as U | undefined;
-  }
-
-  override update(v: AnimationLoopValue) {
-    // Sammle Units, die sichtbar sind oder animieren
-    const animatingUnits = this.getUnits().filter(
-      unit =>
-        unit.modules.animation?.isForceUpdate() ||
-        unit.modules.pathfinding?.isForceUpdate()
-    );
-    const unitsToUpdate = new Set([
-      ...this.state.visibleUnits,
-      ...animatingUnits
-    ]);
-
-    // Update nur relevante Units
-    unitsToUpdate.forEach(unit => unit.update(v));
-
-    // this.state.visibleUnits.forEach(unit => unit.update(v));
   }
 
   //#endregion

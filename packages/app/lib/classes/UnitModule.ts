@@ -10,8 +10,9 @@ export interface UnitModuleObservables extends ModuleObservables {
   [key: string]: SubscriptionLike | unknown;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface UnitModuleState extends ModuleState {
-  [key: string]: unknown;
+  // [key: string]: unknown;
 }
 
 export interface UnitModuleSetupContext extends SetupContext {

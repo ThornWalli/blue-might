@@ -51,7 +51,10 @@ export default class PathfindingUnitModule extends UnitModule<
 > {
   static override TYPE = 'pathfinding';
 
-  debugPathLine?: Line;
+  private debugPathLine?: Line;
+  private yawIntegral = 0;
+  private lastTargetDistance?: number;
+  private lastTargetDistanceCounter = 0;
 
   constructor(
     unit: Unit,
@@ -72,6 +75,16 @@ export default class PathfindingUnitModule extends UnitModule<
     //#endregion
   }
 
+  override async setup() {
+    await super.setup();
+    const unit = this.getUnit();
+    this.subscription.add(
+      unit.modules.damage.observables.destroyed$.subscribe(() => {
+        this.abortMovement();
+      })
+    );
+  }
+
   async move(targetPosition: Vector3) {
     const unit = this.getUnit();
     if (this.isGroundMovable()) {
@@ -86,166 +99,19 @@ export default class PathfindingUnitModule extends UnitModule<
     super.destroy();
   }
 
-  override isForceUpdate() {
-    return this.state.currentPath !== null;
-  }
-
-  simplifyPath(path: Vector3[], tolerance = 0.1): Vector3[] {
-    if (path.length <= 2) {
-      return path;
-    }
-
-    const simplifiedPath: Vector3[] = [path[0]!.clone()];
-    let horizontalSimplificationStarted = false;
-    let lastHorizontalDirection: Vector3 | null = null;
-
-    for (let i = 1; i < path.length - 1; i++) {
-      const p_prev = path[i - 1]!;
-      const p_curr = path[i]!;
-      const p_next = path[i + 1]!;
-
-      const isVerticalMove = Math.abs(p_curr.y - p_next.y) > 0.01;
-
-      if (!horizontalSimplificationStarted) {
-        simplifiedPath.push(p_curr.clone());
-        if (!isVerticalMove) {
-          horizontalSimplificationStarted = true;
-        }
-      } else {
-        if (!lastHorizontalDirection) {
-          const p_prev_xz = p_prev.clone();
-          p_prev_xz.y = 0;
-          const p_curr_xz = p_curr.clone();
-          p_curr_xz.y = 0;
-          lastHorizontalDirection = new Vector3()
-            .subVectors(p_curr_xz, p_prev_xz)
-            .normalize();
-        }
-
-        const p_curr_xz = p_curr.clone();
-        p_curr_xz.y = 0;
-        const p_next_xz = p_next.clone();
-        p_next_xz.y = 0;
-        const currentHorizontalDirection = new Vector3()
-          .subVectors(p_next_xz, p_curr_xz)
-          .normalize();
-
-        if (
-          lastHorizontalDirection.dot(currentHorizontalDirection) <
-          1.0 - tolerance
-        ) {
-          simplifiedPath.push(p_curr.clone());
-          lastHorizontalDirection.copy(currentHorizontalDirection);
-        }
-      }
-    }
-
-    simplifiedPath.push(path[path.length - 1]!.clone());
-
-    return simplifiedPath;
-  }
-
-  private async moveAirVehicle(unit: Unit, target: Vector3) {
-    this.state.currentPath = null;
-
-    const airNavigator = unit.getMap()?.modules.pathfinding.getAirNavigator();
-
-    if (!airNavigator) throw new Error('AirNavigator not initialized');
-
-    const path = await airNavigator.findPath(unit.getPosition(), target);
-
-    if (!path || path.length <= 1) return;
-
-    path.shift();
-
-    this.state.currentPath = this.simplifyPath(path, 1.0);
-
-    this.yawIntegral = 0;
-
-    if (this.debug) {
-      this.updateDebugPathLine(unit);
-
-      const subscription = this.observables.moveComplete$.subscribe(() => {
-        subscription.unsubscribe();
-        this.updateDebugPathLine(unit);
-      });
-    }
-
-    this.observables.moveStart$.next();
-
-    return new Promise<boolean>(resolve => {
-      const subscription = this.observables.moveComplete$.subscribe(() => {
-        subscription.unsubscribe();
-        resolve(true);
-      });
-    });
-  }
-
-  private async moveGroundVehicle(unit: Unit, target: Vector3) {
-    const groundNavigator = unit
-      .getMap()
-      ?.modules.pathfinding.getGroundNavigatorForUnit(unit);
-
-    if (!groundNavigator) throw new Error('GroundNavigator not initialized');
-
-    if (this.state.currentPath) {
-      console.log(
-        'PathfindingUnitModule: Already moving, shortening path to current waypoint'
-      );
-      this.state.currentPath = this.state.currentPath.slice(0, 1);
-      return false;
-    }
-
-    const path = await groundNavigator.findPath(unit.getPosition(), target, [
-      unit.modules.collision.getCollisionObject()
-    ]);
-
-    if (!path) return false;
-
-    this.state.currentPath = path;
-
-    if (this.debug) {
-      this.updateDebugPathLine(unit);
-
-      const subscription = this.observables.moveComplete$.subscribe(() => {
-        subscription.unsubscribe();
-        this.updateDebugPathLine(unit);
-      });
-    }
-
-    this.observables.moveStart$.next();
-
-    return new Promise<boolean>(resolve => {
-      const subscription = this.observables.moveComplete$.subscribe(() => {
-        subscription.unsubscribe();
-        resolve(true);
-      });
-    });
-  }
-
-  isGroundMovable() {
-    const unit = this.getUnit();
-    return (
-      unit.hasModuleType(GroundVehicleUnitModule) ||
-      unit.hasModuleType(FigureUnitModule)
-    );
-  }
-
-  isAirMovable() {
-    const unit = this.getUnit();
-    return unit.hasModuleType(HelicopterUnitModule);
-  }
-
-  yawIntegral = 0;
-
   override update({ delta }: AnimationLoopValue): void {
+    const unit = this.getUnit() as MovableUnit;
     const currentPath = this.state.currentPath;
-    if (!currentPath || currentPath.length === 0) {
+    if (
+      unit.modules.damage.isDestroyed() ||
+      !currentPath ||
+      currentPath.length === 0
+    ) {
       return;
     }
 
     const target = currentPath[0]!;
-    const unit = this.getUnit() as MovableUnit;
+
     let shiftThreshold = 0.1;
 
     const movableModule = unit.modules.movable;
@@ -475,17 +341,117 @@ export default class PathfindingUnitModule extends UnitModule<
     this.lastTargetDistance = horizontalDistance;
   }
 
-  private lastTargetDistance?: number;
-  private lastTargetDistanceCounter = 0;
+  private async moveAirVehicle(unit: Unit, target: Vector3) {
+    this.state.currentPath = null;
+
+    const airNavigator = unit.getMap()?.modules.pathfinding.getAirNavigator();
+
+    if (!airNavigator) throw new Error('AirNavigator not initialized');
+
+    if (this.state.currentPath) {
+      console.log(
+        'PathfindingUnitModule: Already moving, shortening path to current waypoint'
+      );
+      this.abortMovement();
+      return false;
+    }
+
+    const path = await airNavigator.findPath(unit.getPosition(), target);
+
+    if (!path || path.length <= 1) return;
+
+    path.shift();
+
+    this.state.currentPath = simplifyPath(path, 1.0);
+
+    this.yawIntegral = 0;
+
+    if (this.debug) {
+      this.updateDebugPathLine(unit);
+
+      const subscription = this.observables.moveComplete$.subscribe(() => {
+        subscription.unsubscribe();
+        this.updateDebugPathLine(unit);
+      });
+    }
+
+    this.observables.moveStart$.next();
+
+    return new Promise<boolean>(resolve => {
+      const subscription = this.observables.moveComplete$.subscribe(() => {
+        subscription.unsubscribe();
+        resolve(true);
+      });
+    });
+  }
+
+  private async moveGroundVehicle(unit: Unit, target: Vector3) {
+    const groundNavigator = unit
+      .getMap()
+      ?.modules.pathfinding.getGroundNavigatorForUnit(unit);
+
+    if (!groundNavigator) throw new Error('GroundNavigator not initialized');
+
+    if (this.state.currentPath) {
+      console.log(
+        'PathfindingUnitModule: Already moving, shortening path to current waypoint'
+      );
+      this.abortMovement();
+      return false;
+    }
+
+    const path = await groundNavigator.findPath(unit.getPosition(), target, [
+      unit.modules.collision.getCollisionObject()
+    ]);
+
+    if (!path) return false;
+
+    this.state.currentPath = path;
+
+    if (this.debug) {
+      this.updateDebugPathLine(unit);
+
+      const subscription = this.observables.moveComplete$.subscribe(() => {
+        subscription.unsubscribe();
+        this.updateDebugPathLine(unit);
+      });
+    }
+
+    this.observables.moveStart$.next();
+
+    return new Promise<boolean>(resolve => {
+      const subscription = this.observables.moveComplete$.subscribe(() => {
+        subscription.unsubscribe();
+        resolve(true);
+      });
+    });
+  }
+
+  abortMovement(force?: boolean) {
+    this.state.currentPath = force
+      ? null
+      : (this.state.currentPath?.slice(0, 1) ?? null);
+  }
+
+  isGroundMovable() {
+    const unit = this.getUnit();
+    return (
+      unit.hasModuleType(GroundVehicleUnitModule) ||
+      unit.hasModuleType(FigureUnitModule)
+    );
+  }
+
+  isAirMovable() {
+    const unit = this.getUnit();
+    return unit.hasModuleType(HelicopterUnitModule);
+  }
+
+  override isForceUpdate() {
+    return this.state.currentPath !== null;
+  }
 
   //#region debug
 
-  private removeDebugPathLine() {
-    if (this.debugPathLine) {
-      disposeObject3D(this.debugPathLine);
-      this.debugPathLine = undefined;
-    }
-  }
   private updateDebugPathLine(unit: Unit) {
     const path = this.state.currentPath;
     if (!path || path.length < 2) {
@@ -515,5 +481,67 @@ export default class PathfindingUnitModule extends UnitModule<
     }
   }
 
+  private removeDebugPathLine() {
+    if (this.debugPathLine) {
+      disposeObject3D(this.debugPathLine);
+      this.debugPathLine = undefined;
+    }
+  }
+
   //#endregion
+}
+
+function simplifyPath(path: Vector3[], tolerance = 0.1): Vector3[] {
+  if (path.length <= 2) {
+    return path;
+  }
+
+  const simplifiedPath: Vector3[] = [path[0]!.clone()];
+  let horizontalSimplificationStarted = false;
+  let lastHorizontalDirection: Vector3 | null = null;
+
+  for (let i = 1; i < path.length - 1; i++) {
+    const p_prev = path[i - 1]!;
+    const p_curr = path[i]!;
+    const p_next = path[i + 1]!;
+
+    const isVerticalMove = Math.abs(p_curr.y - p_next.y) > 0.01;
+
+    if (!horizontalSimplificationStarted) {
+      simplifiedPath.push(p_curr.clone());
+      if (!isVerticalMove) {
+        horizontalSimplificationStarted = true;
+      }
+    } else {
+      if (!lastHorizontalDirection) {
+        const p_prev_xz = p_prev.clone();
+        p_prev_xz.y = 0;
+        const p_curr_xz = p_curr.clone();
+        p_curr_xz.y = 0;
+        lastHorizontalDirection = new Vector3()
+          .subVectors(p_curr_xz, p_prev_xz)
+          .normalize();
+      }
+
+      const p_curr_xz = p_curr.clone();
+      p_curr_xz.y = 0;
+      const p_next_xz = p_next.clone();
+      p_next_xz.y = 0;
+      const currentHorizontalDirection = new Vector3()
+        .subVectors(p_next_xz, p_curr_xz)
+        .normalize();
+
+      if (
+        lastHorizontalDirection.dot(currentHorizontalDirection) <
+        1.0 - tolerance
+      ) {
+        simplifiedPath.push(p_curr.clone());
+        lastHorizontalDirection.copy(currentHorizontalDirection);
+      }
+    }
+  }
+
+  simplifiedPath.push(path[path.length - 1]!.clone());
+
+  return simplifiedPath;
 }

@@ -62,13 +62,9 @@ export default class CollisionUnitModule<
   State extends CollisionUnitModuleState = CollisionUnitModuleState
 > extends UnitModule<Options, State, Observables> {
   static override TYPE = 'collision';
-  localOBB = new OBB();
-  worldOBB = new OBB();
-  debugHelper: LineSegments | Box3Helper | null = null;
-
-  getCollisionType() {
-    return this.options.type;
-  }
+  private localOBB = new OBB();
+  private worldOBB = new OBB();
+  private debugHelper: LineSegments | Box3Helper | null = null;
 
   constructor(unit: Unit, options: Options, state: State, debug?: boolean) {
     super(
@@ -84,21 +80,18 @@ export default class CollisionUnitModule<
     );
   }
 
+  override destroy() {
+    if (this.debugHelper) {
+      this.debugHelper.geometry.dispose();
+      (this.debugHelper.material as LineBasicMaterial).dispose();
+      this.debugHelper.removeFromParent();
+    }
+    super.destroy();
+  }
+
   override async setup() {
-    const unit = this.getUnit();
-
-    // Erstelle einen Box-Helper für OBB (mit Rotation)
-    const geometry = new BoxGeometry(1, 1, 1);
-    const edges = new EdgesGeometry(geometry);
-
     if (this.debug) {
-      this.debugHelper = new LineSegments(
-        edges,
-        new LineBasicMaterial({ color: 0xff0000 })
-      );
-
-      const map = unit.getMap();
-      if (this.debugHelper && map) map.app.getScene().add(this.debugHelper);
+      this.createDebugHelper();
     }
   }
 
@@ -106,6 +99,13 @@ export default class CollisionUnitModule<
     this.setupLocalOBB();
     this.refreshWorldOBB();
     this.refreshDebugHelper();
+  }
+
+  getCollisionType() {
+    return this.options.type;
+  }
+  getWorldOBB() {
+    return this.worldOBB;
   }
 
   enableCollision() {
@@ -171,6 +171,22 @@ export default class CollisionUnitModule<
     this.worldOBB.halfSize.copy(this.localOBB.halfSize);
   }
 
+  //#region debug
+  createDebugHelper() {
+    const unit = this.getUnit();
+
+    // Erstelle einen Box-Helper für OBB (mit Rotation)
+    const geometry = new BoxGeometry(1, 1, 1);
+    const edges = new EdgesGeometry(geometry);
+
+    this.debugHelper = new LineSegments(
+      edges,
+      new LineBasicMaterial({ color: 0xff0000 })
+    );
+
+    const map = unit.getMap();
+    if (this.debugHelper && map) map.app.getScene().add(this.debugHelper);
+  }
   refreshDebugHelper() {
     if (!this.debugHelper || !this.worldOBB) return;
 
@@ -186,12 +202,5 @@ export default class CollisionUnitModule<
     this.debugHelper.updateMatrixWorld(true);
   }
 
-  override destroy() {
-    if (this.debugHelper) {
-      this.debugHelper.geometry.dispose();
-      (this.debugHelper.material as LineBasicMaterial).dispose();
-      this.debugHelper.removeFromParent();
-    }
-    super.destroy();
-  }
+  //#endregion
 }
