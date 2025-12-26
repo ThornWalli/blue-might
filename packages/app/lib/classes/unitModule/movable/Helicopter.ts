@@ -1,15 +1,16 @@
 /* eslint-disable complexity */
 
 import { Vector3 } from 'three';
-import type { AnimationLoopValue } from '../../Renderer';
-
 import { EMPTY, filter, fromEvent, ReplaySubject, switchMap } from 'rxjs';
+
+import type { AnimationLoopValue } from '../../Renderer';
 import MovableUnitModule, {
   type MovableUnitModuleObservables,
   type MovableUnitModuleOptions,
   type MovableUnitModuleState
 } from '../Movable';
 import type HelicopterUnit from '../../unit/vehicle/Helicopter';
+import { getDefaultControls } from '../../playerModule/Controls';
 
 declare module '../../Unit' {
   interface ModuleStates {
@@ -79,16 +80,16 @@ export default class HelicopterUnitModule<
     if (!ai) return human;
 
     return {
-      up: ai.up ?? human.up,
-      down: ai.down ?? human.down,
-      left: ai.left ?? human.left,
-      right: ai.right ?? human.right,
-      space: ai.space ?? human.space,
+      ...getDefaultControls(),
       gear: ai.gear ?? human.gear,
       landing: ai.landing ?? human.landing,
-      modifier: ai.modifier ?? human.modifier,
       rotateLeft: ai.rotateLeft ?? human.rotateLeft,
-      rotateRight: ai.rotateRight ?? human.rotateRight
+      rotateRight: ai.rotateRight ?? human.rotateRight,
+
+      pitchUp: ai.pitchUp ?? human.pitchUp,
+      pitchDown: ai.pitchDown ?? human.pitchDown,
+      rollLeft: ai.rollLeft ?? human.rollLeft,
+      rollRight: ai.rollRight ?? human.rollRight
     };
   }
 
@@ -98,13 +99,13 @@ export default class HelicopterUnitModule<
       {
         ...options,
         gearsHeight: options.gearsHeight ?? 0,
-        maxSpeed: options.maxSpeed ?? 25,
-        acceleration: options.acceleration ?? 10,
-        yawSpeed: options.yawSpeed ?? 5,
+        maxSpeed: options.maxSpeed ?? 10,
+        acceleration: options.acceleration ?? 2,
+        yawSpeed: options.yawSpeed ?? 4,
         pitchPower: options.pitchPower ?? 1,
-        rollPower: options.rollPower ?? 0.75,
+        rollPower: options.rollPower ?? 0.5,
         friction: options.friction ?? 0.96,
-        liftPower: options.liftPower ?? 4,
+        liftPower: options.liftPower ?? 2,
         maxAltitude: options.maxAltitude ?? 10,
         autoAltitude: options.autoAltitude ?? true,
         autoLevelRate: options.autoLevelRate ?? 2
@@ -113,15 +114,6 @@ export default class HelicopterUnitModule<
         ...state,
         tilt: state.tilt ?? new Vector3(0, 0, 0),
         groundNormal: state.groundNormal ?? new Vector3(0, 1, 0),
-        controls: {
-          rotateLeft: false,
-          rotateRight: false,
-          up: false,
-          down: false,
-          left: false,
-          right: false,
-          space: false
-        },
         isAirborne: state.isAirborne ?? false,
         yawVelocity: state.yawVelocity ?? 0,
         gearsActive: false,
@@ -255,26 +247,26 @@ export default class HelicopterUnitModule<
     if (active) {
       // Inputs
       const pitchInput = canRollPitch
-        ? (typeof controls.up === 'number'
-            ? controls.up
-            : controls.up
+        ? (typeof controls.pitchUp === 'number'
+            ? controls.pitchUp
+            : controls.pitchUp
               ? 1
               : 0) -
-          (typeof controls.down === 'number'
-            ? controls.down
-            : controls.down
+          (typeof controls.pitchDown === 'number'
+            ? controls.pitchDown
+            : controls.pitchDown
               ? 1
               : 0)
         : 0;
       const rollInput = canRollPitch
-        ? (typeof controls.left === 'number'
-            ? controls.left
-            : controls.left
+        ? (typeof controls.rollLeft === 'number'
+            ? controls.rollLeft
+            : controls.rollLeft
               ? 1
               : 0) -
-          (typeof controls.right === 'number'
-            ? controls.right
-            : controls.right
+          (typeof controls.rollRight === 'number'
+            ? controls.rollRight
+            : controls.rollRight
               ? 1
               : 0)
         : 0;
@@ -343,7 +335,7 @@ export default class HelicopterUnitModule<
 
       // Direct strafe on input: invertiere nicht mehr, "Right" → +right
       const strafeInput = canRollPitch
-        ? (controls.left ? 1 : 0) - (controls.right ? 1 : 0)
+        ? (controls.rollLeft ? 1 : 0) - (controls.rollRight ? 1 : 0)
         : 0;
       const strafeControlAccel = strafeAccel * 0.75;
       if (strafeInput !== 0) {
@@ -369,15 +361,15 @@ export default class HelicopterUnitModule<
     const hasFixedAltitude = this.options.fixedAltitude != null;
     let targetAltitude: number | null = null;
     if (hasFixedAltitude) {
-      if (controls.space) this.state.isAirborne = true;
+      if (controls.ascend) this.state.isAirborne = true;
       if (!this.state.isAirborne) {
         velocity.y -= liftPower * delta * 0.6;
       } else {
         targetAltitude = this.options.fixedAltitude!;
       }
     } else {
-      if (controls.space && active) {
-        if (controls.modifier) {
+      if ((controls.ascend || controls.descend) && active) {
+        if (controls.descend) {
           velocity.y -= liftPower * 1.2 * delta;
           status = FLIGHT_STATUS.LANDING;
         } else {
@@ -388,8 +380,12 @@ export default class HelicopterUnitModule<
         this.state.isAirborne = true;
       } else {
         let g = liftPower * 0.25 * delta;
-        if (controls.down && !controls.up) g = liftPower * 0.6 * delta;
-        if (!active) g = liftPower * 1.2 * delta;
+        if (controls.pitchDown && !controls.pitchUp) {
+          g = liftPower * 0.6 * delta;
+        }
+        if (!active) {
+          g = liftPower * 1.2 * delta;
+        }
         if (autoAltitude && active) {
           if (velocity.y > 0) velocity.y = Math.max(0, velocity.y - g);
           else velocity.y = Math.min(0, velocity.y + g);
@@ -406,7 +402,8 @@ export default class HelicopterUnitModule<
       const approach = Math.max(-liftPower, Math.min(liftPower, dy)) * 0.5;
       velocity.y += approach * delta;
       if (
-        !controls.space &&
+        !controls.ascend &&
+        !controls.descend &&
         Math.abs(dy) < 0.5 &&
         Math.abs(velocity.y) < 0.25
       ) {
@@ -435,7 +432,8 @@ export default class HelicopterUnitModule<
     if (
       this.state.isAirborne &&
       targetAltitude != null &&
-      !controls.space &&
+      !controls.ascend &&
+      !controls.descend &&
       Math.abs(targetAltitude - pos.y) < 0.5 &&
       Math.abs(velocity.y) < 0.25
     ) {
@@ -451,7 +449,7 @@ export default class HelicopterUnitModule<
       this.state.isAirborne = false;
     }
 
-    if (!active || !(controls.space && !controls.modifier)) {
+    if (!active || !controls.ascend) {
       const position = unit.getPosition();
       let minY =
         unit

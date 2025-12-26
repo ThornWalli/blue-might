@@ -8,12 +8,13 @@ import {
   Matrix4,
   Vector3
 } from 'three';
+import { OBB } from 'three/examples/jsm/math/OBB.js';
+
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
   type UnitModuleState
 } from '../UnitModule';
-import { OBB } from 'three/examples/jsm/math/OBB.js';
 import type Unit from '../Unit';
 import { OBJECT_USER_DATA } from '../../utils/object';
 

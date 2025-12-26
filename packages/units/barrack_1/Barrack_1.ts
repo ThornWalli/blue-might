@@ -4,13 +4,14 @@ import type {
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh } from 'three';
-import baseGlb from './assets/barrack_1.glb?url';
 import BuildingUnit, {
   type BuildingUnitModuleList,
   type BuildingUnitModules,
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
+
+import baseGlb from './assets/barrack_1.glb?url';
 
 export type Options = BuildingUnitOptions;
 

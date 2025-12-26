@@ -83,12 +83,7 @@
 </template>
 
 <script lang="ts" setup>
-import type Unit from '../../lib/classes/Unit';
-import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
-import BmPanel from '../Panel.vue';
-import BmButton from '../Button.vue';
-import type App from '../../lib/classes/App';
 import {
   combineLatest,
   EMPTY,
@@ -106,10 +101,15 @@ import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movab
 import HelicopterUnit from '@blue-might/app/lib/classes/unit/vehicle/Helicopter';
 import type { PowerInfo } from '@blue-might/app/lib/classes/unitModule/Movable';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
-import BaseButton from '../base/Button.vue';
-
 import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/movable/Helicopter';
 import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
+
+import BaseButton from '../base/Button.vue';
+import type App from '../../lib/classes/App';
+import BmButton from '../Button.vue';
+import BmPanel from '../Panel.vue';
+import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
+import type Unit from '../../lib/classes/Unit';
 
 const $props = defineProps<{
   app: App;

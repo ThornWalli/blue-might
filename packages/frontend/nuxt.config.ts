@@ -1,3 +1,5 @@
+import { existsSync } from 'fs';
+
 import { join, resolve } from 'pathe';
 import { defineNuxtConfig } from 'nuxt/config';
 import { joinURL, withHttps } from 'ufo';
@@ -6,7 +8,6 @@ import { config } from 'dotenv-mono';
 import svgLoader from 'vite-svg-loader';
 
 // import viteMkcert from 'vite-plugin-mkcert';
-import { existsSync } from 'fs';
 import svgoConfig from './svgo.config';
 
 config();

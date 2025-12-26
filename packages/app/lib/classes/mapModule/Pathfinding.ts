@@ -1,12 +1,13 @@
 import { Box3, Vector2, Vector3, type Object3D } from 'three';
+import type { Subscription } from 'rxjs';
+import { filter, throttleTime } from 'rxjs';
+
 import MapModule, {
   type MapModuleObservables,
   type MapModuleState
 } from '../MapModule';
 import GroundNavigator from '../pathfinding/GroundNavigator';
 import AirNavigator, { VehicleType } from '../pathfinding/AirNavigator';
-import type { Subscription } from 'rxjs';
-import { filter, throttleTime } from 'rxjs';
 import type Unit from '../Unit';
 
 declare module '../Map' {
@@ -73,6 +74,8 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       },
       this.debug
     );
+    await this.groundNavigationSmall.setup();
+
     this.groundNavigationLarge = new GroundNavigator(
       this.map,
       this.colliders.slice(),
@@ -86,12 +89,13 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       },
       this.debug
     );
+    await this.groundNavigationLarge.setup();
 
     this.airNavigation = new AirNavigator(
       this.map,
       this.colliders.slice(),
       VehicleType.HELICOPTER,
-      1.4,
+      1,
       [],
       {
         gridSize: 1 / 3,
@@ -99,17 +103,19 @@ export default class PathfindingModule extends MapModule<State, Observables> {
           this.map.modules.ground.state.terrainWidth,
           this.map.modules.ground.state.terrainHeight
         ),
-        sphere: false
+        sphere: true
       },
       this.debug
     );
+    await this.airNavigation.setup();
 
     if (this.debug) {
-      this.groundNavigationLarge.setupDebugGridObjects();
+      this.airNavigation.setupDebugGridObjects();
     }
 
     this.groundNavigationSmall.getGrid().update();
     this.groundNavigationLarge.getGrid().update();
+    this.airNavigation.getGrid().update();
   }
 
   getGroundNavigatorForUnit(unit: Unit): GroundNavigator {
@@ -124,6 +130,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
 
   override destroy(): void {
     super.destroy();
+    this.airNavigation?.destroy();
     this.groundNavigationSmall?.destroy();
     this.groundNavigationLarge?.destroy();
     this.debugObject?.removeFromParent();
@@ -136,6 +143,9 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     const collisionModule = unit.modules.collision;
     if (collisionModule?.options.disabled) return;
     this.units.push(unit);
+    this.airNavigation?.addCollider(
+      unit.modules.collision.getCollisionObject()
+    );
     this.groundNavigationSmall?.addCollider(
       unit.modules.collision.getCollisionObject()
     );
@@ -145,6 +155,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     this.unitSubscriptions.set(
       unit,
       unit.observables.position$.pipe(throttleTime(250)).subscribe(() => {
+        this.airNavigation?.updateWalkabilityAroundObject(unit.root);
         this.groundNavigationSmall?.updateWalkabilityAroundObject(unit.root);
         this.groundNavigationLarge?.updateWalkabilityAroundObject(unit.root);
       })
@@ -168,6 +179,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
 
   private addToColliders(object: Object3D) {
     this.colliders.push(object);
+    this.airNavigation?.setColliders(this.colliders);
     this.groundNavigationSmall?.setColliders(this.colliders);
     this.groundNavigationLarge?.setColliders(this.colliders);
   }
@@ -177,6 +189,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     if (index !== -1) {
       this.colliders.splice(index, 1);
     }
+    this.airNavigation?.setColliders(this.colliders);
     this.groundNavigationSmall?.setColliders(this.colliders);
     this.groundNavigationLarge?.setColliders(this.colliders);
   }

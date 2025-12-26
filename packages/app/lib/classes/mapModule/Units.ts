@@ -1,14 +1,15 @@
+import { Subject, debounceTime, distinctUntilChanged, map, merge } from 'rxjs';
+import type { Object3D } from 'three';
+import { Group, Mesh, SkinnedMesh } from 'three';
+
 import MapModule, {
   type MapModuleObservables,
   type MapModuleState
 } from '../MapModule';
 import type Unit from '../Unit';
 import UnitChunkManager from '../UnitChunkManager';
-import { Subject, debounceTime, distinctUntilChanged, map, merge } from 'rxjs';
 import type { AnimationLoopValue } from '../Renderer';
 import type Map from '../Map';
-import type { Object3D } from 'three';
-import { Group, Mesh, SkinnedMesh } from 'three';
 import type { IntersectionListener } from '../rendererModule/Intersection';
 import { OBJECT_USER_DATA } from '../../utils/object';
 import BuildingUnit from '../unit/Building';

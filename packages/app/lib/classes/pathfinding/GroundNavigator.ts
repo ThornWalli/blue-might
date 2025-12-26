@@ -1,14 +1,16 @@
 /* eslint-disable complexity */
 import { Vector3, type Object3D } from 'three';
+
 import type { TILE_TYPE } from '../../utils/pathfinding';
 import { COLLISION_TYPE } from '../unitModule/Collision';
 import BaseNavigator from '../abstract/BaseNavigator';
-import type { GridNode } from './Grid';
-import type Grid from './Grid';
-import type HelicopterUnitModule from '../unitModule/movable/Helicopter';
-import { FLIGHT_STATUS } from '../unitModule/movable/Helicopter';
 import { OBJECT_USER_DATA } from '../../utils/object';
 import type Unit from '../Unit';
+import type HelicopterUnitModule from '../unitModule/movable/Helicopter';
+import { FLIGHT_STATUS } from '../unitModule/movable/Helicopter';
+
+import type Grid from './Grid';
+import type { GridNode } from './Grid';
 
 export default class GroundNavigator extends BaseNavigator {
   protected getHeightAt(x: number, z: number): number {

@@ -1,5 +1,4 @@
 /* eslint-disable complexity */
-import Grid, { type GridNode } from '../pathfinding/Grid';
 import EasyStar from 'easystarjs';
 import {
   Box3,
@@ -12,8 +11,10 @@ import {
   Sphere,
   Vector2
 } from 'three';
-import type Map from '../Map';
 import { Subscription } from 'rxjs';
+
+import type Map from '../Map';
+import Grid, { type GridNode } from '../pathfinding/Grid';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import { TILE_TYPE, TILE_COSTS, TILE_INDEX } from '../../utils/pathfinding';
 import { COLLISION_TYPE } from '../unitModule/Collision';
@@ -24,9 +25,13 @@ export default abstract class BaseNavigator {
   public map: Map;
   colliders: Object3D[];
   private gridSize: number;
-  private grid: Grid;
+  private grid!: Grid;
+  private size: Vector2;
   useSphere: boolean;
   sphere = new Sphere(undefined, 1 / 2);
+  setSphereRadius(radius: number) {
+    this.sphere.radius = radius;
+  }
   box = new Box3();
   private occupiedByObject = new globalThis.Map<
     Object3D,
@@ -39,7 +44,7 @@ export default abstract class BaseNavigator {
     options: { gridSize: number; size: Vector2; sphere: boolean },
     debug = false
   ) {
-    const size = options.size ?? new Vector2(32, 32);
+    this.size = options.size ?? new Vector2(32, 32);
 
     this.debug = debug;
     this.map = map;
@@ -47,9 +52,11 @@ export default abstract class BaseNavigator {
 
     this.gridSize = options.gridSize ?? 2;
     this.useSphere = options.sphere ?? false;
+  }
 
+  setup() {
     this.grid = new Grid(
-      size.divideScalar(this.gridSize).floor(),
+      this.size.clone().divideScalar(this.gridSize).floor(),
       this.gridSize,
       (options, debug) => this.isWalkable(options, debug),
       node => {
@@ -57,23 +64,14 @@ export default abstract class BaseNavigator {
           if (node.walkable.collisionType === COLLISION_TYPE.SOFT) {
             return TILE_TYPE.SOFT;
           }
-          return this.getTileTypeAtNode(node) ?? TILE_TYPE.GRASS;
+          const tileType = this.getTileTypeAtNode(node);
+          return tileType ?? TILE_TYPE.GRASS;
         } else {
           return TILE_TYPE.BLOCKED;
         }
       }
     );
-
-    // if (this.debug) {
-    //   this.subscription.add(
-    //     this.grid.observables.update$.pipe(debounceTime(500)).subscribe(() => {
-    //       this.updateDebugGridObjects();
-    //     })
-    //   );
-    // }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).groundNav = this; // Debug-Zwecke
+    this.grid.setup();
   }
 
   destroy() {
@@ -241,6 +239,7 @@ export default abstract class BaseNavigator {
   ): Promise<Vector3[]> {
     let affectedNodes: GridNode[] | undefined;
 
+    debugger;
     if (excludeObjects?.length) {
       const tmpBox = new Box3();
       affectedNodes = excludeObjects
@@ -248,7 +247,6 @@ export default abstract class BaseNavigator {
         .flat();
 
       this.grid.update(affectedNodes, excludeObjects);
-      console.log(affectedNodes);
     }
 
     try {
@@ -408,8 +406,12 @@ export default abstract class BaseNavigator {
   }
 
   worldToNode(x: number, z: number) {
-    const gx = Math.floor(x / this.gridSize);
-    const gy = Math.floor(z / this.gridSize);
+    const gx = Math.floor(
+      (x + (this.grid.width * this.gridSize) / 2) / this.gridSize
+    );
+    const gy = Math.floor(
+      (z + (this.grid.height * this.gridSize) / 2) / this.gridSize
+    );
     return this.grid.getNodes()[this.grid.index(gx, gy)];
   }
 

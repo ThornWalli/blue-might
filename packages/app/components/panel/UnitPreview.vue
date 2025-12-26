@@ -38,17 +38,18 @@
 </template>
 
 <script lang="ts" setup>
-import type Unit from '../../lib/classes/Unit';
-import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
-import BmPanel from '../Panel.vue';
-import type App from '../../lib/classes/App';
 import { EMPTY, Subscription, switchMap } from 'rxjs';
 import type { Vector3 } from 'three';
-import BmButton from '../Button.vue';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
+
+import BmButton from '../Button.vue';
+import type App from '../../lib/classes/App';
+import BmPanel from '../Panel.vue';
+import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
+import type Unit from '../../lib/classes/Unit';
 
 const $props = defineProps<{
   app: App;

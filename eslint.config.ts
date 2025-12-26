@@ -1,6 +1,7 @@
-import { withNuxt } from './packages/frontend/.nuxt/eslint.config.mjs';
 import eslintPluginPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import pluginSecurity from 'eslint-plugin-security';
+
+import { withNuxt } from './packages/frontend/.nuxt/eslint.config.mjs';
 import eslintIgnores from './eslint.ignore.ts';
 
 export default withNuxt({
@@ -38,7 +39,21 @@ export default withNuxt({
     ],
     'vue/multi-word-component-names': 'off',
     'vue/html-self-closing': 'off', // prettier workaround
-    'security/detect-object-injection': 'off'
+    'security/detect-object-injection': 'off',
+    'import/order': [
+      'error',
+      {
+        groups: [
+          'builtin',
+          'external',
+          'internal',
+          'parent',
+          'sibling',
+          'index'
+        ],
+        'newlines-between': 'always'
+      }
+    ]
   }
 }).prepend(
   eslintIgnores,

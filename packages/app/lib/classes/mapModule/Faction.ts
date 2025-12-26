@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs';
+
 import Faction from '../Faction';
 import MapModule, {
   type MapModuleObservables,

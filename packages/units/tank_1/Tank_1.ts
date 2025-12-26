@@ -7,11 +7,11 @@ import TankUnit, {
   type TankUnitModules,
   type TankUnitOptions
 } from '@blue-might/app/lib/classes/unit/vehicle/Tank';
-
-import baseGlb from './assets/tank_1.glb?url';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh } from 'three';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
+
+import baseGlb from './assets/tank_1.glb?url';
 
 export type Options = TankUnitOptions;
 export type Modules = TankUnitModules;

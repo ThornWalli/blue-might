@@ -1,4 +1,7 @@
 /* eslint-disable complexity */
+import { ReplaySubject, Subject } from 'rxjs';
+import { Vector3 } from 'three';
+
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
@@ -6,9 +9,10 @@ import UnitModule, {
 } from '../UnitModule';
 import type { AnimationLoopValue } from '../Renderer';
 import type MovableUnit from '../unit/Movable';
-import { ReplaySubject, Subject } from 'rxjs';
-import type { ControlState } from '../playerModule/Controls';
-import { Vector3 } from 'three';
+import {
+  getDefaultControls,
+  type ControlState
+} from '../playerModule/Controls';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -165,8 +169,10 @@ export default class MovableUnitModule<
     return this._aiControls;
   }
 
-  setAutopilotControls(controls?: ControlState) {
-    this._aiControls = controls;
+  setAutopilotControls(controls?: Partial<ControlState>) {
+    this._aiControls = controls
+      ? { ...getDefaultControls(), ...controls }
+      : undefined;
     if (controls) {
       // Automatisch starten, wenn AI aktiv
       this.turnOn();
@@ -178,31 +184,39 @@ export default class MovableUnitModule<
   clearAutopilotControls() {
     if (!this._aiControls) return;
     this._aiControls = undefined;
-    this.turnOff(); // Stoppen, wenn AI entfernt
+    // this.turnOff(); // Stoppen, wenn AI entfernt
   }
 
-  getControls() {
+  getControls(): ControlState {
     const unit = this.getUnit() as U;
-    const human =
-      unit.modules.player.getPlayer()?.modules.controls.getControls() ?? {};
+    const human = unit.modules.player
+      .getPlayer()
+      ?.modules.controls.getControls();
     const ai = this._aiControls;
-    if (!ai || !this.hasMinPower()) {
+
+    if (human && (!ai || !this.hasMinPower())) {
       // Keine AI-Controls, wenn keine Power oder kein AI
       return human;
     }
 
     // AI-Controls nur anwenden, wenn genug Power da ist
     return {
-      up: ai.up ?? human.up,
-      down: ai.down ?? human.down,
-      left: ai.left ?? human.left,
-      right: ai.right ?? human.right,
-      space: ai.space ?? human.space,
-      gear: ai.gear ?? human.gear,
-      landing: ai.landing ?? human.landing,
-      modifier: ai.modifier ?? human.modifier,
-      rotateLeft: ai.rotateLeft ?? human.rotateLeft,
-      rotateRight: ai.rotateRight ?? human.rotateRight
+      moveForward: ai?.moveForward ?? human?.moveForward ?? false,
+      moveBackward: ai?.moveBackward ?? human?.moveBackward ?? false,
+      moveLeft: ai?.moveLeft ?? human?.moveLeft ?? false,
+      moveRight: ai?.moveRight ?? human?.moveRight ?? false,
+      space: ai?.space ?? human?.space ?? false,
+      gear: ai?.gear ?? human?.gear ?? false,
+      landing: ai?.landing ?? human?.landing ?? false,
+      modifier: ai?.modifier ?? human?.modifier ?? false,
+      rotateLeft: ai?.rotateLeft ?? human?.rotateLeft ?? false,
+      rotateRight: ai?.rotateRight ?? human?.rotateRight ?? false,
+      ascend: ai?.ascend ?? human?.ascend ?? false,
+      descend: ai?.descend ?? human?.descend ?? false,
+      pitchDown: ai?.pitchDown ?? human?.pitchDown ?? false,
+      pitchUp: ai?.pitchUp ?? human?.pitchUp ?? false,
+      rollLeft: ai?.rollLeft ?? human?.rollLeft ?? false,
+      rollRight: ai?.rollRight ?? human?.rollRight ?? false
     };
   }
 

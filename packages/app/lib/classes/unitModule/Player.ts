@@ -1,4 +1,6 @@
 import { Object3D } from 'three';
+import { ReplaySubject } from 'rxjs';
+
 import type Player from '../Player';
 import UnitModule, {
   type UnitModuleObservables,
@@ -6,9 +8,7 @@ import UnitModule, {
   type UnitModuleSetupContext,
   type UnitModuleState
 } from '../UnitModule';
-
 import type Unit from '../Unit';
-import { ReplaySubject } from 'rxjs';
 
 declare module '../Unit' {
   interface ModuleStates {

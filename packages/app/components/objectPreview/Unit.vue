@@ -17,16 +17,15 @@ import type { Vector3 } from 'three';
 import { Object3D } from 'three';
 import { markRaw, onUnmounted, ref, type Raw } from 'vue';
 import { Subscription, Subject } from 'rxjs';
-
-import type App from '../../lib/classes/App';
-import type { AnimationLoopValue } from '../../lib/classes/Renderer';
-
-import BmObjectPreview from '../ObjectPreview.vue';
 import { units } from '@blue-might/units';
 import type Unit from '@blue-might/app/lib/classes/Unit';
 import type { UnitConstructorOptions } from '@blue-might/app/lib/classes/Unit';
 import type Faction from '@blue-might/app/lib/classes/Faction';
 import FactionUnitModule from '@blue-might/app/lib/classes/unitModule/Faction';
+
+import BmObjectPreview from '../ObjectPreview.vue';
+import type { AnimationLoopValue } from '../../lib/classes/Renderer';
+import type App from '../../lib/classes/App';
 
 const $props = defineProps<{
   app: App;

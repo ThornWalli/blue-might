@@ -1,10 +1,12 @@
 import { Vector3 } from 'three';
+
+import type { AnimationLoopValue } from '../Renderer';
+import type TankUnit from '../unit/vehicle/Tank';
+
 import GroundVehicleUnitModule, {
   type GroundVehicleUnitModuleOptions,
   type GroundVehicleUnitModuleState
 } from './movable/GroundVehicle';
-import type { AnimationLoopValue } from '../Renderer';
-import type TankUnit from '../unit/vehicle/Tank';
 
 export type TankUnitModuleOptions = GroundVehicleUnitModuleOptions;
 export type TankUnitModuleState = GroundVehicleUnitModuleState & {
@@ -26,8 +28,13 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
       unit,
       {
         ...options,
-        turnSpeed: options.turnSpeed ?? 4,
-        acceleration: options.acceleration ?? 6
+
+        acceleration: options.acceleration ?? 3,
+        turnSpeed: options.turnSpeed ?? 16
+        // maxSpeed: options.maxSpeed ?? 10,
+        // turnSpeed: options.turnSpeed ?? 5,
+        // turnMovementSpeed: options.turnMovementSpeed ?? 20,
+        // acceleration: options.acceleration ?? 4
       },
       {
         ...state,
@@ -48,15 +55,15 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
     const maxSpeed = this.options.maxSpeed;
     const friction = this.options.friction;
 
-    const isRotating = controls.left || controls.right;
+    const isRotating = controls.moveLeft || controls.moveRight;
 
     // Früher Bail-out: wenn keine Eingaben und Geschwindigkeiten ~0, nichts tun
     const eps = 1e-4;
     if (
-      !controls.up &&
-      !controls.down &&
-      !controls.left &&
-      !controls.right &&
+      !controls.moveForward &&
+      !controls.moveBackward &&
+      !controls.moveLeft &&
+      !controls.moveRight &&
       !controls.space &&
       this.state.velocity.lengthSq() < eps &&
       this.state.rotationVelocity.lengthSq() < eps
@@ -66,12 +73,12 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
     // 1. Beschleunigung durch Input
     let accel = 0;
     let rotationAccel = 0;
-    if (controls.up) accel += acceleration;
-    if (controls.down) accel -= acceleration * 0.5; // Rückwärts langsamer
+    if (controls.moveForward) accel += acceleration;
+    if (controls.moveBackward) accel -= acceleration * 0.5; // Rückwärts langsamer
 
     if (isRotating) {
-      if (controls.left) rotationAccel += acceleration;
-      if (controls.right) rotationAccel -= acceleration;
+      if (controls.moveLeft) rotationAccel += acceleration;
+      if (controls.moveRight) rotationAccel -= acceleration;
     } else {
       rotationAccel = accel;
     }
@@ -146,8 +153,8 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
 
     if (_rotationSpeed > 0.5) {
       let turn = 0;
-      if (controls.left) turn += turnSpeed * (isRotating ? 1 : 0.5);
-      if (controls.right) turn -= turnSpeed * (isRotating ? 1 : 0.5);
+      if (controls.moveLeft) turn += turnSpeed * (isRotating ? 1 : 0.5);
+      if (controls.moveRight) turn -= turnSpeed * (isRotating ? 1 : 0.5);
 
       const turnFactor = Math.min(_rotationSpeed / maxSpeed, 1);
 

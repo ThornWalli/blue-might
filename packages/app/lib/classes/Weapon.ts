@@ -1,4 +1,5 @@
 import type { WeaponDescription } from '../types/weapon';
+
 import Projectile from './Projectile';
 
 export default class Weapon implements WeaponDescription {

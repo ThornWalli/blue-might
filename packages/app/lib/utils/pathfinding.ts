@@ -1,5 +1,7 @@
 import type { Object3D, Vector3, Texture } from 'three';
-import { Raycaster } from 'three';
+import { Raycaster, Vector2 } from 'three';
+
+import { resizeCanvas } from './canvas';
 
 export enum TILE_TYPE {
   BLOCKED = 0,
@@ -44,26 +46,9 @@ export function getCostsFromImage(
     b: number,
     a: number
   ) => TILE_TYPE | undefined,
-  size: number = 64 / (1 / 3)
+  size: Vector2 = new Vector2(64, 64)
 ) {
-  function resizeCanvas(
-    canvas: HTMLCanvasElement | OffscreenCanvas,
-    width: number,
-    height?: number
-  ) {
-    if (!width && height) {
-      width = height * (canvas.width / canvas.height);
-    } else if (!height) {
-      height = width * (canvas.height / canvas.width);
-    }
-    const resizedCanvas = new OffscreenCanvas(width, height);
-    const ctx = resizedCanvas.getContext(
-      '2d'
-    ) as OffscreenCanvasRenderingContext2D;
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(canvas, 0, 0, width, height);
-    return resizedCanvas;
-  }
+  size = size.clone().divideScalar(1 / 3); // Grid Size 3 Cells
 
   let canvas: HTMLCanvasElement | OffscreenCanvas =
     document.createElement('canvas');
@@ -73,7 +58,7 @@ export function getCostsFromImage(
     canvas.getContext('2d')!;
   ctx.drawImage(texture.image, 0, 0);
 
-  canvas = resizeCanvas(canvas, size);
+  canvas = resizeCanvas(canvas, size.x);
   ctx = canvas.getContext('2d')!;
 
   const test: (number | undefined)[][] = [];

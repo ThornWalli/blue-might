@@ -3,15 +3,15 @@ import type {
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import type { MeshStandardMaterial } from 'three';
 import { Mesh, LoopRepeat, SkinnedMesh } from 'three';
-import baseGlb from './assets/control_tower_1.glb?url';
 import BuildingUnit, {
   type BuildingUnitModuleList,
   type BuildingUnitModules,
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
+
+import baseGlb from './assets/control_tower_1.glb?url';
 
 export type Options = BuildingUnitOptions;
 
@@ -55,7 +55,6 @@ export default class ControlTower_1<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-        console.log((child.material as MeshStandardMaterial).name);
 
         replaceColors(
           [

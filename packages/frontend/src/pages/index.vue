@@ -9,9 +9,7 @@
 <script lang="ts" setup>
 import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/App';
 import { defineAsyncComponent, markRaw, onUnmounted, ref } from 'vue';
-
 import { extendedMap } from '@blue-might/maps';
-
 import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import { filter, map, Subscription } from 'rxjs';
 import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';

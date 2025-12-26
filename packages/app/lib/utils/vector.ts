@@ -1,4 +1,5 @@
 import { Vector2 } from 'three';
+
 import { ROTATION } from './rotation';
 
 export function rotateVector2(vec: Vector2, rotation: ROTATION) {

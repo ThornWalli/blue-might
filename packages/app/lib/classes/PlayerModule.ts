@@ -1,4 +1,5 @@
 import type { SubscriptionLike } from 'rxjs';
+
 import type Player from './Player';
 import Module, { type ModuleObservables, type ModuleState } from './Module';
 

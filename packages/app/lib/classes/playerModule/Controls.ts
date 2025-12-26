@@ -1,5 +1,6 @@
 /* eslint-disable complexity */
 import { fromEvent, ReplaySubject } from 'rxjs';
+
 import type {
   PlayerModuleObservables,
   PlayerModuleState
@@ -15,11 +16,51 @@ interface State extends PlayerModuleState {
   controls: ControlState;
 }
 
+export function getDefaultControls<
+  Controls extends ControlState = ControlState
+>() {
+  return {
+    space: false,
+    gear: false,
+    landing: false,
+    modifier: false,
+    rotateLeft: false,
+    rotateRight: false,
+    moveLeft: false,
+    moveRight: false,
+    moveForward: false,
+    moveBackward: false,
+    ascend: false,
+    descend: false,
+    pitchUp: false,
+    pitchDown: false,
+    rollLeft: false,
+    rollRight: false
+  } as Controls;
+}
+
 export default class ControlsModule extends PlayerModule<State, Observables> {
   static override TYPE = 'controls';
 
   override state: State = {
-    controls: {}
+    controls: {
+      space: false,
+      gear: false,
+      landing: false,
+      modifier: false,
+      rotateLeft: false,
+      rotateRight: false,
+      moveLeft: false,
+      moveRight: false,
+      moveForward: false,
+      moveBackward: false,
+      ascend: false,
+      descend: false,
+      pitchUp: false,
+      pitchDown: false,
+      rollLeft: false,
+      rollRight: false
+    }
   };
 
   constructor(player: Player, state: State, debug?: boolean) {
@@ -71,21 +112,31 @@ export default class ControlsModule extends PlayerModule<State, Observables> {
       case 'KeyE':
         controls.rotateRight = isKeyDown;
         break;
+      case 'KeyR':
+        controls.ascend = isKeyDown;
+        break;
+      case 'KeyF':
+        controls.descend = isKeyDown;
+        break;
       case 'KeyW':
       case 'ArrowUp':
-        controls.up = isKeyDown;
+        controls.moveForward = isKeyDown;
+        controls.pitchUp = isKeyDown;
         break;
       case 'KeyS':
       case 'ArrowDown':
-        controls.down = isKeyDown;
+        controls.moveBackward = isKeyDown;
+        controls.pitchDown = isKeyDown;
         break;
       case 'KeyA':
       case 'ArrowLeft':
-        controls.left = isKeyDown;
+        controls.moveLeft = isKeyDown;
+        controls.rollLeft = isKeyDown;
         break;
       case 'KeyD':
       case 'ArrowRight':
-        controls.right = isKeyDown;
+        controls.moveRight = isKeyDown;
+        controls.rollRight = isKeyDown;
         break;
       case 'Space':
         controls.space = isKeyDown;
@@ -100,18 +151,37 @@ export default class ControlsModule extends PlayerModule<State, Observables> {
 }
 
 export interface ControlState {
-  gear?: boolean;
-  landing?: boolean;
-  modifier?: boolean;
-  rotateLeft?: boolean | number;
-  rotateRight?: boolean | number;
-  up?: boolean | number;
-  down?: boolean | number;
-  left?: boolean | number;
-  right?: boolean | number;
-  space?: boolean;
-  pitchUp?: boolean;
-  pitchDown?: boolean;
+  space: boolean;
+
+  gear: boolean;
+  landing: boolean;
+  modifier: boolean;
+
+  rotateLeft: boolean | number;
+  rotateRight: boolean | number;
+  moveLeft: boolean | number;
+  moveRight: boolean | number;
+  moveForward: boolean | number;
+  moveBackward: boolean | number;
+
+  ascend: boolean | number; // aufsteigen
+  descend: boolean | number; // absteigen
+  /**
+   * forward tilt
+   */
+  pitchUp: boolean | number;
+  /**
+   * backward tilt
+   */
+  pitchDown: boolean | number;
+  /**
+   *left tilt
+   */
+  rollLeft: boolean | number;
+  /**
+   * right tilt
+   */
+  rollRight: boolean | number;
 }
 
 export enum Controls {

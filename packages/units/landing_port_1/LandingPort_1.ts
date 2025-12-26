@@ -17,9 +17,9 @@ import LandingPortUnit, {
   type LandingPortUnitOptions
 } from '@blue-might/app/lib/classes/unit/LandingPort';
 import assetLoader from '@blue-might/app/services/assetLoader';
+import { LOADER } from '@blue-might/app/lib/classes/AssetLoader';
 
 import baseTexture from './texture.png?url';
-import { LOADER } from '@blue-might/app/lib/classes/AssetLoader';
 
 export type Options = LandingPortUnitOptions;
 export type Modules = LandingPortUnitModules;

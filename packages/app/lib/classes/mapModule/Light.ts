@@ -4,6 +4,7 @@ import {
   DirectionalLightHelper,
   Vector3
 } from 'three';
+
 import MapModule, {
   type MapModuleObservables,
   type MapModuleState

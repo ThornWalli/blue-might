@@ -1,4 +1,7 @@
 import {
+  AddOperation,
+  CanvasTexture,
+  MultiplyOperation,
   Raycaster,
   ShadowMaterial,
   Vector2,
@@ -12,16 +15,19 @@ import {
   Object3D,
   PlaneGeometry
 } from 'three';
+import { filter, map, Subject } from 'rxjs';
+
 import MapModule, {
   type MapModuleObservables,
   type MapModuleState
 } from '../MapModule';
-import { filter, map, Subject } from 'rxjs';
 import type Map from '../Map';
 import { getCostsFromImage, TILE_TYPE } from '../../utils/pathfinding';
 import type Unit from '../Unit';
 import { getAllMeshes } from '../../utils/object';
 import BuildingUnit from '../unit/Building';
+import { generateNoiseTexture } from '../../utils/texture';
+
 declare module '../Map' {
   interface ModuleDebug {
     ground: boolean;
@@ -227,7 +233,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     //     allMeshes.push(child);
     //   }
     // });
-    const intersections = raycaster.intersectObjects(allMeshes, true);
+    const intersections = raycaster.intersectObjects(allMeshes, false);
 
     const groundHeight = this.getHeightAt(x, z);
 
@@ -280,25 +286,45 @@ export default class GroundModule extends MapModule<State, Observables> {
     return smoothedHeights;
   }
 
-  createMeshes() {
+  async createMeshes() {
     const backgroundTexture = this.map.textures.backgroundTexture!;
     backgroundTexture.minFilter = NearestFilter;
     backgroundTexture.magFilter = NearestFilter;
     backgroundTexture.generateMipmaps = false;
-    const foregroundTexture = this.map.textures.foregroundTexture!;
-    foregroundTexture.minFilter = NearestFilter;
-    foregroundTexture.magFilter = NearestFilter;
-    foregroundTexture.generateMipmaps = false;
-
-    const segments = this.state.segments;
-    const heights = this.getGroundHeights(segments);
-    this.state.heights = heights;
 
     const width = backgroundTexture.width; // Terraingröße
     const height = backgroundTexture.height;
 
     this.state.terrainWidth = width;
     this.state.terrainHeight = height;
+
+    const segments = this.state.segments;
+    const heights = this.getGroundHeights(segments);
+    this.state.heights = heights;
+
+    const foregroundTexture = this.map.textures.foregroundTexture!;
+    foregroundTexture.minFilter = NearestFilter;
+    foregroundTexture.magFilter = NearestFilter;
+    foregroundTexture.generateMipmaps = false;
+
+    // const noiseTexture = await assetLoader.add<Texture<ImageBitmap>>({
+    //   value: noiseTextureUrl,
+    //   loader: LOADER.TEXTURE
+    // });
+
+    const noiseTexture = new CanvasTexture(
+      generateNoiseTexture({
+        width: width * 1,
+        height: height * 1,
+        intensity: 0.4,
+        opacity: 0.2,
+        monochrome: false
+      })
+    );
+
+    noiseTexture.minFilter = NearestFilter;
+    noiseTexture.magFilter = NearestFilter;
+    noiseTexture.generateMipmaps = false;
 
     const geometry = new PlaneGeometry(width, height, segments, segments);
     geometry.rotateX(-Math.PI / 2);
@@ -321,13 +347,26 @@ export default class GroundModule extends MapModule<State, Observables> {
       map: foregroundTexture,
       flatShading: true,
       wireframe: false,
-      transparent: true
+      transparent: true,
+      combine: AddOperation
+    });
+    const noiseMaterial = new MeshLambertMaterial({
+      color: 0x88aa55,
+      map: noiseTexture,
+      flatShading: true,
+      wireframe: false,
+      transparent: true,
+      combine: MultiplyOperation
     });
 
     const backgroundTerrain = new Mesh(geometry, backgroundMaterial);
     backgroundTerrain.name = 'Ground Background';
+    const noiseTerrain = new Mesh(geometry, noiseMaterial);
+    noiseTerrain.name = 'Ground Noise';
+
     const foregroundTerrain = new Mesh(geometry, foregroundMaterial);
     foregroundTerrain.name = 'Ground Foreground';
+
     const shadowTerrain = new Mesh(geometry, new ShadowMaterial());
     shadowTerrain.name = 'Ground Shadow';
     shadowTerrain.receiveShadow = true;
@@ -346,6 +385,7 @@ export default class GroundModule extends MapModule<State, Observables> {
 
     const object = new Object3D();
     object.add(backgroundTerrain);
+    object.add(noiseTerrain);
     object.add(foregroundTerrain);
     object.add(shadowTerrain);
     object.add(water);
@@ -385,11 +425,6 @@ export default class GroundModule extends MapModule<State, Observables> {
           );
         })
     );
-  }
-
-  pathfinderTileTypes: (TILE_TYPE | undefined)[][] = [];
-  override async afterSetup() {
-    await super.afterSetup();
 
     function tileTypeByColor(
       r: number,
@@ -404,10 +439,34 @@ export default class GroundModule extends MapModule<State, Observables> {
       return undefined;
     }
 
+    const { width, height } = this.map.textures.backgroundTexture!;
+
     this.pathfinderTileTypes = await getCostsFromImage(
       this.map.textures.foregroundTexture!,
-      tileTypeByColor
+      tileTypeByColor,
+      new Vector2(width, height)
     );
+  }
+
+  pathfinderTileTypes: (TILE_TYPE | undefined)[][] = [];
+  override async afterSetup() {
+    await super.afterSetup();
+
+    // const filteredTypes = [];
+    // for (let x = 0; x < this.pathfinderTileTypes.length; x++) {
+    //   for (let y = 0; y < this.pathfinderTileTypes[x].length; y++) {
+    //     const tileType = this.pathfinderTileTypes[x]?.[y];
+    //     if (tileType === TILE_TYPE.BETON_ROAD) {
+    //       filteredTypes.push({ x, y, tileType });
+    //     }
+    //   }
+    // }
+
+    // console.log(
+    //   filteredTypes,
+    //   new Set(this.pathfinderTileTypes.flat()),
+    //   this.pathfinderTileTypes.length
+    // );
   }
 
   getNormalAt(x: number | Vector2, z?: number): Vector3 {

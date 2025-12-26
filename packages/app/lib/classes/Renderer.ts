@@ -1,7 +1,6 @@
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import type { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-
 import { Observable, ReplaySubject, fromEvent } from 'rxjs';
 import type { Vector2, Object3D } from 'three';
 import {
@@ -21,6 +20,8 @@ import IntersectionRendererModule from './rendererModule/Intersection';
 import DebugRendererModule from './rendererModule/Debug';
 import CameraRendererModule from './rendererModule/Camera';
 import ControlsRendererModule from './rendererModule/Controls';
+
+import '../utils/raycast';
 
 export type RendererModuleList = (
   | typeof CameraRendererModule

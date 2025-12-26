@@ -1,6 +1,7 @@
+import Weapon from '@blue-might/app/lib/classes/Weapon';
+
 import { PROJECTILE_TYPE, WEAPON } from './../app/lib/types/weapon';
 import { projectiles } from './projectile';
-import Weapon from '@blue-might/app/lib/classes/Weapon';
 
 declare module '@blue-might/app/lib/types/weapon' {
   interface Weapon {

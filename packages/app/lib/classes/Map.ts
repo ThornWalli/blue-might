@@ -1,11 +1,12 @@
 import type { Texture } from 'three';
 import { Object3D } from 'three';
+import assetLoader from '@blue-might/app/services/assetLoader';
+import { Subscription } from 'rxjs';
+
 import type App from './App';
 import type { AnimationLoopValue } from './Renderer';
-import assetLoader from '@blue-might/app/services/assetLoader';
 import { LOADER } from './AssetLoader';
 import type Unit from './Unit';
-import { Subscription } from 'rxjs';
 import UnitsModule from './mapModule/Units';
 import GroundModule from './mapModule/Ground';
 import LightModule from './mapModule/Light';

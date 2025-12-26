@@ -1,5 +1,4 @@
 import useFonts from '../composables/useFonts';
-
 import OpenSansRegular from '../assets/fonts/open-sans-v43-latin/open-sans-v43-latin-regular.woff2';
 import OpenSans700 from '../assets/fonts/open-sans-v43-latin/open-sans-v43-latin-700.woff2';
 

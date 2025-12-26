@@ -1,6 +1,7 @@
 import { kebabCase } from 'change-case';
-import { useHead } from '#imports';
 import { ref } from 'vue';
+
+import { useHead } from '#imports';
 
 const fontDefinitions = ref<FontDefinition[]>([]);
 

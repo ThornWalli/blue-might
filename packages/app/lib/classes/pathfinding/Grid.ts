@@ -1,6 +1,7 @@
 import { Subject } from 'rxjs';
 import type { Object3D } from 'three';
 import { Vector2 } from 'three';
+
 import { TILE_TYPE } from '../../utils/pathfinding';
 import { COLLISION_TYPE } from '../unitModule/Collision';
 
@@ -28,7 +29,7 @@ export interface GridNode {
 }
 
 export default class Grid {
-  private matrix: number[][];
+  private matrix: number[][] = [];
   getNode(x: number, z: number) {
     return this.nodes[this.index(x, z)]!;
   }
@@ -58,6 +59,7 @@ export default class Grid {
         const tileType = node.walkable.value
           ? (this.getTileType?.(node) ?? TILE_TYPE.GRASS)
           : TILE_TYPE.BLOCKED;
+
         row.push(tileType);
       }
       matrix.push(row);
@@ -87,7 +89,9 @@ export default class Grid {
         y: Math.floor(i / this.width)
       };
     });
+  }
 
+  setup() {
     this.matrix = this.createMatrix();
     console.log(
       'Grid matrix created:',
@@ -120,6 +124,16 @@ export default class Grid {
       (this.height * this.cellSize) / 2;
 
     return new Vector2(x, y);
+  }
+
+  toNode(worldPosition: Vector2) {
+    const x = Math.floor(
+      (worldPosition.x + (this.width * this.cellSize) / 2) / this.cellSize
+    );
+    const y = Math.floor(
+      (worldPosition.y + (this.height * this.cellSize) / 2) / this.cellSize
+    );
+    return this.getNode(x, y);
   }
 
   update(nodes?: GridNode[], excludeObjects: Object3D[] = []) {

@@ -1,9 +1,6 @@
 import { Vector3 } from 'three';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import heightMap from './heightMap.png';
-import backgroundTexture from './texture_bg.png';
-import foregroundTexture from './texture_fg.png';
-import CombatHelicopter_1 from '@blue-might/units/blue_might/CombatHelicopter_1';
+import CombatHelicopter_1 from '@blue-might/units/combat_helicopter_1/CombatHelicopter_1';
 import {
   Barrack_1,
   ControlTower_1,
@@ -15,6 +12,10 @@ import {
 } from '@blue-might/units';
 import Faction from '@blue-might/app/lib/classes/Faction';
 import { weapons } from '@blue-might/weapon';
+
+import foregroundTexture from './texture_fg.png';
+import backgroundTexture from './texture_bg.png';
+import heightMap from './heightMap.png';
 
 const blueFaction = new Faction({
   id: 'blue-faction',
@@ -50,16 +51,10 @@ const desc: MapDescription = {
       position: new Vector3(36.5, 0, -22) // 2.5+34, 10-32
     }),
     new LandingPort_1({
-      position: new Vector3(43.5, 0, -26.5),
-      moduleDebug: {
-        collision: true
-      }
+      position: new Vector3(43.5, 0, -26.5)
     }),
     new LandingPort_1({
-      position: new Vector3(41.5, 0, -26.5),
-      moduleDebug: {
-        collision: true
-      }
+      position: new Vector3(41.5, 0, -26.5)
     }),
     new ControlTower_1({
       position: new Vector3(37, 0, -27),
@@ -84,15 +79,9 @@ const desc: MapDescription = {
         faction: {
           faction: blueFaction
         }
-      },
-      moduleDebug: {
-        collision: true
       }
     }),
     new Tank_1({
-      moduleDebug: {
-        collision: true
-      },
       id: 'tank-1',
       position: new Vector3(38.83, 0, -30.17),
       moduleStates: {
@@ -102,9 +91,6 @@ const desc: MapDescription = {
       }
     }),
     new Tank_1({
-      moduleDebug: {
-        collision: true
-      },
       position: new Vector3(38.17, 0, -30.17),
       moduleStates: {
         faction: {
@@ -113,9 +99,6 @@ const desc: MapDescription = {
       }
     }),
     new Tank_1({
-      moduleDebug: {
-        collision: true
-      },
       position: new Vector3(37.5, 0, -30.17),
       moduleStates: {
         faction: {
@@ -190,9 +173,6 @@ const desc: MapDescription = {
       }
     }),
     new StationaryGun_1({
-      moduleDebug: {
-        collision: true
-      },
       position: new Vector3(45.17, 1, -25.83),
       moduleStates: {
         faction: {

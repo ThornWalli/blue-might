@@ -1,8 +1,3 @@
-import AppModule, {
-  type AppModuleObservables,
-  type AppModuleState
-} from '../AppModule';
-import type App from '../App';
 import type { Observable } from 'rxjs';
 import {
   ReplaySubject,
@@ -20,6 +15,12 @@ import {
   Object3D,
   Vector3
 } from 'three';
+
+import type App from '../App';
+import AppModule, {
+  type AppModuleObservables,
+  type AppModuleState
+} from '../AppModule';
 import type Map from '../Map';
 import { disposeObject3D } from '../../utils/object';
 

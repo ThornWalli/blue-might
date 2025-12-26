@@ -1,12 +1,14 @@
 import { BufferGeometry, Line, LineBasicMaterial, Vector3 } from 'three';
+import { Subject } from 'rxjs';
+
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
   type UnitModuleState
 } from '../UnitModule';
 import type Unit from '../Unit';
-import { Subject } from 'rxjs';
 import { disposeObject3D } from '../../utils/object';
+
 import type PathfindingUnitModule from './Pathfinding';
 
 declare module '../Unit' {

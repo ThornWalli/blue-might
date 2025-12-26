@@ -4,13 +4,14 @@ import type {
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh } from 'three';
-import baseGlb from './assets/soldat_1.glb?url';
 import FigureUnit, {
   type FigureUnitModuleList,
   type FigureUnitModules,
   type FigureUnitOptions
 } from '@blue-might/app/lib/classes/unit/Figure';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
+
+import baseGlb from './assets/soldat_1.glb?url';
 
 export type Options = FigureUnitOptions;
 

@@ -1,20 +1,20 @@
 /* eslint-disable complexity */
 import { ReplaySubject } from 'rxjs';
-import type Unit from '../Unit';
+import { Texture, NearestFilter, Vector3, Object3D } from 'three';
+import textureFire from '@blue-might/app/assets/fire/fire.png?url';
+import textureSmokeLight from '@blue-might/app/assets/fire/smoke/light.png?url';
+import textureSmokeMedium from '@blue-might/app/assets/fire/smoke/medium.png?url';
+import textureSmokeHeavy from '@blue-might/app/assets/fire/smoke/heavy.png?url';
+import assetLoader from '@blue-might/app/services/assetLoader';
+
+import type Projectile from '../Projectile';
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
   type UnitModuleSetupContext,
   type UnitModuleState
 } from '../UnitModule';
-import type Projectile from '../Projectile';
-import { Texture, NearestFilter, Vector3, Object3D } from 'three';
-
-import textureFire from '@blue-might/app/assets/fire/fire.png?url';
-import textureSmokeLight from '@blue-might/app/assets/fire/smoke/light.png?url';
-import textureSmokeMedium from '@blue-might/app/assets/fire/smoke/medium.png?url';
-import textureSmokeHeavy from '@blue-might/app/assets/fire/smoke/heavy.png?url';
-import assetLoader from '@blue-might/app/services/assetLoader';
+import type Unit from '../Unit';
 import { LOADER } from '../AssetLoader';
 import { Particle } from '../Particle';
 import type { AnimationLoopValue } from '../Renderer';
@@ -50,6 +50,7 @@ export interface DamageUnitModuleState extends UnitModuleState {
    * Aktueller Schaden normalisiert.
    */
   damage: number;
+  maxDamage: number;
   /**
    * Brenndauer in Sekunden
    */
@@ -95,6 +96,7 @@ export default class DamageUnitModule extends UnitModule<
       {
         ...state,
         damage: state.damage ?? 0,
+        maxDamage: state.maxDamage ?? 1,
         burnTimeLeft: state.burnTimeLeft ?? 0
       },
       debug
@@ -175,16 +177,14 @@ export default class DamageUnitModule extends UnitModule<
 
   public hit(projectile: Projectile) {
     if (this.isDemolished()) {
-      console.log('Already demolished:', this.getUnit(), projectile);
       return;
     }
-    console.log('Hit object:', this.getUnit(), projectile);
     this.setValue(this.state.damage + projectile.strength);
     this.spawnSmoke(SMOKE_TYPE.MEDIUM);
   }
 
   private setValue(value: number) {
-    if (this.isDemolished()) return;
+    if (!this.canDamage() && this.isDemolished()) return;
     this.state.damage = Math.max(0, value);
     this.observables.damage$.next(this.state.damage);
     if (this.isDestroyed()) {
@@ -194,21 +194,27 @@ export default class DamageUnitModule extends UnitModule<
   }
 
   public getDamageLevel() {
+    let value = 0;
     if (this.state.damage >= DamageLevel.DEMOLISHED) {
-      return DamageLevel.DEMOLISHED;
+      value = DamageLevel.DEMOLISHED;
     } else if (this.state.damage >= DamageLevel.DAMAGED) {
-      return DamageLevel.DAMAGED;
+      value = DamageLevel.DAMAGED;
     } else {
-      return DamageLevel.INTACT;
+      value = DamageLevel.INTACT;
     }
+    return value * this.state.maxDamage;
+  }
+
+  public canDamage() {
+    return this.state.damage < DamageLevel.DEMOLISHED;
   }
 
   public isDemolished() {
-    return this.state.damage >= 1;
+    return this.state.damage >= this.state.maxDamage;
   }
 
   public isDestroyed() {
-    return this.state.damage >= 1;
+    return this.state.damage >= this.state.maxDamage;
   }
 
   private spawnSmoke(type: SMOKE_TYPE = SMOKE_TYPE.MEDIUM) {

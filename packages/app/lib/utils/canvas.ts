@@ -31,3 +31,22 @@ export function createCheckerboardCanvas(
   }
   return canvas;
 }
+
+export function resizeCanvas(
+  canvas: HTMLCanvasElement | OffscreenCanvas,
+  width: number,
+  height?: number
+) {
+  if (!width && height) {
+    width = height * (canvas.width / canvas.height);
+  } else if (!height) {
+    height = width * (canvas.height / canvas.width);
+  }
+  const resizedCanvas = new OffscreenCanvas(width, height);
+  const ctx = resizedCanvas.getContext(
+    '2d'
+  ) as OffscreenCanvasRenderingContext2D;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(canvas, 0, 0, width, height);
+  return resizedCanvas;
+}

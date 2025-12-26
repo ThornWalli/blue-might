@@ -3,17 +3,13 @@ import type {
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-
 import { Vector2, Vector3, Mesh, SkinnedMesh, Object3D } from 'three';
-import baseGlb from './assets/stationary_gun_2.glb?url';
 import BuildingUnit, {
   type BuildingUnitModuleList,
   type BuildingUnitModules,
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
-
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
 import GunUnitModule, {
@@ -21,10 +17,14 @@ import GunUnitModule, {
 } from '@blue-might/app/lib/classes/unitModule/Gun';
 import { playSound } from '@blue-might/debug/utils';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
-import { createBarrelTargetShoot } from '../stationary_gun_1/utils';
 import { getSfx } from '@blue-might/weapon/projectile';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
+import type { ControlState } from '@blue-might/app/lib/classes/playerModule/Controls';
+
+import { createBarrelTargetShoot } from '../stationary_gun_1/utils';
+
+import baseGlb from './assets/stationary_gun_2.glb?url';
 
 interface State {
   active: boolean;
@@ -232,7 +232,7 @@ export default class StationaryGun_2 extends BuildingUnit<
     return object;
   }
 
-  private getControls() {
+  private getControls(): Partial<ControlState> {
     if (!this.modules.player) return {};
 
     return (
@@ -248,16 +248,16 @@ export default class StationaryGun_2 extends BuildingUnit<
 
   updateControls() {
     const controls = this.getControls();
-    if (controls.up) {
+    if (controls.moveForward) {
       this.state.velocity.y -= 0.005;
     }
-    if (controls.down) {
+    if (controls.moveBackward) {
       this.state.velocity.y += 0.005;
     }
-    if (controls.left) {
+    if (controls.moveLeft) {
       this.state.velocity.x += 0.005;
     }
-    if (controls.right) {
+    if (controls.moveRight) {
       this.state.velocity.x -= 0.005;
     }
     this.modules.gun.setActive(controls.space ?? false);

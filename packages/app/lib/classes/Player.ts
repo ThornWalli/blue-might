@@ -1,6 +1,7 @@
-import type Unit from './Unit';
 import { ReplaySubject, type SubscriptionLike } from 'rxjs';
 import { Subscription } from 'rxjs';
+
+import type Unit from './Unit';
 import VehicleModule from './playerModule/Vehicle';
 import type MovableUnit from './unit/Movable';
 import ControlsModule from './playerModule/Controls';

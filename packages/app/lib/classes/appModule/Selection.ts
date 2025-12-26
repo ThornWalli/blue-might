@@ -1,4 +1,5 @@
 import { ReplaySubject } from 'rxjs';
+
 import AppModule, {
   type AppModuleObservables,
   type AppModuleState

@@ -14,7 +14,6 @@ import type App from '@blue-might/app/lib/classes/App';
 import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-
 import {
   CombatHelicopter_1,
   Soldat_1,
@@ -57,8 +56,51 @@ const map: Partial<MapDescription> = {
   units: [
     new Tree_1({
       id: 'tree-1',
-      position: new Vector3(-0.17, 0, 2.83),
-      rotation: new Euler(0, 0, 0)
+      position: new Vector3(-0.17, 0, 2.5),
+      rotation: new Euler(0, 0, 0),
+      moduleDebug: {
+        collision: true
+      }
+    }),
+    new Tree_1({
+      id: 'tree-2',
+      position: new Vector3(-0.17, 0, -2.5),
+      rotation: new Euler(0, 0, 0),
+      moduleDebug: {
+        collision: true
+      }
+    }),
+    new Tree_1({
+      id: 'tree-3',
+      position: new Vector3(2.83, 0, 2.5),
+      rotation: new Euler(0, 0, 0),
+      moduleDebug: {
+        collision: true
+      }
+    }),
+    new Tree_1({
+      id: 'tree-4',
+      position: new Vector3(-2.83, 0, 2.5),
+      rotation: new Euler(0, 0, 0),
+      moduleDebug: {
+        collision: true
+      }
+    }),
+    new Tree_1({
+      id: 'tree-5',
+      position: new Vector3(2.83, 0, -2.5),
+      rotation: new Euler(0, 0, 0),
+      moduleDebug: {
+        collision: true
+      }
+    }),
+    new Tree_1({
+      id: 'tree-6',
+      position: new Vector3(-2.83, 0, -2.5),
+      rotation: new Euler(0, 0, 0),
+      moduleDebug: {
+        collision: true
+      }
     }),
 
     new CombatHelicopter_1({
@@ -71,13 +113,10 @@ const map: Partial<MapDescription> = {
       moduleOptions: {
         patrol: {
           path: [
-            // [2.83, 4.5],
-            // [-2.83, 4.5]
-
-            [4.83, 5.17],
-            [-4.5, 5.17],
-            [-4.17, -1.5],
-            [3.5, -1.83]
+            [3.83, 3.83],
+            [-3.83, 3.83],
+            [-3.83, -3.83],
+            [3.83, -3.83]
           ]
         }
       },
@@ -93,9 +132,10 @@ const map: Partial<MapDescription> = {
         }
       }
     }),
+
     new Tank_1({
       id: 'tank-1',
-      position: new Vector3(0, 0, 0),
+      position: new Vector3(0.5, 0, -0.17),
       rotation: new Euler(0, 0, 0),
       moduleDebug: {
         pathfinding: true,
@@ -104,10 +144,40 @@ const map: Partial<MapDescription> = {
       moduleOptions: {
         patrol: {
           path: [
-            [2.83, 2.83],
-            [-2.83, 2.83],
-            [-2.83, 1.5],
-            [2.83, 1.5]
+            [3.83, 1.17],
+            [3.83, 3.83],
+            [-3.83, 3.83],
+            [-3.83, 1.17]
+          ]
+        }
+      },
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        },
+        movable: {
+          active: false
+        },
+        patrol: {
+          active: true
+        }
+      }
+    }),
+    new Tank_1({
+      id: 'tank-2',
+      position: new Vector3(-0.5, 0, -0.17),
+      rotation: new Euler(0, Math.PI, 0),
+      moduleDebug: {
+        pathfinding: true,
+        patrol: true
+      },
+      moduleOptions: {
+        patrol: {
+          path: [
+            [-3.83, -1.17],
+            [-3.83, -3.83],
+            [3.83, -3.83],
+            [3.83, -1.17]
           ]
         }
       },
@@ -137,12 +207,17 @@ const map: Partial<MapDescription> = {
           moduleOptions: {
             patrol: {
               path: [
-                [2.83, 0.5],
-                [-2.83, 0.5]
+                [3.17, 1.17],
+                [3.17, -1.17],
+                [-3.17, -1.17],
+                [-3.17, 1.17]
               ]
             }
           },
           moduleStates: {
+            faction: {
+              faction: blueFaction
+            },
             patrol: {
               active: true
             }
@@ -160,12 +235,17 @@ const map: Partial<MapDescription> = {
           moduleOptions: {
             patrol: {
               path: [
-                [-2.83, 0.5],
-                [2.83, 0.5]
+                [-3.17, 1.17],
+                [-3.17, -1.17],
+                [3.17, -1.17],
+                [3.17, 1.17]
               ]
             }
           },
           moduleStates: {
+            faction: {
+              faction: blueFaction
+            },
             patrol: {
               active: true
             }

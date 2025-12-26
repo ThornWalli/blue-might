@@ -1,5 +1,6 @@
 import type { UnitConstructorOptions } from '@blue-might/app/lib/classes/Unit';
 import TankUnitModule from '@blue-might/app/lib/classes/unitModule/Tank';
+
 import VehicleUnit, {
   type VehicleUnitModuleList,
   type VehicleUnitModules,

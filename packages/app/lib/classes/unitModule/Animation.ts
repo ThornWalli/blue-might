@@ -1,5 +1,8 @@
 import { AnimationClip, type AnimationAction } from 'three';
 import { AnimationMixer, Object3D } from 'three';
+import type { Subject } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
+
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
@@ -7,8 +10,6 @@ import UnitModule, {
   type UnitModuleState
 } from '../UnitModule';
 import { OBJECT_NAME } from '../../utils/object';
-import type { Subject } from 'rxjs';
-import { ReplaySubject } from 'rxjs';
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 

@@ -14,7 +14,6 @@ import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 import type { UnitIdentifier } from '@blue-might/app/lib/types/unit';
 import { debugMap } from '@blue-might/maps';
 import { filter, Subscription, map as rxjsMap } from 'rxjs';
-
 import { onUnmounted, defineAsyncComponent, markRaw } from 'vue';
 import { defu } from 'defu';
 import type Faction from '@blue-might/app/lib/classes/Faction';

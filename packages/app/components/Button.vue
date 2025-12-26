@@ -17,8 +17,10 @@
 
 <script lang="ts" setup>
 import type { FunctionalComponent } from 'vue';
+
 import type icons from '../utils/icons';
 import type { ICON } from '../utils/icons';
+
 import BaseButton from './base/Button.vue';
 import BaseIcon from './base/Icon.vue';
 

@@ -1,5 +1,11 @@
 import type { Mesh } from 'three';
 import { Object3D, Raycaster, Vector2, Vector3 } from 'three';
+import {
+  createDustCone,
+  type DustConeOptions
+} from '@blue-might/app/lib/utils/dustCone';
+import { getGlb } from '@blue-might/weapon/projectile';
+
 import MapModule, {
   type MapModuleObservables,
   type MapModuleState
@@ -8,12 +14,8 @@ import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import { loadGltf } from '../../utils/gltf';
-import {
-  createDustCone,
-  type DustConeOptions
-} from '@blue-might/app/lib/utils/dustCone';
 import type Projectile from '../Projectile';
-import { getGlb } from '@blue-might/weapon/projectile';
+
 declare module '../Map' {
   interface ModuleDebug {
     shoot: boolean;

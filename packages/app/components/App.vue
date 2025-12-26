@@ -24,16 +24,16 @@ import {
   markRaw,
   computed
 } from 'vue';
-import App, { APP_MODE, type AppConfig } from '../lib/classes/App';
-import BmRenderer from './Renderer.vue';
-
-import setupFonts from './../utils/fonts';
 import { fromEvent, Subscription } from 'rxjs';
 import { Vector2 } from 'three';
+
+import App, { APP_MODE, type AppConfig } from '../lib/classes/App';
 import type Renderer from '../lib/classes/Renderer';
 import type { Cursor } from '../lib/classes/appModule/Cursor';
-
 import type { MapDescription } from '../lib/classes/Map';
+
+import setupFonts from './../utils/fonts';
+import BmRenderer from './Renderer.vue';
 
 setupFonts();
 const $props = defineProps<{

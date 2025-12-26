@@ -7,6 +7,8 @@ import {
   SphereGeometry,
   Vector3
 } from 'three';
+import { ReplaySubject, Subscription } from 'rxjs';
+
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
@@ -14,7 +16,6 @@ import UnitModule, {
 } from '../UnitModule';
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
-import { ReplaySubject, Subscription } from 'rxjs';
 
 declare module '../Unit' {
   interface ModuleStates {

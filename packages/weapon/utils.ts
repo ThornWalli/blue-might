@@ -1,5 +1,4 @@
 import { Mesh, MeshLambertMaterial, PlaneGeometry } from 'three';
-
 import soundShoot1 from '@blue-might/app/assets/meshes/shoot_1.wav?url';
 
 export function createGround(options?: { color?: number }) {

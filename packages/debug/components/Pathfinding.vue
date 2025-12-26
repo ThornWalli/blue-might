@@ -12,7 +12,6 @@
 import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-
 import { CombatHelicopter_1, Tank_1, Tree_1 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Euler, Vector3 } from 'three';
@@ -45,7 +44,15 @@ const map: Partial<MapDescription> = {
     }),
     new CombatHelicopter_1({
       id: 'combat-helicopter-1',
-      position: new Vector3(2, 0, 0)
+      position: new Vector3(2, 0, 0),
+      moduleStates: {
+        movable: {
+          active: true
+        }
+      },
+      moduleDebug: {
+        pathfinding: true
+      }
     }),
     new Tree_1({
       id: 'tree-1',

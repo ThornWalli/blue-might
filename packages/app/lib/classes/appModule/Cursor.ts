@@ -1,5 +1,6 @@
 import type { Observable } from 'rxjs';
 import { distinctUntilChanged, ReplaySubject } from 'rxjs';
+
 import AppModule, {
   type AppModuleObservables,
   type AppModuleState

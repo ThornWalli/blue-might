@@ -1,5 +1,6 @@
 import type { Camera } from 'three';
 import { Box3, Frustum, Matrix4, Mesh, Vector3 } from 'three';
+
 import type Unit from './Unit';
 
 export interface UnitChunking {

@@ -1,14 +1,16 @@
+import type { Object3D } from 'three';
+import { Vector2, Vector3 } from 'three';
+import { Subject } from 'rxjs';
+
 import type Unit from '../Unit';
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
   type UnitModuleState
 } from '../UnitModule';
-import type { Object3D } from 'three';
-import { Vector2, Vector3 } from 'three';
 import type { AnimationLoopValue } from '../Renderer';
-import { Subject } from 'rxjs';
 import type Weapon from '../Weapon';
+
 import AttackUnitModule from './Attack';
 
 declare module '../Unit' {
@@ -29,12 +31,13 @@ export interface GunUnitModuleObservables extends UnitModuleObservables {
   cooldown$: Subject<{ index: number }>;
 }
 
-type AutoAimFunction = (options: {
+export type AutoAimOptions = {
   target: Unit;
   sourcePosition: Vector3;
   weapon: Weapon;
   index: number;
-}) => boolean;
+};
+export type AutoAimFunction = (options: AutoAimOptions) => boolean;
 export interface GunUnitModuleOptions extends UnitModuleOptions {
   autoAimFn: AutoAimFunction;
   weapons: Weapon[];
@@ -68,7 +71,7 @@ export default class GunUnitModule<
         sourcePositions: state.sourcePositions ?? [],
         barrelTargets: state.barrelTargets ?? [],
         targetRotation: new Vector2(),
-        autoAimActive: state.autoAimActive ?? true,
+        autoAimActive: state.autoAimActive ?? false,
         autoAimTarget: state.autoAimTarget ?? null
       },
       debug

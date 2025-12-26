@@ -7,6 +7,8 @@ import {
   switchMap,
   type SubscriptionLike
 } from 'rxjs';
+import type { RendererOptions } from '@blue-might/app/types';
+
 import type Renderer from './Renderer';
 import AssetLoader from './AssetLoader';
 import CursorAppModule from './appModule/Cursor';
@@ -17,7 +19,6 @@ import SelectionAppModule from './appModule/Selection';
 import type Unit from './Unit';
 import UnitFocusAppModule from './appModule/UnitFocus';
 import DebugAppModule from './appModule/Debug';
-import type { RendererOptions } from '@blue-might/app/types';
 
 type AppModuleList = (
   | typeof DebugAppModule

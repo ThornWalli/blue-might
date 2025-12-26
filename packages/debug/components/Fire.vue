@@ -14,15 +14,15 @@
 import ThreeDebug from '@blue-might/app/components/ThreeDebug.vue';
 import { disposeObject3D } from '@blue-might/app/lib/utils/object';
 import { NearestFilter, Vector3, type Scene, type Texture } from 'three';
-
 import GUI from 'three/examples/jsm/libs/lil-gui.module.min.js';
-import { createGround } from '../utils';
 import { reactive } from 'vue';
 import textureFire from '@blue-might/app/assets/fire/fire.png?url';
 import textureSmoke from '@blue-might/app/assets/fire/smoke.png?url';
 import assetLoader from '@blue-might/app/services/assetLoader';
 import { LOADER } from '@blue-might/app/lib/classes/AssetLoader';
 import { Particle } from '@blue-might/app/lib/classes/Particle';
+
+import { createGround } from '../utils';
 
 let gui: GUI;
 const params = reactive({

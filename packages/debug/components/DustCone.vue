@@ -16,9 +16,9 @@ import { disposeObject3D } from '@blue-might/app/lib/utils/object';
 import type { Scene, Object3D } from 'three';
 import { Vector2 } from 'three';
 import GUI from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { reactive } from 'vue';
 
 import { createGround } from '../utils';
-import { reactive } from 'vue';
 import { createDustCone } from '../dustCone';
 
 let gui: GUI;

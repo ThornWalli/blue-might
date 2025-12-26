@@ -1,9 +1,8 @@
 import type { Object3D } from 'three';
+import type { SubscriptionLike } from 'rxjs';
 
 import type Unit from './Unit';
 import type { SetupContext } from './Unit';
-import type { SubscriptionLike } from 'rxjs';
-
 import Module, { type ModuleObservables, type ModuleState } from './Module';
 
 export interface UnitModuleObservables extends ModuleObservables {

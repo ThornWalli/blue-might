@@ -1,5 +1,6 @@
 /* eslint-disable complexity */
 import { Vector3 } from 'three';
+
 import type { AnimationLoopValue } from '../../Renderer';
 import MovableUnitModule, {
   type MovableUnitModuleObservables,
@@ -90,10 +91,10 @@ export default class FigureUnitModule extends MovableUnitModule<
 
     // Frühzeitiger Abbruch bei keinen Inputs und niedriger Geschwindigkeit
     if (
-      !controls.up &&
-      !controls.down &&
-      !controls.left &&
-      !controls.right &&
+      !controls.moveForward &&
+      !controls.moveBackward &&
+      !controls.moveLeft &&
+      !controls.moveRight &&
       !controls.space &&
       this.state.velocity.lengthSq() < eps &&
       this.state.isGrounded
@@ -107,19 +108,19 @@ export default class FigureUnitModule extends MovableUnitModule<
     // 2. Beschleunigung
     let accelX = 0;
     let accelZ = 0;
-    if (controls.up) {
+    if (controls.moveForward) {
       accelX += forward.x * acceleration;
       accelZ += forward.z * acceleration;
     }
-    if (controls.down) {
+    if (controls.moveBackward) {
       accelX -= forward.x * acceleration * 0.5;
       accelZ -= forward.z * acceleration * 0.5;
     }
 
     // 3. Lenken (Drehen)
     let turn = 0;
-    if (controls.left) turn += turnSpeed;
-    if (controls.right) turn -= turnSpeed;
+    if (controls.moveLeft) turn += turnSpeed;
+    if (controls.moveRight) turn -= turnSpeed;
     if (turn !== 0) {
       const newYaw = unit.getYaw() + turn * delta;
       unit.setYaw(newYaw);
@@ -187,7 +188,7 @@ export default class FigureUnitModule extends MovableUnitModule<
     unit.setPosition(pos);
     unit.updateGroundAlignment();
 
-    if (controls.left || controls.right) {
+    if (controls.moveLeft || controls.moveRight) {
       if (!this.moveState.rotating) {
         this.observables.rotate$.next();
         this.moveState.rotating = true;
@@ -196,7 +197,7 @@ export default class FigureUnitModule extends MovableUnitModule<
       this.moveState.rotating = false;
     }
 
-    if (controls.up || controls.down) {
+    if (controls.moveForward || controls.moveBackward) {
       if (!this.moveState.moving) {
         this.observables.move$.next();
         this.moveState.moving = true;

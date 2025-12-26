@@ -1,11 +1,12 @@
 import type { UnitConstructorOptions, UnitOptions } from '../Unit';
 import FigureUnitModule from '../unitModule/movable/Figure';
+import PatrolUnitModule from '../unitModule/Patrol';
+import { COLLISION_TYPE } from '../unitModule/Collision';
+
 import MovableUnit, {
   type MovableUnitModuleList,
   type MovableUnitModules
 } from './Movable';
-import PatrolUnitModule from '../unitModule/Patrol';
-import { COLLISION_TYPE } from '../unitModule/Collision';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface FigureUnitOptions extends UnitOptions {}

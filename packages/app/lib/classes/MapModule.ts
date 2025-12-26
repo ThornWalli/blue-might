@@ -1,7 +1,8 @@
 import type { SubscriptionLike } from 'rxjs';
+import type { Object3D } from 'three';
+
 import type Map from './Map';
 import Module, { type ModuleObservables, type ModuleState } from './Module';
-import type { Object3D } from 'three';
 
 export interface MapModuleObservables extends ModuleObservables {
   [key: string]: SubscriptionLike | unknown;

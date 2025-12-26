@@ -1,5 +1,6 @@
 import type { SubscriptionLike } from 'rxjs';
 import { Subscription } from 'rxjs';
+
 import type { AnimationLoopValue } from './Renderer';
 
 export type ModuleObservables = {

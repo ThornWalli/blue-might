@@ -3,12 +3,11 @@ import { ReplaySubject, Subscription } from 'rxjs';
 import { Euler, Quaternion, Vector3, type Object3D } from 'three';
 import { Group } from 'three';
 
+import { OBJECT_USER_DATA, setMainObjectRecursive } from '../utils/object';
+import type { UnitIdentifier } from '../types/unit';
+
 import type UnitModule from './UnitModule';
 import type { UnitModuleOptions, UnitModuleState } from './UnitModule';
-
-import { OBJECT_USER_DATA, setMainObjectRecursive } from '../utils/object';
-
-import type { UnitIdentifier } from '../types/unit';
 import type Map from './Map';
 import type { AnimationLoopValue } from './Renderer';
 import { AnimationUnitModule } from './unitModule/Animation';
@@ -59,6 +58,7 @@ export interface ModuleDebug extends Record<any, boolean> {}
 export interface UnitConstructorOptions<
   Options extends UnitOptions = UnitOptions
 > {
+  debug?: boolean;
   preview?: boolean;
   id?: string;
   name: string;
@@ -100,13 +100,11 @@ export default class Unit<
   static KEY = 'unit';
   static NAME = 'Unit';
 
+  debug: boolean;
   preview: boolean;
-
   id: UnitIdentifier;
   name: string;
-
   observables: Observables = {} as Observables;
-
   modules: Modules = {} as Modules;
   moduleList: ModuleList;
   subscription = new Subscription();
@@ -134,6 +132,7 @@ export default class Unit<
 
   constructor(
     {
+      debug,
       preview,
       id,
       name,
@@ -156,6 +155,7 @@ export default class Unit<
     this.observables.visible$ = new ReplaySubject<boolean>(1);
     //#endregion
 
+    this.debug = debug ?? false;
     this.preview = preview ?? false;
 
     this.moduleDebug = { ...this.moduleDebug, ...moduleDebug };

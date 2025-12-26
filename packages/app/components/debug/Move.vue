@@ -17,17 +17,16 @@
 
 <script lang="ts" setup>
 import type { PositionMarker } from '@blue-might/app/lib/classes/appModule/Debug';
-import type App from '../../lib/classes/App';
 import { computed, markRaw, onMounted, ref } from 'vue';
 import { EMPTY, filter, merge, of, Subscription, switchMap } from 'rxjs';
-
-import BmButton from '../Button.vue';
-import BmDetails from '../Details.vue';
-
 import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
 import type Unit from '@blue-might/app/lib/classes/Unit';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
+
+import BmDetails from '../Details.vue';
+import BmButton from '../Button.vue';
+import type App from '../../lib/classes/App';
 
 const subscription = new Subscription();
 
