@@ -184,7 +184,7 @@ export default class PathfindingUnitModule extends UnitModule<
     } else if (movableModule instanceof HelicopterUnitModule) {
       if (!movableModule.hasMinPower()) {
         movableModule.setAutopilotControls({
-          space: true
+          ascend: true
         });
         return;
       }
@@ -215,8 +215,10 @@ export default class PathfindingUnitModule extends UnitModule<
       const heightDiff = target.y - pos.y;
       const heightDeadzone = 0.5;
       const heightReached = Math.abs(heightDiff) <= heightDeadzone;
-      const space = !heightReached && heightDiff > heightDeadzone;
-      const modifier = !heightReached && heightDiff < -heightDeadzone;
+      let ascend = !heightReached && heightDiff > heightDeadzone;
+      const descend = !heightReached && heightDiff < -heightDeadzone;
+
+      ascend = ascend && !descend;
 
       const shouldToggleGears = heightReached && movableModule.getGearsOpened();
 
@@ -250,8 +252,9 @@ export default class PathfindingUnitModule extends UnitModule<
       shiftThreshold = currentPath.length === 1 ? 0.2 : 0.8;
 
       movableModule.setAutopilotControls({
-        space: space,
-        modifier: modifier,
+        ascend,
+        descend,
+
         gear: shouldToggleGears,
 
         rotateLeft: turnLeft,
@@ -385,7 +388,7 @@ export default class PathfindingUnitModule extends UnitModule<
     const path = await airNavigator.findPath(unit.getPosition(), target, [
       unit.modules.collision.getCollisionObject()
     ]);
-    console.log(path);
+
     if (!path || path.length <= 1) return;
 
     path.shift();

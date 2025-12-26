@@ -33,8 +33,6 @@ export default class AirNavigator extends BaseNavigator {
     this.flightHeight = flightHeight;
     this.vehicleType = vehicleType;
     this.runways = runways;
-
-    this.setSphereRadius(2 / 4);
   }
 
   protected getHeightAt(x: number, z: number): number {

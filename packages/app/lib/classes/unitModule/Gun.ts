@@ -31,15 +31,16 @@ export interface GunUnitModuleObservables extends UnitModuleObservables {
   cooldown$: Subject<{ index: number }>;
 }
 
-export type AutoAimOptions = {
+export type AutoAimFnOptions = {
   target: Unit;
   sourcePosition: Vector3;
   weapon: Weapon;
   index: number;
 };
-export type AutoAimFunction = (options: AutoAimOptions) => boolean;
+export type AutoAimFn = (options: AutoAimFnOptions) => boolean;
+
 export interface GunUnitModuleOptions extends UnitModuleOptions {
-  autoAimFn: AutoAimFunction;
+  autoAimFn: AutoAimFn;
   weapons: Weapon[];
 }
 export interface GunUnitModuleState extends UnitModuleState {
@@ -47,8 +48,9 @@ export interface GunUnitModuleState extends UnitModuleState {
   lastShootTime: number[];
   sourcePositions: Vector3[];
   barrelTargets: Object3D[];
-  autoAimTarget?: Unit;
   autoAimActive: boolean;
+  autoAimTarget?: Unit;
+  autoAimAutoShoot: boolean;
 }
 
 export default class GunUnitModule<
@@ -72,6 +74,7 @@ export default class GunUnitModule<
         barrelTargets: state.barrelTargets ?? [],
         targetRotation: new Vector2(),
         autoAimActive: state.autoAimActive ?? false,
+        autoAimAutoShoot: state.autoAimAutoShoot ?? true,
         autoAimTarget: state.autoAimTarget ?? null
       },
       debug
@@ -159,6 +162,7 @@ export default class GunUnitModule<
       const target = this.state.autoAimTarget;
       if (target) {
         this.getWeapons().forEach((weapon, index) => {
+          this.updateSourcePosition(index);
           const sourcePosition = this.state.sourcePositions[index]!;
           const shoot = this.options.autoAimFn({
             target,
@@ -166,8 +170,7 @@ export default class GunUnitModule<
             weapon,
             index
           });
-          this.setActive(shoot);
-          this.updateSourcePosition(index);
+          this.setActive(this.state.autoAimAutoShoot && shoot);
         });
       } else {
         this.setActive(false);
@@ -193,5 +196,9 @@ export default class GunUnitModule<
     if (this.state.active === active) return;
     this.state.active = active;
     this.observables.active$.next(active);
+  }
+
+  isAutoAimActive() {
+    return this.state.autoAimActive;
   }
 }

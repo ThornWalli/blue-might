@@ -173,6 +173,7 @@ export default class MovableUnitModule<
     this._aiControls = controls
       ? { ...getDefaultControls(), ...controls }
       : undefined;
+
     if (controls) {
       // Automatisch starten, wenn AI aktiv
       this.turnOn();

@@ -13,7 +13,7 @@ import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
 import GunUnitModule, {
-  type AutoAimOptions
+  type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Gun';
 import { playSound } from '@blue-might/debug/utils';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
@@ -98,7 +98,7 @@ export default class StationaryGun_1 extends BuildingUnit<
         moduleOptions: {
           ...options.moduleOptions,
           gun: {
-            autoAimFn: (options: AutoAimOptions) => this.autoAimFn(options),
+            autoAimFn: (options: AutoAimFnOptions) => this.autoAimFn(options),
             weapons: options.moduleOptions?.gun?.weapons ?? [
               new weapons.default()
             ],
@@ -115,7 +115,7 @@ export default class StationaryGun_1 extends BuildingUnit<
     );
   }
 
-  autoAimFn(options: AutoAimOptions) {
+  autoAimFn(options: AutoAimFnOptions) {
     const { target, sourcePosition, index } = options;
     if (target && this.objects.head && this.objects.barrels[index]) {
       // Richtung von sourcePosition zum Target berechnen
@@ -275,7 +275,7 @@ export default class StationaryGun_1 extends BuildingUnit<
     if (controls.moveRight) {
       this.state.weaponVelocity.x -= 0.005;
     }
-    if (this.modules.gun.state.autoAimActive) return;
+    if (this.modules.gun.isAutoAimActive()) return;
     this.modules.gun.setActive(controls.space ?? false);
   }
 

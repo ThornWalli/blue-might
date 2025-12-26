@@ -1,6 +1,5 @@
 /* eslint-disable complexity */
 import {
-  Box3,
   Mesh,
   MeshLambertMaterial,
   Sphere,
@@ -51,7 +50,6 @@ export default class AttackUnitModule extends UnitModule<
 
   private sphere: Sphere;
   private debugSphere: Mesh | null = null;
-  private box: Box3 = new Box3();
 
   constructor(
     unit: Unit,

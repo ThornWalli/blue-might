@@ -81,6 +81,10 @@ export default class HelicopterUnitModule<
 
     return {
       ...getDefaultControls(),
+
+      ascend: ai.ascend ?? human.ascend,
+      descend: ai.descend ?? human.descend,
+
       gear: ai.gear ?? human.gear,
       landing: ai.landing ?? human.landing,
       rotateLeft: ai.rotateLeft ?? human.rotateLeft,
@@ -220,6 +224,7 @@ export default class HelicopterUnitModule<
     const unit = this.getUnit();
 
     const controls = this.getControls();
+    // console.log('YYYY', controls.ascend);
     const active = this.state.active;
 
     if (controls.gear) {

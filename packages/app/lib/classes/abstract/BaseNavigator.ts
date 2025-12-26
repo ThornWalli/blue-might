@@ -27,16 +27,13 @@ export default abstract class BaseNavigator {
   private gridSize: number;
   private grid!: Grid;
   private size: Vector2;
-  useSphere: boolean;
-  sphere = new Sphere(undefined, 1 / 2);
-  setSphereRadius(radius: number) {
-    this.sphere.radius = radius;
-  }
-  box = new Box3();
   private occupiedByObject = new globalThis.Map<
     Object3D,
     { x: number; z: number }[]
   >();
+  protected useSphere: boolean;
+  protected sphere = new Sphere(undefined, 1 / 2);
+  protected box = new Box3();
 
   constructor(
     map: Map,
@@ -239,7 +236,6 @@ export default abstract class BaseNavigator {
   ): Promise<Vector3[]> {
     let affectedNodes: GridNode[] | undefined;
 
-    debugger;
     if (excludeObjects?.length) {
       const tmpBox = new Box3();
       affectedNodes = excludeObjects

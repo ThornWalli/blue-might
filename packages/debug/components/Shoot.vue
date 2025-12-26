@@ -1,6 +1,13 @@
 <template>
   <div>
     <debug-app-component
+      :config="{
+        debug: {
+          map: {
+            pathfinding: false
+          }
+        }
+      }"
       :on-setup="onSetup"
       :player-unit="playerUnitId"
       :map="map" />
