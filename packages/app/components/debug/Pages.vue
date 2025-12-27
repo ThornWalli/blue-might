@@ -5,6 +5,7 @@
       <li><nuxt-link href="/debug/shoot">Shoot</nuxt-link></li>
       <li><nuxt-link href="/debug/patrol">Patrol</nuxt-link></li>
       <li><nuxt-link href="/debug/helicopter">Helicopter</nuxt-link></li>
+      <li><nuxt-link href="/debug/pathfinding">Pathfinding</nuxt-link></li>
     </ul>
   </bm-details>
 </template>

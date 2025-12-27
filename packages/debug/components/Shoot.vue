@@ -20,7 +20,7 @@ import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import type Weapon from '@blue-might/app/lib/classes/Weapon';
-import { CombatHelicopter_1, StationaryGun_1, Tank_1 } from '@blue-might/units';
+import { CombatHelicopter_1, Turret_1, Tank_1 } from '@blue-might/units';
 import { weapons } from '@blue-might/weapon';
 import { Subscription } from 'rxjs';
 import { Euler, Vector3 } from 'three';
@@ -51,8 +51,8 @@ const enemyFaction = new Faction({
 
 const unitWeapons: Weapon[] = [new weapons.default(), new weapons.default()];
 
-const unitA = new StationaryGun_1({
-  id: 'stationary-gun-1',
+const unitA = new Turret_1({
+  id: 'turret-1',
   position: new Vector3(0, 0, 0),
   moduleDebug: {
     attack: true
@@ -90,7 +90,7 @@ const unitA = new StationaryGun_1({
 //   }
 // });
 
-const playerUnitId = 'stationary-gun-1';
+const playerUnitId = 'turret-1';
 
 const map: Partial<MapDescription> = {
   factions: [blueFaction, enemyFaction],

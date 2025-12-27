@@ -8,6 +8,7 @@ import MovableUnitModule, {
   type MovableUnitModuleState
 } from '../Movable';
 import type FigureUnit from '../../unit/Figure'; // Annahme: Es gibt eine FigureUnit-Klasse
+import { ControlAction } from '../../playerModule/Controls';
 
 declare module '../../Unit' {
   interface ModuleStates {
@@ -91,11 +92,11 @@ export default class FigureUnitModule extends MovableUnitModule<
 
     // Frühzeitiger Abbruch bei keinen Inputs und niedriger Geschwindigkeit
     if (
-      !controls.moveForward &&
-      !controls.moveBackward &&
-      !controls.moveLeft &&
-      !controls.moveRight &&
-      !controls.space &&
+      !controls[ControlAction.MOVE_FORWARD] &&
+      !controls[ControlAction.MOVE_BACKWARD] &&
+      !controls[ControlAction.MOVE_LEFT] &&
+      !controls[ControlAction.MOVE_RIGHT] &&
+      !controls[ControlAction.SPACE] &&
       this.state.velocity.lengthSq() < eps &&
       this.state.isGrounded
     ) {
@@ -108,19 +109,19 @@ export default class FigureUnitModule extends MovableUnitModule<
     // 2. Beschleunigung
     let accelX = 0;
     let accelZ = 0;
-    if (controls.moveForward) {
+    if (controls[ControlAction.MOVE_FORWARD]) {
       accelX += forward.x * acceleration;
       accelZ += forward.z * acceleration;
     }
-    if (controls.moveBackward) {
+    if (controls[ControlAction.MOVE_BACKWARD]) {
       accelX -= forward.x * acceleration * 0.5;
       accelZ -= forward.z * acceleration * 0.5;
     }
 
     // 3. Lenken (Drehen)
     let turn = 0;
-    if (controls.moveLeft) turn += turnSpeed;
-    if (controls.moveRight) turn -= turnSpeed;
+    if (controls[ControlAction.MOVE_LEFT]) turn += turnSpeed;
+    if (controls[ControlAction.MOVE_RIGHT]) turn -= turnSpeed;
     if (turn !== 0) {
       const newYaw = unit.getYaw() + turn * delta;
       unit.setYaw(newYaw);
@@ -147,7 +148,7 @@ export default class FigureUnitModule extends MovableUnitModule<
 
     // 5. Springen
     if (
-      controls.space &&
+      controls[ControlAction.SPACE] &&
       this.state.isGrounded &&
       this.state.jumpCooldown <= 0
     ) {
@@ -188,7 +189,10 @@ export default class FigureUnitModule extends MovableUnitModule<
     unit.setPosition(pos);
     unit.updateGroundAlignment();
 
-    if (controls.moveLeft || controls.moveRight) {
+    if (
+      controls[ControlAction.MOVE_LEFT] ||
+      controls[ControlAction.MOVE_RIGHT]
+    ) {
       if (!this.moveState.rotating) {
         this.observables.rotate$.next();
         this.moveState.rotating = true;
@@ -197,7 +201,10 @@ export default class FigureUnitModule extends MovableUnitModule<
       this.moveState.rotating = false;
     }
 
-    if (controls.moveForward || controls.moveBackward) {
+    if (
+      controls[ControlAction.MOVE_FORWARD] ||
+      controls[ControlAction.MOVE_BACKWARD]
+    ) {
       if (!this.moveState.moving) {
         this.observables.move$.next();
         this.moveState.moving = true;

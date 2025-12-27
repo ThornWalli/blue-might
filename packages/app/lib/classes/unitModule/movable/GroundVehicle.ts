@@ -10,6 +10,7 @@ import type {
 import MovableUnitModule from '../Movable';
 import type MovableUnit from '../../unit/Movable';
 import {
+  ControlAction,
   getDefaultControls,
   type ControlState
 } from '../../playerModule/Controls';
@@ -90,16 +91,25 @@ export default class GroundVehicleUnitModule<
 
     return {
       ...getDefaultControls(),
-      moveForward: ai.moveForward ?? human.moveForward,
-      moveBackward: ai.moveBackward ?? human.moveBackward,
-      moveLeft: ai.moveLeft ?? human.moveLeft,
-      moveRight: ai.moveRight ?? human.moveRight,
-      space: ai.space ?? human.space,
-      gear: ai.gear ?? human.gear,
-      landing: ai.landing ?? human.landing,
-      modifier: ai.modifier ?? human.modifier,
-      rotateLeft: ai.rotateLeft ?? human.rotateLeft,
-      rotateRight: ai.rotateRight ?? human.rotateRight
+      [ControlAction.MOVE_FORWARD]:
+        ai[ControlAction.MOVE_FORWARD] ?? human[ControlAction.MOVE_FORWARD],
+      [ControlAction.MOVE_BACKWARD]:
+        ai[ControlAction.MOVE_BACKWARD] ?? human[ControlAction.MOVE_BACKWARD],
+      [ControlAction.MOVE_LEFT]:
+        ai[ControlAction.MOVE_LEFT] ?? human[ControlAction.MOVE_LEFT],
+      [ControlAction.MOVE_RIGHT]:
+        ai[ControlAction.MOVE_RIGHT] ?? human[ControlAction.MOVE_RIGHT],
+      [ControlAction.SPACE]:
+        ai[ControlAction.SPACE] ?? human[ControlAction.SPACE],
+      [ControlAction.GEAR]: ai[ControlAction.GEAR] ?? human[ControlAction.GEAR],
+      [ControlAction.LANDING]:
+        ai[ControlAction.LANDING] ?? human[ControlAction.LANDING],
+      [ControlAction.MODIFIER]:
+        ai[ControlAction.MODIFIER] ?? human[ControlAction.MODIFIER],
+      [ControlAction.ROTATE_LEFT]:
+        ai[ControlAction.ROTATE_LEFT] ?? human[ControlAction.ROTATE_LEFT],
+      [ControlAction.ROTATE_RIGHT]:
+        ai[ControlAction.ROTATE_RIGHT] ?? human[ControlAction.ROTATE_RIGHT]
     };
   }
   moveUpdate({ delta }: { delta: number }) {
@@ -117,11 +127,11 @@ export default class GroundVehicleUnitModule<
     const eps = 1e-4;
     if (
       !aiActive && // Early-Return nur ohne Autopilot
-      !controls.moveForward &&
-      !controls.moveBackward &&
-      !controls.moveLeft &&
-      !controls.moveRight &&
-      !controls.space &&
+      !controls[ControlAction.MOVE_FORWARD] &&
+      !controls[ControlAction.MOVE_BACKWARD] &&
+      !controls[ControlAction.MOVE_LEFT] &&
+      !controls[ControlAction.MOVE_RIGHT] &&
+      !controls[ControlAction.SPACE] &&
       this.state.velocity.lengthSq() < eps
     ) {
       return;
@@ -129,14 +139,15 @@ export default class GroundVehicleUnitModule<
 
     // NEU: Beschleunigung glätten (Target-Wert berechnen und interpolieren)
     let targetAccel = 0;
-    if (controls.moveForward) targetAccel += acceleration;
-    if (controls.moveBackward) targetAccel -= acceleration * 0.5;
+    if (controls[ControlAction.MOVE_FORWARD]) targetAccel += acceleration;
+    if (controls[ControlAction.MOVE_BACKWARD])
+      targetAccel -= acceleration * 0.5;
 
     // Autopilot: minimaler Vortrieb
     if (
       aiActive &&
       targetAccel === 0 &&
-      (controls.moveLeft || controls.moveRight)
+      (controls[ControlAction.MOVE_LEFT] || controls[ControlAction.MOVE_RIGHT])
     ) {
       targetAccel = acceleration * 0.4;
     }

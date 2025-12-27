@@ -8,7 +8,7 @@ import {
   Tank_1,
   Tree_1,
   Soldat_1,
-  StationaryGun_1
+  Turret_1
 } from '@blue-might/units';
 import Faction from '@blue-might/app/lib/classes/Faction';
 import { weapons } from '@blue-might/weapon';
@@ -172,7 +172,7 @@ const desc: MapDescription = {
         }
       }
     }),
-    new StationaryGun_1({
+    new Turret_1({
       position: new Vector3(45.17, 1, -25.83),
       moduleStates: {
         faction: {

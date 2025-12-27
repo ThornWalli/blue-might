@@ -15,14 +15,14 @@ import { weapons } from '@blue-might/weapon';
 import GunUnitModule, {
   type GunUnitModuleOptions
 } from '@blue-might/app/lib/classes/unitModule/Gun';
-import { playSound } from '@blue-might/debug/utils';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import { getSfx } from '@blue-might/weapon/projectile';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import type { ControlState } from '@blue-might/app/lib/classes/playerModule/Controls';
+import { playSound } from '@blue-might/weapon/utils';
 
-import { createBarrelTargetShoot } from '../stationary_gun_1/utils';
+import { createBarrelTargetShoot } from '../turret_1/utils';
 
 import baseGlb from './assets/stationary_gun_2.glb?url';
 

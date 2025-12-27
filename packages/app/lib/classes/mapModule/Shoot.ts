@@ -145,7 +145,6 @@ export default class ShootModule extends MapModule<State, Observables> {
       startPosition: position.clone()
     });
   }
-
   override update(_v: AnimationLoopValue): void {
     const raycaster = this.raycaster;
     this.shoots = this.shoots.filter(shoot => {

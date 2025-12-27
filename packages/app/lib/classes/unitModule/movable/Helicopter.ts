@@ -10,7 +10,7 @@ import MovableUnitModule, {
   type MovableUnitModuleState
 } from '../Movable';
 import type HelicopterUnit from '../../unit/vehicle/Helicopter';
-import { getDefaultControls } from '../../playerModule/Controls';
+import { ControlAction, getDefaultControls } from '../../playerModule/Controls';
 
 declare module '../../Unit' {
   interface ModuleStates {
@@ -82,18 +82,18 @@ export default class HelicopterUnitModule<
     return {
       ...getDefaultControls(),
 
-      ascend: ai.ascend ?? human.ascend,
-      descend: ai.descend ?? human.descend,
+      [ControlAction.ASCEND]: ai.ascend ?? human.ascend,
+      [ControlAction.DESCEND]: ai.descend ?? human.descend,
 
-      gear: ai.gear ?? human.gear,
-      landing: ai.landing ?? human.landing,
-      rotateLeft: ai.rotateLeft ?? human.rotateLeft,
-      rotateRight: ai.rotateRight ?? human.rotateRight,
+      [ControlAction.GEAR]: ai.gear ?? human.gear,
+      [ControlAction.LANDING]: ai.landing ?? human.landing,
+      [ControlAction.ROTATE_LEFT]: ai.rotateLeft ?? human.rotateLeft,
+      [ControlAction.ROTATE_RIGHT]: ai.rotateRight ?? human.rotateRight,
 
-      pitchUp: ai.pitchUp ?? human.pitchUp,
-      pitchDown: ai.pitchDown ?? human.pitchDown,
-      rollLeft: ai.rollLeft ?? human.rollLeft,
-      rollRight: ai.rollRight ?? human.rollRight
+      [ControlAction.PITCH_UP]: ai.pitchUp ?? human.pitchUp,
+      [ControlAction.PITCH_DOWN]: ai.pitchDown ?? human.pitchDown,
+      [ControlAction.ROLL_LEFT]: ai.rollLeft ?? human.rollLeft,
+      [ControlAction.ROLL_RIGHT]: ai.rollRight ?? human.rollRight
     };
   }
 

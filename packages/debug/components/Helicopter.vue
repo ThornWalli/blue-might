@@ -13,7 +13,7 @@ import type App from '@blue-might/app/lib/classes/App';
 import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import { CombatHelicopter_1, LandingPort_1 } from '@blue-might/units';
+import { CombatHelicopter_1, LandingPort_1, Tank_1 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
@@ -31,20 +31,28 @@ const playerUnitId = 'combat-helicopter-1';
 const blueFaction = new Faction({
   id: 'blue-faction',
   name: 'Blue Faction',
-  colors: [0x0055aa]
+  colors: [0x0055aa, 0xcccccc]
 });
+const enemyFaction = new Faction({
+  id: 'enemy-faction',
+  name: 'Enemy Faction',
+  colors: [0x205010, 0xa0b0a0]
+});
+
 const map: Partial<MapDescription> = {
-  factions: [blueFaction],
+  factions: [blueFaction, enemyFaction],
   units: [
     new LandingPort_1({
       position: new Vector3(0, 0, 0)
     }),
     new CombatHelicopter_1({
+      debug: false,
       id: 'combat-helicopter-1',
       position: new Vector3(0, 0, 0),
       moduleDebug: {
-        pathfinding: true,
-        patrol: true
+        attack: false,
+        pathfinding: false,
+        patrol: false
       },
       moduleOptions: {
         patrol: {
@@ -60,6 +68,10 @@ const map: Partial<MapDescription> = {
         }
       },
       moduleStates: {
+        gun: {
+          autoAimActive: true,
+          autoAimAutoShoot: false
+        },
         faction: {
           faction: blueFaction
         },
@@ -68,6 +80,17 @@ const map: Partial<MapDescription> = {
         },
         movable: {
           active: true
+        }
+      }
+    }),
+
+    new Tank_1({
+      id: 'tank-1',
+      position: new Vector3(1, 0, 2),
+      rotation: undefined,
+      moduleStates: {
+        faction: {
+          faction: enemyFaction
         }
       }
     })

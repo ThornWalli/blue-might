@@ -1,5 +1,4 @@
 import { Mesh, MeshLambertMaterial, PlaneGeometry } from 'three';
-import soundShoot1 from '@blue-might/app/assets/meshes/shoot_1.wav?url';
 
 export function createGround(options?: { color?: number }) {
   const ground = new Mesh(
@@ -16,9 +15,6 @@ export function createGround(options?: { color?: number }) {
   ground.position.y = 0;
   return ground;
 }
-const sounds = {
-  soundShoot1
-};
 
 const _audios: { [key: string]: HTMLAudioElement } = {};
 function createSound(src: string) {
@@ -28,11 +24,11 @@ function createSound(src: string) {
   return audio;
 }
 
-export function playSound(name: keyof typeof sounds, volume = 0.5) {
-  if (!_audios[name]) {
-    _audios[name] = createSound(sounds[name]);
+export function playSound(url: string, volume = 0.5) {
+  if (!_audios[url]) {
+    _audios[url] = createSound(url);
   }
-  const sound = _audios[name].cloneNode() as HTMLAudioElement;
+  const sound = _audios[url].cloneNode() as HTMLAudioElement;
   sound.volume = volume;
   sound.play();
 }

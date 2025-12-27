@@ -1,6 +1,6 @@
 import type { Object3D } from 'three';
 import { Vector2, Vector3 } from 'three';
-import { Subject } from 'rxjs';
+import { ReplaySubject, Subject } from 'rxjs';
 
 import type Unit from '../Unit';
 import UnitModule, {
@@ -29,6 +29,8 @@ export interface GunUnitModuleObservables extends UnitModuleObservables {
   active$: Subject<boolean>;
   shoot$: Subject<{ index: number }>;
   cooldown$: Subject<{ index: number }>;
+  autoAimActive$: ReplaySubject<boolean>;
+  autoAimTarget$: ReplaySubject<Unit | null>;
 }
 
 export type AutoAimFnOptions = {
@@ -49,7 +51,8 @@ export interface GunUnitModuleState extends UnitModuleState {
   sourcePositions: Vector3[];
   barrelTargets: Object3D[];
   autoAimActive: boolean;
-  autoAimTarget?: Unit;
+  autoAimTarget: Unit | null;
+  autoAimFollowTarget: boolean;
   autoAimAutoShoot: boolean;
 }
 
@@ -74,6 +77,7 @@ export default class GunUnitModule<
         barrelTargets: state.barrelTargets ?? [],
         targetRotation: new Vector2(),
         autoAimActive: state.autoAimActive ?? false,
+        autoAimFollowTarget: state.autoAimFollowTarget ?? false,
         autoAimAutoShoot: state.autoAimAutoShoot ?? true,
         autoAimTarget: state.autoAimTarget ?? null
       },
@@ -84,6 +88,8 @@ export default class GunUnitModule<
     this.observables.active$ = new Subject<boolean>();
     this.observables.shoot$ = new Subject<{ index: number }>();
     this.observables.cooldown$ = new Subject<{ index: number }>();
+    this.observables.autoAimActive$ = new ReplaySubject<boolean>();
+    this.observables.autoAimTarget$ = new ReplaySubject<Unit | null>();
     //#endregion
   }
   override async setup() {
@@ -92,7 +98,7 @@ export default class GunUnitModule<
     if (attackModule) {
       this.subscription.add(
         attackModule.observables.target$.subscribe(target => {
-          this.state.autoAimTarget = target;
+          this.setAutoAimTarget(target ?? null);
         })
       );
     }
@@ -170,7 +176,9 @@ export default class GunUnitModule<
             weapon,
             index
           });
-          this.setActive(this.state.autoAimAutoShoot && shoot);
+          if (this.state.autoAimAutoShoot) {
+            this.setActive(shoot);
+          }
         });
       } else {
         this.setActive(false);
@@ -200,5 +208,23 @@ export default class GunUnitModule<
 
   isAutoAimActive() {
     return this.state.autoAimActive;
+  }
+
+  isAutoAimFollowTarget() {
+    return this.state.autoAimFollowTarget;
+  }
+
+  isAutoAimAutoShoot() {
+    return this.state.autoAimAutoShoot;
+  }
+
+  getAutoAimTarget() {
+    return this.state.autoAimTarget;
+  }
+
+  setAutoAimTarget(target: Unit | null) {
+    if (this.state.autoAimTarget === target) return;
+    this.state.autoAimTarget = target;
+    this.observables.autoAimTarget$.next(target);
   }
 }

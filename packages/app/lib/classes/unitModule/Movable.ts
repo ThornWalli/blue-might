@@ -10,6 +10,7 @@ import UnitModule, {
 import type { AnimationLoopValue } from '../Renderer';
 import type MovableUnit from '../unit/Movable';
 import {
+  ControlAction,
   getDefaultControls,
   type ControlState
 } from '../playerModule/Controls';
@@ -202,22 +203,35 @@ export default class MovableUnitModule<
 
     // AI-Controls nur anwenden, wenn genug Power da ist
     return {
-      moveForward: ai?.moveForward ?? human?.moveForward ?? false,
-      moveBackward: ai?.moveBackward ?? human?.moveBackward ?? false,
-      moveLeft: ai?.moveLeft ?? human?.moveLeft ?? false,
-      moveRight: ai?.moveRight ?? human?.moveRight ?? false,
-      space: ai?.space ?? human?.space ?? false,
-      gear: ai?.gear ?? human?.gear ?? false,
-      landing: ai?.landing ?? human?.landing ?? false,
-      modifier: ai?.modifier ?? human?.modifier ?? false,
-      rotateLeft: ai?.rotateLeft ?? human?.rotateLeft ?? false,
-      rotateRight: ai?.rotateRight ?? human?.rotateRight ?? false,
-      ascend: ai?.ascend ?? human?.ascend ?? false,
-      descend: ai?.descend ?? human?.descend ?? false,
-      pitchDown: ai?.pitchDown ?? human?.pitchDown ?? false,
-      pitchUp: ai?.pitchUp ?? human?.pitchUp ?? false,
-      rollLeft: ai?.rollLeft ?? human?.rollLeft ?? false,
-      rollRight: ai?.rollRight ?? human?.rollRight ?? false
+      [ControlAction.FIRE_PRIMARY]:
+        ai?.firePrimary ?? human?.firePrimary ?? false,
+      [ControlAction.FIRE_SECONDARY]:
+        ai?.fireSecondary ?? human?.fireSecondary ?? false,
+      [ControlAction.MOVE_FORWARD]:
+        ai?.moveForward ?? human?.moveForward ?? false,
+      [ControlAction.MOVE_BACKWARD]:
+        ai?.moveBackward ?? human?.moveBackward ?? false,
+      [ControlAction.MOVE_LEFT]: ai?.moveLeft ?? human?.moveLeft ?? false,
+      [ControlAction.MOVE_RIGHT]: ai?.moveRight ?? human?.moveRight ?? false,
+
+      [ControlAction.UP]: ai?.up ?? human?.up ?? false,
+      [ControlAction.DOWN]: ai?.down ?? human?.down ?? false,
+      [ControlAction.LEFT]: ai?.left ?? human?.left ?? false,
+      [ControlAction.RIGHT]: ai?.right ?? human?.right ?? false,
+
+      [ControlAction.SPACE]: ai?.space ?? human?.space ?? false,
+      [ControlAction.GEAR]: ai?.gear ?? human?.gear ?? false,
+      [ControlAction.LANDING]: ai?.landing ?? human?.landing ?? false,
+      [ControlAction.MODIFIER]: ai?.modifier ?? human?.modifier ?? false,
+      [ControlAction.ROTATE_LEFT]: ai?.rotateLeft ?? human?.rotateLeft ?? false,
+      [ControlAction.ROTATE_RIGHT]:
+        ai?.rotateRight ?? human?.rotateRight ?? false,
+      [ControlAction.ASCEND]: ai?.ascend ?? human?.ascend ?? false,
+      [ControlAction.DESCEND]: ai?.descend ?? human?.descend ?? false,
+      [ControlAction.PITCH_DOWN]: ai?.pitchDown ?? human?.pitchDown ?? false,
+      [ControlAction.PITCH_UP]: ai?.pitchUp ?? human?.pitchUp ?? false,
+      [ControlAction.ROLL_LEFT]: ai?.rollLeft ?? human?.rollLeft ?? false,
+      [ControlAction.ROLL_RIGHT]: ai?.rollRight ?? human?.rollRight ?? false
     };
   }
 
