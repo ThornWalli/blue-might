@@ -152,7 +152,7 @@ export default class DamageUnitModule extends UnitModule<
       }
     } else if (this.isDestroyed()) {
       if (Math.random() < 0.05) {
-        this.spawnSmoke(SMOKE_TYPE.LIGHT);
+        this.spawnSmoke(SMOKE_TYPE.HEAVY);
       }
     }
 

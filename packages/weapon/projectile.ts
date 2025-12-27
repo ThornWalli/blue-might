@@ -16,7 +16,7 @@ export class Default extends Projectile {
   constructor() {
     super({
       id: PROJECTILE_TYPE.DEFAULT,
-      speed: 0.5,
+      speed: 10,
       strength: 0.1
     });
   }

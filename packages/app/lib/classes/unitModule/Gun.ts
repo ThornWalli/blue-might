@@ -1,4 +1,4 @@
-import type { Object3D } from 'three';
+import type { Line, Object3D } from 'three';
 import { Vector2, Vector3 } from 'three';
 import { ReplaySubject, Subject } from 'rxjs';
 
@@ -10,6 +10,7 @@ import UnitModule, {
 } from '../UnitModule';
 import type { AnimationLoopValue } from '../Renderer';
 import type Weapon from '../Weapon';
+import { disposeObject3D } from '../../utils/object';
 
 import AttackUnitModule from './Attack';
 
@@ -49,12 +50,15 @@ export interface GunUnitModuleState extends UnitModuleState {
   active: boolean;
   lastShootTime: number[];
   sourcePositions: Vector3[];
+  sourceDirections: Vector3[];
   barrelTargets: Object3D[];
   autoAimActive: boolean;
   autoAimTarget: Unit | null;
   autoAimFollowTarget: boolean;
   autoAimAutoShoot: boolean;
 }
+
+const DEFAULT_DIRECTION: [number, number, number] = [0, 0, 1];
 
 export default class GunUnitModule<
   Options extends GunUnitModuleOptions = GunUnitModuleOptions,
@@ -74,6 +78,7 @@ export default class GunUnitModule<
         active: state.active ?? false,
         lastShootTime: state.lastShootTime ?? [],
         sourcePositions: state.sourcePositions ?? [],
+        sourceDirections: state.sourceDirections ?? [],
         barrelTargets: state.barrelTargets ?? [],
         targetRotation: new Vector2(),
         autoAimActive: state.autoAimActive ?? false,
@@ -104,6 +109,18 @@ export default class GunUnitModule<
     }
   }
 
+  override destroy(): void {
+    const map = this.getUnit().getMap();
+    const app = map?.app;
+
+    Object.values(this.debugWeaponLines).forEach(line => {
+      if (line) {
+        app?.renderer.scene.remove(line);
+        disposeObject3D(line);
+      }
+    });
+  }
+
   public shoot(position: Vector3, direction: Vector3, weapon: Weapon) {
     const shootModule = this.getUnit().getMap()?.modules.shoot;
     if (!shootModule) return;
@@ -118,13 +135,15 @@ export default class GunUnitModule<
   override update(_v: AnimationLoopValue) {
     this.updateShoot(_v);
     this.updateAutoAIM();
+    if (this.debug) {
+      this.updateDebug();
+    }
   }
 
   private updateShoot({ time }: { time: number }) {
     const weapons = this.getWeapons();
 
     weapons.forEach((weapon, index) => {
-      const barrelTarget = this.getBarrelTargetbyIndex(index);
       if (!weapon) return;
 
       const currentTime = time / 1000;
@@ -137,12 +156,11 @@ export default class GunUnitModule<
         ) {
           this.updateSourcePosition(index);
 
-          const direction = new Vector3(0, 0, 1);
-          if (barrelTarget) {
-            barrelTarget.getWorldDirection(direction);
-          }
-
-          this.shoot(this.state.sourcePositions[index]!, direction, weapon);
+          this.shoot(
+            this.state.sourcePositions[index]!,
+            this.state.sourceDirections[index]!,
+            weapon
+          );
 
           this.observables.shoot$.next({ index });
           this.state.lastShootTime[index] = currentTime;
@@ -155,11 +173,14 @@ export default class GunUnitModule<
 
   public updateSourcePosition(index: number) {
     const sourcePosition = this.state.sourcePositions[index]!;
+    const sourceDirection = this.state.sourceDirections[index]!;
     const object = this.getBarrelTargetbyIndex(index);
     if (object) {
       object.getWorldPosition(sourcePosition);
+      object.getWorldDirection(sourceDirection);
     } else {
       sourcePosition.set(0, 0.5, 0);
+      sourceDirection.set(...DEFAULT_DIRECTION);
     }
   }
 
@@ -189,6 +210,7 @@ export default class GunUnitModule<
   registerBarrelTarget(object: Object3D) {
     this.state.barrelTargets.push(object);
     this.state.sourcePositions.push(new Vector3());
+    this.state.sourceDirections.push(new Vector3(...DEFAULT_DIRECTION));
   }
   private getBarrelTargetbyIndex(index: number) {
     return this.state.barrelTargets.at(index) ?? null;
@@ -227,4 +249,31 @@ export default class GunUnitModule<
     this.state.autoAimTarget = target;
     this.observables.autoAimTarget$.next(target);
   }
+
+  //#region debug
+
+  debugWeaponLines: Record<number, Line | null> = {};
+
+  updateDebug() {
+    const shootModule = this.getUnit().getMap()?.modules.shoot;
+    this.getWeapons().forEach((weapon, index) => {
+      if (this.debugWeaponLines[index]) {
+        shootModule?.removeFromScene(this.debugWeaponLines[index]);
+        disposeObject3D(this.debugWeaponLines[index]);
+        this.debugWeaponLines[index] = null;
+      }
+
+      const line = shootModule?.createDebugVisualizePath(
+        this.state.sourcePositions[index]!,
+        this.state.sourceDirections[index]!,
+        weapon.projectile
+      );
+      if (line) {
+        this.debugWeaponLines[index] = line;
+        shootModule?.addToScene(line);
+      }
+    });
+  }
+
+  //#endregion
 }

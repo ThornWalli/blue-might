@@ -44,6 +44,12 @@ export default class ControlTower_1<
 
     this.setMaterialReady();
     this.modules.animation.playAction('radar');
+
+    this.subscription.add(
+      this.modules.damage.observables.destroyed$.subscribe(() => {
+        this.modules.animation.stopAction('radar');
+      })
+    );
   }
 
   override async createMesh(_context: SetupContext) {

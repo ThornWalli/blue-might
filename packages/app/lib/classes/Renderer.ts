@@ -252,7 +252,7 @@ export default class Renderer<
     renderer.toneMapping = NeutralToneMapping;
     renderer.toneMappingExposure = 1.0;
     if (options.pixelated) {
-      renderer.setPixelRatio(480 / window.innerWidth);
+      renderer.setPixelRatio(640 / window.innerWidth);
     }
     renderer.setSize(dimension.x, dimension.y);
     //#endregion
