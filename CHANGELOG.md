@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.4](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.3...v1.0.0-beta.4) (2025-12-27)
+
+
+### Bug Fixes
+
+* **update:** update control mappings for turret movement ([f50ba42](https://github.com/ThornWalli/blue-might/commit/f50ba42cfbd62770e1e4c179c877cb829bcb398d))
+
 # [1.0.0-beta.3](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.2...v1.0.0-beta.3) (2025-12-27)
 
 
