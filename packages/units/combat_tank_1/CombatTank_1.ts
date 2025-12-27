@@ -3,32 +3,31 @@ import type {
   SetupContext,
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
+import TankUnit, {
+  type TankUnitModuleList,
+  type TankUnitModules,
+  type TankUnitOptions
+} from '@blue-might/app/lib/classes/unit/vehicle/Tank';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { Vector2, Vector3, Mesh, SkinnedMesh, Object3D } from 'three';
-import BuildingUnit, {
-  type BuildingUnitModuleList,
-  type BuildingUnitModules,
-  type BuildingUnitOptions
-} from '@blue-might/app/lib/classes/unit/Building';
-import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
-import { weapons } from '@blue-might/weapon';
-import GunUnitModule, {
-  type AutoAimFnOptions
-} from '@blue-might/app/lib/classes/unitModule/Gun';
-import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
+import { Object3D, Vector2, Mesh, SkinnedMesh, Vector3 } from 'three';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
+import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
+import GunUnitModule from '@blue-might/app/lib/classes/unitModule/Gun';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
+import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/Gun';
+import { weapons } from '@blue-might/weapon';
 import { lerp } from 'three/src/math/MathUtils.js';
+import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import {
   ControlAction,
   type ControlState
 } from '@blue-might/app/lib/classes/playerModule/Controls';
-import { playSound } from '@blue-might/weapon/utils';
 import { getSfx } from '@blue-might/weapon/projectile';
+import { playSound } from '@blue-might/weapon/utils';
 
-import { createBarrelTargetShoot } from './utils';
-import baseGlb from './assets/turret_1.glb?url';
+import { createBarrelTargetShoot } from '../turret_1/utils';
+
+import baseGlb from './assets/combat_tank_1.glb?url';
 
 interface State {
   weaponActive: boolean;
@@ -36,33 +35,25 @@ interface State {
   weaponTargetRotation: Vector2;
 }
 
-export interface TurretOptions extends BuildingUnitOptions {
+export interface CombatTankOptions extends TankUnitOptions {
   minAngle: Vector2;
   maxAngle: Vector2;
   rotationSpeed: number;
 }
-
-export interface TurretModules extends BuildingUnitModules {
+export interface CombatTankModules extends TankUnitModules {
   attack: AttackUnitModule;
   gun: GunUnitModule;
   player: PlayerUnitModule;
-  movable: MovableUnitModule;
 }
+export type CombatTankModuleList = TankUnitModuleList &
+  [typeof AttackUnitModule | typeof GunUnitModule | typeof PlayerUnitModule];
 
-export type TurretModuleList = BuildingUnitModuleList &
-  [
-    | typeof AttackUnitModule
-    | typeof GunUnitModule
-    | typeof PlayerUnitModule
-    | typeof MovableUnitModule
-  ];
-
-export default class Turret_1 extends BuildingUnit<
-  TurretOptions,
-  TurretModules,
-  TurretModuleList
-> {
-  static override KEY = 'turret_1';
+export default class CombatTank_1<
+  Options extends CombatTankOptions = CombatTankOptions,
+  Modules extends CombatTankModules = CombatTankModules,
+  ModuleList extends CombatTankModuleList = CombatTankModuleList
+> extends TankUnit<CombatTankOptions, Modules, ModuleList> {
+  static override KEY = 'combat_tank_1';
 
   state: State = {
     weaponActive: false,
@@ -82,19 +73,14 @@ export default class Turret_1 extends BuildingUnit<
   };
 
   constructor(
-    options: Omit<UnitConstructorOptions<TurretOptions>, 'name'> = {},
+    options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []
   ) {
-    moduleList.push(
-      AttackUnitModule,
-      GunUnitModule,
-      PlayerUnitModule,
-      MovableUnitModule
-    );
+    moduleList.push(AttackUnitModule, GunUnitModule, PlayerUnitModule);
     super(
       {
         ...options,
-        name: 'Turret 1',
+        name: 'Combat Tank 1',
         options: {
           ...options.options,
           minAngle: options.options?.minAngle ?? new Vector2(-0.6, -Math.PI),
@@ -112,12 +98,11 @@ export default class Turret_1 extends BuildingUnit<
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targetName: 'head',
-            targetChildIndex: 1
+            targetName: 'base'
           }
         }
       },
-      moduleList
+      moduleList as ModuleList
     );
   }
 
@@ -154,9 +139,7 @@ export default class Turret_1 extends BuildingUnit<
   }
 
   override async createMesh(_context: SetupContext) {
-    const { object, animations } = await loadGltf(baseGlb);
-
-    this.modules.animation.setAnimations(animations);
+    const { object } = await loadGltf(baseGlb);
 
     //#region barrel
 
@@ -290,13 +273,6 @@ export default class Turret_1 extends BuildingUnit<
         console.log('Ballistik nicht möglich, verwende direkte Berechnung');
         const targetYaw = Math.atan2(delta.x, delta.z);
         const targetPitch = -Math.atan2(delta.y, horizontalDistance);
-        // const isYawInRange =
-        //   !this.options.minMaxHeadAngle ||
-        //   (targetYaw >= this.options.minMaxHeadAngle[0] &&
-        //     targetYaw <= this.options.minMaxHeadAngle[1]);
-        // const isPitchInRange =
-        //   targetPitch >= this.options.minMaxBarrelAngle[0] &&
-        //   targetPitch <= this.options.minMaxBarrelAngle[1];
         const isYawInRange =
           !this.options.minAngle ||
           (targetYaw >= this.options.minAngle.y &&
@@ -334,13 +310,6 @@ export default class Turret_1 extends BuildingUnit<
       );
 
       // Prüfe Winkel-Bereiche
-      // const isYawInRange =
-      //   !this.options.minMaxHeadAngle ||
-      //   (targetYaw >= this.options.minMaxHeadAngle[0] &&
-      //     targetYaw <= this.options.minMaxHeadAngle[1]);
-      // const isPitchInRange =
-      //   elevation >= this.options.minMaxBarrelAngle[0] &&
-      //   elevation <= this.options.minMaxBarrelAngle[1];
       const isYawInRange =
         !this.options.minAngle ||
         (targetYaw >= this.options.minAngle.y &&

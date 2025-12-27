@@ -8,7 +8,8 @@ import {
   Tank_1,
   Tree_1,
   Soldat_1,
-  Turret_1
+  Turret_1,
+  CombatTank_1
 } from '@blue-might/units';
 import Faction from '@blue-might/app/lib/classes/Faction';
 import { weapons } from '@blue-might/weapon';
@@ -72,6 +73,15 @@ const desc: MapDescription = {
         }
       }
     }),
+    new Barrack_1({
+      position: new Vector3(42.83, 0, -31),
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
+      }
+    }),
+
     new CombatHelicopter_1({
       id: 'combat-helicopter-1',
       position: new Vector3(43.5, 0, -26.5), // 34+9.5, -32+5.5
@@ -81,8 +91,8 @@ const desc: MapDescription = {
         }
       }
     }),
-    new Tank_1({
-      id: 'tank-1',
+    new CombatTank_1({
+      id: 'combat-tank-1',
       position: new Vector3(38.83, 0, -30.17),
       moduleStates: {
         faction: {

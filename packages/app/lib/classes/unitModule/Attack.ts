@@ -80,7 +80,13 @@ export default class AttackUnitModule extends UnitModule<
     }
   }
 
-  override update(_v: AnimationLoopValue): void {
+  lastUpdateTime = 0;
+  override update({ time }: AnimationLoopValue): void {
+    if ((time - this.lastUpdateTime) / 1000 < 2 / 3) {
+      return;
+    }
+    this.lastUpdateTime = time;
+
     // Wenn bereits ein Ziel vorhanden und die Option "changeByDistance" deaktiviert ist wird nicht automatisch ein neues Ziel gesucht.
     if (!this.options.changeByDistance && this.state.target) {
       return;
