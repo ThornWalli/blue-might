@@ -224,7 +224,7 @@ export default class HelicopterUnitModule<
     const unit = this.getUnit();
 
     const controls = this.getControls();
-    // console.log('YYYY', controls.ascend);
+
     const active = this.state.active;
 
     if (controls.gear) {
@@ -342,7 +342,7 @@ export default class HelicopterUnitModule<
       const strafeInput = canRollPitch
         ? (controls.rollLeft ? 1 : 0) - (controls.rollRight ? 1 : 0)
         : 0;
-      console.log(`Strafe Input: ${strafeInput}`);
+
       const strafeControlAccel = strafeAccel * 0.75;
       if (strafeInput !== 0) {
         velocity.addScaledVector(
@@ -484,13 +484,7 @@ export default class HelicopterUnitModule<
     // if (!this.state.isAirborne && this.state.status !== FLIGHT_STATUS.LANDED) {
     //   this.state.status = FLIGHT_STATUS.LANDED;
     // }
-    // console.log(velocity);
-    // if (velocity.length() <= 0 && (time - this.lastUpdateTime) / 1000 < 2 / 3) {
-    //   return;
-    // }
-    // this.lastUpdateTime = time;
 
-    // console.log(status);
     // Integrate position
     const dx = velocity.x * delta;
     const dy = velocity.y * delta;
