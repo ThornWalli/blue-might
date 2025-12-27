@@ -328,16 +328,16 @@ export default class Turret_1 extends BuildingUnit<
 
   updateControls() {
     const controls = this.getControls();
-    if (controls[ControlAction.MOVE_FORWARD]) {
+    if (controls[ControlAction.UP]) {
       this.state.weaponVelocity.y -= 0.005;
     }
-    if (controls[ControlAction.MOVE_BACKWARD]) {
+    if (controls[ControlAction.DOWN]) {
       this.state.weaponVelocity.y += 0.005;
     }
-    if (controls[ControlAction.MOVE_LEFT]) {
+    if (controls[ControlAction.LEFT]) {
       this.state.weaponVelocity.x += 0.005;
     }
-    if (controls[ControlAction.MOVE_RIGHT]) {
+    if (controls[ControlAction.RIGHT]) {
       this.state.weaponVelocity.x -= 0.005;
     }
     if (this.modules.gun.isAutoAimActive()) return;
