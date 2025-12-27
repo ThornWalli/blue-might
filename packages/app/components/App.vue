@@ -7,9 +7,9 @@
         ? `url(${currentCursor?.src}) 0 0, auto`
         : currentCursor?.type
     }">
-    <bm-renderer ref="rendererEl" debug :options="rendererOptions" />
+    <bm-renderer ref="rendererEl" debug :options="config.rendererOptions" />
     <transition name="fade-short">
-      <component :is="currentComponent" v-if="ready && hasPlayer" :app="app!" />
+      <component :is="currentComponent" v-if="ready" :app="app!" />
     </transition>
   </div>
 </template>
@@ -24,24 +24,22 @@ import {
   markRaw,
   computed
 } from 'vue';
-import App, { type AppConfig } from '../lib/classes/App';
-import BmRenderer from './Renderer.vue';
-
-import setupFonts from './../utils/fonts';
-import type { RendererOptions } from '../types';
-import { filter, fromEvent, map, Subscription } from 'rxjs';
+import { fromEvent, Subscription } from 'rxjs';
 import { Vector2 } from 'three';
+
+import App, { APP_MODE, type AppConfig } from '../lib/classes/App';
 import type Renderer from '../lib/classes/Renderer';
 import type { Cursor } from '../lib/classes/appModule/Cursor';
+import type { MapDescription } from '../lib/classes/Map';
 
-import { defaultMap } from '@blue-might/maps';
-import { HumanPlayer } from '../lib/classes/player/Human';
-import type MovableUnit from '../lib/classes/unit/Movable';
+import setupFonts from './../utils/fonts';
+import BmRenderer from './Renderer.vue';
 
 setupFonts();
 const $props = defineProps<{
   config: AppConfig;
-  rendererOptions?: RendererOptions;
+  map: MapDescription;
+  onSetup?: (app: App) => Promise<void>;
 }>();
 
 const rendererEl = ref<InstanceType<typeof BmRenderer> | null>(null);
@@ -52,9 +50,14 @@ const subscription = new Subscription();
 const app = ref<App>();
 const ready = ref(false);
 
-const currentComponent = computed(() =>
-  defineAsyncComponent(() => import('./app/Playground.vue'))
-);
+const currentComponent = computed(() => {
+  switch ($props.config.mode) {
+    case APP_MODE.DEBUG:
+      return defineAsyncComponent(() => import('./app/Debug.vue'));
+    default:
+      return defineAsyncComponent(() => import('./app/Playground.vue'));
+  }
+});
 
 onMounted(() => {
   nextTick(async () => {
@@ -78,10 +81,8 @@ async function setup() {
 
   await setupApp(renderer);
   if (app.value) {
-    if (app.value.modules.player) {
-      await setupPlayer(app.value);
-    }
-    await app.value.enterMap(defaultMap);
+    await $props.onSetup?.(app.value);
+    await app.value.enterMap($props.map);
   } else {
     throw new Error('App not initialized');
   }
@@ -103,28 +104,6 @@ async function setupApp(renderer: Renderer) {
   );
 
   return app.value;
-}
-
-const hasPlayer = ref(false);
-async function setupPlayer(app: App) {
-  const player = await app.modules.player.addPlayer(
-    markRaw(
-      new HumanPlayer({
-        name: 'Player'
-      })
-    )
-  );
-
-  app.modules.map.observables.map$
-    .pipe(
-      map(map => map?.modules.units.getById<MovableUnit>('blue-might-1')),
-      filter(Boolean)
-    )
-    .subscribe(vehicle => {
-      player.modules.vehicle.setVehicle(vehicle);
-    });
-
-  hasPlayer.value = true;
 }
 
 function onResize() {

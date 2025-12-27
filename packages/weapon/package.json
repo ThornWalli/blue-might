@@ -1,0 +1,24 @@
+{
+  "name": "@blue-might/weapon",
+  "version": "0.0.0",
+  "author": "Thorn-Welf Walli",
+  "contributors": [
+    {
+      "name": "Thorn-Welf Walli",
+      "email": "lammpee@gmail.com"
+    }
+  ],
+  "type": "module",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "rxjs": "catalog:",
+    "three": "catalog:"
+  },
+  "devDependencies": {
+    "@types/concaveman": "1.1.6",
+    "@types/file-saver": "2.0.7",
+    "@types/three": "catalog:",
+    "vite": "catalog:"
+  }
+}

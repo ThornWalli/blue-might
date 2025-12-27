@@ -1,12 +1,13 @@
-import RendererModule, {
-  type RendererModuleObservables,
-  type RendererModuleState
-} from '../RendererModule';
-import type Renderer from '../Renderer';
 import type { Observable } from 'rxjs';
 import { switchMap, fromEvent, ReplaySubject } from 'rxjs';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { HasEventTargetAddRemove } from 'rxjs/internal/observable/fromEvent';
+
+import type Renderer from '../Renderer';
+import RendererModule, {
+  type RendererModuleObservables,
+  type RendererModuleState
+} from '../RendererModule';
 
 interface ControlOptions {
   pan: boolean;

@@ -1,7 +1,9 @@
 import { Subject } from 'rxjs';
 import type { Object3D } from 'three';
 import { Vector2 } from 'three';
+
 import { TILE_TYPE } from '../../utils/pathfinding';
+import { COLLISION_TYPE } from '../unitModule/Collision';
 
 export type WalkableFunction = (
   options: {
@@ -11,16 +13,23 @@ export type WalkableFunction = (
     excludeObjects: Object3D[];
   },
   debug?: boolean
-) => boolean;
+) => {
+  value: boolean;
+  collisionType: COLLISION_TYPE;
+};
 
 export interface GridNode {
-  walkable: boolean;
+  index: number;
+  walkable: {
+    value: boolean;
+    collisionType: COLLISION_TYPE;
+  };
   x: number;
   y: number;
 }
 
 export default class Grid {
-  private matrix: number[][];
+  private matrix: number[][] = [];
   getNode(x: number, z: number) {
     return this.nodes[this.index(x, z)]!;
   }
@@ -47,9 +56,10 @@ export default class Grid {
       for (let x = 0; x < this.width; x++) {
         const node = this.nodes[this.index(x, y)]!;
 
-        const tileType = node.walkable
+        const tileType = node.walkable.value
           ? (this.getTileType?.(node) ?? TILE_TYPE.GRASS)
           : TILE_TYPE.BLOCKED;
+
         row.push(tileType);
       }
       matrix.push(row);
@@ -70,12 +80,18 @@ export default class Grid {
 
     this.nodes = new Array(this.width * this.height).fill(0).map((_, i) => {
       return {
-        walkable: true,
+        index: i,
+        walkable: {
+          value: true,
+          collisionType: COLLISION_TYPE.NONE
+        },
         x: i % this.width,
         y: Math.floor(i / this.width)
       };
     });
+  }
 
+  setup() {
     this.matrix = this.createMatrix();
     console.log(
       'Grid matrix created:',
@@ -110,6 +126,16 @@ export default class Grid {
     return new Vector2(x, y);
   }
 
+  toNode(worldPosition: Vector2) {
+    const x = Math.floor(
+      (worldPosition.x + (this.width * this.cellSize) / 2) / this.cellSize
+    );
+    const y = Math.floor(
+      (worldPosition.y + (this.height * this.cellSize) / 2) / this.cellSize
+    );
+    return this.getNode(x, y);
+  }
+
   update(nodes?: GridNode[], excludeObjects: Object3D[] = []) {
     const nodesToUpdate = nodes || this.nodes;
     for (const node of nodesToUpdate) {
@@ -120,7 +146,7 @@ export default class Grid {
         excludeObjects
       });
 
-      const tileType = node.walkable
+      const tileType = node.walkable.value
         ? (this.getTileType?.(node) ?? TILE_TYPE.GRASS)
         : TILE_TYPE.BLOCKED;
       this.matrix[node.y]![node.x] = tileType;
@@ -149,7 +175,7 @@ export default class Grid {
 
       if (nx >= 0 && nx < this.width && ny >= 0 && ny < this.height) {
         const n = this.nodes[this.index(nx, ny)]!;
-        if (n.walkable) result.push(n);
+        if (n.walkable.value) result.push(n);
       }
     }
 

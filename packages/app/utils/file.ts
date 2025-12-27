@@ -1,5 +1,6 @@
 import type { Object3D } from 'three';
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
+
 import { loadGltf } from '../lib/utils/gltf';
 
 export function getGltfObjectFromFile(file: File) {

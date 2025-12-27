@@ -1,105 +1,31 @@
-import Grid, { type GridNode } from './Grid';
-import EasyStar from 'easystarjs';
-import {
-  Box3,
-  InstancedMesh,
-  MeshLambertMaterial,
-  Vector3,
-  Object3D,
-  BoxGeometry,
-  Matrix4,
-  Sphere,
-  Vector2
-} from 'three';
-import type Map from '../Map';
-import { debounceTime, Subscription } from 'rxjs';
-import { disposeObject3D } from '../../utils/object';
-import { TILE_TYPE, TILE_COSTS, TILE_INDEX } from '../../utils/pathfinding';
+/* eslint-disable complexity */
+import { Vector3, type Object3D } from 'three';
 
-export default class GroundNavigator {
-  debug = false;
-  private subscription = new Subscription();
-  private map: Map;
-  private colliders: Object3D[];
-  private gridSize: number;
-  private grid: Grid;
+import type { TILE_TYPE } from '../../utils/pathfinding';
+import { COLLISION_TYPE } from '../unitModule/Collision';
+import BaseNavigator from '../abstract/BaseNavigator';
+import { OBJECT_USER_DATA } from '../../utils/object';
+import type Unit from '../Unit';
+import type HelicopterUnitModule from '../unitModule/movable/Helicopter';
+import { FLIGHT_STATUS } from '../unitModule/movable/Helicopter';
 
-  private useSphere: boolean;
-  private sphere = new Sphere(undefined, 1 / 2);
-  private box = new Box3();
-  lastDebugGridPositions?: {
-    valids: Vector3[];
-    invalids: Vector3[];
-  };
-  private occupiedByObject = new globalThis.Map<
-    Object3D,
-    { x: number; z: number }[]
-  >();
+import type Grid from './Grid';
+import type { GridNode } from './Grid';
 
-  getGridSize() {
-    return this.gridSize;
+export default class GroundNavigator extends BaseNavigator {
+  protected getHeightAt(x: number, z: number): number {
+    return this.map.modules.ground.getSurfaceHeightAt(x, z);
   }
 
-  constructor(
-    map: Map,
-    colliders: Object3D[],
-    options: { gridSize: number; size: Vector2; sphere: boolean },
-    debug = false
-  ) {
-    const size = options.size ?? new Vector2(32, 32);
-
-    this.debug = debug;
-    this.map = map;
-    this.colliders = colliders;
-
-    this.gridSize = options.gridSize ?? 2;
-    this.useSphere = options.sphere ?? false;
-
-    this.grid = new Grid(
-      size.divideScalar(this.gridSize).floor(),
-      this.gridSize,
-      (options, debug) => this.isWalkable(options, debug),
-      node =>
-        node.walkable
-          ? (this.getTileTypeAtNode(node) ?? TILE_TYPE.GRASS)
-          : TILE_TYPE.BLOCKED
-    );
-
-    if (this.debug) {
-      this.subscription.add(
-        this.grid.observables.update$.pipe(debounceTime(50)).subscribe(() => {
-          this.updateDebugGridObjects();
-        })
-      );
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (window as any).groundNav = this; // Debug-Zwecke
+  protected isWalkableExtra(
+    _pos: Vector3,
+    _excludeObjects: Object3D[]
+  ): { value: boolean; collisionType: COLLISION_TYPE } {
+    // Keine Extra-Prüfung für Boden
+    return { value: true, collisionType: COLLISION_TYPE.NONE };
   }
 
-  destroy() {
-    this.subscription.unsubscribe();
-    if (this.debugGridMeshes) {
-      Object.values(this.debugGridMeshes).forEach(
-        object => object && disposeObject3D(object)
-      );
-    }
-  }
-
-  getGrid() {
-    return this.grid;
-  }
-
-  setColliders(colliders: Object3D[]) {
-    this.colliders = colliders;
-    this.grid.update();
-  }
-
-  update() {
-    this.grid.update();
-  }
-
-  isWalkable(
+  override isWalkable(
     {
       grid,
       x,
@@ -110,18 +36,26 @@ export default class GroundNavigator {
   ) {
     const pos = this.toWorldPosition(x, y, grid);
     let walkable = pos.y > this.map.modules.ground.getSeaLevel();
+    let collisionType = COLLISION_TYPE.NONE;
 
-    // Sphere-Prüfung für realistischen Puffer
-    this.sphere.center.copy(pos);
-    // this.sphere.radius = this.gridSize / 2;
+    // Filtere Colliders: Ignoriere fliegende Helicopters (nur gelandete blockieren)
+    const filteredColliders = this.colliders.filter(collider => {
+      const unit = collider.userData.unit as Unit;
+      if (unit && 'helicopter' in unit.modules) {
+        const heliModule = unit.modules.helicopter as HelicopterUnitModule;
+        return heliModule.getFlightStatus() === FLIGHT_STATUS.LANDED; // Nur gelandete berücksichtigen
+      }
+      return true; // Andere Colliders (Infantry, GroundVehicle, etc.) immer berücksichtigen
+    });
 
-    for (const collider of this.colliders) {
-      if (excludeObjects.includes(collider)) continue; // Eigene Unit ignorieren
-      if (collider.userData.ignorePathfinding) continue; // Zusätzliche Ignorier-Option
+    for (const collider of filteredColliders) {
+      if (excludeObjects.includes(collider)) continue;
+      if (collider.userData[OBJECT_USER_DATA.IGNORE_PATHFINDING]) continue;
 
+      collisionType =
+        collider.userData[OBJECT_USER_DATA.COLLISION_TYPE] ?? collisionType;
       const box = this.box.setFromObject(collider);
       if (this.useSphere) {
-        // Sphere-Prüfung
         this.sphere.center.copy(pos);
         if (box.intersectsSphere(this.sphere)) {
           walkable = false;
@@ -129,7 +63,7 @@ export default class GroundNavigator {
         }
       } else {
         const colliderSize = box.getSize(new Vector3());
-        const buffer = Math.max(colliderSize.x, colliderSize.z) / 4; // Puffer = halbe max-Größe
+        const buffer = Math.max(colliderSize.x, colliderSize.z) / 4;
         const expandedBox = box.clone().expandByScalar(buffer);
         if (expandedBox.containsPoint(pos)) {
           walkable = false;
@@ -138,7 +72,10 @@ export default class GroundNavigator {
       }
     }
 
-    // Debug-Handling (bleibt gleich)
+    const extra = this.isWalkableExtra(pos, excludeObjects);
+    walkable = walkable && extra.value;
+    collisionType = extra.collisionType || collisionType;
+
     if (debug && this.debugState.checkDebugMeshes) {
       const MAX_DEBUG = Math.max(1000, this.getGrid().getNodes().length);
       if (this.debugState.isWalkableChecks.length < MAX_DEBUG) {
@@ -146,383 +83,18 @@ export default class GroundNavigator {
       }
     }
 
-    return walkable;
+    return { value: walkable, collisionType };
   }
 
-  updateWalkabilityAroundObject(object: Object3D) {
-    // Vorherige Zellen sammeln
-    const previous = this.occupiedByObject.get(object) || [];
-
-    // Neue Zellen berechnen: Erweitere AABB konsistent mit isWalkable
-    const aabb = new Box3().setFromObject(object);
-    if (this.useSphere) {
-      aabb.expandByScalar(this.sphere.radius);
-    } else {
-      const colliderSize = aabb.getSize(new Vector3());
-      const buffer = Math.max(colliderSize.x, colliderSize.z) / 4; // Gleicher buffer wie in isWalkable
-      aabb.expandByScalar(buffer);
-    }
-    const cells = this.worldToGridCellsInAABB(aabb);
-
-    // Alle betroffenen Zellen sammeln (previous + new)
-    const allCells = new Set([...previous, ...cells]);
-    const nodes = Array.from(allCells).map(cell =>
-      this.grid.getNode(cell.x, cell.z)
-    );
-
-    // Grid nur für betroffene Nodes aktualisieren
-    this.grid.update(nodes);
-
-    // Speichere neue Zellen
-    this.occupiedByObject.set(object, cells);
+  protected getTileTypeAtNode(node: GridNode): TILE_TYPE | undefined {
+    return this.map.modules.ground.pathfinderTileTypes[node.y]?.[node.x];
   }
 
-  getNodesAroundObject(object: Object3D, box: Box3 = new Box3()) {
-    // Neue Zellen berechnen: Erweitere AABB konsistent mit isWalkable
-    const aabb = box.setFromObject(object);
-    if (this.useSphere) {
-      aabb.expandByScalar(this.sphere.radius);
-    } else {
-      const colliderSize = aabb.getSize(new Vector3());
-      const buffer = Math.max(colliderSize.x, colliderSize.z) / 4; // Gleicher buffer
-      aabb.expandByScalar(buffer);
-    }
-    const cells = this.worldToGridCellsInAABB(aabb);
-
-    // Alle betroffenen Zellen sammeln
-    const allCells = new Set([...cells]);
-    const nodes = Array.from(allCells).map(cell =>
-      this.grid.getNode(cell.x, cell.z)
-    );
-    return nodes;
-  }
-
-  // updateWalkabilityAroundObject(object: Object3D) {
-  //   // Vorherige Zellen sammeln
-  //   const previous = this.occupiedByObject.get(object) || [];
-
-  //   // Neue Zellen berechnen: Erweitere AABB um Sphere-Radius
-  //   const aabb = new Box3().setFromObject(object);
-  //   if (this.useSphere) {
-  //     aabb.expandByScalar(this.sphere.radius);
+  // private isCellOccupiedByOthers(x: number, z: number, self: Object3D) {
+  //   for (const [obj, cells] of this.occupiedByObject.entries()) {
+  //     if (obj === self) continue;
+  //     if (cells.some(c => c.x === x && c.z === z)) return true;
   //   }
-  //   const cells = this.worldToGridCellsInAABB(aabb);
-
-  //   // Alle betroffenen Zellen sammeln (previous + new)
-  //   const allCells = new Set([...previous, ...cells]);
-  //   const nodes = Array.from(allCells).map(cell =>
-  //     this.grid.getNode(cell.x, cell.z)
-  //   );
-
-  //   // Grid nur für betroffene Nodes aktualisieren (verwendet isWalkable)
-  //   this.grid.update(nodes);
-
-  //   // Speichere neue Zellen
-  //   this.occupiedByObject.set(object, cells);
+  //   return false;
   // }
-
-  // getNodesAroundObject(object: Object3D, box: Box3 = new Box3()) {
-  //   // Neue Zellen berechnen: Erweitere AABB um Sphere-Radius
-  //   const aabb = box.setFromObject(object);
-  //   if (this.useSphere) {
-  //     aabb.expandByScalar(this.sphere.radius);
-  //   }
-  //   const cells = this.worldToGridCellsInAABB(aabb);
-
-  //   // Alle betroffenen Zellen sammeln (previous + new)
-  //   const allCells = new Set([...cells]);
-  //   const nodes = Array.from(allCells).map(cell =>
-  //     this.grid.getNode(cell.x, cell.z)
-  //   );
-  //   return nodes;
-  // }
-  private isCellOccupiedByOthers(x: number, z: number, self: Object3D) {
-    for (const [obj, cells] of this.occupiedByObject.entries()) {
-      if (obj === self) continue;
-      if (cells.some(c => c.x === x && c.z === z)) return true;
-    }
-    return false;
-  }
-
-  worldToGridCellsInAABB(aabb: Box3) {
-    const minX = Math.floor(
-      (aabb.min.x + (this.grid.width * this.gridSize) / 2) / this.gridSize
-    );
-    const maxX = Math.floor(
-      (aabb.max.x + (this.grid.width * this.gridSize) / 2) / this.gridSize
-    );
-    const minZ = Math.floor(
-      (aabb.min.z + (this.grid.height * this.gridSize) / 2) / this.gridSize
-    );
-    const maxZ = Math.floor(
-      (aabb.max.z + (this.grid.height * this.gridSize) / 2) / this.gridSize
-    );
-
-    const cells: { x: number; z: number }[] = [];
-    for (let x = minX; x <= maxX; x++) {
-      for (let z = minZ; z <= maxZ; z++) {
-        if (x >= 0 && x < this.grid.width && z >= 0 && z < this.grid.height) {
-          cells.push({ x, z });
-        }
-      }
-    }
-    return cells;
-  }
-
-  async findPath(
-    start: Vector3,
-    end: Vector3,
-    excludeObjects?: Object3D[]
-  ): Promise<Vector3[]> {
-    let affectedNodes: GridNode[] | undefined;
-
-    if (excludeObjects?.length) {
-      const tmpBox = new Box3();
-      affectedNodes = excludeObjects
-        .map(excludeObject => this.getNodesAroundObject(excludeObject, tmpBox))
-        .flat();
-
-      this.grid.update(affectedNodes, excludeObjects);
-    }
-
-    try {
-      const s = this.toNodePosition(start.x, start.z)!;
-      const e = this.toNodePosition(end.x, end.z)!;
-
-      const startNode = this.grid.getNode(s.x, s.y);
-      startNode.walkable = true;
-
-      // const paths = await new Promise<{ x: number; y: number }[]>(resolve => {
-      //   const easystar = createEasyStarInstance();
-      //   easystar.setGrid(this.grid.toMatrix());
-      //   easystar.findPath(s.x, s.y, e.x, e.y, path => resolve(path || []));
-      //   easystar.calculate();
-      // });
-
-      // return paths.map(n => {
-      //   const p = this.grid.toWorld(n.x, n.y);
-      //   return new Vector3(
-      //     p.x,
-      //     this.map.modules.ground.getAvgHeightAt(p.x, p.y),
-      //     p.y
-      //   );
-      // });
-
-      const paths = await new Promise<{ x: number; y: number }[]>(resolve => {
-        const easystar = createEasyStarInstance();
-        easystar.setGrid(this.grid.toMatrix());
-        easystar.findPath(s.x, s.y, e.x, e.y, path => resolve(path || []));
-        easystar.calculate();
-      });
-
-      let waypoints = paths.map(n => {
-        const p = this.grid.toWorld(n.x, n.y);
-        return new Vector3(
-          Math.round(p.x * 1000) / 1000, // Runde X auf 3 Dezimalen
-          this.map.modules.ground.getHeightAt(p.x, p.y),
-          Math.round(p.y * 1000) / 1000 // Runde Z auf 3 Dezimalen
-        );
-      });
-
-      // Entferne Duplikate und zu nahe Punkte
-      waypoints = waypoints.filter((point, index, arr) => {
-        if (index === 0) return true;
-        const prev = arr[index - 1]!;
-        const dist = Math.hypot(point.x - prev.x, point.z - prev.z);
-        return dist > 0.01; // Entferne, wenn Distanz < 0.01 (fast identisch)
-      });
-
-      return waypoints;
-    } finally {
-      if (excludeObjects?.length) {
-        this.grid.update(affectedNodes);
-      }
-    }
-  }
-
-  //#region Debug
-
-  private debugState: {
-    isWalkableChecks: { pos: Vector3; walkable: boolean }[];
-    checkDebugMeshes?: { valid: InstancedMesh; invalid: InstancedMesh };
-  } = {
-    isWalkableChecks: [],
-    checkDebugMeshes: undefined
-  };
-
-  debugGridMeshes?: {
-    valid: InstancedMesh;
-    invalid: InstancedMesh;
-    [key: string]: InstancedMesh;
-  };
-  debugMaterials = {
-    valid: new MeshLambertMaterial({ color: 0x00ff00 }),
-    invalid: new MeshLambertMaterial({ color: 0xff0000 }),
-    walkableValid: new MeshLambertMaterial({ color: 0x0000ff }),
-    walkableInvalid: new MeshLambertMaterial({ color: 0xff00ff })
-  };
-  debugGeometrySize = 0.1;
-  debugGridGeometry = new BoxGeometry(
-    this.debugGeometrySize,
-    this.debugGeometrySize,
-    this.debugGeometrySize
-  );
-
-  // #region Debug Objects
-
-  setupDebugGridObjects(
-    maxInstances = this.getGrid().getNodes().length || 1000
-  ) {
-    this.debugGridMeshes = {
-      valid: new InstancedMesh(
-        this.debugGridGeometry,
-        new MeshLambertMaterial({ color: 0x00ff00 }),
-        maxInstances
-      ),
-      invalid: new InstancedMesh(
-        this.debugGridGeometry,
-        new MeshLambertMaterial({ color: 0xff0000 }),
-        maxInstances
-      )
-    };
-
-    Object.values(this.debugGridMeshes).forEach(mesh => {
-      this.map.app.renderer.scene.add(mesh);
-    });
-
-    // initial invisible
-    const empty = new Matrix4();
-    for (let i = 0; i < maxInstances; i++) {
-      this.debugGridMeshes.valid.setMatrixAt(i, empty);
-      this.debugGridMeshes.invalid.setMatrixAt(i, empty);
-    }
-
-    Object.values(this.debugGridMeshes).forEach(mesh => {
-      mesh.instanceMatrix.needsUpdate = true;
-    });
-
-    this.updateDebugGridObjects();
-  }
-
-  updateDebugGridObjects() {
-    const { valids, invalids } = this.getDebugPositions();
-    this.lastDebugGridPositions = { valids, invalids };
-
-    const helper = new Object3D();
-    valids.forEach((position: Vector3, index: number) => {
-      helper.updateMatrix();
-      helper.matrix.makeTranslation(position.x, position.y, position.z);
-      this.debugGridMeshes?.valid.setMatrixAt(index, helper.matrix);
-    });
-
-    invalids.forEach((position: Vector3, index: number) => {
-      helper.updateMatrix();
-      helper.matrix.makeTranslation(position.x, position.y, position.z);
-      this.debugGridMeshes?.invalid.setMatrixAt(index, helper.matrix);
-    });
-
-    Object.values(this.debugGridMeshes ?? []).forEach(mesh => {
-      mesh.instanceMatrix.needsUpdate = true;
-    });
-  }
-
-  // removeDebugGridObjects() {
-  //   if (this.debugGridMeshes) {
-  //     disposeObject3D(this.debugGridMeshes.valid);
-  //     disposeObject3D(this.debugGridMeshes.invalid);
-  //   }
-  //   this.debugGridMeshes = undefined;
-  // }
-
-  // resetDebugObjects() {
-  //   if (this.lastDebugGridPositions) {
-  //     const { valids, invalids } = this.lastDebugGridPositions;
-
-  //     const matrix = new Matrix4();
-  //     valids.forEach((_position: Vector3, index: number) => {
-  //       this.debugGridMeshes?.valid.setMatrixAt(index, matrix);
-  //     });
-
-  //     this.debugGridMeshes!.valid.instanceMatrix.needsUpdate = true;
-
-  //     invalids.forEach((_position: Vector3, index: number) => {
-  //       this.debugGridMeshes?.invalid.setMatrixAt(index, matrix);
-  //     });
-
-  //     this.debugGridMeshes!.invalid.instanceMatrix.needsUpdate = true;
-  //     this.lastDebugGridPositions = undefined;
-  //   }
-  // }
-
-  //#endregion
-
-  toWorldPosition(nodeX: number, nodeY: number, grid?: Grid) {
-    const worldPosition = (grid || this.grid).toWorld(nodeX, nodeY);
-    const x = worldPosition.x;
-    const z = worldPosition.y;
-
-    const y = this.map.modules.ground.getAvgHeightAt(x, z);
-
-    return new Vector3(x, y, z);
-  }
-
-  toNodePosition(worldX: number, worldZ: number) {
-    const gx = Math.floor(
-      (worldX + (this.grid.width * this.gridSize) / 2) / this.gridSize
-    );
-    const gz = Math.floor(
-      (worldZ + (this.grid.height * this.gridSize) / 2) / this.gridSize
-    );
-    return { x: gx, y: gz };
-  }
-
-  worldToNode(x: number, z: number) {
-    const gx = Math.floor(x / this.gridSize);
-    const gy = Math.floor(z / this.gridSize);
-    return this.grid.getNodes()[this.grid.index(gx, gy)];
-  }
-
-  getTileTypeAtNode(node: GridNode) {
-    const map = this.map;
-    return map.modules.ground.pathfinderTileTypes[node.y]?.[node.x];
-  }
-
-  getDebugPositions() {
-    const grid = this.getGrid();
-    const valids: Vector3[] = [];
-    const invalids: Vector3[] = [];
-
-    grid?.getNodes().forEach(node => {
-      const pos = this.toWorldPosition(node.x, node.y);
-
-      if (node.walkable) {
-        valids.push(pos);
-      } else {
-        invalids.push(pos);
-      }
-    });
-
-    return { valids, invalids };
-  }
-  //#endregion
-}
-
-function createEasyStarInstance() {
-  const easystar = new EasyStar.js();
-  easystar.enableDiagonals();
-  easystar.enableCornerCutting();
-
-  const validTypes = Object.values(TILE_INDEX).slice(1) as number[];
-
-  easystar.setAcceptableTiles(validTypes);
-
-  validTypes.forEach(tileType => {
-    easystar.setTileCost(tileType, getTileCost(tileType));
-  });
-
-  return easystar;
-}
-
-export function getTileCost(type: TILE_TYPE) {
-  return TILE_COSTS[type] as number;
 }

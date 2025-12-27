@@ -1,9 +1,10 @@
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { LOADER } from '../classes/AssetLoader';
-import { OBJECT_NAME } from '../utils/object';
 import assetLoader from '@blue-might/app/services/assetLoader';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
 import { Group, Mesh, type Object3D } from 'three';
+
+import { OBJECT_NAME } from '../utils/object';
+import { LOADER } from '../classes/AssetLoader';
 
 export async function loadGltf(
   value: string | ArrayBuffer,

@@ -4,12 +4,14 @@ import type {
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh } from 'three';
-import baseGlb from './assets/tree_1.glb?url';
 import BuildingUnit, {
   type BuildingUnitModuleList,
   type BuildingUnitModules,
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
+import { prepareForRaycast } from '@blue-might/app/lib/utils/raycast';
+
+import baseGlb from './assets/tree_1.glb?url';
 
 export type Options = BuildingUnitOptions;
 
@@ -32,6 +34,11 @@ export default class Tree_1<
     );
   }
 
+  override async afterSetup(_context: SetupContext) {
+    await super.afterSetup(_context);
+    this.setMaterialReady();
+  }
+
   override async createMesh(_context: SetupContext) {
     const { object, animations } = await loadGltf(baseGlb);
 
@@ -43,6 +50,8 @@ export default class Tree_1<
         child.receiveShadow = false;
       }
     });
+
+    prepareForRaycast(object);
 
     return object;
   }

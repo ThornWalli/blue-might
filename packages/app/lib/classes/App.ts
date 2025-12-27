@@ -7,12 +7,14 @@ import {
   switchMap,
   type SubscriptionLike
 } from 'rxjs';
+import type { RendererOptions } from '@blue-might/app/types';
+
 import type Renderer from './Renderer';
 import AssetLoader from './AssetLoader';
 import CursorAppModule from './appModule/Cursor';
 import PlayerAppModule from './appModule/Player';
 import MapAppModule from './appModule/Map';
-import type { MapDescription } from './Map';
+import type { MapDescription, ModuleDebug as MapModuleDebug } from './Map';
 import SelectionAppModule from './appModule/Selection';
 import type Unit from './Unit';
 import UnitFocusAppModule from './appModule/UnitFocus';
@@ -45,11 +47,15 @@ interface AppState {
 
 export enum APP_MODE {
   PLAYGROUND = 'playground',
-  EDITOR = 'editor'
+  DEBUG = 'debug'
 }
 
 export interface AppConfig {
   mode?: APP_MODE;
+  rendererOptions: RendererOptions;
+  debug?: {
+    map?: Partial<MapModuleDebug>;
+  };
 }
 
 export class BaseApp<
@@ -96,10 +102,12 @@ export class BaseApp<
     if (this.ready) return;
 
     //#region Modules
-    const preparedModules = this.moduleList.map(ModuleClass => {
-      const moduleInstance = new ModuleClass(this);
-      return [ModuleClass.TYPE, moduleInstance];
-    });
+    const preparedModules = this.moduleList
+      .map(ModuleClass => {
+        const moduleInstance = new ModuleClass(this);
+        return ModuleClass.TYPES.map(type => [type, moduleInstance]);
+      })
+      .flat();
     this.modules = Object.fromEntries(preparedModules);
     //#endregion
 
@@ -130,6 +138,7 @@ export class BaseApp<
 
   async enterMap(desc: MapDescription) {
     const map = await this.loadMap(desc);
+    map.setModuleDebug(this.config.debug?.map ?? {});
     await this.modules.map.setMap(map);
     console.log('Map loaded', map);
   }
@@ -148,6 +157,10 @@ export class BaseApp<
       module.destroy();
     });
     this.renderer.destroy();
+  }
+
+  getScene() {
+    return this.renderer.scene;
   }
 }
 

@@ -1,4 +1,5 @@
 import { EMPTY, map, merge, ReplaySubject, switchMap } from 'rxjs';
+
 import AppModule, {
   type AppModuleObservables,
   type AppModuleState

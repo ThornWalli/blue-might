@@ -17,17 +17,16 @@
 
 <script lang="ts" setup>
 import type { PositionMarker } from '@blue-might/app/lib/classes/appModule/Debug';
-import type App from '../../lib/classes/App';
 import { computed, markRaw, onMounted, ref } from 'vue';
 import { EMPTY, filter, merge, of, Subscription, switchMap } from 'rxjs';
-
-import BmButton from '../Button.vue';
-import BmDetails from '../Details.vue';
-
 import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
 import type Unit from '@blue-might/app/lib/classes/Unit';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
+
+import BmDetails from '../Details.vue';
+import BmButton from '../Button.vue';
+import type App from '../../lib/classes/App';
 
 const subscription = new Subscription();
 
@@ -70,11 +69,7 @@ onMounted(() => {
 
   const vehicleModule$ = vehicle$.pipe(
     filter(vehicle => vehicle?.hasModuleType(MovableUnitModule) ?? false),
-    switchMap(
-      vehicle =>
-        of(vehicle?.getModuleByType<MovableUnitModule>(MovableUnitModule)) ??
-        EMPTY
-    ),
+    switchMap(vehicle => of((vehicle as MovableUnit).modules.movable ?? EMPTY)),
     filter(Boolean)
   );
 
@@ -99,11 +94,12 @@ function onClickUnitActive(e: Event) {
   (e.target as HTMLButtonElement).blur();
   const unit = $props.app.modules.selection.getSelectedUnit() as MovableUnit;
   if (!unit) return;
+  const vehicleModule = unit.modules.movable;
 
-  if (unit.isTurnOn()) {
-    unit.turnOff();
+  if (vehicleModule.isTurnOn()) {
+    vehicleModule.turnOff();
   } else {
-    unit.turnOn();
+    vehicleModule.turnOn();
   }
 }
 </script>

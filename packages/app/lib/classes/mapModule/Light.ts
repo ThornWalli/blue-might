@@ -1,15 +1,21 @@
-import { AmbientLight, DirectionalLight, DirectionalLightHelper } from 'three';
+import {
+  AmbientLight,
+  DirectionalLight,
+  DirectionalLightHelper,
+  Vector3
+} from 'three';
+
 import MapModule, {
   type MapModuleObservables,
   type MapModuleState
 } from '../MapModule';
-import type Unit from '../Unit';
-import type { Subject } from 'rxjs';
-
-interface Observables extends MapModuleObservables {
-  addUnit$: Subject<Unit>;
-  removeUnit$: Subject<Unit>;
+declare module '../Map' {
+  interface ModuleDebug {
+    light: boolean;
+  }
 }
+
+type Observables = MapModuleObservables;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface State extends MapModuleState {}
@@ -29,11 +35,6 @@ export default class LightModule extends MapModule<State, Observables> {
     light.shadow.mapSize.width = 2048;
     light.shadow.mapSize.height = 2048;
 
-    light.shadow.camera.left = -10;
-    light.shadow.camera.right = 10;
-    light.shadow.camera.top = 10;
-    light.shadow.camera.bottom = -10;
-
     // Optional: Shadow Radius = 0 für harte Kanten
     light.shadow.radius = 0;
     light.shadow.bias = -0.0005;
@@ -46,6 +47,15 @@ export default class LightModule extends MapModule<State, Observables> {
       const helper = new DirectionalLightHelper(light, 5);
       this.map.addToRoot(helper);
     }
+
+    this.subscription.add(
+      this.map.app.renderer?.modules.controls?.observables.change$.subscribe(
+        () => {
+          this.updateLightPosition();
+        }
+      )
+    );
+    this.updateLightPosition();
   }
 
   override destroy(): void {
@@ -60,5 +70,28 @@ export default class LightModule extends MapModule<State, Observables> {
     await super.setup();
 
     this.setupLights();
+  }
+
+  private updateLightPosition() {
+    if (!this.map.app.renderer?.modules.controls?.controls) return;
+    const controls = this.map.app.renderer?.modules.controls.controls;
+    const camera = controls.object; // Kamera von Controls
+
+    // Licht relativ zur Kamera positionieren (z.B. über und hinter der Kamera)
+    const light = this.lights[0] as DirectionalLight;
+    light.position.copy(camera.position).add(new Vector3(10, 20, 10)); // Offset zur Kamera
+
+    // Shadow-Camera dynamisch anpassen (basierend auf Map-Größe)
+    const mapSize = this.map.modules.ground?.state.terrainWidth ?? 64; // Hole Map-Größe;
+    const halfSize = mapSize / 2;
+    light.shadow.camera.left = -halfSize;
+    light.shadow.camera.right = halfSize;
+    light.shadow.camera.top = halfSize;
+    light.shadow.camera.bottom = -halfSize;
+    light.shadow.camera.updateProjectionMatrix();
+
+    // Target des Lichts auf das Controls-Target setzen
+    light.target.position.copy(controls.target);
+    light.target.updateMatrixWorld();
   }
 }

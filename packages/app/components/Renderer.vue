@@ -13,9 +13,10 @@
 
 <script lang="ts" setup>
 import { provide, ref, onUnmounted, onMounted, nextTick, markRaw } from 'vue';
-import Renderer, { type RendererModuleList } from '../lib/classes/Renderer';
 import { Vector2 } from 'three';
 import { fromEvent, Subscription } from 'rxjs';
+
+import Renderer, { type RendererModuleList } from '../lib/classes/Renderer';
 import type { RendererOptions } from '../types';
 import type { State as DebugState } from '../lib/classes/rendererModule/Debug';
 
@@ -51,7 +52,7 @@ const canvasEl = ref();
 const subscription = new Subscription();
 
 const defaultRendererOptions: RendererOptions = {
-  pixelated: true,
+  pixelated: false,
   controls: true
 };
 

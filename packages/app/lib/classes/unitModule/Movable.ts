@@ -1,3 +1,7 @@
+/* eslint-disable complexity */
+import { ReplaySubject, Subject } from 'rxjs';
+import { Vector3 } from 'three';
+
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
@@ -5,7 +9,23 @@ import UnitModule, {
 } from '../UnitModule';
 import type { AnimationLoopValue } from '../Renderer';
 import type MovableUnit from '../unit/Movable';
-import { ReplaySubject, Subject } from 'rxjs';
+import {
+  ControlAction,
+  getDefaultControls,
+  type ControlState
+} from '../playerModule/Controls';
+
+declare module '../Unit' {
+  interface ModuleStates {
+    movable: Partial<MovableUnitModuleState>;
+  }
+  interface ModuleOptions {
+    movable: Partial<MovableUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    movable: boolean;
+  }
+}
 
 export interface PowerInfo {
   flightPower: number;
@@ -27,6 +47,7 @@ export interface MovableUnitModuleObservables extends UnitModuleObservables {
 export interface MovableUnitModuleOptions extends UnitModuleOptions {}
 
 export interface MovableUnitModuleState extends UnitModuleState {
+  velocity: Vector3;
   active: boolean;
   rawPower: number;
   maxPower: number;
@@ -45,6 +66,8 @@ export default class MovableUnitModule<
   U extends MovableUnit = MovableUnit
 > extends UnitModule<Options, State, Obervables, U> {
   static override TYPE = 'movable';
+  private _dir = new Vector3();
+  private _aiControls?: ControlState;
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {
     super(
@@ -54,6 +77,7 @@ export default class MovableUnitModule<
       },
       {
         ...state,
+        velocity: state.velocity ?? new Vector3(0, 0, 0),
         active: state.active ?? false,
         rawPower: state.rawPower ?? 0,
         maxPower: state.maxPower ?? 1,
@@ -81,10 +105,12 @@ export default class MovableUnitModule<
     //#endregion
   }
 
-  getControls() {
-    const unit = this.getUnit() as U;
-    return (
-      unit.modules.player.getPlayer()?.modules.controls.getControls() ?? {}
+  override async setup() {
+    this.subscription.add(
+      this.getUnit().modules.damage.observables.destroyed$.subscribe(() => {
+        this.clearAutopilotControls();
+        this.turnOff();
+      })
     );
   }
 
@@ -128,6 +154,87 @@ export default class MovableUnitModule<
     }
   }
 
+  isTurnOn() {
+    return this.getActive() ?? false;
+  }
+
+  turnOn() {
+    this.setActive(true);
+  }
+
+  turnOff() {
+    this.setActive(false);
+  }
+
+  getAIControls() {
+    return this._aiControls;
+  }
+
+  setAutopilotControls(controls?: Partial<ControlState>) {
+    this._aiControls = controls
+      ? { ...getDefaultControls(), ...controls }
+      : undefined;
+
+    if (controls) {
+      // Automatisch starten, wenn AI aktiv
+      this.turnOn();
+    } else {
+      // Optional: Stoppen, wenn AI deaktiviert
+      this.turnOff();
+    }
+  }
+  clearAutopilotControls() {
+    if (!this._aiControls) return;
+    this._aiControls = undefined;
+    // this.turnOff(); // Stoppen, wenn AI entfernt
+  }
+
+  getControls(): ControlState {
+    const unit = this.getUnit() as U;
+    const human = unit.modules.player
+      .getPlayer()
+      ?.modules.controls.getControls();
+    const ai = this._aiControls;
+
+    if (human && (!ai || !this.hasMinPower())) {
+      // Keine AI-Controls, wenn keine Power oder kein AI
+      return human;
+    }
+
+    // AI-Controls nur anwenden, wenn genug Power da ist
+    return {
+      [ControlAction.FIRE_PRIMARY]:
+        ai?.firePrimary ?? human?.firePrimary ?? false,
+      [ControlAction.FIRE_SECONDARY]:
+        ai?.fireSecondary ?? human?.fireSecondary ?? false,
+      [ControlAction.MOVE_FORWARD]:
+        ai?.moveForward ?? human?.moveForward ?? false,
+      [ControlAction.MOVE_BACKWARD]:
+        ai?.moveBackward ?? human?.moveBackward ?? false,
+      [ControlAction.MOVE_LEFT]: ai?.moveLeft ?? human?.moveLeft ?? false,
+      [ControlAction.MOVE_RIGHT]: ai?.moveRight ?? human?.moveRight ?? false,
+
+      [ControlAction.UP]: ai?.up ?? human?.up ?? false,
+      [ControlAction.DOWN]: ai?.down ?? human?.down ?? false,
+      [ControlAction.LEFT]: ai?.left ?? human?.left ?? false,
+      [ControlAction.RIGHT]: ai?.right ?? human?.right ?? false,
+
+      [ControlAction.SPACE]: ai?.space ?? human?.space ?? false,
+      [ControlAction.GEAR]: ai?.gear ?? human?.gear ?? false,
+      [ControlAction.LANDING]: ai?.landing ?? human?.landing ?? false,
+      [ControlAction.MODIFIER]: ai?.modifier ?? human?.modifier ?? false,
+      [ControlAction.ROTATE_LEFT]: ai?.rotateLeft ?? human?.rotateLeft ?? false,
+      [ControlAction.ROTATE_RIGHT]:
+        ai?.rotateRight ?? human?.rotateRight ?? false,
+      [ControlAction.ASCEND]: ai?.ascend ?? human?.ascend ?? false,
+      [ControlAction.DESCEND]: ai?.descend ?? human?.descend ?? false,
+      [ControlAction.PITCH_DOWN]: ai?.pitchDown ?? human?.pitchDown ?? false,
+      [ControlAction.PITCH_UP]: ai?.pitchUp ?? human?.pitchUp ?? false,
+      [ControlAction.ROLL_LEFT]: ai?.rollLeft ?? human?.rollLeft ?? false,
+      [ControlAction.ROLL_RIGHT]: ai?.rollRight ?? human?.rollRight ?? false
+    };
+  }
+
   hasMinPower() {
     return this.state.rawPower >= this.state.minPower;
   }
@@ -159,7 +266,19 @@ export default class MovableUnitModule<
   }
 
   setActive(value: boolean) {
+    if (this.state.active === value) return;
     this.state.active = value;
     this.observables.active$.next(this.state.active);
+  }
+
+  getTmpDirection() {
+    return this._dir;
+  }
+  setTmpDirection(x: number, y: number, z: number) {
+    this._dir.set(x, y, z);
+  }
+
+  getVelocity() {
+    return this.state.velocity;
   }
 }

@@ -1,25 +1,26 @@
-import Unit, {
-  type UnitConstructorOptions,
-  type UnitModuleList,
-  type UnitModules,
-  type UnitOptions
-} from '@blue-might/app/lib/classes/Unit';
+import type { UnitConstructorOptions } from '@blue-might/app/lib/classes/Unit';
 import LandingPortUnitModule from '@blue-might/app/lib/classes/unitModule/LandingPort';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface LandingPortUnitOptions extends UnitOptions {}
+import BuildingUnit, {
+  type BuildingUnitModuleList,
+  type BuildingUnitModules,
+  type BuildingUnitOptions
+} from './Building';
 
-export type LandingPortUnitModules = UnitModules & {
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface LandingPortUnitOptions extends BuildingUnitOptions {}
+
+export type LandingPortUnitModules = BuildingUnitModules & {
   landingPortal: LandingPortUnitModule;
 };
 
 export type LandingPortUnitModuleList = (typeof LandingPortUnitModule)[] &
-  UnitModuleList;
+  BuildingUnitModuleList;
 export default class LandingPortUnit<
   Options extends LandingPortUnitOptions = LandingPortUnitOptions,
   Modules extends LandingPortUnitModules = LandingPortUnitModules,
   ModuleList extends LandingPortUnitModuleList = LandingPortUnitModuleList
-> extends Unit<Options, Modules, ModuleList> {
+> extends BuildingUnit<Options, Modules, ModuleList> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: ModuleList = [] as unknown as ModuleList

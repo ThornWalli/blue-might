@@ -1,4 +1,6 @@
 import type { SubscriptionLike } from 'rxjs';
+import type { Object3D } from 'three';
+
 import type Map from './Map';
 import Module, { type ModuleObservables, type ModuleState } from './Module';
 
@@ -23,5 +25,17 @@ export default abstract class MapModule<
   override destroy() {
     this.map.destroy();
     super.destroy();
+  }
+
+  getScene() {
+    return this.map.app.renderer.scene;
+  }
+
+  addToScene(object: Object3D) {
+    this.getScene().add(object);
+  }
+
+  removeFromScene(object: Object3D) {
+    this.getScene().remove(object);
   }
 }

@@ -1,16 +1,18 @@
 import { ReplaySubject } from 'rxjs';
+
 import type {
   PlayerModuleObservables,
   PlayerModuleState
 } from '../PlayerModule';
 import PlayerModule from '../PlayerModule';
-import type MovableUnit from '../unit/Movable';
 import type Player from '../Player';
+import type Unit from '../Unit';
+import type MovableUnit from '../unit/Movable';
 
 interface Observables extends PlayerModuleObservables {
   vehicle$: ReplaySubject<{
-    current: MovableUnit | null;
-    last: MovableUnit | null;
+    current: Unit | null;
+    last: Unit | null;
   }>;
 }
 
@@ -28,13 +30,13 @@ export default class VehicleModule extends PlayerModule<State, Observables> {
     vehicle: null
   };
 
-  constructor(player: Player, debug?: boolean) {
-    super(player, {} as State, debug);
+  constructor(player: Player, state: State, debug?: boolean) {
+    super(player, state, debug);
 
     //#region observables
     this.observables.vehicle$ = new ReplaySubject<{
-      current: MovableUnit | null;
-      last: MovableUnit | null;
+      current: Unit | null;
+      last: Unit | null;
     }>();
     //#endregion
   }

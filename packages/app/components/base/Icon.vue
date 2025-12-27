@@ -7,8 +7,9 @@
 <script setup lang="ts">
 import type { Icon } from '@blue-might/app/lib/types/icon';
 import { IconSize } from '@blue-might/app/lib/types/icon';
-import icons from '../../utils/icons';
 import { computed } from 'vue';
+
+import icons from '../../utils/icons';
 
 const $props = defineProps<{
   name: Icon;

@@ -1,4 +1,5 @@
 import { Subscription, type SubscriptionLike } from 'rxjs';
+
 import type App from './App';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type

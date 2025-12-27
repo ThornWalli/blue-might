@@ -1,6 +1,7 @@
 import { fromEvent, Subject } from 'rxjs';
 import type { Object3D, Intersection as ThreeIntersection } from 'three';
 import { Raycaster, Vector2 } from 'three';
+
 import type Renderer from '../Renderer';
 import RendererModule, { type RendererModuleState } from '../RendererModule';
 import { OBJECT_USER_DATA } from '../../utils/object';

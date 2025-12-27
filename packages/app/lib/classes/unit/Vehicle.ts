@@ -1,9 +1,10 @@
 import type { UnitConstructorOptions, UnitOptions } from '../Unit';
+import PatrolUnitModule from '../unitModule/Patrol';
+
 import MovableUnit, {
   type MovableUnitModuleList,
   type MovableUnitModules
 } from './Movable';
-import PatrolUnitModule from '../unitModule/Patrol';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface VehicleUnitOptions extends UnitOptions {}

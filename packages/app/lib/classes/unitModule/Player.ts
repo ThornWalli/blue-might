@@ -1,4 +1,6 @@
-import { ConeGeometry, Mesh, MeshStandardMaterial, Object3D } from 'three';
+import { Object3D } from 'three';
+import { ReplaySubject } from 'rxjs';
+
 import type Player from '../Player';
 import UnitModule, {
   type UnitModuleObservables,
@@ -6,19 +8,29 @@ import UnitModule, {
   type UnitModuleSetupContext,
   type UnitModuleState
 } from '../UnitModule';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import type Unit from '../Unit';
-import { ReplaySubject } from 'rxjs';
+
+declare module '../Unit' {
+  interface ModuleStates {
+    player: Partial<PlayerUnitModuleState>;
+  }
+  interface ModuleOptions {
+    player: Partial<PlayerUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    player: boolean;
+  }
+}
 
 interface Observables extends UnitModuleObservables {
   player$: ReplaySubject<Player | null>;
 }
-type Options = UnitModuleOptions;
-type State = UnitModuleState;
+export type PlayerUnitModuleOptions = UnitModuleOptions;
+export type PlayerUnitModuleState = UnitModuleState;
 
 export default class PlayerUnitModule extends UnitModule<
-  Options,
-  State,
+  PlayerUnitModuleOptions,
+  PlayerUnitModuleState,
   Observables
 > {
   hasPlayer() {
@@ -29,7 +41,12 @@ export default class PlayerUnitModule extends UnitModule<
   root: Object3D;
   private _player: Player | null = null;
 
-  constructor(unit: Unit, options: Options, state: State, debug: boolean) {
+  constructor(
+    unit: Unit,
+    options: PlayerUnitModuleOptions,
+    state: PlayerUnitModuleState,
+    debug: boolean
+  ) {
     super(unit, options, state, debug);
 
     //#region observables
@@ -43,33 +60,6 @@ export default class PlayerUnitModule extends UnitModule<
     const mesh = await super.setupMesh(context);
     this.root.add(mesh);
     return this.root;
-  }
-
-  createIndicator() {
-    const radius = 0.1;
-    const height = 0.2;
-    const radialSegments = 4;
-    const coneTop = new ConeGeometry(radius, height, radialSegments);
-    const coneBottom = new ConeGeometry(radius, height, radialSegments);
-
-    coneBottom.rotateX(Math.PI);
-    coneBottom.translate(0, -height, 0);
-
-    const mergedGeometry = mergeGeometries([coneTop, coneBottom]);
-
-    const mesh = new Mesh(
-      mergedGeometry,
-      new MeshStandardMaterial({
-        color: 0x0066ff,
-        transparent: true,
-        opacity: 0.7,
-        metalness: 0.0,
-        roughness: 0.1,
-        envMapIntensity: 1.0
-      })
-    );
-
-    return mesh;
   }
 
   getPlayer() {

@@ -1,12 +1,15 @@
 import type { Object3D, Vector3, Texture } from 'three';
-import { Raycaster } from 'three';
+import { Raycaster, Vector2 } from 'three';
+
+import { resizeCanvas } from './canvas';
 
 export enum TILE_TYPE {
   BLOCKED = 0,
-  DRY_ROAD = 1,
-  BETON_ROAD = 2,
-  GRASS = 3,
-  WATER = 4
+  SOFT = 1,
+  DRY_ROAD = 2,
+  BETON_ROAD = 3,
+  GRASS = 4,
+  WATER = 5
 }
 
 export const TILE_INDEX: { [key: number]: TILE_TYPE } = {
@@ -19,6 +22,7 @@ export const TILE_INDEX: { [key: number]: TILE_TYPE } = {
 
 export const TILE_COSTS: { [key: number]: number } = {
   [TILE_TYPE.BLOCKED]: Infinity, // Hohe Kosten für blockierte Zellen
+  [TILE_TYPE.SOFT]: 9999,
   [TILE_TYPE.GRASS]: 1000,
   [TILE_TYPE.DRY_ROAD]: 200,
   [TILE_TYPE.BETON_ROAD]: 50,
@@ -42,26 +46,9 @@ export function getCostsFromImage(
     b: number,
     a: number
   ) => TILE_TYPE | undefined,
-  size: number = 64 / (1 / 3)
+  size: Vector2 = new Vector2(64, 64)
 ) {
-  function resizeCanvas(
-    canvas: HTMLCanvasElement | OffscreenCanvas,
-    width: number,
-    height?: number
-  ) {
-    if (!width && height) {
-      width = height * (canvas.width / canvas.height);
-    } else if (!height) {
-      height = width * (canvas.height / canvas.width);
-    }
-    const resizedCanvas = new OffscreenCanvas(width, height);
-    const ctx = resizedCanvas.getContext(
-      '2d'
-    ) as OffscreenCanvasRenderingContext2D;
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(canvas, 0, 0, width, height);
-    return resizedCanvas;
-  }
+  size = size.clone().divideScalar(1 / 3); // Grid Size 3 Cells
 
   let canvas: HTMLCanvasElement | OffscreenCanvas =
     document.createElement('canvas');
@@ -71,7 +58,7 @@ export function getCostsFromImage(
     canvas.getContext('2d')!;
   ctx.drawImage(texture.image, 0, 0);
 
-  canvas = resizeCanvas(canvas, size);
+  canvas = resizeCanvas(canvas, size.x);
   ctx = canvas.getContext('2d')!;
 
   const test: (number | undefined)[][] = [];

@@ -1,5 +1,6 @@
 import type { SubscriptionLike } from 'rxjs';
 import { Subscription } from 'rxjs';
+
 import type { AnimationLoopValue } from './Renderer';
 
 export type ModuleObservables = {
@@ -15,7 +16,25 @@ export default class Module<
 > {
   static TYPE: string;
 
-  protected state: State = {} as State;
+  static get TYPES() {
+    const types = [];
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let current = this;
+
+    while (current && current !== Function.prototype) {
+      if (
+        Object.prototype.hasOwnProperty.call(current, 'TYPE') &&
+        current.TYPE
+      ) {
+        types.push(current.TYPE);
+      }
+      current = Object.getPrototypeOf(current);
+    }
+
+    return types;
+  }
+
+  state: State = {} as State;
 
   subscription = new Subscription();
   observables: Observables = {} as Observables;

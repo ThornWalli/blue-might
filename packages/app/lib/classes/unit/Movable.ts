@@ -5,7 +5,6 @@ import Unit, {
   type UnitOptions
 } from '../Unit';
 import MovableUnitModule from '../unitModule/Movable';
-import CollisionUnitModule from '../unitModule/Collision';
 import PlayerUnitModule from '../unitModule/Player';
 
 export interface MovableUnitOptions extends UnitOptions {
@@ -14,13 +13,12 @@ export interface MovableUnitOptions extends UnitOptions {
 
 export type MovableUnitModules = UnitModules & {
   player: PlayerUnitModule;
-  collision: CollisionUnitModule;
+  movable: MovableUnitModule;
 };
 
 export type MovableUnitModuleList = (
   | typeof MovableUnitModule
   | typeof PlayerUnitModule
-  | typeof CollisionUnitModule
 )[] &
   UnitModuleList;
 export default class MovableUnit<
@@ -32,19 +30,14 @@ export default class MovableUnit<
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []
   ) {
-    moduleList.push(PlayerUnitModule, CollisionUnitModule);
+    if (
+      !(moduleList as ModuleList).find(test =>
+        test.TYPES.includes(MovableUnitModule.TYPE)
+      )
+    ) {
+      moduleList.push(MovableUnitModule);
+    }
+    moduleList.push(PlayerUnitModule);
     super(options, moduleList);
-  }
-
-  isTurnOn() {
-    return this.getModuleByType(MovableUnitModule)?.getActive() ?? false;
-  }
-
-  turnOn() {
-    this.getModuleByType(MovableUnitModule)?.setActive(true);
-  }
-
-  turnOff() {
-    this.getModuleByType(MovableUnitModule)?.setActive(false);
   }
 }

@@ -1,7 +1,8 @@
 import { AxesHelper } from 'three';
+import GUI from 'three/examples/jsm/libs/lil-gui.module.min.js';
+
 import RendererModule, { type RendererModuleState } from '../RendererModule';
 import type Renderer from '../Renderer';
-import GUI from 'three/examples/jsm/libs/lil-gui.module.min.js';
 
 export interface State extends RendererModuleState {
   gui?: boolean;

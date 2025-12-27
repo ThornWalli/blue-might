@@ -4,12 +4,14 @@ import type {
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh } from 'three';
-import baseGlb from './assets/soldat_1.glb?url';
 import FigureUnit, {
   type FigureUnitModuleList,
   type FigureUnitModules,
   type FigureUnitOptions
 } from '@blue-might/app/lib/classes/unit/Figure';
+import { replaceColors } from '@blue-might/app/lib/utils/object';
+
+import baseGlb from './assets/soldat_1.glb?url';
 
 export type Options = FigureUnitOptions;
 
@@ -32,23 +34,20 @@ export default class Human_1<
   }
 
   override async afterSetup(_context: SetupContext) {
+    await super.afterSetup(_context);
     this.setMaterialReady();
     this.modules.animation.playAction('idle');
     this.subscription.add(
-      (_context.unit as FigureUnit).modules.figure.observables.move$.subscribe(
-        () => {
-          this.modules.animation.stopAction('idle');
-          this.modules.animation.playAction('walk');
-        }
-      )
+      (this as FigureUnit).modules.movable.observables.move$.subscribe(() => {
+        this.modules.animation.stopAction('idle');
+        this.modules.animation.playAction('walk');
+      })
     );
     this.subscription.add(
-      (_context.unit as FigureUnit).modules.figure.observables.stop$.subscribe(
-        () => {
-          this.modules.animation.stopAction('walk');
-          this.modules.animation.playAction('idle');
-        }
-      )
+      (this as FigureUnit).modules.movable.observables.stop$.subscribe(() => {
+        this.modules.animation.stopAction('walk');
+        this.modules.animation.playAction('idle');
+      })
     );
   }
 
@@ -63,6 +62,20 @@ export default class Human_1<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
+
+        replaceColors(
+          [
+            [
+              'primary',
+              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
+            ],
+            [
+              'secondary',
+              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
+            ]
+          ],
+          child
+        );
       }
     });
 

@@ -48,6 +48,17 @@
           Gears
         </base-button>
       </div>
+      <div
+        class="damage"
+        :class="{
+          demolished: unitDamageValue >= 1,
+          damaged: unitDamageValue >= 0.5
+        }"
+        :style="{
+          '--value': 1 - unitDamageValue
+        }">
+        <div></div>
+      </div>
     </div>
     <bm-button :disabled="!isVehicle" @click="onClickUnitActive">
       {{ unitActive ? 'Vehicle Off' : 'Vehicle On' }}
@@ -72,12 +83,7 @@
 </template>
 
 <script lang="ts" setup>
-import type Unit from '../../lib/classes/Unit';
-import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
-import BmPanel from '../Panel.vue';
-import BmButton from '../Button.vue';
-import type App from '../../lib/classes/App';
 import {
   combineLatest,
   EMPTY,
@@ -91,19 +97,25 @@ import {
 import { Vector3 } from 'three';
 import { ICON } from '@blue-might/app/utils/icons';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/moveable/Helicopter';
+import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/Helicopter';
 import HelicopterUnit from '@blue-might/app/lib/classes/unit/vehicle/Helicopter';
 import type { PowerInfo } from '@blue-might/app/lib/classes/unitModule/Movable';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
-import BaseButton from '../base/Button.vue';
-
-import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/moveable/Helicopter';
+import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/movable/Helicopter';
 import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
+
+import BaseButton from '../base/Button.vue';
+import type App from '../../lib/classes/App';
+import BmButton from '../Button.vue';
+import BmPanel from '../Panel.vue';
+import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
+import type Unit from '../../lib/classes/Unit';
 
 const $props = defineProps<{
   app: App;
 }>();
 
+const unitDamageValue = ref<number>(0);
 const tilt = ref<Vector3>(new Vector3(0, 0, 0));
 const maxTilt = ref<Vector3>(new Vector3(0, 0, 0));
 const gearsActive = ref(false);
@@ -123,7 +135,11 @@ const minGroundHeight = computed(
     position.value &&
     $props.app.modules.map
       .getMap()
-      .modules.ground.getHeightAt(position.value.x, position.value.z)
+      .modules.ground.getSurfaceHeightAt(
+        position.value.x,
+        position.value.z,
+        [unit.value].filter(Boolean) as Unit[]
+      )
 );
 const seaLevelDiff = computed(() => {
   if (position.value) {
@@ -257,6 +273,19 @@ async function setup() {
         );
       })
   );
+
+  subscription.add(
+    vehicle$
+      .pipe(
+        switchMap(
+          ({ current }) => current?.modules.damage.observables.damage$ ?? EMPTY
+        )
+      )
+      .subscribe(v => {
+        unitDamageValue.value = v;
+      })
+  );
+
   ready.value = true;
 }
 
@@ -272,6 +301,7 @@ const previewOptions = computed(() => {
   if (!unit.value) return null;
   return {
     type: unit.value.key,
+    faction: unit.value.modules.faction.getFaction(),
     action: 'idle'
   };
 });
@@ -280,13 +310,15 @@ function onClickUnitActive(e: Event) {
   (e.target as HTMLButtonElement).blur();
   const vehicle = player.value?.modules.vehicle;
   if (!vehicle) return;
+  const vehicleModule = vehicle
+    .getVehicle()!
+    .getModuleByType(MovableUnitModule);
 
-  if (vehicle.getVehicle()?.isTurnOn()) {
-    vehicle.getVehicle()?.turnOff();
+  if (vehicleModule.isTurnOn()) {
+    vehicleModule.turnOff();
   } else {
-    vehicle.getVehicle()?.turnOn();
+    vehicleModule.turnOn();
   }
-  // vehicle.getVehicle()?.modules.vehicle.
 }
 
 function onClickFocusUnit() {
@@ -294,16 +326,15 @@ function onClickFocusUnit() {
   if (unitFocused.value) {
     app.modules.unitFocus.unfocus();
   } else {
-    app.modules.unitFocus.focus(unit.value!);
+    app.modules.unitFocus.followFocus(unit.value!);
   }
 }
 
 function onClickGears() {
-  const helicopter = player.value?.modules.vehicle.getVehicle();
-  if (!(helicopter instanceof HelicopterUnit)) return;
+  const vehicleUnit = player.value?.modules.vehicle.getVehicle();
+  if (!(vehicleUnit instanceof HelicopterUnit)) return;
 
-  const helicopterModule =
-    helicopter.getModuleByType<HelicopterUnitModule>(HelicopterUnitModule);
+  const helicopterModule = vehicleUnit.modules.vehicle;
   if (!helicopterModule) return;
 
   helicopterModule.toggleGears();
@@ -432,6 +463,27 @@ function onClickGears() {
     &.active {
       color: var(--color-black);
       background-color: yellow;
+    }
+  }
+
+  & .damage {
+    position: relative;
+    width: 16px;
+    background-color: red;
+
+    &.damaged {
+      & div {
+        background-color: yellow;
+      }
+    }
+
+    & div {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100% * var(--value));
+      background-color: green;
     }
   }
 }

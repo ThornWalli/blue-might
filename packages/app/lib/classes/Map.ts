@@ -1,22 +1,30 @@
 import type { Texture } from 'three';
 import { Object3D } from 'three';
+import assetLoader from '@blue-might/app/services/assetLoader';
+import { Subscription } from 'rxjs';
+
 import type App from './App';
 import type { AnimationLoopValue } from './Renderer';
-import assetLoader from '@blue-might/app/services/assetLoader';
 import { LOADER } from './AssetLoader';
 import type Unit from './Unit';
-import CollisionUnitModule from './unitModule/Collision';
-import { Subscription } from 'rxjs';
 import UnitsModule from './mapModule/Units';
 import GroundModule from './mapModule/Ground';
 import LightModule from './mapModule/Light';
 import PathfindingModule from './mapModule/Pathfinding';
+import ShootModule from './mapModule/Shoot';
+import EffectModule from './mapModule/Effect';
+import { COLLISION_TYPE } from './unitModule/Collision';
+import FactionModule from './mapModule/Faction';
+import type Faction from './Faction';
 
 type MapModuleList = (
   | typeof UnitsModule
   | typeof GroundModule
   | typeof LightModule
   | typeof PathfindingModule
+  | typeof ShootModule
+  | typeof FactionModule
+  | typeof EffectModule
 )[];
 
 interface MapModules {
@@ -24,18 +32,29 @@ interface MapModules {
   ground: GroundModule;
   light: LightModule;
   pathfinding: PathfindingModule;
+  shoot: ShootModule;
+  faction: FactionModule;
+  effect: EffectModule;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface MapState {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-explicit-any
+export interface ModuleDebug extends Record<any, boolean> {}
+
 export default class Map<
   Modules extends MapModules = MapModules,
   ModuleList extends MapModuleList = MapModuleList
 > {
-  debug = true;
-  subscription = new Subscription();
+  //#region debug
+  private moduleDebug: Partial<ModuleDebug> = {};
+  setModuleDebug(debug: Partial<ModuleDebug>) {
+    this.moduleDebug = { ...this.moduleDebug, ...debug };
+  }
+  //#endregion
 
+  subscription = new Subscription();
   state: MapState = {};
   modules: Modules = {} as Modules;
   root: Object3D;
@@ -59,6 +78,8 @@ export default class Map<
     this.root.name = 'map';
 
     this.description = description;
+
+    this.moduleDebug = { ...this.moduleDebug, ...description.debug };
   }
 
   async setup() {
@@ -74,22 +95,25 @@ export default class Map<
 
   private async setupModules() {
     const moduleList = this.moduleList as ModuleList;
-    moduleList.push(UnitsModule, GroundModule, LightModule, PathfindingModule);
+    moduleList.push(
+      UnitsModule,
+      GroundModule,
+      LightModule,
+      PathfindingModule,
+      ShootModule,
+      FactionModule,
+      EffectModule
+    );
 
-    const moduleDebug = {
-      [PathfindingModule.TYPE]: false,
-      [GroundModule.TYPE]: false,
-      [LightModule.TYPE]: false,
-      [UnitsModule.TYPE]: false
-    };
-
-    const preparedModules = moduleList.map(ModuleClass => {
-      const moduleInstance = new ModuleClass(
-        this,
-        this.debug && (moduleDebug[ModuleClass.TYPE] ?? false)
-      );
-      return [ModuleClass.TYPE, moduleInstance];
-    });
+    const preparedModules = moduleList
+      .map(ModuleClass => {
+        const moduleInstance = new ModuleClass(
+          this,
+          this.moduleDebug && (this.moduleDebug[ModuleClass.TYPE] ?? false)
+        );
+        return ModuleClass.TYPES.map(type => [type, moduleInstance]);
+      })
+      .flat();
     this.modules = Object.fromEntries(preparedModules);
 
     await Promise.all(
@@ -124,7 +148,7 @@ export default class Map<
 
   destroy() {
     this.subscription.unsubscribe();
-    this.app.renderer.scene.remove(this.root);
+    this.app.getScene().remove(this.root);
     this.root.remove();
     Object.values(this.modules).forEach(module => module.destroy());
   }
@@ -148,8 +172,8 @@ export default class Map<
   }
 
   checkCollision(unit: Unit) {
-    const cm1 = getCollisionModule(unit);
-    if (!cm1) return false;
+    const cm1 = unit.modules.collision;
+    if (!cm1) return COLLISION_TYPE.NONE;
 
     cm1.refreshWorldOBB();
     cm1.refreshDebugHelper();
@@ -160,22 +184,23 @@ export default class Map<
       const target = units[i]!;
       if (target === unit) continue; // Verwende === statt .equal()
 
-      const cm2 = getCollisionModule(target);
+      const cm2 = target.modules.collision;
       if (!cm2) continue;
 
       cm2.refreshWorldOBB();
       cm2.refreshDebugHelper(); // Nur für debug, sonst weglassen
 
-      if (cm1.worldOBB.intersectsOBB(cm2.worldOBB)) {
-        return true;
+      if (cm1.getWorldOBB().intersectsOBB(cm2.getWorldOBB())) {
+        return cm2.getCollisionType();
       }
     }
 
-    return false;
+    return COLLISION_TYPE.NONE;
   }
 }
 
 export interface MapDescription {
+  debug?: Partial<ModuleDebug>;
   name: string;
   textures: {
     backgroundTexture: string;
@@ -183,10 +208,5 @@ export interface MapDescription {
     heightMap: string;
   };
   units: Unit[];
-}
-
-function getCollisionModule(unit: Unit): CollisionUnitModule | null {
-  const cm = unit.getModule<CollisionUnitModule>(CollisionUnitModule.TYPE);
-  if (!cm) return null;
-  return cm;
+  factions: Faction[];
 }

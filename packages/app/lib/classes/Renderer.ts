@@ -1,7 +1,6 @@
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import type { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-
 import { Observable, ReplaySubject, fromEvent } from 'rxjs';
 import type { Vector2, Object3D } from 'three';
 import {
@@ -13,13 +12,16 @@ import {
   NeutralToneMapping,
   Color,
   PCFSoftShadowMap,
-  Scene
+  Scene,
+  Fog
 } from 'three';
 
 import IntersectionRendererModule from './rendererModule/Intersection';
 import DebugRendererModule from './rendererModule/Debug';
 import CameraRendererModule from './rendererModule/Camera';
 import ControlsRendererModule from './rendererModule/Controls';
+
+import '../utils/raycast';
 
 export type RendererModuleList = (
   | typeof CameraRendererModule
@@ -120,10 +122,12 @@ export default class Renderer<
     this.pixelated = options.pixelated ?? false;
 
     //#region Modules
-    const preparedModules = modules.map(ModuleClass => {
-      const moduleInstance = new ModuleClass(this, {});
-      return [ModuleClass.TYPE, moduleInstance];
-    });
+    const preparedModules = modules
+      .map(ModuleClass => {
+        const moduleInstance = new ModuleClass(this, {});
+        return ModuleClass.TYPES.map(type => [type, moduleInstance]);
+      })
+      .flat();
     this.modules = Object.fromEntries(preparedModules);
     //#endregion
   }
@@ -221,6 +225,11 @@ export default class Renderer<
   setupScene(color: Color = new Color(0x000000)) {
     const scene = new Scene();
     scene.background = color;
+    scene.fog = new Fog(color, 30, 30.001);
+
+    const cam = this.modules.camera.getCamera();
+    cam.far = 30;
+    cam.updateProjectionMatrix();
     this.scene = scene;
   }
 

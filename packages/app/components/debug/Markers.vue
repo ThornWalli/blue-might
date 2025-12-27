@@ -28,10 +28,10 @@
 
 <script lang="ts" setup>
 import type { PositionMarker } from '@blue-might/app/lib/classes/appModule/Debug';
-import type App from '../../lib/classes/App';
 import { onMounted, ref } from 'vue';
 import { merge, Subscription } from 'rxjs';
 
+import type App from '../../lib/classes/App';
 import BmButton from '../Button.vue';
 import BmDetails from '../Details.vue';
 

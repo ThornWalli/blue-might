@@ -1,8 +1,3 @@
-import AppModule, {
-  type AppModuleObservables,
-  type AppModuleState
-} from '../AppModule';
-import type App from '../App';
 import type { Observable } from 'rxjs';
 import {
   ReplaySubject,
@@ -20,6 +15,12 @@ import {
   Object3D,
   Vector3
 } from 'three';
+
+import type App from '../App';
+import AppModule, {
+  type AppModuleObservables,
+  type AppModuleState
+} from '../AppModule';
 import type Map from '../Map';
 import { disposeObject3D } from '../../utils/object';
 
@@ -99,7 +100,7 @@ export default class DebugAppModule extends AppModule<State, Observables> {
     mesh.position.y = size / 2;
     const obj = new Object3D();
     obj.add(mesh);
-    this.app.renderer.scene.add(obj);
+    this.app.getScene().add(obj);
     this.helper[type] = obj;
   }
 
@@ -368,7 +369,7 @@ export default class DebugAppModule extends AppModule<State, Observables> {
 
   private refreshMarkerObjects(map: Map, markers: PositionMarker[]) {
     this.positionMarkerObjects.forEach(obj => {
-      this.app.renderer.scene.remove(obj);
+      this.app.getScene().remove(obj);
       obj.remove();
     });
     this.positionMarkerObjects = [];
@@ -379,7 +380,7 @@ export default class DebugAppModule extends AppModule<State, Observables> {
       });
       const y = map.modules.ground.getHeightAt(position.x, position.y);
       marker.position.set(position.x, y, position.y);
-      this.app.renderer.scene.add(marker);
+      this.app.getScene().add(marker);
       this.positionMarkerObjects.push(marker);
     });
   }

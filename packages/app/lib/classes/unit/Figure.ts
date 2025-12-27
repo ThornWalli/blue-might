@@ -1,24 +1,23 @@
 import type { UnitConstructorOptions, UnitOptions } from '../Unit';
-import FigureUnitModule from '../unitModule/moveable/Figure';
-import CollisionUnitModule from '../unitModule/Collision';
+import FigureUnitModule from '../unitModule/movable/Figure';
+import PatrolUnitModule from '../unitModule/Patrol';
+import { COLLISION_TYPE } from '../unitModule/Collision';
+
 import MovableUnit, {
   type MovableUnitModuleList,
   type MovableUnitModules
 } from './Movable';
-import PatrolUnitModule from '../unitModule/Patrol';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface FigureUnitOptions extends UnitOptions {}
 
 export type FigureUnitModules = MovableUnitModules & {
-  figure: FigureUnitModule;
-  collision: CollisionUnitModule;
+  movable: FigureUnitModule;
   patrol: PatrolUnitModule;
 };
 
 export type FigureUnitModuleList = (
   | typeof FigureUnitModule
-  | typeof CollisionUnitModule
   | typeof PatrolUnitModule
 )[] &
   MovableUnitModuleList;
@@ -31,7 +30,7 @@ export default class FigureUnit<
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []
   ) {
-    moduleList.push(CollisionUnitModule, PatrolUnitModule);
+    moduleList.push(PatrolUnitModule);
     if (
       !(moduleList as ModuleList).find(
         ({ TYPE }) => TYPE === FigureUnitModule.TYPE
@@ -45,7 +44,9 @@ export default class FigureUnit<
         moduleOptions: {
           ...options.moduleOptions,
           collision: {
-            disabled: true
+            disabled: true,
+            type: COLLISION_TYPE.SOFT,
+            ...options.moduleOptions?.collision
           }
         }
       },

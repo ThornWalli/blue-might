@@ -1,13 +1,27 @@
 import { BufferGeometry, Line, LineBasicMaterial, Vector3 } from 'three';
+import { Subject } from 'rxjs';
+
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
   type UnitModuleState
 } from '../UnitModule';
 import type Unit from '../Unit';
-import { Subject } from 'rxjs';
 import { disposeObject3D } from '../../utils/object';
+
 import type PathfindingUnitModule from './Pathfinding';
+
+declare module '../Unit' {
+  interface ModuleStates {
+    patrol: Partial<PatrolUnitModuleState>;
+  }
+  interface ModuleOptions {
+    patrol: Partial<PatrolUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    patrol: boolean;
+  }
+}
 
 interface Observables extends UnitModuleObservables {
   start$: Subject<void>;
@@ -17,22 +31,28 @@ interface Observables extends UnitModuleObservables {
   abort$: Subject<void>;
 }
 
-interface Options extends UnitModuleOptions {
+export interface PatrolUnitModuleOptions extends UnitModuleOptions {
   path: [number, number][];
 }
 
-interface State extends UnitModuleState {
+export interface PatrolUnitModuleState extends UnitModuleState {
   active: boolean;
 }
 
 export default class PatrolUnitModule extends UnitModule<
-  Options,
-  State,
+  PatrolUnitModuleOptions,
+  PatrolUnitModuleState,
   Observables
 > {
+  static override PREVIEW = false;
   static override TYPE = 'patrol';
 
-  constructor(unit: Unit, options: Options, state: State, debug: boolean) {
+  constructor(
+    unit: Unit,
+    options: PatrolUnitModuleOptions,
+    state: PatrolUnitModuleState,
+    debug: boolean
+  ) {
     super(
       unit,
       { ...options, path: options.path ?? [] },
@@ -51,6 +71,12 @@ export default class PatrolUnitModule extends UnitModule<
 
   override async afterSetup() {
     await super.afterSetup();
+
+    this.subscription.add(
+      this.getUnit().modules.damage.observables.destroyed$.subscribe(() => {
+        this.stopPatrol();
+      })
+    );
 
     if (import.meta.hot) {
       import.meta.hot.dispose(() => {
@@ -126,13 +152,19 @@ export default class PatrolUnitModule extends UnitModule<
     pathfinding: PathfindingUnitModule
   ) {
     if (!this.state.active || index >= worldPath.length) {
-      // Ende der Patrol oder Abbruch
       return;
+    }
+
+    let nextIndex = index;
+    if (nextIndex >= worldPath.length) {
+      nextIndex = 0;
+      this.observables.loop$.next();
     }
 
     const point = worldPath[index]!;
     try {
       if (!(await pathfinding.move(point))) {
+        this.stopPatrol();
         return;
       }
     } catch (error) {
@@ -154,7 +186,7 @@ export default class PatrolUnitModule extends UnitModule<
   //#region debug
   private debugLine: Line | null = null;
   private setupDebug() {
-    const scene = this.getUnit().getMap()?.app.renderer.scene;
+    const scene = this.getUnit().getMap()?.app.getScene();
     let worldPath = this.getWorldPath();
     worldPath = [...worldPath, worldPath[0]!];
 

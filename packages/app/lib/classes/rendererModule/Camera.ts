@@ -1,11 +1,12 @@
+import type { Quaternion } from 'three';
+import { OrthographicCamera, PerspectiveCamera, Vector3 } from 'three';
+import { ReplaySubject } from 'rxjs';
+
+import type Renderer from '../Renderer';
 import RendererModule, {
   type RendererModuleObservables,
   type RendererModuleState
 } from '../RendererModule';
-import type Renderer from '../Renderer';
-import type { Quaternion } from 'three';
-import { OrthographicCamera, PerspectiveCamera, Vector3 } from 'three';
-import { ReplaySubject } from 'rxjs';
 
 export interface Observables extends RendererModuleObservables {
   camera$: ReplaySubject<PerspectiveCamera>;
@@ -53,7 +54,7 @@ export default class CameraRendererModule extends RendererModule<
     if (!controls) return;
     if (!this.camera) return;
     this.camera.zoom = (controls.object as PerspectiveCamera)?.zoom || 1;
-    console.log('updateCamera', options);
+
     if (options) {
       const { position, quaternion } = options;
       let { lerpFactor } = options;

@@ -3,17 +3,29 @@
     v-if="unit && ready"
     class="bm-panel-unit-preview"
     :title="panelTitle">
-    <div :key="unit.key" class="preview">
-      <div>
-        <bm-object-preview-unit
-          v-if="previewOptions"
-          :app="app"
-          :ratio="1"
-          :size="null"
-          :model-value="previewOptions" />
+    <div>
+      <div
+        class="damage"
+        :class="{
+          demolished: unitDamageValue >= 1,
+          damaged: unitDamageValue >= 0.5
+        }"
+        :style="{
+          '--value': 1 - unitDamageValue
+        }">
+        <div></div>
+      </div>
+      <div :key="unit.key" class="preview">
+        <div>
+          <bm-object-preview-unit
+            v-if="previewOptions"
+            :app="app"
+            :ratio="1"
+            :size="null"
+            :model-value="previewOptions" />
+        </div>
       </div>
     </div>
-
     <p>
       <span>Pos.:</span>
       {{ position?.round().toArray().join(' / ') }}<br />
@@ -26,21 +38,24 @@
 </template>
 
 <script lang="ts" setup>
-import type Unit from '../../lib/classes/Unit';
-import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
-import BmPanel from '../Panel.vue';
-import type App from '../../lib/classes/App';
 import { EMPTY, Subscription, switchMap } from 'rxjs';
 import type { Vector3 } from 'three';
-import BmButton from '../Button.vue';
-import MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
+import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
+import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
+
+import BmButton from '../Button.vue';
+import type App from '../../lib/classes/App';
+import BmPanel from '../Panel.vue';
+import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
+import type Unit from '../../lib/classes/Unit';
 
 const $props = defineProps<{
   app: App;
 }>();
 
+const unitDamageValue = ref<number>(0);
 const unit = ref<Raw<Unit> | null>(null);
 
 const player = computed(() =>
@@ -65,14 +80,18 @@ async function setup() {
 
   subscription.add(
     app.modules.selection.observables.selectUnit$
-      .pipe(
-        switchMap(unit => {
-          if (!unit) return EMPTY;
-          return unit.observables.position$;
-        })
-      )
+      .pipe(switchMap(unit => unit?.observables.position$ ?? EMPTY))
       .subscribe(p => {
         position.value = p.clone();
+      })
+  );
+  subscription.add(
+    app.modules.selection.observables.selectUnit$
+      .pipe(
+        switchMap(unit => unit?.modules.damage.observables.damage$ ?? EMPTY)
+      )
+      .subscribe(v => {
+        unitDamageValue.value = v;
       })
   );
 
@@ -91,6 +110,7 @@ const previewOptions = computed(() => {
   if (!unit.value) return null;
   return {
     type: unit.value.key,
+    faction: unit.value.modules.faction.getFaction(),
     action: 'idle'
   };
 });
@@ -105,7 +125,7 @@ const canUseVehicle = computed(() => {
 function onClickUseVehicle() {
   const u = unit.value;
   if (!u) return;
-  if (u instanceof MovableUnit) {
+  if (u.hasModuleType(MovableUnitModule)) {
     const app = $props.app;
     const player = app.modules.player.getCurrentPlayer();
 
@@ -164,6 +184,34 @@ function onClickFocusUnit() {
     flex-direction: row;
     gap: 10px;
     justify-content: center;
+  }
+}
+
+:deep(.content) {
+  & > div:first-child {
+    display: flex;
+    gap: var(--bm-spacing-small);
+  }
+}
+
+.damage {
+  position: relative;
+  width: 16px;
+  background-color: red;
+
+  &.damaged {
+    & div {
+      background-color: yellow;
+    }
+  }
+
+  & div {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: calc(100% * var(--value));
+    background-color: green;
   }
 }
 </style>

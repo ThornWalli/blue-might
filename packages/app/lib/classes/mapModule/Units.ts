@@ -1,16 +1,24 @@
+import { Subject, debounceTime, distinctUntilChanged, map, merge } from 'rxjs';
+import type { Object3D } from 'three';
+import { Group, Mesh, SkinnedMesh } from 'three';
+
 import MapModule, {
   type MapModuleObservables,
   type MapModuleState
 } from '../MapModule';
 import type Unit from '../Unit';
 import UnitChunkManager from '../UnitChunkManager';
-import { Subject, debounceTime, distinctUntilChanged, map, merge } from 'rxjs';
 import type { AnimationLoopValue } from '../Renderer';
 import type Map from '../Map';
-import type { Object3D } from 'three';
-import { Group, Mesh, SkinnedMesh } from 'three';
 import type { IntersectionListener } from '../rendererModule/Intersection';
 import { OBJECT_USER_DATA } from '../../utils/object';
+import BuildingUnit from '../unit/Building';
+
+declare module '../Map' {
+  interface ModuleDebug {
+    units: boolean;
+  }
+}
 
 interface Observables extends MapModuleObservables {
   addUnit$: Subject<Unit>;
@@ -74,7 +82,6 @@ export default class UnitsModule extends MapModule<State, Observables> {
       )
         .pipe(debounceTime(200))
         .subscribe(() => {
-          console.log('Updating unit visibility...');
           this.state.visibleUnits = Array.from(
             this.chunkManager.updateVisibility(
               this.map.app.renderer.modules.camera.getCamera()
@@ -100,7 +107,48 @@ export default class UnitsModule extends MapModule<State, Observables> {
     this.listener.addMeshes(this.getUnits().map(unit => unit.root));
   }
 
+  async setupUnits(units: Unit[]) {
+    const { buildings, others } = units.reduce<{
+      buildings: BuildingUnit[];
+      others: Unit[];
+    }>(
+      (result, unit) => {
+        if (unit instanceof BuildingUnit) {
+          result.buildings.push(unit);
+        } else {
+          result.others.push(unit);
+        }
+        return result;
+      },
+      {
+        buildings: [],
+        others: []
+      }
+    );
+
+    await Promise.all(buildings.map(unit => this.add(unit)));
+    await Promise.all(others.map(unit => this.add(unit)));
+  }
+
   //#region methods
+
+  override update(v: AnimationLoopValue) {
+    // Sammle Units, die sichtbar sind oder animieren
+    const animatingUnits = this.getUnits().filter(
+      unit =>
+        unit.modules.animation?.isForceUpdate() ||
+        unit.modules.pathfinding?.isForceUpdate()
+    );
+    const unitsToUpdate = new Set([
+      ...this.state.visibleUnits,
+      ...animatingUnits
+    ]);
+
+    // Update nur relevante Units
+    unitsToUpdate.forEach(unit => unit.update(v));
+
+    // this.state.visibleUnits.forEach(unit => unit.update(v));
+  }
 
   getUnits() {
     return Array.from(this.state.units.values());
@@ -110,10 +158,6 @@ export default class UnitsModule extends MapModule<State, Observables> {
     return this.state.units.get(id);
   }
 
-  async setupUnits(units: Unit[]) {
-    await Promise.all(units.map(unit => this.add(unit)));
-  }
-
   async add(unit: Unit) {
     const context = {
       unit,
@@ -121,6 +165,13 @@ export default class UnitsModule extends MapModule<State, Observables> {
     };
     await unit.setup(context);
     await unit.afterSetup(context);
+
+    // const position = unit.getPosition().clone();
+    // // position.setY(
+    // //   this.map.modules.ground.getSurfaceHeightAt(position.x, position.z, [unit])
+    // // );
+    // unit.setPosition(position);
+    // console.log(unit, 'Position:', position);
 
     unit.subscription.add(
       unit.observables.position$
@@ -148,24 +199,6 @@ export default class UnitsModule extends MapModule<State, Observables> {
 
   getById<U extends Unit = Unit>(id: string): U | undefined {
     return this.state.units.get(id) as U | undefined;
-  }
-
-  override update(v: AnimationLoopValue) {
-    // Sammle Units, die sichtbar sind oder animieren
-    const animatingUnits = this.getUnits().filter(
-      unit =>
-        unit.modules.animation?.isForceUpdate() ||
-        unit.modules.pathfinding?.isForceUpdate()
-    );
-    const unitsToUpdate = new Set([
-      ...this.state.visibleUnits,
-      ...animatingUnits
-    ]);
-
-    // Update nur relevante Units
-    unitsToUpdate.forEach(unit => unit.update(v));
-
-    // this.state.visibleUnits.forEach(unit => unit.update(v));
   }
 
   //#endregion

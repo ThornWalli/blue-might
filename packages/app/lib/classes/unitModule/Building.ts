@@ -3,9 +3,24 @@ import UnitModule, {
   type UnitModuleState
 } from '../UnitModule';
 
-type Options = UnitModuleOptions;
-type State = UnitModuleState;
+declare module '../Unit' {
+  interface ModuleStates {
+    building: Partial<BuildingUnitModuleState>;
+  }
+  interface ModuleOptions {
+    building: Partial<BuildingUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    building: boolean;
+  }
+}
 
-export default class BuildingUnitModule extends UnitModule<Options, State> {
+export type BuildingUnitModuleOptions = UnitModuleOptions;
+export type BuildingUnitModuleState = UnitModuleState;
+
+export default class BuildingUnitModule extends UnitModule<
+  BuildingUnitModuleOptions,
+  BuildingUnitModuleState
+> {
   static override TYPE = 'building';
 }

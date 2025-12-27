@@ -1,5 +1,8 @@
 import { AnimationClip, type AnimationAction } from 'three';
 import { AnimationMixer, Object3D } from 'three';
+import type { Subject } from 'rxjs';
+import { ReplaySubject } from 'rxjs';
+
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
@@ -7,10 +10,20 @@ import UnitModule, {
   type UnitModuleState
 } from '../UnitModule';
 import { OBJECT_NAME } from '../../utils/object';
-import type { Subject } from 'rxjs';
-import { ReplaySubject } from 'rxjs';
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
+
+declare module '../Unit' {
+  interface ModuleStates {
+    animation: Partial<AnimationUnitModuleState>;
+  }
+  interface ModuleOptions {
+    animation: Partial<AnimationUnitModuleOptions>;
+  }
+  interface ModuleDebug {
+    animation: boolean;
+  }
+}
 
 type Actions = { [key: string]: AnimationAction };
 
@@ -22,23 +35,23 @@ interface Observables extends UnitModuleObservables {
   addAction$: Subject<AnimationAction>;
 }
 
-type Options = UnitModuleOptions;
+export type AnimationUnitModuleOptions = UnitModuleOptions;
 
-type State = UnitModuleState;
+export type AnimationUnitModuleState = UnitModuleState;
 
 export class AnimationUnitModule extends UnitModule<
-  Options,
-  State,
+  AnimationUnitModuleOptions,
+  AnimationUnitModuleState,
   Observables
 > {
   static override TYPE = 'animation';
 
-  mixer!: AnimationMixer;
-  actions: Actions = {};
-  animations: AnimationClip[] = [];
+  private mixer!: AnimationMixer;
+  private actions: Actions = {};
+  private animations: AnimationClip[] = [];
   private action: string | null;
-  private activeActionsCount = 0; // Counter für aktive Actions
-  isAnimating = false; // Public Property für externe Checks
+  private activeActionsCount = 0;
+  public isAnimating = false;
 
   override isForceUpdate() {
     return this.isAnimating;
@@ -48,7 +61,12 @@ export class AnimationUnitModule extends UnitModule<
     return this.action;
   }
 
-  constructor(unit: Unit, options: Options, state: State, debug: boolean) {
+  constructor(
+    unit: Unit,
+    options: AnimationUnitModuleOptions,
+    state: AnimationUnitModuleState,
+    debug: boolean
+  ) {
     super(unit, options, state, debug);
 
     this.action = null;
@@ -64,6 +82,15 @@ export class AnimationUnitModule extends UnitModule<
     });
     this.observables.addAction$ = new ReplaySubject<AnimationAction>(1);
     //#endregion
+  }
+
+  override destroy(): void {
+    super.destroy();
+    this.mixer?.stopAllAction();
+  }
+
+  override update({ delta }: AnimationLoopValue) {
+    this.mixer?.update(delta);
   }
 
   override async setupMesh(context: UnitModuleSetupContext) {
@@ -84,9 +111,8 @@ export class AnimationUnitModule extends UnitModule<
     return context.mesh;
   }
 
-  override destroy(): void {
-    super.destroy();
-    this.mixer?.stopAllAction();
+  getMixer() {
+    return this.mixer;
   }
 
   getAction(name: string) {
@@ -100,19 +126,6 @@ export class AnimationUnitModule extends UnitModule<
 
   setAnimations(animations: AnimationClip[]) {
     this.animations = animations;
-  }
-
-  override update({ delta }: AnimationLoopValue) {
-    this.mixer?.update(delta);
-  }
-
-  activeActions: Set<string> = new Set();
-
-  stopAction(name: string) {
-    const action = this.actions[name];
-    if (!action) return;
-
-    action.stop();
   }
 
   playAction(
@@ -175,5 +188,11 @@ export class AnimationUnitModule extends UnitModule<
       current: name,
       previous: from ?? null
     });
+  }
+  stopAction(name: string) {
+    const action = this.actions[name];
+    if (!action) return;
+
+    action.stop();
   }
 }
