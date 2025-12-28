@@ -12,7 +12,7 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "defu": "^6.1.4",
+    "defu": "6.1.4",
     "rxjs": "catalog:",
     "three": "catalog:"
   },
