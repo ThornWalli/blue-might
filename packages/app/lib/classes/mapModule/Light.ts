@@ -32,13 +32,12 @@ export default class LightModule extends MapModule<State, Observables> {
 
     light.castShadow = true;
 
-    light.shadow.mapSize.width = 2048;
-    light.shadow.mapSize.height = 2048;
-
-    // Optional: Shadow Radius = 0 für harte Kanten
+    light.shadow.mapSize.set(512, 512);
     light.shadow.radius = 0;
-    light.shadow.bias = -0.0005;
-    const ambientLight = new AmbientLight(0xffffff, 0.4);
+
+    light.shadow.bias = -0.0007;
+    light.shadow.normalBias = 0.03;
+    const ambientLight = new AmbientLight(0xcccccc, 0.08);
 
     this.lights = [light, ambientLight];
     this.map.addToRoot(...this.lights);
@@ -79,15 +78,20 @@ export default class LightModule extends MapModule<State, Observables> {
 
     // Licht relativ zur Kamera positionieren (z.B. über und hinter der Kamera)
     const light = this.lights[0] as DirectionalLight;
-    light.position.copy(camera.position).add(new Vector3(10, 20, 10)); // Offset zur Kamera
+    // light.position.copy(camera.position).add(new Vector3(10, 20, 10)); // Offset zur Kamera
 
-    // Shadow-Camera dynamisch anpassen (basierend auf Map-Größe)
-    const mapSize = this.map.modules.ground?.state.terrainWidth ?? 64; // Hole Map-Größe;
-    const halfSize = mapSize / 2;
-    light.shadow.camera.left = -halfSize;
-    light.shadow.camera.right = halfSize;
-    light.shadow.camera.top = halfSize;
-    light.shadow.camera.bottom = -halfSize;
+    light.position.copy(camera.position).add(new Vector3(6, 12, 6));
+    // light.position.copy(camera.position).add(new Vector3(8, 10, 2));
+
+    const SHADOW_RANGE = 12;
+
+    light.shadow.camera.left = -SHADOW_RANGE;
+    light.shadow.camera.right = SHADOW_RANGE;
+    light.shadow.camera.top = SHADOW_RANGE;
+    light.shadow.camera.bottom = -SHADOW_RANGE;
+
+    light.shadow.camera.near = 2;
+    light.shadow.camera.far = 40;
     light.shadow.camera.updateProjectionMatrix();
 
     // Target des Lichts auf das Controls-Target setzen

@@ -43,7 +43,7 @@ export enum ShadowQuality {
   OFF = 'off'
 }
 
-export const DEFAULT_SHADOW_QUALITY = ShadowQuality.MEDIUM;
+export const DEFAULT_SHADOW_QUALITY = ShadowQuality.LOW;
 
 export type AnimationLoopValue = {
   time: number;
@@ -64,7 +64,7 @@ export default class Renderer<
     rotation$: ReplaySubject<number>;
     controlsChange$: Observable<Event>;
   };
-  shadowQuality: ShadowQuality = ShadowQuality.LOW;
+  shadowQuality: ShadowQuality = DEFAULT_SHADOW_QUALITY;
 
   clock = new Clock();
   private renderer?: WebGLRenderer;
