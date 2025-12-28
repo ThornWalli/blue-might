@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.10](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.9...v1.0.0-beta.10) (2025-12-28)
+
+
+### Bug Fixes
+
+* **shoot:** optimize direction handling with temporary vectors ([7de6c90](https://github.com/ThornWalli/blue-might/commit/7de6c90c948062ebe9ed5ebfb7374be0be7d85d1))
+
 # [1.0.0-beta.9](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.8...v1.0.0-beta.9) (2025-12-28)
 
 
