@@ -6,6 +6,7 @@ import { projectiles } from './projectile';
 declare module '@blue-might/app/lib/types/weapon' {
   interface Weapon {
     DEFAULT: 'default';
+    TANK: 'tank';
   }
 }
 
@@ -22,8 +23,22 @@ export class Default extends Weapon {
   }
 }
 
+WEAPON.TANK = 'tank';
+export class Tank extends Weapon {
+  constructor() {
+    super({
+      id: WEAPON.TANK,
+      spreadAmount: 0,
+      speed: 0.6,
+      perSeconds: 5,
+      projectile: new projectiles[PROJECTILE_TYPE.TANK]()
+    });
+  }
+}
+
 const weapons = {
-  default: Default
+  default: Default,
+  tank: Tank
 };
 
 export { weapons };

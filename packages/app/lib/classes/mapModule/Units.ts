@@ -186,6 +186,10 @@ export default class UnitsModule extends MapModule<State, Observables> {
     this.state.units.set(unit.id, unit);
     this.root.add(unit.root);
 
+    await Promise.all(
+      Object.values(unit.modules).map(module => module.addToScene(this.root))
+    );
+
     this.listener!.addMeshes(getMeshes(unit.root));
 
     this.observables.addUnit$.next(unit);

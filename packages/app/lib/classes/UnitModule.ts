@@ -1,4 +1,4 @@
-import type { Object3D } from 'three';
+import type { Object3D, Scene } from 'three';
 import type { SubscriptionLike } from 'rxjs';
 
 import type Unit from './Unit';
@@ -45,6 +45,10 @@ export default abstract class UnitModule<
 
   setupMesh(context: UnitModuleSetupContext) {
     return Promise.resolve(context.mesh);
+  }
+
+  async addToScene(_scene: Scene) {
+    // implement scene ready logic
   }
 
   getOptions() {

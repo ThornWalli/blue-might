@@ -306,41 +306,43 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     const barrelObj = object.getObjectByName('weapon')!;
     const barrelTargetObj = object.getObjectByName('weapon_barrel_target')!;
 
-    const parent = barrelObj.parent!;
-    const barrelWrapperY = new Object3D();
-    const barrelWrapperX = new Object3D();
+    if (!this.preview) {
+      const parent = barrelObj.parent!;
+      const barrelWrapperY = new Object3D();
+      const barrelWrapperX = new Object3D();
 
-    const barrelTargetShoot = createBarrelTargetShoot();
-    barrelTargetObj.add(barrelTargetShoot);
+      const barrelTargetShoot = createBarrelTargetShoot();
+      barrelTargetObj.add(barrelTargetShoot);
 
-    barrelObj.position.set(0, 0.35, -2.8);
-    barrelWrapperX.position.set(0, -0.35, 2.8);
-    barrelWrapperX.add(barrelObj);
+      barrelObj.position.set(0, 0.35, -2.8);
+      barrelWrapperX.position.set(0, -0.35, 2.8);
+      barrelWrapperX.add(barrelObj);
 
-    if (this.debug) {
-      let axesHelper = new AxesHelper(1);
-      barrelWrapperX.add(axesHelper);
-      axesHelper = new AxesHelper(1);
-      barrelWrapperY.add(axesHelper);
-      axesHelper = new AxesHelper(1);
-      parent.add(axesHelper);
+      if (this.debug) {
+        let axesHelper = new AxesHelper(1);
+        barrelWrapperX.add(axesHelper);
+        axesHelper = new AxesHelper(1);
+        barrelWrapperY.add(axesHelper);
+        axesHelper = new AxesHelper(1);
+        parent.add(axesHelper);
+      }
+      barrelWrapperX.position.set(0, 0, 0);
+      barrelWrapperY.position.set(0, -0.35, 2.8);
+
+      barrelWrapperY.add(barrelWrapperX);
+
+      parent.add(barrelWrapperY);
+
+      // (window as any).barrelWrapper = barrelWrapper;
+
+      this.objects = {
+        barrels: [[barrelWrapperX, barrelWrapperY]],
+        barrelTargets: [barrelTargetObj],
+        barrelTargetShoots: [barrelTargetShoot]
+      };
+
+      this.modules.gun.registerBarrelTarget(barrelTargetObj);
     }
-    barrelWrapperX.position.set(0, 0, 0);
-    barrelWrapperY.position.set(0, -0.35, 2.8);
-
-    barrelWrapperY.add(barrelWrapperX);
-
-    parent.add(barrelWrapperY);
-
-    // (window as any).barrelWrapper = barrelWrapper;
-
-    this.objects = {
-      barrels: [[barrelWrapperX, barrelWrapperY]],
-      barrelTargets: [barrelTargetObj],
-      barrelTargetShoots: [barrelTargetShoot]
-    };
-
-    this.modules.gun.registerBarrelTarget(barrelTargetObj);
 
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
@@ -375,6 +377,7 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
   }
 
   override update(_v: AnimationLoopValue): void {
+    if (this.preview) return;
     super.update(_v);
     this.updateControls();
     this.updateObjects();
