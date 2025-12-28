@@ -58,8 +58,8 @@ export interface CollisionUnitModuleOptions extends UnitModuleOptions {
 
 export default class CollisionUnitModule<
   Options extends CollisionUnitModuleOptions = CollisionUnitModuleOptions,
-  Observables extends
-    CollisionUnitModuleObservables = CollisionUnitModuleObservables,
+  Observables extends CollisionUnitModuleObservables =
+    CollisionUnitModuleObservables,
   State extends CollisionUnitModuleState = CollisionUnitModuleState
 > extends UnitModule<Options, State, Observables> {
   static override TYPE = 'collision';

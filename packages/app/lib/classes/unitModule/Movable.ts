@@ -61,8 +61,8 @@ export interface MovableUnitModuleState extends UnitModuleState {
 export default class MovableUnitModule<
   Options extends MovableUnitModuleOptions = MovableUnitModuleOptions,
   State extends MovableUnitModuleState = MovableUnitModuleState,
-  Obervables extends
-    MovableUnitModuleObservables = MovableUnitModuleObservables,
+  Obervables extends MovableUnitModuleObservables =
+    MovableUnitModuleObservables,
   U extends MovableUnit = MovableUnit
 > extends UnitModule<Options, State, Obervables, U> {
   static override TYPE = 'movable';

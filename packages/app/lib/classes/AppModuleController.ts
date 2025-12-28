@@ -9,8 +9,8 @@ export type AppModuleControllerObservables = {
 };
 export default class AppModuleController<
   State extends AppModuleControllerState = AppModuleControllerState,
-  Observables extends
-    AppModuleControllerObservables = AppModuleControllerObservables
+  Observables extends AppModuleControllerObservables =
+    AppModuleControllerObservables
 > {
   id: string = crypto.randomUUID();
   setup() {

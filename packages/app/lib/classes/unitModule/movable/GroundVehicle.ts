@@ -28,8 +28,7 @@ declare module '../../Unit' {
 }
 export type GroundVehicleUnitModuleObservables = MovableUnitModuleObservables;
 
-export interface GroundVehicleUnitModuleOptions
-  extends MovableUnitModuleOptions {
+export interface GroundVehicleUnitModuleOptions extends MovableUnitModuleOptions {
   maxSpeed: number;
   acceleration: number;
   turnSpeed: number;
@@ -43,11 +42,11 @@ export interface GroundVehicleUnitModuleState extends MovableUnitModuleState {
 }
 
 export default class GroundVehicleUnitModule<
-  Options extends
-    GroundVehicleUnitModuleOptions = GroundVehicleUnitModuleOptions,
+  Options extends GroundVehicleUnitModuleOptions =
+    GroundVehicleUnitModuleOptions,
   State extends GroundVehicleUnitModuleState = GroundVehicleUnitModuleState,
-  Obervables extends
-    GroundVehicleUnitModuleObservables = GroundVehicleUnitModuleObservables,
+  Obervables extends GroundVehicleUnitModuleObservables =
+    GroundVehicleUnitModuleObservables,
   U extends MovableUnit = MovableUnit
 > extends MovableUnitModule<Options, State, Obervables, U> {
   private _rotDir = new Vector3();

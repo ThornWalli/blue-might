@@ -21,8 +21,7 @@ declare module '../../Unit' {
   }
 }
 
-export interface AirVehicleUnitModuleObservables
-  extends MovableUnitModuleObservables {
+export interface AirVehicleUnitModuleObservables extends MovableUnitModuleObservables {
   flightStatus$: ReplaySubject<FLIGHT_STATUS>;
   gearsActive$: ReplaySubject<boolean>;
   gearsOpened$: ReplaySubject<boolean>;
@@ -43,8 +42,8 @@ export const MAX_AIR_VEHICLE_ALTITUDE = 3;
 export default class AirVehicleUnitModule<
   Options extends AirVehicleUnitModuleOptions = AirVehicleUnitModuleOptions,
   State extends AirVehicleUnitModuleState = AirVehicleUnitModuleState,
-  Observable extends
-    AirVehicleUnitModuleObservables = AirVehicleUnitModuleObservables,
+  Observable extends AirVehicleUnitModuleObservables =
+    AirVehicleUnitModuleObservables,
   U extends MovableUnit = MovableUnit
 > extends MovableUnitModule<Options, State, Observable, U> {
   static override TYPE = 'airVehicle';
