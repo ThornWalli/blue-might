@@ -53,7 +53,6 @@ export default class ShootModule extends MapModule<State, Observables> {
   static override TYPE = 'shoot';
   private raycastFrameCounter = 0; // Neuer Zähler für Raycasting-Frequenz
 
-  private tempSphere = new Sphere();
   private raycaster = new Raycaster();
   override state: State = {};
   private dustCones: Object3D[] = [];
@@ -67,10 +66,13 @@ export default class ShootModule extends MapModule<State, Observables> {
    */
   readonly airResistance = 0.1;
 
-  // Temporäre Vektoren für die Physikberechnung, um .clone() zu reduzieren
-  private tempVector = new Vector3();
-  private tempGravity = new Vector3();
-  private tempDrag = new Vector3();
+  private temps = {
+    sphere: new Sphere(),
+    position: new Vector3(),
+    direction: new Vector3(),
+    gravity: new Vector3(),
+    drag: new Vector3()
+  };
 
   private dustConeOptions: DustConeOptions = {
     ditherThreshold: 0.1,
@@ -198,17 +200,28 @@ export default class ShootModule extends MapModule<State, Observables> {
     obj.position.copy(position);
 
     if (enableSpread) {
-      setSpread(this.tempVector, direction, spreadAmount);
+      setSpread(
+        this.temps.position,
+        this.temps.direction.copy(direction),
+        spreadAmount
+      );
     }
 
-    obj.lookAt(obj.position.clone().add(direction));
+    obj.lookAt(
+      this.tempLookAtPosition.copy(obj.position).add(this.temps.direction)
+    );
 
     // Aktiviere und konfiguriere das Projektil
     shootDesc.isActive = true;
     shootDesc.ignoredObjects = ignoredObjects ?? [];
     shootDesc.startPosition.copy(position);
-    shootDesc.velocity.copy(direction).multiplyScalar(projectile.speed);
+    shootDesc.velocity
+      .copy(this.temps.direction)
+      .multiplyScalar(projectile.speed);
   }
+
+  private tempLookAtVelocity: Vector3 = new Vector3();
+  private tempLookAtPosition: Vector3 = new Vector3();
   // eslint-disable-next-line complexity
   override update({ delta }: AnimationLoopValue): void {
     const raycaster = this.raycaster;
@@ -226,33 +239,35 @@ export default class ShootModule extends MapModule<State, Observables> {
       }
 
       // 2. Physikberechnung mit wiederverwendeten Vektoren
-      this.tempGravity.copy(this.gravity).multiplyScalar(delta);
-      shoot.velocity.add(this.tempGravity);
+      this.temps.gravity.copy(this.gravity).multiplyScalar(delta);
+      shoot.velocity.add(this.temps.gravity);
 
-      this.tempDrag
+      this.temps.drag
         .copy(shoot.velocity)
         .multiplyScalar(this.airResistance * delta);
-      shoot.velocity.sub(this.tempDrag);
+      shoot.velocity.sub(this.temps.drag);
 
       const obj = shoot.object;
-      const oldPosition = this.tempVector.copy(obj.position);
+      const oldPosition = this.temps.position.copy(obj.position);
 
-      const moveVector = this.tempGravity
+      const moveVector = this.temps.gravity
         .copy(shoot.velocity)
         .multiplyScalar(delta);
       obj.position.add(moveVector);
 
-      obj.lookAt(obj.position.clone().add(shoot.velocity));
+      obj.lookAt(
+        this.tempLookAtVelocity.copy(obj.position).add(shoot.velocity)
+      );
 
       let hit = false;
 
       // Bounding-Sphere-Prüfung (Radius z. B. 1.0 anpassen)
-      this.tempSphere.set(obj.position, 1.0);
+      this.temps.sphere.set(obj.position, 1.0);
       let needsRaycast = false;
       for (const target of allPossibleTargets) {
         if (
           target !== obj &&
-          this.tempSphere.intersectsSphere(
+          this.temps.sphere.intersectsSphere(
             //target.boundingSphere ||
             new Sphere(target.position, 2.0)
           )
@@ -263,7 +278,7 @@ export default class ShootModule extends MapModule<State, Observables> {
       }
 
       if (needsRaycast && this.raycastFrameCounter % 3 === 0) {
-        const direction = this.tempDrag.copy(shoot.velocity).normalize();
+        const direction = this.temps.drag.copy(shoot.velocity).normalize();
         raycaster.set(oldPosition, direction);
 
         // 3. Raycast gegen eine gefilterte Liste von Zielen
