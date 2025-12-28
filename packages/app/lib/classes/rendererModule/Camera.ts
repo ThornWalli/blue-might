@@ -1,6 +1,6 @@
-import type { Quaternion } from 'three';
+import type { Camera, Quaternion } from 'three';
 import { OrthographicCamera, PerspectiveCamera, Vector3 } from 'three';
-import { ReplaySubject } from 'rxjs';
+import { Subject } from 'rxjs';
 
 import type Renderer from '../Renderer';
 import RendererModule, {
@@ -8,8 +8,14 @@ import RendererModule, {
   type RendererModuleState
 } from '../RendererModule';
 
+export enum CameraType {
+  MAIN = 'main',
+  SECONDARY = 'secondary'
+}
+
 export interface Observables extends RendererModuleObservables {
-  camera$: ReplaySubject<PerspectiveCamera>;
+  addCamera$: Subject<Camera>;
+  removeCamera$: Subject<Camera>;
 }
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface State extends RendererModuleState {}
@@ -18,9 +24,12 @@ export default class CameraRendererModule extends RendererModule<
   State,
   Observables
 > {
+  getCameras() {
+    return Array.from(this.cameras.values());
+  }
   static override TYPE = 'camera';
 
-  camera?: PerspectiveCamera;
+  private cameras: Map<string, Camera> = new Map(); // Map mit Camera als Wert
 
   constructor(renderer: Renderer, state: State) {
     super(renderer, {
@@ -28,12 +37,17 @@ export default class CameraRendererModule extends RendererModule<
     });
 
     //#region observables
-    this.observables.camera$ = new ReplaySubject<PerspectiveCamera>(1);
+    this.observables.addCamera$ = new Subject<Camera>();
+    this.observables.removeCamera$ = new Subject<Camera>();
     //#endregion
   }
 
+  getCamera<C extends Camera = Camera>(type: CameraType = CameraType.MAIN) {
+    return this.cameras.get(type) as C;
+  }
+
   override async setup() {
-    const dimension = this.renderer.dimension;
+    const dimension = this.renderer.getDimension();
     const camera = new PerspectiveCamera(
       60, // FOV reduziert von 75 auf 60 für bessere Sicht auf Details
       dimension.x / dimension.y,
@@ -41,7 +55,7 @@ export default class CameraRendererModule extends RendererModule<
       2000 // far plane
     );
 
-    this.camera = camera;
+    this.addCamera(CameraType.MAIN, camera);
     this.updateCamera();
   }
 
@@ -52,8 +66,11 @@ export default class CameraRendererModule extends RendererModule<
   }) {
     const { controls } = this.renderer.modules.controls;
     if (!controls) return;
-    if (!this.camera) return;
-    this.camera.zoom = (controls.object as PerspectiveCamera)?.zoom || 1;
+
+    const camera = this.getCamera<PerspectiveCamera>();
+
+    if (!camera) return;
+    camera.zoom = (controls.object as PerspectiveCamera)?.zoom || 1;
 
     if (options) {
       const { position, quaternion } = options;
@@ -66,35 +83,35 @@ export default class CameraRendererModule extends RendererModule<
         .clone()
         .add(cameraOffset.clone().applyQuaternion(quaternion));
 
-      this.camera.position.lerp(idealPosition, lerpFactor);
-      this.camera.lookAt(position);
+      camera.position.lerp(idealPosition, lerpFactor);
+      camera.lookAt(position);
 
       controls.target.copy(position);
-      controls.update();
     } else {
       const distance = 10;
-      this.camera.position.set(distance, distance, distance);
-      this.camera.lookAt(0, 0, 0); // Explizit auf Zentrum schauen
+      camera.position.set(distance, distance, distance);
+      camera.lookAt(0, 0, 0); // Explizit auf Zentrum schauen
 
       controls.target.set(0, 0, 0); // Target der Controls setzen
-      controls.update();
     }
+    controls.update();
   }
 
-  getCamera() {
-    if (!this.camera) {
-      throw new Error('Camera not initialized');
-    }
-    return this.camera;
+  addCamera(type: CameraType, camera: PerspectiveCamera) {
+    this.cameras.set(type, camera);
+    this.observables.addCamera$.next(camera);
   }
 
-  setCamera(camera: PerspectiveCamera) {
-    this.camera = camera;
-    this.observables.camera$.next(camera);
+  removeCamera(type: CameraType) {
+    const camera = this.cameras.get(type);
+    if (camera) {
+      this.cameras.delete(type);
+      this.observables.removeCamera$.next(camera);
+    }
   }
 
   resize() {
-    const camera = this.camera;
+    const camera = this.getCamera();
     if (camera instanceof OrthographicCamera) {
       camera.left = -this.cameraZoom * this.aspectRatio;
       camera.right = this.cameraZoom * this.aspectRatio;
@@ -124,6 +141,7 @@ export default class CameraRendererModule extends RendererModule<
   }
 
   get aspectRatio() {
-    return this.renderer.dimension.x / this.renderer.dimension.y;
+    const dimension = this.renderer.getDimension();
+    return dimension.x / dimension.y;
   }
 }

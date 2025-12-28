@@ -13,7 +13,7 @@ import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import type MovableUnit from '../unit/Movable';
 
 import FigureUnitModule from './movable/Figure';
-import HelicopterUnitModule from './movable/Helicopter';
+import HelicopterUnitModule from './movable/airVehicle/Helicopter';
 import GroundVehicleUnitModule from './movable/GroundVehicle';
 
 declare module '../Unit' {

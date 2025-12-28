@@ -52,14 +52,12 @@ const map: Partial<MapDescription> = {
       moduleDebug: {
         attack: false,
         pathfinding: false,
-        patrol: false
+        patrol: false,
+        gun: false
       },
       moduleOptions: {
         patrol: {
           path: [
-            // [2.83, 4.5],
-            // [-2.83, 4.5]
-
             [4.83, 5.17],
             [-4.5, 5.17],
             [-4.17, -1.5],

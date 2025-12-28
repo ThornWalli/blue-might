@@ -290,13 +290,7 @@ export default class Turret_1 extends BuildingUnit<
         console.log('Ballistik nicht möglich, verwende direkte Berechnung');
         const targetYaw = Math.atan2(delta.x, delta.z);
         const targetPitch = -Math.atan2(delta.y, horizontalDistance);
-        // const isYawInRange =
-        //   !this.options.minMaxHeadAngle ||
-        //   (targetYaw >= this.options.minMaxHeadAngle[0] &&
-        //     targetYaw <= this.options.minMaxHeadAngle[1]);
-        // const isPitchInRange =
-        //   targetPitch >= this.options.minMaxBarrelAngle[0] &&
-        //   targetPitch <= this.options.minMaxBarrelAngle[1];
+
         const isYawInRange =
           !this.options.minAngle ||
           (targetYaw >= this.options.minAngle.y &&
@@ -304,6 +298,7 @@ export default class Turret_1 extends BuildingUnit<
         const isPitchInRange =
           targetPitch >= this.options.minAngle.x &&
           targetPitch <= this.options.maxAngle.x;
+
         if (isYawInRange && isPitchInRange && horizontalDistance >= 0.96) {
           this.state.weaponTargetRotation.set(targetYaw, targetPitch);
           this.objects.head.rotation.y = lerp(
@@ -318,6 +313,7 @@ export default class Turret_1 extends BuildingUnit<
           );
           return true;
         }
+
         return false;
       }
 
@@ -341,6 +337,7 @@ export default class Turret_1 extends BuildingUnit<
       // const isPitchInRange =
       //   elevation >= this.options.minMaxBarrelAngle[0] &&
       //   elevation <= this.options.minMaxBarrelAngle[1];
+
       const isYawInRange =
         !this.options.minAngle ||
         (targetYaw >= this.options.minAngle.y &&

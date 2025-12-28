@@ -60,9 +60,20 @@
         <div></div>
       </div>
     </div>
-    <bm-button :disabled="!isVehicle" @click="onClickUnitActive">
-      {{ unitActive ? 'Vehicle Off' : 'Vehicle On' }}
-    </bm-button>
+    <div class="controls">
+      <bm-button
+        :class="{ active: autoAimActive }"
+        :disabled="!isVehicle"
+        @click="onClickAimActive">
+        AIM
+      </bm-button>
+      <bm-button
+        :class="{ active: unitActive }"
+        :disabled="!isVehicle"
+        @click="onClickUnitActive">
+        Power
+      </bm-button>
+    </div>
     <bm-button
       :icon="unitFocused ? ICON.UNLOCKED : ICON.LOCKED"
       @click="onClickFocusUnit">
@@ -97,12 +108,14 @@ import {
 import { Vector3 } from 'three';
 import { ICON } from '@blue-might/app/utils/icons';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/Helicopter';
+import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
 import HelicopterUnit from '@blue-might/app/lib/classes/unit/vehicle/Helicopter';
 import type { PowerInfo } from '@blue-might/app/lib/classes/unitModule/Movable';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
-import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/movable/Helicopter';
+import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
 import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
+import AirVehicleUnit from '@blue-might/app/lib/classes/unit/AirVehicle';
+import GunUnitModule from '@blue-might/app/lib/classes/unitModule/Gun';
 
 import BaseButton from '../base/Button.vue';
 import type App from '../../lib/classes/App';
@@ -169,6 +182,7 @@ const powerInfo = ref<PowerInfo>({
   minPower: 0,
   idlePower: 0
 });
+const autoAimActive = ref<boolean>(false);
 const unitActive = ref<boolean>(false);
 
 async function setup() {
@@ -184,6 +198,13 @@ async function setup() {
       ({ current }) =>
         of(current?.getModuleByType<MovableUnitModule>(MovableUnitModule)) ??
         EMPTY
+    ),
+    filter(Boolean)
+  );
+  const gunModule$ = vehicle$.pipe(
+    filter(({ current }) => current?.hasModuleType(GunUnitModule) ?? false),
+    switchMap(
+      ({ current }) => of(current?.getModuleByType(GunUnitModule)) ?? EMPTY
     ),
     filter(Boolean)
   );
@@ -216,6 +237,14 @@ async function setup() {
       .pipe(switchMap(({ observables }) => observables.active$))
       .subscribe(v => {
         unitActive.value = v;
+      })
+  );
+
+  subscription.add(
+    gunModule$
+      .pipe(switchMap(({ observables }) => observables.autoAimActive$))
+      .subscribe(v => {
+        autoAimActive.value = v;
       })
   );
 
@@ -321,6 +350,18 @@ function onClickUnitActive(e: Event) {
   }
 }
 
+function onClickAimActive(e: Event) {
+  (e.target as HTMLButtonElement).blur();
+  autoAimActive.value = !autoAimActive.value;
+  const vehicle = player.value?.modules.vehicle;
+  if (!vehicle) return;
+  const gunModule = vehicle.getVehicle()!.getModuleByType(GunUnitModule);
+
+  if (gunModule) {
+    gunModule.setAutoAimActive(autoAimActive.value);
+  }
+}
+
 function onClickFocusUnit() {
   const app = $props.app;
   if (unitFocused.value) {
@@ -331,13 +372,14 @@ function onClickFocusUnit() {
 }
 
 function onClickGears() {
-  const vehicleUnit = player.value?.modules.vehicle.getVehicle();
-  if (!(vehicleUnit instanceof HelicopterUnit)) return;
+  const vehicleUnit =
+    player.value?.modules.vehicle.getVehicle() as AirVehicleUnit;
+  if (!(vehicleUnit instanceof AirVehicleUnit)) return;
 
-  const helicopterModule = vehicleUnit.modules.vehicle;
-  if (!helicopterModule) return;
+  const airVehicleModule = vehicleUnit.modules.airVehicle;
+  if (!airVehicleModule) return;
 
-  helicopterModule.toggleGears();
+  airVehicleModule.toggleGears();
 }
 </script>
 
@@ -492,6 +534,20 @@ function onClickGears() {
   & > div:first-child {
     display: flex;
     gap: var(--bm-spacing-small);
+  }
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+
+  & > * {
+    opacity: 0.6;
+    transition: opacity var(--bm-easing-duration-short) var(--bm-easing-base);
+
+    &.active {
+      opacity: 1;
+    }
   }
 }
 </style>

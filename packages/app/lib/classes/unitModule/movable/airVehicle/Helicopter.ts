@@ -1,18 +1,22 @@
 /* eslint-disable complexity */
 
 import { Vector3 } from 'three';
-import { EMPTY, filter, fromEvent, ReplaySubject, switchMap } from 'rxjs';
+import { EMPTY, filter, fromEvent, switchMap } from 'rxjs';
 
-import type { AnimationLoopValue } from '../../Renderer';
-import MovableUnitModule, {
-  type MovableUnitModuleObservables,
-  type MovableUnitModuleOptions,
-  type MovableUnitModuleState
-} from '../Movable';
-import type HelicopterUnit from '../../unit/vehicle/Helicopter';
-import { ControlAction, getDefaultControls } from '../../playerModule/Controls';
+import type { AnimationLoopValue } from '../../../Renderer';
+import type HelicopterUnit from '../../../unit/vehicle/Helicopter';
+import {
+  ControlAction,
+  getDefaultControls
+} from '../../../playerModule/Controls';
+import type {
+  AirVehicleUnitModuleObservables,
+  AirVehicleUnitModuleOptions,
+  AirVehicleUnitModuleState
+} from '../AirVehicle';
+import AirUnitModule from '../AirVehicle';
 
-declare module '../../Unit' {
+declare module '../../../Unit' {
   interface ModuleStates {
     helicopter: Partial<HelicopterUnitModuleState>;
   }
@@ -24,14 +28,10 @@ declare module '../../Unit' {
   }
 }
 
-interface HelicopterUnitObservables extends MovableUnitModuleObservables {
-  flightStatus$: ReplaySubject<FLIGHT_STATUS>;
-  gearsActive$: ReplaySubject<boolean>;
-  gearsOpened$: ReplaySubject<boolean>;
-}
+type HelicopterUnitObservables = AirVehicleUnitModuleObservables;
 
-export interface HelicopterUnitModuleOptions extends MovableUnitModuleOptions {
-  gearsHeight: number;
+export interface HelicopterUnitModuleOptions
+  extends AirVehicleUnitModuleOptions {
   maxSpeed: number;
   acceleration: number;
   yawSpeed: number; // how fast yaw rotates
@@ -52,17 +52,11 @@ export enum FLIGHT_STATUS {
   LANDING = 'landing'
 }
 
-export interface HelicopterUnitModuleState extends MovableUnitModuleState {
+export interface HelicopterUnitModuleState extends AirVehicleUnitModuleState {
   tilt: Vector3; // x=pitch, y=unused, z=roll (right-handed; adjust as needed)
   groundNormal: Vector3;
-  isAirborne?: boolean;
   yawVelocity?: number;
   targetAltitude?: number;
-  flightStatus: FLIGHT_STATUS;
-  //#region gears
-  gearsOpened: boolean;
-  gearsActive: boolean;
-  //#endregion
 }
 
 export default class HelicopterUnitModule<
@@ -70,7 +64,7 @@ export default class HelicopterUnitModule<
   State extends HelicopterUnitModuleState = HelicopterUnitModuleState,
   Obervables extends HelicopterUnitObservables = HelicopterUnitObservables,
   U extends HelicopterUnit = HelicopterUnit
-> extends MovableUnitModule<Options, State, Obervables, U> {
+> extends AirUnitModule<Options, State, Obervables, U> {
   static override TYPE = 'helicopter';
   private _right = new Vector3();
 
@@ -102,7 +96,6 @@ export default class HelicopterUnitModule<
       unit,
       {
         ...options,
-        gearsHeight: options.gearsHeight ?? 0,
         maxSpeed: options.maxSpeed ?? 10,
         acceleration: options.acceleration ?? 2,
         yawSpeed: options.yawSpeed ?? 4,
@@ -118,26 +111,13 @@ export default class HelicopterUnitModule<
         ...state,
         tilt: state.tilt ?? new Vector3(0, 0, 0),
         groundNormal: state.groundNormal ?? new Vector3(0, 1, 0),
-        isAirborne: state.isAirborne ?? false,
         yawVelocity: state.yawVelocity ?? 0,
-        gearsActive: false,
-        gearsOpened: state.gearsOpened ?? true,
-        flightStatus: FLIGHT_STATUS.LANDED,
         maxPower: state.maxPower ?? 4,
         minPower: state.minPower ?? 2,
         idlePower: state.idlePower ?? 0.2
       } as State,
       debug
     );
-
-    //#region observables
-    this.observables.gearsActive$ = new ReplaySubject<boolean>(1);
-    this.observables.gearsActive$.next(this.state.gearsActive);
-    this.observables.gearsOpened$ = new ReplaySubject<boolean>(1);
-    this.observables.gearsOpened$.next(this.state.gearsOpened);
-    this.observables.flightStatus$ = new ReplaySubject<FLIGHT_STATUS>(1);
-    this.observables.flightStatus$.next(this.state.flightStatus);
-    //#endregion
   }
 
   override async afterSetup() {
@@ -174,24 +154,6 @@ export default class HelicopterUnitModule<
     );
   }
 
-  toggleGears() {
-    if (!this.state.gearsActive) {
-      this.state.gearsActive = true;
-      this.observables.gearsActive$.next(this.state.gearsActive);
-      console.log('Toggling gears to', this.state.gearsActive);
-    }
-  }
-  getGearsOpened() {
-    return this.state.gearsOpened;
-  }
-
-  private setGearsOpened(opened: boolean) {
-    this.state.gearsActive = false;
-    this.state.gearsOpened = opened;
-    this.observables.gearsOpened$.next(this.state.gearsOpened);
-    this.observables.gearsActive$.next(this.state.gearsActive);
-  }
-
   override getMaxPower(): number {
     if (this.state.active) {
       if (
@@ -205,6 +167,7 @@ export default class HelicopterUnitModule<
     }
     return 0;
   }
+
   getMaxPitch() {
     // Wenn die Gears gerade animiert werden ODER ausgefahren sind, begrenze die Neigung stark.
     return this.state.gearsActive || this.state.gearsOpened ? 0.2 : 0.6;
@@ -240,10 +203,14 @@ export default class HelicopterUnitModule<
     const autoAltitude = this.options.autoAltitude;
     const autoLevelRate = this.options.autoLevelRate ?? 2;
     const currentPower = this.getCurrentPower();
+    const flightStatus = this.getFlightStatus();
 
-    const isLanded = this.getFlightStatus() === FLIGHT_STATUS.LANDED;
-    const isTakingOff = this.getFlightStatus() === FLIGHT_STATUS.TAKING_OFF;
+    const isLanded = flightStatus === FLIGHT_STATUS.LANDED;
+    const isTakingOff = flightStatus === FLIGHT_STATUS.TAKING_OFF;
+
     const canRollPitch = !isLanded && !isTakingOff;
+    const canYaw = !isLanded;
+
     const eps = 1e-4;
 
     const velocity = this.state.velocity;
@@ -275,18 +242,20 @@ export default class HelicopterUnitModule<
               ? 1
               : 0)
         : 0;
+
       // Yaw: invertiere, wenn deine Welt rechtsdrehend ist
-      const yawInput =
-        (typeof controls.rotateLeft === 'number'
-          ? controls.rotateLeft
-          : controls.rotateLeft
-            ? 1
-            : 0) -
-        (typeof controls.rotateRight === 'number'
-          ? controls.rotateRight
-          : controls.rotateRight
-            ? 1
-            : 0);
+      const yawInput = canYaw
+        ? (typeof controls.rotateLeft === 'number'
+            ? controls.rotateLeft
+            : controls.rotateLeft
+              ? 1
+              : 0) -
+          (typeof controls.rotateRight === 'number'
+            ? controls.rotateRight
+            : controls.rotateRight
+              ? 1
+              : 0)
+        : 0; // Setze yawInput auf 0, wenn nicht drehen erlaubt
 
       // Tilt integrate
       tilt.x += pitchInput * pitchPower * delta;
@@ -514,15 +483,5 @@ export default class HelicopterUnitModule<
 
   getTmpRight() {
     return this._right;
-  }
-
-  getFlightStatus() {
-    return this.state.flightStatus;
-  }
-
-  setFlightStatus(flightStatus: FLIGHT_STATUS) {
-    if (this.state.flightStatus === flightStatus) return;
-    this.state.flightStatus = flightStatus;
-    this.observables.flightStatus$.next(flightStatus);
   }
 }
