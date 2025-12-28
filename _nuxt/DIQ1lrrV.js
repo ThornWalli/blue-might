@@ -1,1 +1,0 @@
-import{m as n}from"./CaFADmBF.js";const e=new n({id:"blue-faction",name:"Blue Faction",colors:[21930,13421772]}),a=new n({id:"enemy-faction",name:"Enemy Faction",colors:[2117648,10530976]});export{e as b,a as e};
