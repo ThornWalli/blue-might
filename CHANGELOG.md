@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.8](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.7...v1.0.0-beta.8) (2025-12-28)
+
+
+### Bug Fixes
+
+* **renderer:** set default shadow quality to LOW and update shadow properties in LightModule ([b46211f](https://github.com/ThornWalli/blue-might/commit/b46211f5e4b59495e5723db6b8da023f78fe9061))
+
 # [1.0.0-beta.7](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.6...v1.0.0-beta.7) (2025-12-28)
 
 
