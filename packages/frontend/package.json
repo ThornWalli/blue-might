@@ -27,7 +27,7 @@
     "@nuxtjs/critters": "catalog:",
     "@nuxtjs/robots": "catalog:",
     "@nuxtjs/sitemap": "catalog:",
-    "@types/stats.js": "^0.17.4",
+    "@types/stats.js": "0.17.4",
     "dotenv-mono": "catalog:",
     "nuxt": "catalog:",
     "pathe": "catalog:",
