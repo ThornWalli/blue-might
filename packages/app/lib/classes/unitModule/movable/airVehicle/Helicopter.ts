@@ -30,8 +30,7 @@ declare module '../../../Unit' {
 
 type HelicopterUnitObservables = AirVehicleUnitModuleObservables;
 
-export interface HelicopterUnitModuleOptions
-  extends AirVehicleUnitModuleOptions {
+export interface HelicopterUnitModuleOptions extends AirVehicleUnitModuleOptions {
   maxSpeed: number;
   acceleration: number;
   yawSpeed: number; // how fast yaw rotates

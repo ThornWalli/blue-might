@@ -134,7 +134,6 @@ defineExpose({
 <style lang="postcss" scoped>
 .bm-renderer {
   &.pixelated {
-    image-rendering: optimizeSpeed;
     image-rendering: crisp-edges;
     image-rendering: pixelated;
   }

@@ -6,8 +6,10 @@ import type Renderer from '../Renderer';
 import RendererModule, { type RendererModuleState } from '../RendererModule';
 import { OBJECT_USER_DATA } from '../../utils/object';
 
-export interface Intersection
-  extends Pick<ThreeIntersection, 'point' | 'face' | 'faceIndex'> {
+export interface Intersection extends Pick<
+  ThreeIntersection,
+  'point' | 'face' | 'faceIndex'
+> {
   object: Object3D;
   originObject: Object3D;
 }

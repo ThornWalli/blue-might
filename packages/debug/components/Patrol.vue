@@ -36,7 +36,7 @@ const playerUnitId = 'tank-1';
 
 const config: Partial<AppConfig> = {
   debug: {
-    map: { pathfinding: true }
+    map: { pathfinding: false }
   }
 };
 
