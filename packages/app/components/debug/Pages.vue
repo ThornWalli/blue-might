@@ -1,23 +1,55 @@
 <template>
   <bm-details label="Pages" class="bm-debug-pages">
     <ul>
-      <li><nuxt-link href="/">Default</nuxt-link></li>
-      <li><nuxt-link href="/debug/shoot">Shoot</nuxt-link></li>
-      <li><nuxt-link href="/debug/patrol">Patrol</nuxt-link></li>
-      <li><nuxt-link href="/debug/helicopter">Helicopter</nuxt-link></li>
-      <li><nuxt-link href="/debug/pathfinding">Pathfinding</nuxt-link></li>
+      <li v-for="link in links" :key="link.title">
+        <nuxt-link :href="link.href">{{ link.title }}</nuxt-link>
+      </li>
     </ul>
   </bm-details>
 </template>
 
 <script lang="ts" setup>
 // import BmButton from '../Button.vue';
+import { ref } from 'vue';
+
 import BmDetails from '../Details.vue';
+
+const links = ref([
+  { title: 'Default', href: '/' },
+  { title: 'Shoot', href: '/debug/shoot' },
+  { title: 'Patrol', href: '/debug/patrol' },
+  { title: 'Helicopter', href: '/debug/helicopter' },
+  { title: 'Tank', href: '/debug/tank' },
+  { title: 'Pathfinding', href: '/debug/pathfinding' }
+]);
 </script>
 
 <style lang="postcss" scoped>
 a {
+  --color-background: var(--color-green-dark);
+  --color-background-hover: var(--color-green-mid);
+  --color-foreground: var(--color-white);
+
+  display: block;
+  padding: var(--bm-spacing-small) var(--bm-spacing-small);
   font-size: 12px;
-  color: currentColor;
+  color: var(--color-foreground);
+  text-decoration: none;
+  background: var(--color-background);
+
+  &:hover,
+  &.router-link-exact-active {
+    background: var(--color-background-hover);
+  }
+}
+
+ul {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--bm-spacing-small);
+
+  & li {
+    text-align: center;
+  }
 }
 </style>
