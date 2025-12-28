@@ -4,6 +4,7 @@
     class="bm-panel-player-unit"
     :title="panelTitle">
     <div>
+      <!-- altitude -->
       <div
         class="graph altitude"
         :class="{
@@ -17,9 +18,10 @@
         <div class="label" title="Altitude">A</div>
         <div>
           <div class="value"></div>
-          <div class="helper-min"></div>
+          <div class="min"></div>
         </div>
       </div>
+      <!-- power -->
       <div
         class="graph power"
         :class="{ ready: powerInfo.currentPower > powerInfo.minPower }"
@@ -31,43 +33,42 @@
         <div class="label">P</div>
         <div>
           <div class="value"></div>
-          <div class="helper-min"></div>
-          <div class="helper-idle"></div>
+          <div class="min"></div>
+          <div class="idle"></div>
         </div>
       </div>
+      <!-- speed -->
       <div
         class="graph speed"
         :style="{
-          '--tilt-x': tilt.x,
-          '--tilt-z': tilt.z,
-          '--max-tilt-x': maxTilt.x,
-          '--max-tilt-z': maxTilt.z,
           '--value': unitSpeed
         }">
         <div class="label">S</div>
         <div>
           <div class="value"></div>
-          <div class="helper-min"></div>
+          <div class="min"></div>
+        </div>
+      </div>
+      <div>
+        <div :key="unit.key" class="preview">
+          <div class="preview-inner">
+            <bm-object-preview-unit
+              v-if="previewOptions"
+              :app="app"
+              :ratio="1"
+              :size="null"
+              :model-value="previewOptions" />
+          </div>
+          <base-button
+            class="gears"
+            :class="{ active: unitGears.active, opened: unitGears.opened }"
+            @click="onClickGears">
+            Gears
+          </base-button>
         </div>
       </div>
 
-      <div :key="unit.key" class="preview">
-        <div>
-          <bm-object-preview-unit
-            v-if="previewOptions"
-            :app="app"
-            :ratio="1"
-            :size="null"
-            :model-value="previewOptions" />
-        </div>
-        <base-button
-          class="gears"
-          :class="{ active: unitGears.active, opened: unitGears.opened }"
-          @click="onClickGears">
-          Gears
-        </base-button>
-      </div>
-
+      <!-- damage -->
       <div
         class="graph damage"
         :class="{
@@ -83,6 +84,7 @@
         </div>
       </div>
     </div>
+
     <div class="controls">
       <bm-button
         :class="{ active: autoAimActive }"
@@ -120,6 +122,7 @@
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import {
   combineLatest,
+  concatMap,
   EMPTY,
   filter,
   map,
@@ -128,7 +131,7 @@ import {
   switchMap,
   timer
 } from 'rxjs';
-import { Vector3 } from 'three';
+import { Euler, Vector3 } from 'three';
 import { ICON } from '@blue-might/app/utils/icons';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
@@ -169,7 +172,8 @@ const unitGears = ref<{
   opened: false
 });
 
-const unitSpeed = ref<number>(0);
+const unitSpeed = ref<string>('0');
+const unitRotation = ref<Euler>(new Euler(0, 0, 0));
 
 const tilt = ref<Vector3>(new Vector3(0, 0, 0));
 const maxTilt = ref<Vector3>(new Vector3(0, 0, 0));
@@ -320,9 +324,21 @@ async function setup() {
       )
       .subscribe(
         vehicleModule =>
-          (unitSpeed.value = vehicleModule.state.velocity.length())
+          (unitSpeed.value = vehicleModule.state.velocity.length().toFixed(2))
       )
   );
+  subscription.add(
+    vehicle$
+      .pipe(
+        switchMap(({ current }) =>
+          current
+            ? timer(0, 100).pipe(concatMap(() => current.observables.rotation$))
+            : EMPTY
+        )
+      )
+      .subscribe(rotation => (unitRotation.value = rotation))
+  );
+
   subscription.add(
     vehicle$
       .pipe(
@@ -485,7 +501,7 @@ function onClickGears() {
     padding: var(--bm-spacing-medium) var(--bm-spacing-large);
     background-color: #000;
 
-    & > div:first-child {
+    & > .preview-inner {
       position: relative;
 
       &::before {
@@ -520,7 +536,7 @@ function onClickGears() {
   }
 
   & .altitude {
-    & .helper-min {
+    & .min {
       position: absolute;
       top: calc(100% - (50% + (-50% + var(--min) * 100%)));
       left: 0;
@@ -547,8 +563,8 @@ function onClickGears() {
   }
 
   & .power {
-    & .helper-min,
-    & .helper-idle {
+    & .min,
+    & .idle {
       position: absolute;
       top: calc(100% - (50% + (-50% + var(--min) * 100%)));
       left: 0;
@@ -557,7 +573,7 @@ function onClickGears() {
       transform: translateY(-50%);
     }
 
-    & .helper-idle {
+    & .idle {
       top: calc(100% - (50% + (-50% + var(--idle) * 100%)));
       border-top-style: dashed;
       opacity: 0.4;

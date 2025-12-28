@@ -63,9 +63,9 @@ function setup() {
     renderer.render($props.app.getScene(), camera);
     const gunModule = unit?.getModuleByType(GunUnitModule);
     if (gunModule) {
-      const sourceDirection = gunModule.getSourceDirections()[0];
-      const sourcePosition = gunModule.getSourcePositions()[0];
-      const barrelTarget = gunModule.getBarrelTargets()[0];
+      const [sourceDirection] = gunModule.getSourceDirections();
+      const [sourcePosition] = gunModule.getSourcePositions();
+      const [barrelTarget] = gunModule.getBarrelTargets();
       if (unit && sourceDirection && sourcePosition && barrelTarget) {
         const testt = new Vector3();
         barrelTarget.getWorldPosition(testt);

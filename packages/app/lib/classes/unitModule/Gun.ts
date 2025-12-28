@@ -1,5 +1,5 @@
 import type { Line, Object3D } from 'three';
-import { Vector2, Vector3 } from 'three';
+import { Vector3 } from 'three';
 import { ReplaySubject, Subject } from 'rxjs';
 
 import type Unit from '../Unit';
@@ -89,7 +89,6 @@ export default class GunUnitModule<
         sourcePositions: state.sourcePositions ?? [],
         sourceDirections: state.sourceDirections ?? [],
         barrelTargets: state.barrelTargets ?? [],
-        targetRotation: new Vector2(),
         autoAimActive: state.autoAimActive ?? false,
         autoAimFollowTarget: state.autoAimFollowTarget ?? false,
         autoAimAutoShoot: state.autoAimAutoShoot ?? true,
@@ -127,6 +126,12 @@ export default class GunUnitModule<
         });
       })
     );
+  }
+
+  override async addToScene() {
+    this.state.barrelTargets.forEach((barrel, index) => {
+      this.updateSourcePosition(index);
+    });
   }
 
   override destroy(): void {
@@ -232,6 +237,7 @@ export default class GunUnitModule<
     this.state.sourcePositions.push(new Vector3());
     this.state.sourceDirections.push(new Vector3(...DEFAULT_DIRECTION));
   }
+
   private getBarrelTargetbyIndex(index: number) {
     return this.state.barrelTargets.at(index) ?? null;
   }

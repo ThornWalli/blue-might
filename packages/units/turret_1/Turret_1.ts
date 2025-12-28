@@ -220,6 +220,7 @@ export default class Turret_1 extends BuildingUnit<
   }
 
   override update(_v: AnimationLoopValue): void {
+    if (this.preview) return;
     super.update(_v);
     this.updateControls();
     this.updateObjects();

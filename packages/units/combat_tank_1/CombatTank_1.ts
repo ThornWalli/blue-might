@@ -92,7 +92,7 @@ export default class CombatTank_1<
           gun: {
             autoAimFn: (options: AutoAimFnOptions) => this.autoAimFn(options),
             weapons: options.moduleOptions?.gun?.weapons ?? [
-              new weapons.default()
+              new weapons.tank()
             ],
             ...options.moduleOptions?.gun
           },
@@ -201,6 +201,7 @@ export default class CombatTank_1<
   }
 
   override update(_v: AnimationLoopValue): void {
+    if (this.preview) return;
     super.update(_v);
     this.updateControls();
     this.updateObjects();

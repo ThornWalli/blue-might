@@ -435,7 +435,7 @@ export default class HelicopterUnitModule<
 
       if (
         (this.state.isAirborne && position.y <= minY + 0.1) ||
-        (status === FLIGHT_STATUS.LANDED && position.y <= minY)
+        (status === FLIGHT_STATUS.LANDED && position.y < minY)
       ) {
         this.state.isAirborne = false;
         velocity.y = 0;

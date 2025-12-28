@@ -1,13 +1,11 @@
 import Projectile from '@blue-might/app/lib/classes/Projectile';
-import {
-  PROJECTILE_TYPE,
-  type ProjectileDescription
-} from '@blue-might/app/lib/types/weapon';
+import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 import type { Values } from '@blue-might/app/types';
 
 declare module '@blue-might/app/lib/types/weapon' {
   interface ProjectileTypes {
     DEFAULT: 'default';
+    TANK: 'tank';
   }
 }
 
@@ -20,18 +18,25 @@ export class Default extends Projectile {
       strength: 0.1
     });
   }
+}
 
-  toDescription(): ProjectileDescription {
-    return {
-      id: this.id,
-      speed: this.speed,
-      strength: this.strength
-    };
+PROJECTILE_TYPE.TANK = 'tank';
+export class Tank extends Projectile {
+  constructor() {
+    super({
+      id: PROJECTILE_TYPE.TANK,
+      speed: 20,
+      strength: 0.2
+    });
   }
 }
 
 export const glbMap = Object.freeze({
   [PROJECTILE_TYPE.DEFAULT]: () =>
+    import('./projectile/default/projectile_default.glb?url').then(
+      m => m.default ?? m
+    ),
+  [PROJECTILE_TYPE.TANK]: () =>
     import('./projectile/default/projectile_default.glb?url').then(
       m => m.default ?? m
     )
@@ -45,6 +50,10 @@ export const sfxMap = Object.freeze({
   [PROJECTILE_TYPE.DEFAULT]: () =>
     import('./projectile/default/projectile_default_sound.wav?url').then(
       m => m.default ?? m
+    ),
+  [PROJECTILE_TYPE.TANK]: () =>
+    import('./projectile/default/projectile_default_sound.wav?url').then(
+      m => m.default ?? m
     )
 });
 
@@ -52,9 +61,8 @@ export function getSfx(type: string | Values<typeof PROJECTILE_TYPE>) {
   return sfxMap[type as keyof typeof sfxMap]();
 }
 
-getSfx(PROJECTILE_TYPE.DEFAULT);
-
 const projectiles = Object.freeze({
-  [PROJECTILE_TYPE.DEFAULT]: Default
+  [PROJECTILE_TYPE.DEFAULT]: Default,
+  [PROJECTILE_TYPE.TANK]: Tank
 });
 export { projectiles };

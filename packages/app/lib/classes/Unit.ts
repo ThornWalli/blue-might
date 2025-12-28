@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ReplaySubject, Subscription } from 'rxjs';
-import { Euler, Quaternion, Vector3, type Object3D } from 'three';
-import { Group } from 'three';
+import type { Scene, Object3D } from 'three';
+import { Euler, Quaternion, Vector3, Group } from 'three';
 
 import { OBJECT_USER_DATA, setMainObjectRecursive } from '../utils/object';
 import type { UnitIdentifier } from '../types/unit';
@@ -68,6 +68,7 @@ export interface UnitConstructorOptions<
   moduleOptions?: Partial<ModuleOptions>;
   moduleStates?: Partial<ModuleStates>;
   moduleDebug?: Partial<ModuleDebug>;
+  visible?: boolean;
 }
 
 export interface UnitModules {
@@ -145,18 +146,26 @@ export default class Unit<
       options,
       moduleOptions,
       moduleStates,
-      moduleDebug
+      moduleDebug,
+      visible
     }: UnitConstructorOptions = {
       name: 'Unit'
     },
     moduleList: unknown[] = []
   ) {
+    this._position = position ?? new Vector3(0, 0, 0);
+    this._rotation = rotation ?? new Euler(0, 0, 0);
+    this._visible = visible ?? true;
+
     //#region observables
     this.observables.ready$ = new ReplaySubject<void>(1);
     this.observables.materialReady$ = new ReplaySubject<void>(1);
     this.observables.position$ = new ReplaySubject<Vector3>(1);
+    this.observables.position$.next(this._position.clone());
     this.observables.rotation$ = new ReplaySubject<Euler>(1);
+    this.observables.rotation$.next(this._rotation.clone());
     this.observables.visible$ = new ReplaySubject<boolean>(1);
+    this.observables.visible$.next(this._visible);
     //#endregion
 
     this.debug = debug ?? false;
@@ -166,9 +175,6 @@ export default class Unit<
 
     this.id = id || crypto.randomUUID();
     this.name = name;
-
-    this._position = position ?? new Vector3(0, 0, 0);
-    this._rotation = rotation ?? new Euler(0, 0, 0);
 
     this.lastPosition = this._position.clone();
 
@@ -303,6 +309,14 @@ export default class Unit<
     }
     this.setPosition(this._position!);
     // Override in subclasses
+  }
+
+  async addToScene(scene: Scene) {
+    scene.add(this.root);
+
+    for (const module of Object.values(this.modules)) {
+      await module.addToScene();
+    }
   }
 
   addToRoot(object: Object3D) {
@@ -573,9 +587,12 @@ export default class Unit<
   }
 
   //#region visibility
-  private visible: boolean = true;
-  setVisible(visible = this.visible && this.chunkVisible) {
-    if (this.visible === visible) return;
+  private _visible: boolean = true;
+  getVisible() {
+    return this._visible;
+  }
+  setVisible(visible = this._visible && this.chunkVisible) {
+    if (this._visible === visible) return;
     this.root.visible = visible;
     this.observables.visible$.next(visible);
   }
@@ -613,6 +630,8 @@ export default class Unit<
 
   setYaw(yaw: number) {
     const lastYaw = this._rotation.y;
+    if (lastYaw === yaw) return;
+
     this._rotation.y = yaw;
 
     if (this.checkCollision() >= COLLISION_TYPE.BLOCKED) {
