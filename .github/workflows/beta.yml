@@ -80,7 +80,7 @@ jobs:
           BASE_URL: /blue-might/
 
       - name: Archive Production Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: artifact
           path: ./packages/frontend/.output/public
@@ -95,7 +95,7 @@ jobs:
         node: [22]
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: artifact
           path: public

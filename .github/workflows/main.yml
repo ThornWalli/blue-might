@@ -93,7 +93,7 @@ jobs:
           WEBSITE_HOST: https://blue-might.lammpee.de
 
       - name: Archive Production Artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: artifact
           path: ./artifact
@@ -108,7 +108,7 @@ jobs:
         node: [22]
     steps:
       - name: Download Artifact
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: artifact
           path: ./
