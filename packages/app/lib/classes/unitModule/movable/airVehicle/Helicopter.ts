@@ -434,18 +434,6 @@ export default class HelicopterUnitModule<
         minY += this.options.gearsHeight;
       }
 
-      // if (position.y <= (minY ?? 0)) {
-      //   this.state.isAirborne = false;
-      //   velocity.y = 0;
-      //   position.y = minY ?? 0;
-
-      //   if (!this.lastPosition?.equals(position)) {
-      //     unit.setPosition(position);
-      //     this.lastPosition.copy(pos);
-      //   }
-      //   status = FLIGHT_STATUS.LANDED;
-      // }
-
       if (
         (this.state.isAirborne && position.y <= minY + 0.1) ||
         (status === FLIGHT_STATUS.LANDED && position.y <= minY)
@@ -462,11 +450,6 @@ export default class HelicopterUnitModule<
       }
     }
 
-    // // Nach der Landung
-    // if (!this.state.isAirborne && this.state.status !== FLIGHT_STATUS.LANDED) {
-    //   this.state.status = FLIGHT_STATUS.LANDED;
-    // }
-
     // Integrate position
     const dx = velocity.x * delta;
     const dy = velocity.y * delta;
@@ -476,12 +459,6 @@ export default class HelicopterUnitModule<
       pos.y += dy;
       pos.z += dz;
       unit.setPosition(pos);
-      // console.log()
-      //       if (status === FLIGHT_STATUS.LANDED) {
-      //         console.log('Helicopter landed');
-      //         unit.updateGroundAlignment();
-      //         unit.calculateGroundNormal();
-      //       }
     }
 
     this.setFlightStatus(status);
