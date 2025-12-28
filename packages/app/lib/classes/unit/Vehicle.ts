@@ -1,5 +1,6 @@
 import type { UnitConstructorOptions, UnitOptions } from '../Unit';
 import PatrolUnitModule from '../unitModule/Patrol';
+import PlayerUnitModule from '../unitModule/Player';
 
 import MovableUnit, {
   type MovableUnitModuleList,
@@ -11,9 +12,13 @@ export interface VehicleUnitOptions extends UnitOptions {}
 
 export type VehicleUnitModules = MovableUnitModules & {
   patrol: PatrolUnitModule;
+  player: PlayerUnitModule;
 };
 
-export type VehicleUnitModuleList = (typeof PatrolUnitModule)[] &
+export type VehicleUnitModuleList = (
+  | typeof PatrolUnitModule
+  | typeof PlayerUnitModule
+)[] &
   MovableUnitModuleList;
 export default class VehicleUnit<
   Options extends VehicleUnitOptions = VehicleUnitOptions,
@@ -24,7 +29,7 @@ export default class VehicleUnit<
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []
   ) {
-    moduleList.push(PatrolUnitModule);
+    moduleList.push(PatrolUnitModule, PlayerUnitModule);
     super(options, moduleList);
   }
 }

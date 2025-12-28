@@ -65,6 +65,15 @@ export default class GunUnitModule<
   State extends GunUnitModuleState = GunUnitModuleState,
   Obervables extends GunUnitModuleObservables = GunUnitModuleObservables
 > extends UnitModule<Options, State, Obervables> {
+  getSourcePositions() {
+    return this.state.sourcePositions;
+  }
+  getSourceDirections() {
+    return this.state.sourceDirections;
+  }
+  getBarrelTargets() {
+    return this.state.barrelTargets;
+  }
   static override TYPE = 'gun';
   constructor(unit: Unit, options: Options, state: State, debug?: boolean) {
     super(
@@ -91,12 +100,15 @@ export default class GunUnitModule<
 
     //#region observables
     this.observables.active$ = new Subject<boolean>();
+    this.observables.active$.next(this.state.active);
     this.observables.shoot$ = new Subject<{ index: number }>();
     this.observables.cooldown$ = new Subject<{ index: number }>();
     this.observables.autoAimActive$ = new ReplaySubject<boolean>();
+    this.observables.autoAimActive$.next(this.state.autoAimActive);
     this.observables.autoAimTarget$ = new ReplaySubject<Unit | null>();
     //#endregion
   }
+
   override async setup() {
     await super.setup();
     const attackModule = this.getUnit().getModuleByType(AttackUnitModule);
@@ -107,6 +119,14 @@ export default class GunUnitModule<
         })
       );
     }
+
+    this.subscription.add(
+      this.getUnit().observables.rotation$.subscribe(() => {
+        this.state.barrelTargets.forEach((barrel, index) => {
+          this.updateSourcePosition(index);
+        });
+      })
+    );
   }
 
   override destroy(): void {
@@ -230,6 +250,11 @@ export default class GunUnitModule<
 
   isAutoAimActive() {
     return this.state.autoAimActive;
+  }
+
+  setAutoAimActive(value: boolean) {
+    this.state.autoAimActive = value;
+    this.observables.autoAimActive$.next(value);
   }
 
   isAutoAimFollowTarget() {

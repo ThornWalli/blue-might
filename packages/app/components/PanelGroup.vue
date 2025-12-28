@@ -87,6 +87,7 @@ export enum PANEL_GROUP_DIRECTION {
   }
 
   &.position-bottom {
+    align-items: center;
     justify-content: flex-end;
 
     @media (width <= 767px) {

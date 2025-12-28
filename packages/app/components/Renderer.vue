@@ -2,7 +2,7 @@
   <div
     ref="rootEl"
     class="bm-renderer"
-    :class="{ pixelated: renderer?.pixelated }"
+    :class="{ pixelated: renderer?.getPixelated() }"
     :style="{
       '--dimension-x': dimension.x,
       '--dimension-y': dimension.y

@@ -6,8 +6,8 @@ import { COLLISION_TYPE } from '../unitModule/Collision';
 import BaseNavigator from '../abstract/BaseNavigator';
 import { OBJECT_USER_DATA } from '../../utils/object';
 import type Unit from '../Unit';
-import type HelicopterUnitModule from '../unitModule/movable/Helicopter';
-import { FLIGHT_STATUS } from '../unitModule/movable/Helicopter';
+import type HelicopterUnitModule from '../unitModule/movable/airVehicle/Helicopter';
+import { FLIGHT_STATUS } from '../unitModule/movable/airVehicle/Helicopter';
 
 import type Grid from './Grid';
 import type { GridNode } from './Grid';

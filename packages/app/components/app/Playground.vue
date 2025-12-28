@@ -11,6 +11,9 @@
     <template #[PANEL.TOP_RIGHT]>
       <bm-panel-player-unit key="unit-preview" :app="app" />
     </template>
+    <template #[PANEL.BOTTOM]>
+      <bm-panel-secondary-screen key="secondary-screen" :app="app" />
+    </template>
     <template #[PANEL.BOTTOM_RIGHT]>
       <bm-panel-unit-preview key="unit-preview" :app="app" />
     </template>
@@ -24,6 +27,7 @@ import BmPanelDebug from '../panel/Debug.vue';
 import BmPanelControls from '../panel/Controls.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
+import BmPanelSecondaryScreen from '../panel/GunScreen.vue';
 
 defineProps<{
   app: App;

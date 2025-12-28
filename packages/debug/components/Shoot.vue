@@ -73,7 +73,7 @@ const unitA = new Turret_1({
       faction: blueFaction
     },
     gun: {
-      autoAimActive: false
+      autoAimActive: true
     }
   }
 });

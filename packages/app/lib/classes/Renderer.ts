@@ -1,8 +1,7 @@
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import type { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { Observable, ReplaySubject, fromEvent } from 'rxjs';
-import type { Vector2, Object3D } from 'three';
+import { fromEvent, Observable, ReplaySubject, Subscription } from 'rxjs';
+import type { PerspectiveCamera, Vector2, Object3D, Camera } from 'three';
 import {
   WebGLRenderer,
   Clock,
@@ -39,7 +38,6 @@ export interface RendererModules {
 
 interface Passes {
   render: RenderPass;
-  output: OutputPass;
 }
 
 export enum ShadowQuality {
@@ -58,6 +56,7 @@ export type AnimationLoopSubject = ReplaySubject<AnimationLoopValue>;
 export default class Renderer<
   Modules extends RendererModules = RendererModules
 > {
+  //#region Modules
   observables: {
     shadowQuality$: ReplaySubject<ShadowQuality>;
     animationLoop$: AnimationLoopSubject;
@@ -73,15 +72,18 @@ export default class Renderer<
   private renderer?: WebGLRenderer;
   scene!: Scene;
   private composer?: EffectComposer;
-  dimension: Vector2;
+  private dimension: Vector2;
 
-  pixelated: boolean;
+  private pixelated: boolean;
 
   modules: Modules;
   private passes!: Passes;
 
   private _debug: boolean;
   private canvas: HTMLCanvasElement;
+
+  private subscription = new Subscription();
+  private renderPassByCamera = new Map<Camera, RenderPass>();
 
   constructor(
     canvas: HTMLCanvasElement,
@@ -139,7 +141,10 @@ export default class Renderer<
     canvas.width = dimension.x;
     canvas.height = dimension.y;
 
-    const renderer = this.setupRenderer(canvas, { pixelated: this.pixelated });
+    const renderer = createRenderer(canvas, dimension, {
+      pixelated: this.pixelated
+    });
+    this.renderer = renderer;
 
     //#region Modules
     await Promise.all(
@@ -198,8 +203,9 @@ export default class Renderer<
   }
 
   destroy() {
+    this.subscription.unsubscribe();
     this.observables.animationLoop$.complete();
-    Object.values(this.modules).forEach(handler => handler.destroy());
+    Object.values(this.modules).forEach(module => module.destroy());
     this.renderer?.dispose();
     this.composer?.dispose();
     this.scene.clear();
@@ -222,42 +228,33 @@ export default class Renderer<
 
   //#region inits
 
-  setupScene(color: Color = new Color(0x000000)) {
+  setupScene(
+    {
+      color
+    }: {
+      color: Color;
+      fogDistance: number;
+    } = {
+      color: new Color(0x000000),
+      fogDistance: 30
+    }
+  ) {
     const scene = new Scene();
+
+    //#region setup for fog
     scene.background = color;
     scene.fog = new Fog(color, 30, 30.001);
 
-    const cam = this.modules.camera.getCamera();
-    cam.far = 30;
-    cam.updateProjectionMatrix();
-    this.scene = scene;
-  }
-
-  setupRenderer(
-    canvas: HTMLCanvasElement,
-    options: { pixelated?: boolean } = {}
-  ) {
-    const { dimension } = this;
-
-    const renderer = new WebGLRenderer({
-      canvas,
-      antialias: false
-      // powerPreference: 'low-power'
-    });
-
-    this.renderer = renderer;
-
-    renderer.shadowMap.autoUpdate = true;
-    renderer.outputColorSpace = SRGBColorSpace;
-    renderer.toneMapping = NeutralToneMapping;
-    renderer.toneMappingExposure = 1.0;
-    if (options.pixelated) {
-      renderer.setPixelRatio(640 / window.innerWidth);
+    const mainCamera = this.modules.camera.getCamera<PerspectiveCamera>();
+    if (mainCamera) {
+      mainCamera.far = 30;
+      mainCamera.updateProjectionMatrix();
+    } else {
+      throw new Error('Main camera not found');
     }
-    renderer.setSize(dimension.x, dimension.y);
     //#endregion
 
-    return renderer;
+    this.scene = scene;
   }
 
   getRenderer() {
@@ -267,11 +264,19 @@ export default class Renderer<
     return this.renderer;
   }
 
+  getPixelated() {
+    return this.pixelated;
+  }
+
   getComposer() {
     if (!this.composer) {
       throw new Error('Composer not initialized');
     }
     return this.composer;
+  }
+
+  getDimension() {
+    return this.dimension;
   }
 
   setupComposer(dimension: Vector2 = this.dimension) {
@@ -280,11 +285,11 @@ export default class Renderer<
 
     const passes: Partial<Passes> = {};
 
-    const renderPass = new RenderPass(
-      this.scene,
-      this.modules.camera.getCamera()
-    );
-    composer.addPass(renderPass);
+    const mainCamera = this.modules.camera.getCamera();
+    if (mainCamera) {
+      const renderPass = new RenderPass(this.scene, mainCamera);
+      composer.addPass(renderPass);
+    }
 
     this.passes = passes as Passes;
 
@@ -298,4 +303,28 @@ export default class Renderer<
   get el() {
     return this.getRenderer().domElement;
   }
+}
+
+export function createRenderer(
+  canvas: HTMLCanvasElement,
+  dimension: Vector2,
+  options: { pixelated?: boolean } = {}
+) {
+  const renderer = new WebGLRenderer({
+    canvas,
+    antialias: false
+    // powerPreference: 'low-power'
+  });
+
+  renderer.shadowMap.autoUpdate = true;
+  renderer.outputColorSpace = SRGBColorSpace;
+  renderer.toneMapping = NeutralToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  if (options.pixelated) {
+    renderer.setPixelRatio(640 / window.innerWidth);
+  }
+  renderer.setSize(dimension.x, dimension.y);
+  //#endregion
+
+  return renderer;
 }
