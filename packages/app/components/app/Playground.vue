@@ -9,11 +9,12 @@
       </div>
     </template>
     <template #[PANEL.TOP_RIGHT]>
-      <bm-panel-player-unit key="unit-preview" :app="app" />
+      <div class="panel-row">
+        <bm-panel-secondary-screen key="secondary-screen" :app="app" />
+        <bm-panel-player-unit key="player-unit" :app="app" />
+      </div>
     </template>
-    <template #[PANEL.BOTTOM]>
-      <bm-panel-secondary-screen key="secondary-screen" :app="app" />
-    </template>
+    <template #[PANEL.BOTTOM]> </template>
     <template #[PANEL.BOTTOM_RIGHT]>
       <bm-panel-unit-preview key="unit-preview" :app="app" />
     </template>

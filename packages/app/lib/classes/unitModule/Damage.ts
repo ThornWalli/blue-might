@@ -57,10 +57,10 @@ export interface DamageUnitModuleState extends UnitModuleState {
   burnTimeLeft: number;
 }
 
-enum DamageLevel {
+export enum DAMAGE_LEVEL {
   INTACT = 0,
   DAMAGED = 0.5,
-  DEMOLISHED = 1
+  DESTROYED = 1
 }
 
 export default class DamageUnitModule extends UnitModule<
@@ -139,13 +139,13 @@ export default class DamageUnitModule extends UnitModule<
     if (this.state.burnTimeLeft > 0) {
       this.state.burnTimeLeft -= dt;
       if (
-        this.getDamageLevel() >= DamageLevel.DEMOLISHED &&
+        this.getDamageLevel() >= DAMAGE_LEVEL.DESTROYED &&
         Math.random() < 0.4
       ) {
         this.spawnFire();
         this.spawnSmoke(SMOKE_TYPE.HEAVY);
       } else if (
-        this.getDamageLevel() >= DamageLevel.DAMAGED &&
+        this.getDamageLevel() >= DAMAGE_LEVEL.DAMAGED &&
         Math.random() < 0.12
       ) {
         this.spawnSmoke(SMOKE_TYPE.MEDIUM);
@@ -176,7 +176,7 @@ export default class DamageUnitModule extends UnitModule<
   }
 
   public hit(projectile: Projectile) {
-    if (this.isDemolished()) {
+    if (this.isDestroyed()) {
       return;
     }
     this.setValue(this.state.damage + projectile.strength);
@@ -184,7 +184,7 @@ export default class DamageUnitModule extends UnitModule<
   }
 
   private setValue(value: number) {
-    if (!this.canDamage() && this.isDemolished()) return;
+    if (!this.canDamage() && this.isDestroyed()) return;
     this.state.damage = Math.max(0, value);
     this.observables.damage$.next(this.state.damage);
     if (this.isDestroyed()) {
@@ -193,24 +193,24 @@ export default class DamageUnitModule extends UnitModule<
     }
   }
 
+  getDamageValue() {
+    return this.state.damage / this.state.maxDamage;
+  }
+
   public getDamageLevel() {
     let value = 0;
-    if (this.state.damage >= DamageLevel.DEMOLISHED) {
-      value = DamageLevel.DEMOLISHED;
-    } else if (this.state.damage >= DamageLevel.DAMAGED) {
-      value = DamageLevel.DAMAGED;
+    if (this.state.damage >= DAMAGE_LEVEL.DESTROYED) {
+      value = DAMAGE_LEVEL.DESTROYED;
+    } else if (this.state.damage >= DAMAGE_LEVEL.DAMAGED) {
+      value = DAMAGE_LEVEL.DAMAGED;
     } else {
-      value = DamageLevel.INTACT;
+      value = DAMAGE_LEVEL.INTACT;
     }
     return value * this.state.maxDamage;
   }
 
   public canDamage() {
-    return this.state.damage < DamageLevel.DEMOLISHED;
-  }
-
-  public isDemolished() {
-    return this.state.damage >= this.state.maxDamage;
+    return this.state.damage < DAMAGE_LEVEL.DESTROYED;
   }
 
   public isDestroyed() {

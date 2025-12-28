@@ -16,10 +16,10 @@
 
 <script setup lang="ts">
 import type App from '@blue-might/app/lib/classes/App';
-import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import type Weapon from '@blue-might/app/lib/classes/Weapon';
+import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import {
   CombatHelicopter_1,
   CombatTank_1,
@@ -41,17 +41,6 @@ let gui: GUI;
 onUnmounted(() => {
   subscription.unsubscribe();
   if (gui) gui.destroy();
-});
-
-const blueFaction = new Faction({
-  id: 'blue-faction',
-  name: 'Blue Faction',
-  colors: [0x0055aa, 0xcccccc]
-});
-const enemyFaction = new Faction({
-  id: 'enemy-faction',
-  name: 'Enemy Faction',
-  colors: [0x205010, 0xa0b0a0]
 });
 
 const unitWeapons: Weapon[] = [new weapons.default(), new weapons.default()];

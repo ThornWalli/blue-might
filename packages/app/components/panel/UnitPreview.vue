@@ -5,15 +5,18 @@
     :title="panelTitle">
     <div>
       <div
-        class="damage"
+        class="graph damage"
         :class="{
-          demolished: unitDamageValue >= 1,
-          damaged: unitDamageValue >= 0.5
+          destroyed: unitDamage.value >= DAMAGE_LEVEL.DESTROYED / 2,
+          damaged: unitDamage.value >= DAMAGE_LEVEL.DAMAGED / 2
         }"
         :style="{
-          '--value': 1 - unitDamageValue
+          '--value': 1 - unitDamage.value
         }">
-        <div></div>
+        <div class="label">D</div>
+        <div>
+          <div></div>
+        </div>
       </div>
       <div :key="unit.key" class="preview">
         <div>
@@ -39,11 +42,12 @@
 
 <script lang="ts" setup>
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
-import { EMPTY, Subscription, switchMap } from 'rxjs';
+import { EMPTY, map, Subscription, switchMap } from 'rxjs';
 import type { Vector3 } from 'three';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
+import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 
 import BmButton from '../Button.vue';
 import type App from '../../lib/classes/App';
@@ -55,8 +59,14 @@ const $props = defineProps<{
   app: App;
 }>();
 
-const unitDamageValue = ref<number>(0);
 const unit = ref<Raw<Unit> | null>(null);
+const unitDamage = ref<{
+  value: number;
+  level: number;
+}>({
+  value: 0,
+  level: 0
+});
 
 const player = computed(() =>
   unit.value?.getModuleByType(PlayerUnitModule)?.getPlayer()
@@ -72,27 +82,35 @@ const position = ref<Vector3 | null>(null);
 async function setup() {
   const app = $props.app;
 
+  const selectedUnit$ = app.modules.selection.observables.selectUnit$;
   subscription.add(
-    app.modules.selection.observables.selectUnit$.subscribe(u => {
+    selectedUnit$.subscribe(u => {
       unit.value = u ? markRaw(u) : null;
     })
   );
 
   subscription.add(
-    app.modules.selection.observables.selectUnit$
+    selectedUnit$
       .pipe(switchMap(unit => unit?.observables.position$ ?? EMPTY))
       .subscribe(p => {
         position.value = p.clone();
       })
   );
+
   subscription.add(
-    app.modules.selection.observables.selectUnit$
+    selectedUnit$
       .pipe(
-        switchMap(unit => unit?.modules.damage.observables.damage$ ?? EMPTY)
+        switchMap(
+          unit =>
+            unit?.modules.damage.observables.damage$.pipe(
+              map(() => ({
+                value: unit?.modules.damage.getDamageValue(),
+                level: unit?.modules.damage.getDamageLevel()
+              }))
+            ) ?? EMPTY
+        )
       )
-      .subscribe(v => {
-        unitDamageValue.value = v;
-      })
+      .subscribe(value => (unitDamage.value = value))
   );
 
   ready.value = true;
@@ -146,6 +164,28 @@ function onClickFocusUnit() {
 
 <style lang="postcss" scoped>
 .bm-panel-unit-preview {
+  & .graph {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 16px;
+
+    & .label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    & .label + div {
+      position: relative;
+      flex: 1;
+      background: #222;
+    }
+  }
+
   & .preview {
     position: relative;
     width: 128px;
@@ -196,22 +236,32 @@ function onClickFocusUnit() {
 
 .damage {
   position: relative;
+  display: flex;
+  flex-direction: column;
   width: 16px;
-  background-color: red;
+
+  --color: green;
 
   &.damaged {
-    & div {
-      background-color: yellow;
-    }
+    --color: yellow;
   }
 
-  & div {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: calc(100% * var(--value));
-    background-color: green;
+  &.destroyed {
+    --color: red;
+  }
+
+  & .label + div {
+    position: relative;
+    flex: 1;
+
+    & > div {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: calc(100% * var(--value));
+      background-color: var(--color);
+    }
   }
 }
 </style>

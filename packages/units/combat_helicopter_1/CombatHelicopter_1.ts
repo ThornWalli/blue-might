@@ -35,7 +35,7 @@ import { lerp } from 'three/src/math/MathUtils.js';
 import { playSound } from '@blue-might/weapon/utils';
 import { getSfx } from '@blue-might/weapon/projectile';
 
-import { createBarrelTargetShoot } from '../turret_1/utils';
+import { createBarrelTargetShoot, normalizeAngle } from '../turret_1/utils';
 
 import baseGlb from './assets/combat_helicopter_1.glb?url';
 
@@ -211,25 +211,28 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
 
   autoAimFn(options: AutoAimFnOptions) {
     const { target, sourcePosition, index, weapon } = options;
-    if (target && this.objects.barrels[index]) {
+    const shootModule = this.getMap()?.modules.shoot;
+
+    if (shootModule && target && this.objects.barrels[index]) {
       const [barrelObjX, barrelObjY] = this.objects.barrels[index]!;
       const targetPosition = target.getPosition();
       const delta = targetPosition.clone().sub(sourcePosition);
       const horizontalDistance = Math.sqrt(delta.x ** 2 + delta.z ** 2);
       const verticalDistance = delta.y;
 
-      // Gravitation und Geschwindigkeit (aus Shoot.ts)
-      const g = 5; // gravity.y
-      const v = weapon.projectile.speed * 0.9; // Reduziere um ~10% für Luftwiderstand-Approximation
+      // Gravitation und Geschwindigkeit
+      const g = Math.abs(shootModule.gravity.y);
+      const v = weapon.projectile.speed * (1 - shootModule.airResistance);
+      const rotation = this.getRotation();
 
       // Prüfe, ob Schuss möglich
       const discriminant =
         v ** 4 -
         g * (g * horizontalDistance ** 2 + 2 * verticalDistance * v ** 2);
       if (discriminant < 0) {
-        // Fallback: Direkte Berechnung (wie alte autoAimFn)
-        console.log('Ballistik nicht möglich, verwende direkte Berechnung');
-        const targetYaw = Math.atan2(delta.x, delta.z);
+        const targetYaw = normalizeAngle(
+          Math.atan2(delta.x, delta.z) - rotation.y
+        );
         const targetPitch = -Math.atan2(delta.y, horizontalDistance);
         const isYawInRange =
           targetYaw >= this.options.minWeaponAngle.x &&
@@ -261,9 +264,8 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
 
       // Horizontale Richtung (Yaw)
       const horizontalDirection = new Vector3(delta.x, 0, delta.z).normalize();
-      const targetYaw = Math.atan2(
-        horizontalDirection.x,
-        horizontalDirection.z
+      const targetYaw = normalizeAngle(
+        Math.atan2(horizontalDirection.x, horizontalDirection.z) - rotation.y // NEU: Normalisiere die Differenz
       );
 
       // Prüfe Winkel-Bereiche
@@ -294,63 +296,6 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     }
     return false;
   }
-
-  // autoAimFn(options: AutoAimFnOptions) {
-  //   const { target, sourcePosition, index } = options;
-  //   if (target && this.objects.barrels[index]) {
-  //     const [barrelObjX, barrelObjY] = this.objects.barrels[index]!;
-
-  //     // Richtung von sourcePosition zum Target berechnen
-  //     const direction = new Vector3();
-  //     direction.subVectors(target.getPosition(), sourcePosition).normalize();
-
-  //     // Horizontale Richtung (für Y-Rotation)
-  //     const horizontalDirection = new Vector3(
-  //       direction.x,
-  //       0,
-  //       direction.z
-  //     ).normalize();
-  //     const targetYaw = Math.atan2(
-  //       horizontalDirection.x,
-  //       horizontalDirection.z
-  //     );
-
-  //     // Vertikale Richtung (für X-Rotation)
-  //     const distanceXZ = Math.sqrt(direction.x ** 2 + direction.z ** 2);
-  //     const targetPitch = -Math.atan2(direction.y, distanceXZ);
-
-  //     // Prüfe, ob das Ziel innerhalb der erlaubten Winkel liegt
-  //     const isYawInRange =
-  //       targetYaw >= this.options.minWeaponAngle.x &&
-  //       targetYaw <= this.options.maxWeaponAngle.x;
-  //     const isPitchInRange =
-  //       targetPitch >= this.options.minWeaponAngle.y &&
-  //       targetPitch <= this.options.maxWeaponAngle.y;
-
-  //     if (isYawInRange && isPitchInRange) {
-  //       // Setze Ziel-Rotation nur, wenn das Ziel erreichbar ist
-  //       this.state.weaponTargetRotation.set(targetYaw, targetPitch);
-
-  //       // Interpolation zur Ziel-Rotation
-  //       barrelObjY.rotation.y = lerp(
-  //         barrelObjY.rotation.y,
-  //         this.state.weaponTargetRotation.x,
-  //         this.options.rotationSpeed
-  //       );
-  //       barrelObjX.rotation.x = lerp(
-  //         barrelObjX.rotation.x,
-  //         this.state.weaponTargetRotation.y,
-  //         this.options.rotationSpeed
-  //       );
-
-  //       return true; // Ziel ist zielbar
-  //     } else {
-  //       // Ziel ist außerhalb des Bereichs – Auto-Aim deaktivieren oder auf nächste Suche warten
-  //       return false;
-  //     }
-  //   }
-  //   return false;
-  // }
 
   override async createMesh(_context: SetupContext) {
     const { object, animations } = await loadGltf(baseGlb);

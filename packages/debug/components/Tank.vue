@@ -10,12 +10,12 @@
 
 <script setup lang="ts">
 import type App from '@blue-might/app/lib/classes/App';
-import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import { Tank_1 } from '@blue-might/units';
+import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
+import { CombatTank_1, Tank_1 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
-import { Vector3 } from 'three';
+import { Euler, Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
 
 const DebugAppComponent = defineAsyncComponent(() => import('./DebugApp.vue'));
@@ -28,15 +28,19 @@ onUnmounted(() => {
 
 const playerUnitId = 'tank-1';
 
-const blueFaction = new Faction({
-  id: 'blue-faction',
-  name: 'Blue Faction',
-  colors: [0x0055aa]
-});
 const map: Partial<MapDescription> = {
-  factions: [blueFaction],
+  factions: [blueFaction, enemyFaction],
   units: [
     new Tank_1({
+      position: new Vector3(-1.83, 0, 0.17),
+      rotation: new Euler(0, Math.PI / 4, 0),
+      moduleStates: {
+        faction: {
+          faction: enemyFaction
+        }
+      }
+    }),
+    new CombatTank_1({
       id: 'tank-1',
       position: new Vector3(0, 0, 0),
       moduleDebug: {

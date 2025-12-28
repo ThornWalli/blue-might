@@ -130,6 +130,10 @@ export default class Unit<
    */
   private _tilt: Vector3 = new Vector3(0, 0, 0);
 
+  getTilt() {
+    return this._tilt;
+  }
+
   constructor(
     {
       debug,
@@ -356,6 +360,12 @@ export default class Unit<
     switch (this.groundAdjustmentMode) {
       case GROUND_ADJUSTMENT_MODE.MIN_HEIGHT:
         this._position.y = this.getMinGroundHeight();
+        // const groundHeight = groundModule.getTerrainHeightAt(
+        //   position.x,
+        //   position.z,
+        //   ignoredUnits
+        // );
+        // this._position.y = groundHeight;
         break;
 
       case GROUND_ADJUSTMENT_MODE.GROUND:
@@ -415,7 +425,7 @@ export default class Unit<
     this.setYaw(rotation.y); // Nur Heading
   }
 
-  private calculateGroundNormal() {
+  calculateGroundNormal() {
     const sampleDistance = 1;
     const rotation = this._rotation.y;
     const groundModule = this._map?.modules.ground;
@@ -451,24 +461,24 @@ export default class Unit<
   }
 
   getMinGroundHeight(): number {
-    const sampleDistance = 1;
+    const sampleDistance = 0;
     const rotation = this._rotation.y;
     const groundModule = this._map?.modules.ground;
     if (!groundModule) return this._position.y;
 
-    const front = groundModule.getHeightAt(
+    const front = groundModule.getTerrainHeightAt(
       this._position.x + Math.sin(rotation) * sampleDistance,
       this._position.z + Math.cos(rotation) * sampleDistance
     );
-    const back = groundModule.getHeightAt(
+    const back = groundModule.getTerrainHeightAt(
       this._position.x - Math.sin(rotation) * sampleDistance,
       this._position.z - Math.cos(rotation) * sampleDistance
     );
-    const left = groundModule.getHeightAt(
+    const left = groundModule.getTerrainHeightAt(
       this._position.x + Math.cos(rotation) * sampleDistance,
       this._position.z - Math.sin(rotation) * sampleDistance
     );
-    const right = groundModule.getHeightAt(
+    const right = groundModule.getTerrainHeightAt(
       this._position.x - Math.cos(rotation) * sampleDistance,
       this._position.z + Math.sin(rotation) * sampleDistance
     );
@@ -520,7 +530,8 @@ export default class Unit<
     // Schritt 1: Führe Bodenausrichtung für die gewünschte Position durch (wenn nötig)
     if (
       this._map &&
-      this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.NONE
+      this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.NONE &&
+      this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT
     ) {
       desired = this.updateGroundAlignment(desired, [this]) ?? desired;
     }
@@ -609,7 +620,11 @@ export default class Unit<
     }
 
     // Aktualisiere nur die visuellen Aspekte. Ändere NICHT die Position.
-    this.calculateGroundNormal();
+
+    if (this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.GROUND) {
+      this.calculateGroundNormal();
+    }
+
     this.updateMeshTransform();
 
     this.observables.rotation$.next(this._rotation.clone());

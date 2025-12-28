@@ -1,7 +1,8 @@
 /* eslint-disable complexity */
-import type {
-  SetupContext,
-  UnitConstructorOptions
+import {
+  GROUND_ADJUSTMENT_MODE,
+  type SetupContext,
+  type UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Vector2, Vector3, Mesh, SkinnedMesh, Object3D } from 'three';
@@ -27,7 +28,7 @@ import {
 import { playSound } from '@blue-might/weapon/utils';
 import { getSfx } from '@blue-might/weapon/projectile';
 
-import { createBarrelTargetShoot } from './utils';
+import { createBarrelTargetShoot, normalizeAngle } from './utils';
 import baseGlb from './assets/turret_1.glb?url';
 
 interface State {
@@ -119,6 +120,7 @@ export default class Turret_1 extends BuildingUnit<
       },
       moduleList
     );
+    this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.MIN_HEIGHT);
   }
 
   override setup(context: SetupContext) {
@@ -271,24 +273,31 @@ export default class Turret_1 extends BuildingUnit<
 
   autoAimFn(options: AutoAimFnOptions) {
     const { target, sourcePosition, index, weapon } = options;
-    if (target && this.objects.head && this.objects.barrels[index]) {
+    const shootModule = this.getMap()?.modules.shoot;
+    if (
+      shootModule &&
+      target &&
+      this.objects.head &&
+      this.objects.barrels[index]
+    ) {
       const targetPosition = target.getPosition();
       const delta = targetPosition.clone().sub(sourcePosition);
       const horizontalDistance = Math.sqrt(delta.x ** 2 + delta.z ** 2);
       const verticalDistance = delta.y;
 
-      // Gravitation und Geschwindigkeit (aus Shoot.ts)
-      const g = 5; // gravity.y
-      const v = weapon.projectile.speed * 0.9; // Reduziere um ~10% für Luftwiderstand-Approximation
+      // Gravitation und Geschwindigkeit
+      const g = Math.abs(shootModule.gravity.y);
+      const v = weapon.projectile.speed * (1 - shootModule.airResistance);
+      const rotation = this.getRotation();
 
       // Prüfe, ob Schuss möglich
       const discriminant =
         v ** 4 -
         g * (g * horizontalDistance ** 2 + 2 * verticalDistance * v ** 2);
       if (discriminant < 0) {
-        // Fallback: Direkte Berechnung (wie alte autoAimFn)
-        console.log('Ballistik nicht möglich, verwende direkte Berechnung');
-        const targetYaw = Math.atan2(delta.x, delta.z);
+        const targetYaw = normalizeAngle(
+          Math.atan2(delta.x, delta.z) - rotation.y
+        );
         const targetPitch = -Math.atan2(delta.y, horizontalDistance);
 
         const isYawInRange =
@@ -324,20 +333,11 @@ export default class Turret_1 extends BuildingUnit<
 
       // Horizontale Richtung (Yaw)
       const horizontalDirection = new Vector3(delta.x, 0, delta.z).normalize();
-      const targetYaw = Math.atan2(
-        horizontalDirection.x,
-        horizontalDirection.z
+      const targetYaw = normalizeAngle(
+        Math.atan2(horizontalDirection.x, horizontalDirection.z) - rotation.y // NEU: Normalisiere die Differenz
       );
 
       // Prüfe Winkel-Bereiche
-      // const isYawInRange =
-      //   !this.options.minMaxHeadAngle ||
-      //   (targetYaw >= this.options.minMaxHeadAngle[0] &&
-      //     targetYaw <= this.options.minMaxHeadAngle[1]);
-      // const isPitchInRange =
-      //   elevation >= this.options.minMaxBarrelAngle[0] &&
-      //   elevation <= this.options.minMaxBarrelAngle[1];
-
       const isYawInRange =
         !this.options.minAngle ||
         (targetYaw >= this.options.minAngle.y &&

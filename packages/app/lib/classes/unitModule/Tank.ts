@@ -28,13 +28,10 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
       unit,
       {
         ...options,
-
-        acceleration: options.acceleration ?? 3,
-        turnSpeed: options.turnSpeed ?? 16
-        // maxSpeed: options.maxSpeed ?? 10,
-        // turnSpeed: options.turnSpeed ?? 5,
-        // turnMovementSpeed: options.turnMovementSpeed ?? 20,
-        // acceleration: options.acceleration ?? 4
+        maxSpeed: options.maxSpeed ?? 1,
+        acceleration: options.acceleration ?? 1 / 3,
+        turnSpeed: options.turnSpeed ?? 1 / 2,
+        turnMovementSpeed: options.turnMovementSpeed ?? 1 / 3
       },
       {
         ...state,
@@ -72,30 +69,8 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
     }
     // 1. Beschleunigung durch Input
     let accel = 0;
-    let rotationAccel = 0;
     if (controls.moveForward) accel += acceleration;
     if (controls.moveBackward) accel -= acceleration * 0.5; // Rückwärts langsamer
-
-    if (isRotating) {
-      if (controls.moveLeft) rotationAccel += acceleration;
-      if (controls.moveRight) rotationAccel -= acceleration;
-    } else {
-      rotationAccel = accel;
-    }
-
-    // Wenn weder Bewegung noch Rotation stattfinden soll, abbrechen
-    if (
-      accel === 0 &&
-      rotationAccel === 0 &&
-      this.state.velocity.lengthSq() < eps
-    ) {
-      // kleine Restgeschwindigkeiten hart auf 0 setzen
-      if (this.state.velocity.lengthSq() < eps)
-        this.state.velocity.setScalar(0);
-      if (this.state.rotationVelocity.lengthSq() < eps)
-        this.state.rotationVelocity.setScalar(0);
-      return;
-    }
 
     // 2. Richtung aus Rotation (keine neuen Objekte erzeugen)
     const forward = unit.getForwardXZFromYaw(new Vector3());
@@ -103,61 +78,49 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
     this.setTmpRotationDirection(forward);
 
     //#region forward/backward
-    let speed = 0;
     const velocity = this.state.velocity;
     if (!isRotating) {
-      velocity.addScaledVector(this.getTmpDirection(), accel * delta);
+      // Beschleunigung anwenden, wenn Input da ist
+      if (accel !== 0) {
+        velocity.addScaledVector(this.getTmpDirection(), accel * delta);
+      } else {
+        // Nur Reibung anwenden, wenn keine Beschleunigung stattfindet
+        velocity.multiplyScalar(friction);
+      }
 
       if (controls.space) {
         velocity.multiplyScalar(0.8);
-      }
-      velocity.multiplyScalar(friction);
-
-      speed = velocity.length();
-      if (speed > maxSpeed) {
-        velocity.setLength(maxSpeed);
-      } else if (speed < eps) {
-        velocity.setScalar(0);
-        speed = 0;
       }
     } else {
       // Beim Drehen langsamer werden
       velocity.multiplyScalar(0.8);
       if (velocity.lengthSq() < eps) velocity.setScalar(0);
     }
-    //#endregion
 
-    //#region left/right rotation
-    const rotationVelocity = this.state.rotationVelocity;
-    rotationVelocity.addScaledVector(
-      this.getTmpRotationDirection(),
-      rotationAccel * delta
-    );
-    rotationVelocity.multiplyScalar(friction);
+    let speed = velocity.length();
 
-    let rotationSpeed = rotationVelocity.length();
-    if (rotationSpeed > maxSpeed) {
-      rotationVelocity.setLength(maxSpeed);
-      rotationSpeed = maxSpeed;
-    } else if (rotationSpeed < eps) {
-      rotationVelocity.setScalar(0);
-      rotationSpeed = 0;
+    if (speed > maxSpeed) {
+      velocity.setLength(maxSpeed);
+      speed = maxSpeed; // Wichtig: speed-Variable auch aktualisieren
+    } else if (speed < eps && accel === 0) {
+      // Nur auf 0 setzen, wenn keine Beschleunigung anliegt
+      velocity.setScalar(0);
+      speed = 0;
     }
     //#endregion
 
-    const turnSpeed = isRotating
-      ? this.options.turnSpeed
-      : this.options.turnMovementSpeed;
+    const turnSpeed = this.options.turnSpeed;
 
-    const _rotationSpeed = isRotating ? rotationSpeed : speed;
+    // Der turnFactor sollte nicht von der Geschwindigkeit abhängen, wenn man auf der Stelle dreht.
+    const speedFactor = Math.max(0.1, 1 - speed / maxSpeed); // 0.1 als Minimum, damit man auch bei maxSpeed noch lenken kann
+    const turnFactor = isRotating && speed < eps ? 1 : speedFactor;
 
-    if (_rotationSpeed > 0.5) {
-      let turn = 0;
-      if (controls.moveLeft) turn += turnSpeed * (isRotating ? 1 : 0.5);
-      if (controls.moveRight) turn -= turnSpeed * (isRotating ? 1 : 0.5);
+    let turn = 0;
+    if (controls.moveLeft) turn += turnSpeed;
 
-      const turnFactor = Math.min(_rotationSpeed / maxSpeed, 1);
+    if (controls.moveRight) turn -= turnSpeed;
 
+    if (turn !== 0) {
       // Statt Quaternion: Yaw direkt ändern, unabhängig von Tilt/Pitch/Roll
       const newYaw = unit.getYaw() + turn * delta * turnFactor;
       unit.setYaw(newYaw);
@@ -165,6 +128,7 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
 
     // newPosition vermeiden: temp nutzen
     const pos = unit.getPosition().clone();
+    // HIER die Geschwindigkeit mit delta multiplizieren
     const dx = velocity.x * delta * currentPower;
     const dz = velocity.z * delta * currentPower;
 

@@ -25,7 +25,7 @@ import {
 import { getSfx } from '@blue-might/weapon/projectile';
 import { playSound } from '@blue-might/weapon/utils';
 
-import { createBarrelTargetShoot } from '../turret_1/utils';
+import { createBarrelTargetShoot, normalizeAngle } from '../turret_1/utils';
 
 import baseGlb from './assets/combat_tank_1.glb?url';
 
@@ -254,25 +254,34 @@ export default class CombatTank_1<
 
   autoAimFn(options: AutoAimFnOptions) {
     const { target, sourcePosition, index, weapon } = options;
-    if (target && this.objects.head && this.objects.barrels[index]) {
+    const shootModule = this.getMap()?.modules.shoot;
+
+    if (
+      shootModule &&
+      target &&
+      this.objects.head &&
+      this.objects.barrels[index]
+    ) {
       const targetPosition = target.getPosition();
       const delta = targetPosition.clone().sub(sourcePosition);
       const horizontalDistance = Math.sqrt(delta.x ** 2 + delta.z ** 2);
       const verticalDistance = delta.y;
 
-      // Gravitation und Geschwindigkeit (aus Shoot.ts)
-      const g = 5; // gravity.y
-      const v = weapon.projectile.speed * 0.9; // Reduziere um ~10% für Luftwiderstand-Approximation
+      // Gravitation und Geschwindigkeit
+      const g = Math.abs(shootModule.gravity.y);
+      const v = weapon.projectile.speed * (1 - shootModule.airResistance);
+      const rotation = this.getRotation();
 
       // Prüfe, ob Schuss möglich
       const discriminant =
         v ** 4 -
         g * (g * horizontalDistance ** 2 + 2 * verticalDistance * v ** 2);
       if (discriminant < 0) {
-        // Fallback: Direkte Berechnung (wie alte autoAimFn)
-        console.log('Ballistik nicht möglich, verwende direkte Berechnung');
-        const targetYaw = Math.atan2(delta.x, delta.z);
+        const targetYaw = normalizeAngle(
+          Math.atan2(delta.x, delta.z) - rotation.y
+        );
         const targetPitch = -Math.atan2(delta.y, horizontalDistance);
+
         const isYawInRange =
           !this.options.minAngle ||
           (targetYaw >= this.options.minAngle.y &&
@@ -280,6 +289,7 @@ export default class CombatTank_1<
         const isPitchInRange =
           targetPitch >= this.options.minAngle.x &&
           targetPitch <= this.options.maxAngle.x;
+
         if (isYawInRange && isPitchInRange && horizontalDistance >= 0.96) {
           this.state.weaponTargetRotation.set(targetYaw, targetPitch);
           this.objects.head.rotation.y = lerp(
@@ -304,11 +314,9 @@ export default class CombatTank_1<
 
       // Horizontale Richtung (Yaw)
       const horizontalDirection = new Vector3(delta.x, 0, delta.z).normalize();
-      const targetYaw = Math.atan2(
-        horizontalDirection.x,
-        horizontalDirection.z
+      const targetYaw = normalizeAngle(
+        Math.atan2(horizontalDirection.x, horizontalDirection.z) - rotation.y // NEU: Normalisiere die Differenz
       );
-
       // Prüfe Winkel-Bereiche
       const isYawInRange =
         !this.options.minAngle ||

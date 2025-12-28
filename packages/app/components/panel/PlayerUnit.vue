@@ -5,31 +5,50 @@
     :title="panelTitle">
     <div>
       <div
-        class="power"
+        class="graph altitude"
+        :class="{
+          'has-min': heightValue >= seaLevel,
+          ready: powerInfo.currentPower > powerInfo.minPower
+        }"
+        :style="{
+          '--value': heightValue / MAX_AIR_VEHICLE_ALTITUDE,
+          '--min': seaLevel / MAX_AIR_VEHICLE_ALTITUDE
+        }">
+        <div class="label" title="Altitude">A</div>
+        <div>
+          <div class="value"></div>
+          <div class="helper-min"></div>
+        </div>
+      </div>
+      <div
+        class="graph power"
         :class="{ ready: powerInfo.currentPower > powerInfo.minPower }"
         :style="{
           '--value': powerInfo.currentPower / powerInfo.maxPower,
           '--min': powerInfo.minPower / powerInfo.maxPower,
           '--idle': powerInfo.idlePower / powerInfo.maxPower
         }">
-        <div class="value"></div>
-        <div class="helper-min"></div>
-        <div class="helper-idle"></div>
+        <div class="label">P</div>
+        <div>
+          <div class="value"></div>
+          <div class="helper-min"></div>
+          <div class="helper-idle"></div>
+        </div>
       </div>
       <div
-        class="speed"
+        class="graph speed"
         :style="{
           '--tilt-x': tilt.x,
           '--tilt-z': tilt.z,
           '--max-tilt-x': maxTilt.x,
           '--max-tilt-z': maxTilt.z,
-          '--value': powerInfo.currentPower / powerInfo.maxPower,
-          '--min': powerInfo.minPower / powerInfo.maxPower,
-          '--idle': powerInfo.idlePower / powerInfo.maxPower
+          '--value': unitSpeed
         }">
-        <div class="value"></div>
-        <div class="helper-min"></div>
-        <div class="helper-idle"></div>
+        <div class="label">S</div>
+        <div>
+          <div class="value"></div>
+          <div class="helper-min"></div>
+        </div>
       </div>
 
       <div :key="unit.key" class="preview">
@@ -43,21 +62,25 @@
         </div>
         <base-button
           class="gears"
-          :class="{ active: gearsActive, opened: gearsOpened }"
+          :class="{ active: unitGears.active, opened: unitGears.opened }"
           @click="onClickGears">
           Gears
         </base-button>
       </div>
+
       <div
-        class="damage"
+        class="graph damage"
         :class="{
-          demolished: unitDamageValue >= 1,
-          damaged: unitDamageValue >= 0.5
+          destroyed: unitDamage.value >= DAMAGE_LEVEL.DESTROYED / 2,
+          damaged: unitDamage.value >= DAMAGE_LEVEL.DAMAGED / 2
         }"
         :style="{
-          '--value': 1 - unitDamageValue
+          '--value': 1 - unitDamage.value
         }">
-        <div></div>
+        <div class="label">D</div>
+        <div>
+          <div></div>
+        </div>
       </div>
     </div>
     <div class="controls">
@@ -116,6 +139,8 @@ import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/movable
 import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
 import AirVehicleUnit from '@blue-might/app/lib/classes/unit/AirVehicle';
 import GunUnitModule from '@blue-might/app/lib/classes/unitModule/Gun';
+import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
+import { MAX_AIR_VEHICLE_ALTITUDE } from '@blue-might/app/lib/classes/unitModule/movable/AirVehicle';
 
 import BaseButton from '../base/Button.vue';
 import type App from '../../lib/classes/App';
@@ -128,11 +153,27 @@ const $props = defineProps<{
   app: App;
 }>();
 
-const unitDamageValue = ref<number>(0);
+const unitDamage = ref<{
+  value: number;
+  level: number;
+}>({
+  value: 0,
+  level: 0
+});
+
+const unitGears = ref<{
+  active: boolean;
+  opened: boolean;
+}>({
+  active: false,
+  opened: false
+});
+
+const unitSpeed = ref<number>(0);
+
 const tilt = ref<Vector3>(new Vector3(0, 0, 0));
 const maxTilt = ref<Vector3>(new Vector3(0, 0, 0));
-const gearsActive = ref(false);
-const gearsOpened = ref(false);
+
 const unit = ref<Raw<Unit> | null>(null);
 const unitFocused = ref<Raw<Unit> | null>(null);
 
@@ -154,9 +195,10 @@ const minGroundHeight = computed(
         [unit.value].filter(Boolean) as Unit[]
       )
 );
+
 const seaLevelDiff = computed(() => {
   if (position.value) {
-    return position.value.y;
+    return position.value.y - seaLevel.value;
   }
   return 0;
 });
@@ -165,6 +207,13 @@ const heightDiff = computed(() => {
     return position.value.y - minGroundHeight.value;
   }
   return 0;
+});
+
+const seaLevel = computed(() =>
+  $props.app.modules.map.getMap().modules.ground.getSeaLevel()
+);
+const heightValue = computed(() => {
+  return seaLevel.value + ((position.value?.y ?? 0) - seaLevel.value);
 });
 
 const isVehicle = computed(() => {
@@ -192,6 +241,8 @@ async function setup() {
     switchMap(player => player.modules.vehicle.observables.vehicle$)
   );
 
+  const followedUnit$ = app.modules.unitFocus.observables.followedUnit$;
+
   const vehicleModule$ = vehicle$.pipe(
     filter(({ current }) => current?.hasModuleType(MovableUnitModule) ?? false),
     switchMap(
@@ -218,42 +269,84 @@ async function setup() {
     filter(Boolean)
   );
 
+  //#region unit
+
   subscription.add(
-    vehicle$.subscribe(({ current }) => {
-      unit.value = current ? markRaw(current) : null;
-    })
+    followedUnit$.subscribe(focusedUnit => (unitFocused.value = focusedUnit))
+  );
+
+  //#endregion
+
+  //#region vehicle
+
+  subscription.add(
+    vehicle$.subscribe(
+      ({ current }) => (unit.value = current ? markRaw(current) : null)
+    )
   );
 
   subscription.add(
     vehicle$
       .pipe(switchMap(({ current }) => current?.observables.position$ ?? EMPTY))
-      .subscribe(p => {
-        position.value = p.clone();
-      })
+      .subscribe(p => (position.value = p.clone()))
   );
 
   subscription.add(
     vehicleModule$
       .pipe(switchMap(({ observables }) => observables.active$))
-      .subscribe(v => {
-        unitActive.value = v;
-      })
+      .subscribe(v => (unitActive.value = v))
   );
+
+  //#endregion
+
+  //#region gun
 
   subscription.add(
     gunModule$
       .pipe(switchMap(({ observables }) => observables.autoAimActive$))
-      .subscribe(v => {
-        autoAimActive.value = v;
-      })
+      .subscribe(v => (autoAimActive.value = v))
   );
+
+  subscription.add(
+    vehicleModule$
+      .pipe(switchMap(({ observables }) => observables.powerInfo$))
+      .subscribe(v => (powerInfo.value = v))
+  );
+
+  subscription.add(
+    vehicleModule$
+      .pipe(
+        switchMap(vehicleModule => timer(0, 100).pipe(map(() => vehicleModule)))
+      )
+      .subscribe(
+        vehicleModule =>
+          (unitSpeed.value = vehicleModule.state.velocity.length())
+      )
+  );
+  subscription.add(
+    vehicle$
+      .pipe(
+        switchMap(
+          ({ current }) =>
+            current?.modules.damage.observables.damage$.pipe(
+              map(() => ({
+                value: current?.modules.damage.getDamageValue(),
+                level: current?.modules.damage.getDamageLevel()
+              }))
+            ) ?? EMPTY
+        )
+      )
+      .subscribe(value => (unitDamage.value = value))
+  );
+
+  //#endregion
+
+  //#region helicopter
 
   subscription.add(
     helicopterModule$
       .pipe(switchMap(({ observables }) => observables.flightStatus$ ?? EMPTY))
-      .subscribe(s => {
-        status.value = s;
-      })
+      .subscribe(s => (status.value = s))
   );
   subscription.add(
     helicopterModule$
@@ -262,24 +355,13 @@ async function setup() {
           combineLatest([observables.gearsActive$, observables.gearsOpened$])
         )
       )
-      .subscribe(([active, opened]) => {
-        gearsActive.value = active;
-        gearsOpened.value = opened;
-      })
-  );
-
-  subscription.add(
-    vehicleModule$
-      .pipe(switchMap(({ observables }) => observables.powerInfo$))
-      .subscribe(v => {
-        powerInfo.value = v;
-      })
-  );
-
-  subscription.add(
-    app.modules.unitFocus.observables.followedUnit$.subscribe(focusedUnit => {
-      unitFocused.value = focusedUnit;
-    })
+      .subscribe(
+        ([active, opened]) =>
+          (unitGears.value = {
+            active,
+            opened
+          })
+      )
   );
 
   subscription.add(
@@ -303,17 +385,7 @@ async function setup() {
       })
   );
 
-  subscription.add(
-    vehicle$
-      .pipe(
-        switchMap(
-          ({ current }) => current?.modules.damage.observables.damage$ ?? EMPTY
-        )
-      )
-      .subscribe(v => {
-        unitDamageValue.value = v;
-      })
-  );
+  //#endregion
 
   ready.value = true;
 }
@@ -385,6 +457,28 @@ function onClickGears() {
 
 <style lang="postcss" scoped>
 .bm-panel-player-unit {
+  & .graph {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 16px;
+
+    & .label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 4px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    & .label + div {
+      position: relative;
+      flex: 1;
+      background: #222;
+    }
+  }
+
   & .preview {
     position: relative;
     width: 128px;
@@ -425,11 +519,34 @@ function onClickGears() {
     justify-content: center;
   }
 
-  & .power {
-    position: relative;
-    width: 16px;
-    background: #111;
+  & .altitude {
+    & .helper-min {
+      position: absolute;
+      top: calc(100% - (50% + (-50% + var(--min) * 100%)));
+      left: 0;
+      width: 100%;
+      border-top: dashed 2px white;
+      opacity: 0.4;
+      transform: translateY(-50%);
+    }
 
+    & .value {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: calc(var(--value) * 100%);
+      background: red;
+    }
+
+    &.has-min {
+      & .value {
+        background: green;
+      }
+    }
+  }
+
+  & .power {
     & .helper-min,
     & .helper-idle {
       position: absolute;
@@ -463,7 +580,23 @@ function onClickGears() {
   }
 
   & .speed {
-    position: relative;
+    & .value {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: calc(var(--value) * 100%);
+      background: green;
+      transition: height 0.2s linear;
+    }
+
+    &.ready {
+      & .value {
+        background: green;
+      }
+    }
+
+    /* position: relative;
     width: 16px;
     background: #111;
 
@@ -484,7 +617,7 @@ function onClickGears() {
       );
       height: var(--test);
       background: green;
-    }
+    } */
   }
 
   & .gears {
@@ -510,22 +643,32 @@ function onClickGears() {
 
   & .damage {
     position: relative;
+    display: flex;
+    flex-direction: column;
     width: 16px;
-    background-color: red;
+
+    --color: green;
 
     &.damaged {
-      & div {
-        background-color: yellow;
-      }
+      --color: yellow;
     }
 
-    & div {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: calc(100% * var(--value));
-      background-color: green;
+    &.destroyed {
+      --color: red;
+    }
+
+    & .label + div {
+      position: relative;
+      flex: 1;
+
+      & > div {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: calc(100% * var(--value));
+        background-color: var(--color);
+      }
     }
   }
 }

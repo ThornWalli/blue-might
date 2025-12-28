@@ -39,7 +39,6 @@ export interface HelicopterUnitModuleOptions
   rollPower: number; // side tilt strength
   friction: number;
   liftPower: number; // vertical acceleration
-  maxAltitude: number; // clamp altitude
   fixedAltitude?: number; // if set, use takeoff/land to snap here
   autoAltitude?: boolean; // if true, automatically maintain a certain altitude
   autoLevelRate?: number; // how fast tilt recenters
@@ -96,14 +95,13 @@ export default class HelicopterUnitModule<
       unit,
       {
         ...options,
-        maxSpeed: options.maxSpeed ?? 10,
-        acceleration: options.acceleration ?? 2,
+        maxSpeed: options.maxSpeed ?? 1,
+        acceleration: options.acceleration ?? 1,
         yawSpeed: options.yawSpeed ?? 4,
         pitchPower: options.pitchPower ?? 1,
         rollPower: options.rollPower ?? 0.5,
         friction: options.friction ?? 0.96,
         liftPower: options.liftPower ?? 2,
-        maxAltitude: options.maxAltitude ?? 10,
         autoAltitude: options.autoAltitude ?? true,
         autoLevelRate: options.autoLevelRate ?? 2
       } as Options,
@@ -436,16 +434,31 @@ export default class HelicopterUnitModule<
         minY += this.options.gearsHeight;
       }
 
-      if (position.y <= (minY ?? 0)) {
+      // if (position.y <= (minY ?? 0)) {
+      //   this.state.isAirborne = false;
+      //   velocity.y = 0;
+      //   position.y = minY ?? 0;
+
+      //   if (!this.lastPosition?.equals(position)) {
+      //     unit.setPosition(position);
+      //     this.lastPosition.copy(pos);
+      //   }
+      //   status = FLIGHT_STATUS.LANDED;
+      // }
+
+      if (
+        (this.state.isAirborne && position.y <= minY + 0.1) ||
+        (status === FLIGHT_STATUS.LANDED && position.y <= minY)
+      ) {
         this.state.isAirborne = false;
         velocity.y = 0;
-        position.y = minY ?? 0;
-
-        if (!this.lastPosition?.equals(position)) {
-          unit.setPosition(position);
-          this.lastPosition.copy(pos);
-        }
+        position.y = minY;
+        unit.setPosition(position);
+        this.lastPosition.copy(position);
         status = FLIGHT_STATUS.LANDED;
+        console.log('Helicopter landed');
+        unit.updateGroundAlignment();
+        unit.calculateGroundNormal();
       }
     }
 
@@ -463,9 +476,12 @@ export default class HelicopterUnitModule<
       pos.y += dy;
       pos.z += dz;
       unit.setPosition(pos);
-      if (!this.state.isAirborne) {
-        unit.updateGroundAlignment();
-      }
+      // console.log()
+      //       if (status === FLIGHT_STATUS.LANDED) {
+      //         console.log('Helicopter landed');
+      //         unit.updateGroundAlignment();
+      //         unit.calculateGroundNormal();
+      //       }
     }
 
     this.setFlightStatus(status);

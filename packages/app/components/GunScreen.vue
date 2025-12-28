@@ -1,16 +1,23 @@
 <template>
   <div ref="screenEl" class="bm-gun-screen">
     <canvas ref="canvasEl"></canvas>
-    <div></div>
+    <div class="effect"></div>
+    <div class="target"></div>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import type { WebGLRenderer } from 'three';
 import { PerspectiveCamera, Vector2, Vector3 } from 'three';
-import { createRenderer } from '@blue-might/app/lib/classes/Renderer';
+import {
+  createComposer,
+  createRenderer,
+  DEFAULT_SHADOW_QUALITY,
+  setRendererShadow
+} from '@blue-might/app/lib/classes/Renderer';
 import GunUnitModule from '@blue-might/app/lib/classes/unitModule/Gun';
+import type { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 
 import type App from '../lib/classes/App';
 import type Unit from '../lib/classes/Unit';
@@ -24,24 +31,32 @@ const $props = defineProps<{
 }>();
 
 let renderer: WebGLRenderer;
+let composer: EffectComposer;
 
 function setup() {
   if (renderer) return;
 
+  const appRenderer = $props.app.renderer;
+  const scene = appRenderer.scene;
   const dimension = new Vector2(
     screenEl.value!.offsetWidth,
     screenEl.value!.offsetHeight
   );
-  renderer = createRenderer(canvasEl.value!, dimension, {
-    pixelated: false
-  });
 
   const camera = new PerspectiveCamera(
-    60, // FOV
+    60,
     dimension.x / dimension.y,
     0.1,
     2000
   );
+
+  renderer = createRenderer(canvasEl.value!, dimension, {
+    pixelated: appRenderer.getPixelated()
+  });
+
+  setRendererShadow(renderer, DEFAULT_SHADOW_QUALITY);
+
+  composer = createComposer(renderer, scene, camera, dimension);
 
   renderer.setAnimationLoop(() => {
     const unit = $props.unit;
@@ -65,12 +80,19 @@ function setup() {
 onMounted(() => {
   setup();
 });
+
+onUnmounted(() => {
+  if (renderer) {
+    renderer.setAnimationLoop(null);
+    renderer?.dispose();
+    composer?.dispose();
+  }
+});
 </script>
 
 <style lang="postcss" scoped>
 .bm-gun-screen {
   position: relative;
-  width: 240px;
 
   &::before {
     display: block;
@@ -87,7 +109,18 @@ onMounted(() => {
     height: 100%;
   }
 
-  & div {
+  & .effect {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: lime;
+    mix-blend-mode: multiply;
+  }
+
+  & .target {
     --color: lime;
 
     position: absolute;

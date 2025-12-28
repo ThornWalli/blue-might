@@ -37,3 +37,9 @@ onMounted(() => {
   );
 });
 </script>
+
+<style lang="postcss" scoped>
+.bm-gun-screen {
+  width: 120px;
+}
+</style>

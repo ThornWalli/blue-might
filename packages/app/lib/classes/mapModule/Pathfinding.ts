@@ -95,7 +95,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       this.map,
       this.colliders.slice(),
       VehicleType.HELICOPTER,
-      1,
+      4 / 3,
       [],
       {
         gridSize: 1 / 3,
