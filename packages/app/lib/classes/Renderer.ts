@@ -36,16 +36,14 @@ export interface RendererModules {
   intersection: IntersectionRendererModule;
 }
 
-interface Passes {
-  render: RenderPass;
-}
-
 export enum ShadowQuality {
   HIGH = 'high',
   MEDIUM = 'medium',
   LOW = 'low',
   OFF = 'off'
 }
+
+export const DEFAULT_SHADOW_QUALITY = ShadowQuality.MEDIUM;
 
 export type AnimationLoopValue = {
   time: number;
@@ -77,7 +75,6 @@ export default class Renderer<
   private pixelated: boolean;
 
   modules: Modules;
-  private passes!: Passes;
 
   private _debug: boolean;
   private canvas: HTMLCanvasElement;
@@ -153,9 +150,15 @@ export default class Renderer<
     //#endregion
 
     this.setupScene();
-    this.setupComposer();
 
-    this.setShadowQuality(ShadowQuality.MEDIUM);
+    this.composer = createComposer(
+      renderer,
+      this.scene,
+      this.modules.camera.getCamera(),
+      dimension
+    );
+
+    this.setShadowQuality(DEFAULT_SHADOW_QUALITY);
 
     renderer.setAnimationLoop(time => {
       const rawDelta = this.clock.getDelta();
@@ -180,24 +183,9 @@ export default class Renderer<
 
   setShadowQuality(quality: ShadowQuality) {
     const renderer = this.getRenderer();
-    renderer.shadowMap.enabled = true;
 
-    switch (quality) {
-      case ShadowQuality.HIGH:
-        renderer.shadowMap.type = PCFSoftShadowMap;
-        break;
-      case ShadowQuality.MEDIUM:
-        renderer.shadowMap.type = PCFShadowMap;
-        break;
-      case ShadowQuality.LOW:
-        renderer.shadowMap.type = BasicShadowMap;
-        break;
-      case ShadowQuality.OFF:
-        renderer.shadowMap.enabled = false;
-        break;
-    }
+    setRendererShadow(renderer, quality);
 
-    renderer.shadowMap.needsUpdate = true;
     this.shadowQuality = quality;
     this.observables.shadowQuality$.next(quality);
   }
@@ -206,6 +194,7 @@ export default class Renderer<
     this.subscription.unsubscribe();
     this.observables.animationLoop$.complete();
     Object.values(this.modules).forEach(module => module.destroy());
+    this.renderer?.setAnimationLoop(null);
     this.renderer?.dispose();
     this.composer?.dispose();
     this.scene.clear();
@@ -279,23 +268,6 @@ export default class Renderer<
     return this.dimension;
   }
 
-  setupComposer(dimension: Vector2 = this.dimension) {
-    const composer = new EffectComposer(this.getRenderer());
-    this.composer = composer;
-
-    const passes: Partial<Passes> = {};
-
-    const mainCamera = this.modules.camera.getCamera();
-    if (mainCamera) {
-      const renderPass = new RenderPass(this.scene, mainCamera);
-      composer.addPass(renderPass);
-    }
-
-    this.passes = passes as Passes;
-
-    this.composer.setSize(dimension.x, dimension.y);
-  }
-
   get debug() {
     return this._debug;
   }
@@ -327,4 +299,41 @@ export function createRenderer(
   //#endregion
 
   return renderer;
+}
+
+export function createComposer(
+  renderer: WebGLRenderer,
+  scene: Scene,
+  camera: Camera,
+  dimension: Vector2
+) {
+  const composer = new EffectComposer(renderer);
+
+  const renderPass = new RenderPass(scene, camera);
+  composer.addPass(renderPass);
+
+  composer.setSize(dimension.x, dimension.y);
+  return composer;
+}
+
+export function setRendererShadow(
+  renderer: WebGLRenderer,
+  quality: ShadowQuality
+) {
+  renderer.shadowMap.enabled = true;
+  switch (quality) {
+    case ShadowQuality.HIGH:
+      renderer.shadowMap.type = PCFSoftShadowMap;
+      break;
+    case ShadowQuality.MEDIUM:
+      renderer.shadowMap.type = PCFShadowMap;
+      break;
+    case ShadowQuality.LOW:
+      renderer.shadowMap.type = BasicShadowMap;
+      break;
+    case ShadowQuality.OFF:
+      renderer.shadowMap.enabled = false;
+      break;
+  }
+  renderer.shadowMap.needsUpdate = true;
 }

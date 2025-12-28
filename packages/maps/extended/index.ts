@@ -1,6 +1,5 @@
-import { Vector3 } from 'three';
+import { Euler, Vector3 } from 'three';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import CombatHelicopter_1 from '@blue-might/units/combat_helicopter_1/CombatHelicopter_1';
 import {
   Barrack_1,
   ControlTower_1,
@@ -9,6 +8,7 @@ import {
   Tree_1,
   Soldat_1,
   Turret_1,
+  CombatHelicopter_1,
   CombatTank_1
 } from '@blue-might/units';
 import Faction from '@blue-might/app/lib/classes/Faction';
@@ -85,7 +85,11 @@ const desc: MapDescription = {
     new CombatHelicopter_1({
       id: 'combat-helicopter-1',
       position: new Vector3(43.5, 0, -26.5), // 34+9.5, -32+5.5
+      rotation: new Euler(0, Math.PI, 0),
       moduleStates: {
+        helicopter: {
+          active: true
+        },
         faction: {
           faction: blueFaction
         }
@@ -182,19 +186,28 @@ const desc: MapDescription = {
         }
       }
     }),
-    new Turret_1({
-      position: new Vector3(45.17, 1, -25.83),
-      moduleStates: {
-        faction: {
-          faction: blueFaction
-        }
-      },
-      moduleOptions: {
-        gun: {
-          weapons: [new weapons.default()]
-        }
-      }
-    })
+    ...[
+      new Vector3(45.17, 1, -25.83),
+      new Vector3(37.83, 0, -25.83),
+      new Vector3(45.17, 1, -32.5),
+      new Vector3(34.83, 0, -32.5),
+      new Vector3(35.0, 0, -25.24)
+    ].map(
+      position =>
+        new Turret_1({
+          position,
+          moduleStates: {
+            faction: {
+              faction: blueFaction
+            }
+          },
+          moduleOptions: {
+            gun: {
+              weapons: [new weapons.default()]
+            }
+          }
+        })
+    )
   ]
 };
 export default desc;

@@ -61,11 +61,11 @@ export default class ShootModule extends MapModule<State, Observables> {
   /**
    * Gravitation nach unten (m/s²), skaliere für dein Spiel
    */
-  private gravity = new Vector3(0, -5, 0);
+  readonly gravity = new Vector3(0, -5, 0);
   /**
    * Luftwiderstand-Faktor (0.99 = 1% Verlust pro Frame), passe an
    */
-  private airResistance = 0.1;
+  readonly airResistance = 0.1;
 
   // Temporäre Vektoren für die Physikberechnung, um .clone() zu reduzieren
   private tempVector = new Vector3();

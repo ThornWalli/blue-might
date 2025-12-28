@@ -10,9 +10,9 @@
 
 <script setup lang="ts">
 import type App from '@blue-might/app/lib/classes/App';
-import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import { CombatHelicopter_1, LandingPort_1, Tank_1 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Vector3 } from 'three';
@@ -27,17 +27,6 @@ onUnmounted(() => {
 });
 
 const playerUnitId = 'combat-helicopter-1';
-
-const blueFaction = new Faction({
-  id: 'blue-faction',
-  name: 'Blue Faction',
-  colors: [0x0055aa, 0xcccccc]
-});
-const enemyFaction = new Faction({
-  id: 'enemy-faction',
-  name: 'Enemy Faction',
-  colors: [0x205010, 0xa0b0a0]
-});
 
 const map: Partial<MapDescription> = {
   factions: [blueFaction, enemyFaction],
@@ -66,6 +55,9 @@ const map: Partial<MapDescription> = {
         }
       },
       moduleStates: {
+        damage: {
+          damage: 0.4
+        },
         gun: {
           autoAimActive: true,
           autoAimAutoShoot: false

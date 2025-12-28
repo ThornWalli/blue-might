@@ -11,9 +11,9 @@
 <script setup lang="ts">
 import type { AppConfig } from '@blue-might/app/lib/classes/App';
 import type App from '@blue-might/app/lib/classes/App';
-import Faction from '@blue-might/app/lib/classes/Faction';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import {
   CombatHelicopter_1,
   Soldat_1,
@@ -39,17 +39,6 @@ const config: Partial<AppConfig> = {
     map: { pathfinding: true }
   }
 };
-
-const blueFaction = new Faction({
-  id: 'blue-faction',
-  name: 'Blue Faction',
-  colors: [0x0055aa, 0xcccccc]
-});
-const enemyFaction = new Faction({
-  id: 'enemy-faction',
-  name: 'Enemy Faction',
-  colors: [0x205010, 0xa0b0a0]
-});
 
 const map: Partial<MapDescription> = {
   factions: [blueFaction, enemyFaction],

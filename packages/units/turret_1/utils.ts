@@ -14,3 +14,9 @@ export function createBarrelTargetShoot({ color }: { color?: number } = {}) {
 
   return barrelTargetShoot;
 }
+
+export function normalizeAngle(angle: number): number {
+  while (angle > Math.PI) angle -= 2 * Math.PI;
+  while (angle < -Math.PI) angle += 2 * Math.PI;
+  return angle;
+}
