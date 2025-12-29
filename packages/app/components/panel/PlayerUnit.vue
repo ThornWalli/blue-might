@@ -50,6 +50,7 @@
         </div>
       </div>
       <div>
+        <div class="compass">{{ compassValue }}</div>
         <div :key="unit.key" class="preview">
           <div class="preview-inner">
             <bm-object-preview-unit
@@ -131,7 +132,7 @@ import {
   switchMap,
   timer
 } from 'rxjs';
-import { Euler, Vector3 } from 'three';
+import { Euler, MathUtils, Vector3 } from 'three';
 import { ICON } from '@blue-might/app/utils/icons';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
@@ -211,6 +212,19 @@ const heightDiff = computed(() => {
     return position.value.y - minGroundHeight.value;
   }
   return 0;
+});
+
+const compassValue = computed(() => {
+  const deg =
+    (-MathUtils.radToDeg(-Math.PI / 2 + unitRotation.value.y) + 360) % 360;
+  if (deg >= 337.5 || deg < 22.5) return 'N';
+  if (deg < 67.5) return 'NE';
+  if (deg < 112.5) return 'E';
+  if (deg < 157.5) return 'SE';
+  if (deg < 202.5) return 'S';
+  if (deg < 247.5) return 'SW';
+  if (deg < 292.5) return 'W';
+  return 'NW';
 });
 
 const seaLevel = computed(() =>
@@ -708,5 +722,14 @@ function onClickGears() {
       opacity: 1;
     }
   }
+}
+
+.compass {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 4px;
+  font-size: 12px;
+  font-weight: 700;
 }
 </style>

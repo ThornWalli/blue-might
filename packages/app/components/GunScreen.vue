@@ -58,6 +58,7 @@ function setup() {
 
   composer = createComposer(renderer, scene, camera, dimension);
 
+  const target = new Vector3();
   renderer.setAnimationLoop(() => {
     const unit = $props.unit;
     renderer.render($props.app.getScene(), camera);
@@ -67,12 +68,14 @@ function setup() {
       const [sourcePosition] = gunModule.getSourcePositions();
       const [barrelTarget] = gunModule.getBarrelTargets();
       if (unit && sourceDirection && sourcePosition && barrelTarget) {
-        const testt = new Vector3();
-        barrelTarget.getWorldPosition(testt);
-        camera.position.copy(testt);
+        barrelTarget.getWorldPosition(target);
+        camera.position.copy(target);
 
-        const test = camera.position.clone().add(sourceDirection);
-        camera.lookAt(test);
+        camera.lookAt(
+          camera.position.x + sourceDirection.x,
+          camera.position.y + sourceDirection.y,
+          camera.position.z + sourceDirection.z
+        );
       }
     }
   });
@@ -117,6 +120,13 @@ onUnmounted(() => {
     width: 100%;
     height: 100%;
     background: lime;
+
+    /*
+    box-shadow:
+      inset 0 12px 18px rgb(255 255 255 / 25%),
+      inset 0 -18px 30px rgb(0 0 0 / 55%),
+      0 25px 50px rgb(0 0 0 / 60%);
+      */
     mix-blend-mode: multiply;
   }
 

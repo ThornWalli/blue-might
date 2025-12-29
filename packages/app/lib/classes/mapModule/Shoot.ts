@@ -51,9 +51,7 @@ interface ShootDescription {
 
 export default class ShootModule extends MapModule<State, Observables> {
   static override TYPE = 'shoot';
-  private raycastFrameCounter = 0; // Neuer Zähler für Raycasting-Frequenz
-
-  private tempSphere = new Sphere();
+  private raycastFrameCounter = 0;
   private raycaster = new Raycaster();
   override state: State = {};
   private dustCones: Object3D[] = [];
@@ -67,10 +65,12 @@ export default class ShootModule extends MapModule<State, Observables> {
    */
   readonly airResistance = 0.1;
 
-  // Temporäre Vektoren für die Physikberechnung, um .clone() zu reduzieren
-  private tempVector = new Vector3();
-  private tempGravity = new Vector3();
-  private tempDrag = new Vector3();
+  private temp = {
+    sphere: new Sphere(),
+    vector: new Vector3(),
+    gravity: new Vector3(),
+    drag: new Vector3()
+  };
 
   private dustConeOptions: DustConeOptions = {
     ditherThreshold: 0.1,
@@ -130,19 +130,6 @@ export default class ShootModule extends MapModule<State, Observables> {
     return allTargets.filter(obj => !ignoredObjects.includes(obj));
   }
 
-  // private getTargetObjects(ignoredObjects: Object3D[] = []) {
-  //   const map = this.map;
-  //   const objs = [map.modules.ground.getRoot()];
-  //   let obj;
-  //   map.modules.units.getUnits().forEach(u => {
-  //     obj = u.getRoot();
-  //     if (!ignoredObjects.includes(obj)) {
-  //       objs.push(obj);
-  //     }
-  //   });
-  //   return objs;
-  // }
-
   async createShoot(
     position: Vector3,
     direction: Vector3 = new Vector3(0, 0, 1),
@@ -159,8 +146,8 @@ export default class ShootModule extends MapModule<State, Observables> {
   ) {
     const activeCount = this.shoots.filter(s => s.isActive).length;
     if (activeCount >= 50) {
-      // Anpassbar
-      return; // Ignoriere neuen Schuss
+      // Ignoriere neuen Schuss
+      return;
     }
 
     if (!this.shootByProjectile[projectile.id]) {
@@ -198,10 +185,14 @@ export default class ShootModule extends MapModule<State, Observables> {
     obj.position.copy(position);
 
     if (enableSpread) {
-      setSpread(this.tempVector, direction, spreadAmount);
+      setSpread(this.temp.vector, direction, spreadAmount);
     }
 
-    obj.lookAt(obj.position.clone().add(direction));
+    obj.lookAt(
+      obj.position.x + direction.x,
+      obj.position.y + direction.y,
+      obj.position.z + direction.z
+    );
 
     // Aktiviere und konfiguriere das Projektil
     shootDesc.isActive = true;
@@ -226,33 +217,37 @@ export default class ShootModule extends MapModule<State, Observables> {
       }
 
       // 2. Physikberechnung mit wiederverwendeten Vektoren
-      this.tempGravity.copy(this.gravity).multiplyScalar(delta);
-      shoot.velocity.add(this.tempGravity);
+      this.temp.gravity.copy(this.gravity).multiplyScalar(delta);
+      shoot.velocity.add(this.temp.gravity);
 
-      this.tempDrag
+      this.temp.drag
         .copy(shoot.velocity)
         .multiplyScalar(this.airResistance * delta);
-      shoot.velocity.sub(this.tempDrag);
+      shoot.velocity.sub(this.temp.drag);
 
       const obj = shoot.object;
-      const oldPosition = this.tempVector.copy(obj.position);
+      const oldPosition = this.temp.vector.copy(obj.position);
 
-      const moveVector = this.tempGravity
+      const moveVector = this.temp.gravity
         .copy(shoot.velocity)
         .multiplyScalar(delta);
       obj.position.add(moveVector);
 
-      obj.lookAt(obj.position.clone().add(shoot.velocity));
+      obj.lookAt(
+        obj.position.x + shoot.velocity.x,
+        obj.position.y + shoot.velocity.y,
+        obj.position.z + shoot.velocity.z
+      );
 
       let hit = false;
 
       // Bounding-Sphere-Prüfung (Radius z. B. 1.0 anpassen)
-      this.tempSphere.set(obj.position, 1.0);
+      this.temp.sphere.set(obj.position, 1.0);
       let needsRaycast = false;
       for (const target of allPossibleTargets) {
         if (
           target !== obj &&
-          this.tempSphere.intersectsSphere(
+          this.temp.sphere.intersectsSphere(
             //target.boundingSphere ||
             new Sphere(target.position, 2.0)
           )
@@ -263,7 +258,7 @@ export default class ShootModule extends MapModule<State, Observables> {
       }
 
       if (needsRaycast && this.raycastFrameCounter % 3 === 0) {
-        const direction = this.tempDrag.copy(shoot.velocity).normalize();
+        const direction = this.temp.drag.copy(shoot.velocity).normalize();
         raycaster.set(oldPosition, direction);
 
         // 3. Raycast gegen eine gefilterte Liste von Zielen
