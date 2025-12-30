@@ -183,7 +183,7 @@ export default class DamageUnitModule extends UnitModule<
     this.spawnSmoke(SMOKE_TYPE.MEDIUM);
   }
 
-  private setValue(value: number) {
+  setValue(value: number) {
     if (!this.canDamage() && this.isDestroyed()) return;
     this.state.damage = Math.max(0, value);
     this.observables.damage$.next(this.state.damage);

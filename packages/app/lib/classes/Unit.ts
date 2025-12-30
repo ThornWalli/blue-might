@@ -427,10 +427,6 @@ export default class Unit<
     return this._position;
   }
 
-  checkCollision() {
-    return this._map?.checkCollision(this) ?? COLLISION_TYPE.NONE;
-  }
-
   getRotation() {
     return this._rotation;
   }
@@ -552,7 +548,7 @@ export default class Unit<
 
     // Schritt 2: Prüfe, ob die neue Position eine Kollision verursacht
     this._position.copy(desired);
-    const collisionType = this.checkCollision();
+    const collisionType = this.modules.collision.checkCollision();
 
     // Fall A: Keine blockierende Kollision
     if (collisionType < COLLISION_TYPE.BLOCKED) {
@@ -634,7 +630,7 @@ export default class Unit<
 
     this._rotation.y = yaw;
 
-    if (this.checkCollision() >= COLLISION_TYPE.BLOCKED) {
+    if (this.modules.collision.checkCollision() >= COLLISION_TYPE.BLOCKED) {
       this._rotation.y = lastYaw; // Wenn ja, mache es rückgängig.
     }
 

@@ -20,7 +20,8 @@ const links = ref([
   { title: 'Patrol', href: '/debug/patrol' },
   { title: 'Helicopter', href: '/debug/helicopter' },
   { title: 'Tank', href: '/debug/tank' },
-  { title: 'Pathfinding', href: '/debug/pathfinding' }
+  { title: 'Pathfinding', href: '/debug/pathfinding' },
+  { title: 'Building', href: '/debug/building' }
 ]);
 </script>
 

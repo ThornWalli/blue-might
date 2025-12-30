@@ -13,8 +13,8 @@ import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
-import { CombatHelicopter_1 } from '@blue-might/units';
-import House_1 from '@blue-might/units/house_1/House_1';
+import { CombatHelicopter_1, Tower_1 } from '@blue-might/units';
+import House_1 from '@blue-might/units/building/house_1/House_1';
 import { Subscription } from 'rxjs';
 import { Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
@@ -38,6 +38,9 @@ const map: Partial<MapDescription> = {
     }),
     new House_1({
       position: new Vector3(0, 0, 0)
+    }),
+    new Tower_1({
+      position: new Vector3(5, 5, 0)
     })
   ]
 };

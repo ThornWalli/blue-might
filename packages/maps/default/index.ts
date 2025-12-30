@@ -1,11 +1,11 @@
 import { Vector3 } from 'three';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import LandingPort_1 from '@blue-might/units/landing_port_1/LandingPort_1';
-import Tank_1 from '@blue-might/units/tank_1/Tank_1';
+import LandingPort_1 from '@blue-might/units/building/landing_port_1/LandingPort_1';
+import Tank_1 from '@blue-might/units/vehicle/tank_1/Tank_1';
 import { Barrack_1, ControlTower_1 } from '@blue-might/units';
-import CombatHelicopter_1 from '@blue-might/units/combat_helicopter_1/CombatHelicopter_1';
-import Tree_1 from '@blue-might/units/tree_1/Tree_1';
-import Soldat_1 from '@blue-might/units/soldat_1/Soldat_1';
+import CombatHelicopter_1 from '@blue-might/units/vehicle/combat_helicopter_1/CombatHelicopter_1';
+import Tree_1 from '@blue-might/units/tree/tree_1/Tree_1';
+import Soldat_1 from '@blue-might/units/vehicle/soldat_1/Soldat_1';
 import { blueFaction } from '@blue-might/app/lib/utils/factions';
 
 import foregroundTexture from './texture_fg.png';

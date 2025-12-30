@@ -22,7 +22,7 @@ import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import type { ControlState } from '@blue-might/app/lib/classes/playerModule/Controls';
 import { playSound } from '@blue-might/weapon/utils';
 
-import { createBarrelTargetShoot } from '../turret_1/utils';
+import { createBarrelTargetShoot } from '../../../app/lib/utils/turret';
 
 import baseGlb from './assets/stationary_gun_2.glb?url';
 

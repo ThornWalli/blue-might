@@ -15,6 +15,7 @@ import type {
   AirVehicleUnitModuleState
 } from '../AirVehicle';
 import AirUnitModule from '../AirVehicle';
+import { COLLISION_TYPE } from '../../Collision';
 
 declare module '../../../Unit' {
   interface ModuleStates {
@@ -121,6 +122,14 @@ export default class HelicopterUnitModule<
     await super.afterSetup();
 
     const unit = this.getUnit();
+
+    this.subscription.add(
+      unit.modules.collision.observables.collision$.subscribe(({ type }) => {
+        if (type === COLLISION_TYPE.BLOCKED) {
+          unit.modules.damage.setValue(1);
+        }
+      })
+    );
 
     this.subscription.add(
       unit.modules.player.observables.player$

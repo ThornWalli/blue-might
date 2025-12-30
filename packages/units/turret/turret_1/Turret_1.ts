@@ -1,33 +1,38 @@
 /* eslint-disable complexity */
-import type {
-  SetupContext,
-  UnitConstructorOptions
+import {
+  GROUND_ADJUSTMENT_MODE,
+  type SetupContext,
+  type UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
-import TankUnit, {
-  type TankUnitModuleList,
-  type TankUnitModules,
-  type TankUnitOptions
-} from '@blue-might/app/lib/classes/unit/vehicle/Tank';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { Object3D, Vector2, Mesh, SkinnedMesh, Vector3 } from 'three';
-import { replaceColors } from '@blue-might/app/lib/utils/object';
+import { Vector2, Vector3, Mesh, SkinnedMesh, Object3D } from 'three';
+import BuildingUnit, {
+  type BuildingUnitModuleList,
+  type BuildingUnitModules,
+  type BuildingUnitOptions
+} from '@blue-might/app/lib/classes/unit/Building';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import GunUnitModule from '@blue-might/app/lib/classes/unitModule/Gun';
-import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
-import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/Gun';
-import { weapons } from '@blue-might/weapon';
-import { lerp } from 'three/src/math/MathUtils.js';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
+import { weapons } from '@blue-might/weapon';
+import GunUnitModule, {
+  type AutoAimFnOptions
+} from '@blue-might/app/lib/classes/unitModule/Gun';
+import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
+import { replaceColors } from '@blue-might/app/lib/utils/object';
+import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
+import { lerp } from 'three/src/math/MathUtils.js';
 import {
   ControlAction,
   type ControlState
 } from '@blue-might/app/lib/classes/playerModule/Controls';
-import { getSfx } from '@blue-might/weapon/projectile';
 import { playSound } from '@blue-might/weapon/utils';
+import { getSfx } from '@blue-might/weapon/projectile';
+import {
+  createBarrelTargetShoot,
+  normalizeAngle
+} from '@blue-might/app/lib/utils/turret';
 
-import { createBarrelTargetShoot, normalizeAngle } from '../turret_1/utils';
-
-import baseGlb from './assets/combat_tank_1.glb?url';
+import baseGlb from './assets/turret_1.glb?url';
 
 interface State {
   weaponActive: boolean;
@@ -35,25 +40,33 @@ interface State {
   weaponTargetRotation: Vector2;
 }
 
-export interface CombatTankOptions extends TankUnitOptions {
+export interface TurretOptions extends BuildingUnitOptions {
   minAngle: Vector2;
   maxAngle: Vector2;
   rotationSpeed: number;
 }
-export interface CombatTankModules extends TankUnitModules {
+
+export interface TurretModules extends BuildingUnitModules {
   attack: AttackUnitModule;
   gun: GunUnitModule;
   player: PlayerUnitModule;
+  movable: MovableUnitModule;
 }
-export type CombatTankModuleList = TankUnitModuleList &
-  [typeof AttackUnitModule | typeof GunUnitModule | typeof PlayerUnitModule];
 
-export default class CombatTank_1<
-  Options extends CombatTankOptions = CombatTankOptions,
-  Modules extends CombatTankModules = CombatTankModules,
-  ModuleList extends CombatTankModuleList = CombatTankModuleList
-> extends TankUnit<CombatTankOptions, Modules, ModuleList> {
-  static override KEY = 'combat_tank_1';
+export type TurretModuleList = BuildingUnitModuleList &
+  [
+    | typeof AttackUnitModule
+    | typeof GunUnitModule
+    | typeof PlayerUnitModule
+    | typeof MovableUnitModule
+  ];
+
+export default class Turret_1 extends BuildingUnit<
+  TurretOptions,
+  TurretModules,
+  TurretModuleList
+> {
+  static override KEY = 'turret_1';
 
   state: State = {
     weaponActive: false,
@@ -73,14 +86,19 @@ export default class CombatTank_1<
   };
 
   constructor(
-    options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
+    options: Omit<UnitConstructorOptions<TurretOptions>, 'name'> = {},
     moduleList: unknown[] = []
   ) {
-    moduleList.push(AttackUnitModule, GunUnitModule, PlayerUnitModule);
+    moduleList.push(
+      AttackUnitModule,
+      GunUnitModule,
+      PlayerUnitModule,
+      MovableUnitModule
+    );
     super(
       {
         ...options,
-        name: 'Combat Tank 1',
+        name: 'Turret 1',
         options: {
           ...options.options,
           minAngle: options.options?.minAngle ?? new Vector2(-0.6, -Math.PI),
@@ -92,18 +110,20 @@ export default class CombatTank_1<
           gun: {
             autoAimFn: (options: AutoAimFnOptions) => this.autoAimFn(options),
             weapons: options.moduleOptions?.gun?.weapons ?? [
-              new weapons.tank()
+              new weapons.default()
             ],
             ...options.moduleOptions?.gun
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targetName: 'base'
+            targetName: 'head',
+            targetChildIndex: 1
           }
         }
       },
-      moduleList as ModuleList
+      moduleList
     );
+    this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.MIN_HEIGHT);
   }
 
   override setup(context: SetupContext) {
@@ -139,7 +159,9 @@ export default class CombatTank_1<
   }
 
   override async createMesh(_context: SetupContext) {
-    const { object } = await loadGltf(baseGlb);
+    const { object, animations } = await loadGltf(baseGlb);
+
+    this.modules.animation.setAnimations(animations);
 
     //#region barrel
 
@@ -256,7 +278,6 @@ export default class CombatTank_1<
   autoAimFn(options: AutoAimFnOptions) {
     const { target, sourcePosition, index, weapon } = options;
     const shootModule = this.getMap()?.modules.shoot;
-
     if (
       shootModule &&
       target &&
@@ -305,6 +326,7 @@ export default class CombatTank_1<
           );
           return true;
         }
+
         return false;
       }
 
@@ -318,6 +340,7 @@ export default class CombatTank_1<
       const targetYaw = normalizeAngle(
         Math.atan2(horizontalDirection.x, horizontalDirection.z) - rotation.y // NEU: Normalisiere die Differenz
       );
+
       // Prüfe Winkel-Bereiche
       const isYawInRange =
         !this.options.minAngle ||

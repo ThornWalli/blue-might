@@ -34,8 +34,10 @@ import {
 import { lerp } from 'three/src/math/MathUtils.js';
 import { playSound } from '@blue-might/weapon/utils';
 import { getSfx } from '@blue-might/weapon/projectile';
-
-import { createBarrelTargetShoot, normalizeAngle } from '../turret_1/utils';
+import {
+  createBarrelTargetShoot,
+  normalizeAngle
+} from '@blue-might/app/lib/utils/turret';
 
 import baseGlb from './assets/combat_helicopter_1.glb?url';
 

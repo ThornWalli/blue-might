@@ -9,7 +9,8 @@ import {
   Soldat_1,
   Turret_1,
   CombatHelicopter_1,
-  CombatTank_1
+  CombatTank_1,
+  House_1
 } from '@blue-might/units';
 import { weapons } from '@blue-might/weapon';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
@@ -196,7 +197,11 @@ const desc: MapDescription = {
             }
           }
         })
-    )
+    ),
+    new House_1({
+      position: new Vector3(38.5, 0, -20.17),
+      rotation: new Euler(0, Math.PI / 2, 0)
+    })
   ]
 };
 export default desc;

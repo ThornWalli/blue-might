@@ -13,7 +13,6 @@ import LightModule from './mapModule/Light';
 import PathfindingModule from './mapModule/Pathfinding';
 import ShootModule from './mapModule/Shoot';
 import EffectModule from './mapModule/Effect';
-import { COLLISION_TYPE } from './unitModule/Collision';
 import FactionModule from './mapModule/Faction';
 import type Faction from './Faction';
 
@@ -169,33 +168,6 @@ export default class Map<
 
   get name() {
     return this.description.name;
-  }
-
-  checkCollision(unit: Unit) {
-    const cm1 = unit.modules.collision;
-    if (!cm1) return COLLISION_TYPE.NONE;
-
-    cm1.refreshWorldOBB();
-    cm1.refreshDebugHelper();
-
-    const units = this.modules.units.getUnits();
-
-    for (let i = 0; i < units.length; i++) {
-      const target = units[i]!;
-      if (target === unit) continue; // Verwende === statt .equal()
-
-      const cm2 = target.modules.collision;
-      if (!cm2) continue;
-
-      cm2.refreshWorldOBB();
-      cm2.refreshDebugHelper(); // Nur für debug, sonst weglassen
-
-      if (cm1.getWorldOBB().intersectsOBB(cm2.getWorldOBB())) {
-        return cm2.getCollisionType();
-      }
-    }
-
-    return COLLISION_TYPE.NONE;
   }
 }
 

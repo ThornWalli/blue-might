@@ -1,6 +1,8 @@
 <template>
   <bm-panel class="bm-panel-controls" hide-title title="Controls">
     <div class="grid">
+      <div>Power</div>
+      <div>P</div>
       <div>Move</div>
       <div>W/A/S/D</div>
       <div>Rotate</div>

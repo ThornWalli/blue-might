@@ -1,5 +1,5 @@
 /* eslint-disable complexity */
-import { ReplaySubject, Subject } from 'rxjs';
+import { ReplaySubject, Subject, switchMap } from 'rxjs';
 import { Vector3 } from 'three';
 
 import UnitModule, {
@@ -106,17 +106,37 @@ export default class MovableUnitModule<
   }
 
   override async setup() {
+    const unit = this.getUnit();
     this.subscription.add(
-      this.getUnit().modules.damage.observables.destroyed$.subscribe(() => {
+      unit.modules.damage.observables.destroyed$.subscribe(() => {
         this.clearAutopilotControls();
         this.turnOff();
       })
     );
+
+    this.subscription.add(
+      unit
+        .getMap()
+        ?.app.modules.player.observables.currentPlayer$.pipe(
+          switchMap(player => {
+            return player.modules.controls.observables.controls$;
+          })
+        )
+        .subscribe(controls => {
+          const { power } = controls;
+
+          if (power) {
+            if (this.state.active) {
+              this.turnOff();
+            } else {
+              this.turnOn();
+            }
+          }
+        })
+    );
   }
 
   override update({ delta: _delta }: AnimationLoopValue): void {
-    // to be implemented by subclasses
-
     let currentPower = this.state.rawPower ?? 0;
 
     if (
@@ -220,6 +240,7 @@ export default class MovableUnitModule<
       [ControlAction.RIGHT]: ai?.right ?? human?.right ?? false,
 
       [ControlAction.SPACE]: ai?.space ?? human?.space ?? false,
+      [ControlAction.POWER]: ai?.power ?? human?.power ?? false,
       [ControlAction.GEAR]: ai?.gear ?? human?.gear ?? false,
       [ControlAction.LANDING]: ai?.landing ?? human?.landing ?? false,
       [ControlAction.MODIFIER]: ai?.modifier ?? human?.modifier ?? false,

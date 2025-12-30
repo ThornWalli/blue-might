@@ -9,6 +9,7 @@ import type Player from '../Player';
 
 export enum ControlAction {
   SPACE = 'space',
+  POWER = 'power',
   GEAR = 'gear',
   LANDING = 'landing',
   MODIFIER = 'modifier',
@@ -42,6 +43,9 @@ type KeyBindings = {
 };
 
 const actionBindings: KeyBindings = {
+  [ControlAction.POWER]: {
+    keyCode: ['KeyP']
+  },
   [ControlAction.GEAR]: {
     keyCode: ['KeyG']
   },
@@ -277,6 +281,7 @@ export interface ControlState {
   [ControlAction.FIRE_SECONDARY]: boolean;
 
   [ControlAction.SPACE]: boolean;
+  [ControlAction.POWER]: boolean;
   [ControlAction.GEAR]: boolean;
   [ControlAction.LANDING]: boolean;
   [ControlAction.MODIFIER]: boolean;

@@ -9,6 +9,7 @@ import {
   Vector3
 } from 'three';
 import { OBB } from 'three/examples/jsm/math/OBB.js';
+import { ReplaySubject } from 'rxjs';
 
 import UnitModule, {
   type UnitModuleObservables,
@@ -37,8 +38,9 @@ declare module '../../utils/object' {
 }
 OBJECT_USER_DATA.COLLISION_TYPE = 'collisionType';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface CollisionUnitModuleObservables extends UnitModuleObservables {}
+interface CollisionUnitModuleObservables extends UnitModuleObservables {
+  collision$: ReplaySubject<{ type: COLLISION_TYPE; target: Unit }>;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface CollisionUnitModuleState extends UnitModuleState {}
@@ -79,6 +81,13 @@ export default class CollisionUnitModule<
       },
       debug
     );
+
+    //#region observables
+    this.observables.collision$ = new ReplaySubject<{
+      type: COLLISION_TYPE;
+      target: Unit;
+    }>(1);
+    //#endregion
   }
 
   override destroy() {
@@ -170,6 +179,36 @@ export default class CollisionUnitModule<
     this.worldOBB.rotation.setFromMatrix4(worldMatrix);
     this.worldOBB.center.copy(this.localOBB.center).applyMatrix4(worldMatrix);
     this.worldOBB.halfSize.copy(this.localOBB.halfSize);
+  }
+
+  checkCollision() {
+    const unit = this.getUnit();
+    const cm1 = unit.modules.collision;
+    if (!cm1) return COLLISION_TYPE.NONE;
+
+    cm1.refreshWorldOBB();
+    cm1.refreshDebugHelper();
+
+    const units = unit.getMap()?.modules.units.getUnits() ?? [];
+
+    for (let i = 0; i < units.length; i++) {
+      const target = units[i]!;
+      if (target === unit) continue; // Verwende === statt .equal()
+
+      const cm2 = target.modules.collision;
+      if (!cm2) continue;
+
+      cm2.refreshWorldOBB();
+      cm2.refreshDebugHelper(); // Nur für debug, sonst weglassen
+
+      if (cm1.getWorldOBB().intersectsOBB(cm2.getWorldOBB())) {
+        const type = cm2.getCollisionType();
+        this.observables.collision$.next({ type, target });
+        return type;
+      }
+    }
+
+    return COLLISION_TYPE.NONE;
   }
 
   //#region debug
