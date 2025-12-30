@@ -8,6 +8,11 @@
         <bm-panel-controls key="general" :app="app" />
       </div>
     </template>
+    <template #[PANEL.TOP_LEFT]>
+      <div class="panel-row">
+        <bm-panel-map key="map" :app="app" />
+      </div>
+    </template>
     <template #[PANEL.TOP_RIGHT]>
       <div class="panel-row">
         <bm-panel-secondary-screen key="secondary-screen" :app="app" />
@@ -29,6 +34,7 @@ import BmPanelControls from '../panel/Controls.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
 import BmPanelSecondaryScreen from '../panel/GunScreen.vue';
+import BmPanelMap from '../panel/Map.vue';
 
 defineProps<{
   app: App;

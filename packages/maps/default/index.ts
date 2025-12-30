@@ -6,17 +6,12 @@ import { Barrack_1, ControlTower_1 } from '@blue-might/units';
 import CombatHelicopter_1 from '@blue-might/units/combat_helicopter_1/CombatHelicopter_1';
 import Tree_1 from '@blue-might/units/tree_1/Tree_1';
 import Soldat_1 from '@blue-might/units/soldat_1/Soldat_1';
-import Faction from '@blue-might/app/lib/classes/Faction';
+import { blueFaction } from '@blue-might/app/lib/utils/factions';
 
 import foregroundTexture from './texture_fg.png';
 import backgroundTexture from './texture_bg.png';
 import heightMap from './heightMap.png';
 
-const blueFaction = new Faction({
-  id: 'blue-faction',
-  name: 'Blue Faction',
-  colors: [0x0055aa]
-});
 export const playerFaction = blueFaction;
 
 const desc: MapDescription = {

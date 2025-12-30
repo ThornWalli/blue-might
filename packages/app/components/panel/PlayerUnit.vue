@@ -105,17 +105,6 @@
       @click="onClickFocusUnit">
       {{ unitFocused ? 'Unlock' : 'Lock' }}
     </bm-button>
-    <p>
-      <strong>Height:</strong> {{ seaLevelDiff.toFixed(2) }} m /
-      {{ (minGroundHeight ?? 0).toFixed(2) }} m (<span
-        :style="{
-          color: heightDiff! > 0 ? 'green' : 'red'
-        }">
-        {{ heightDiff.toFixed(2) }}
-      </span>
-      m)<br />
-      {{ status }}
-    </p>
   </bm-panel>
 </template>
 
@@ -188,31 +177,6 @@ const player = computed(() =>
 const panelTitle = computed(
   () => player.value?.name || unit.value?.name || 'n/a'
 );
-
-const minGroundHeight = computed(
-  () =>
-    position.value &&
-    $props.app.modules.map
-      .getMap()
-      .modules.ground.getSurfaceHeightAt(
-        position.value.x,
-        position.value.z,
-        [unit.value].filter(Boolean) as Unit[]
-      )
-);
-
-const seaLevelDiff = computed(() => {
-  if (position.value) {
-    return position.value.y - seaLevel.value;
-  }
-  return 0;
-});
-const heightDiff = computed(() => {
-  if (position.value && minGroundHeight.value != null) {
-    return position.value.y - minGroundHeight.value;
-  }
-  return 0;
-});
 
 const compassValue = computed(() => {
   const deg =

@@ -443,7 +443,7 @@ export default class HelicopterUnitModule<
         unit.setPosition(position);
         this.lastPosition.copy(position);
         status = FLIGHT_STATUS.LANDED;
-        console.log('Helicopter landed');
+        // console.log('Helicopter landed');
         unit.updateGroundAlignment();
         unit.calculateGroundNormal();
       }

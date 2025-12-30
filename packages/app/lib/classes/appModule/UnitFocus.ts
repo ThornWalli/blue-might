@@ -44,13 +44,12 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
             ).pipe(map(() => unit));
           })
         )
-        .subscribe(unit => {
-          // Kamera auf Fahrzeug setzen
+        .subscribe(unit =>
           this.app.renderer.modules.camera.updateCamera({
             position: unit.getPosition().clone(),
             quaternion: unit.root.quaternion.clone()
-          });
-        })
+          })
+        )
     );
   }
 

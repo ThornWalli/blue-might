@@ -65,7 +65,8 @@ function createNeutralFaction() {
   return new Faction({
     id: 'neutral',
     name: 'Neutral Faction',
-    colors: [0x808080, 0xffffff]
+    colors: [0x808080, 0xffffff],
+    mapColor: 0x808080
   });
 }
 

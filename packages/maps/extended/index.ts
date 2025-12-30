@@ -11,23 +11,12 @@ import {
   CombatHelicopter_1,
   CombatTank_1
 } from '@blue-might/units';
-import Faction from '@blue-might/app/lib/classes/Faction';
 import { weapons } from '@blue-might/weapon';
+import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 
 import foregroundTexture from './texture_fg.png';
 import backgroundTexture from './texture_bg.png';
 import heightMap from './heightMap.png';
-
-const blueFaction = new Faction({
-  id: 'blue-faction',
-  name: 'Blue Faction',
-  colors: [0x0055aa, 0xcccccc]
-});
-const enemyFaction = new Faction({
-  id: 'enemy-faction',
-  name: 'Enemy Faction',
-  colors: [0x205010, 0xa0b0a0]
-});
 
 export const playerFaction = blueFaction;
 const desc: MapDescription = {

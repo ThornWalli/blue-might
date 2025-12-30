@@ -5,8 +5,10 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, useHead } from '#imports';
+import { onMounted, onUnmounted, useHead, useRoute } from '#imports';
 import useStats from '~/composables/useStats';
+
+const $route = useRoute();
 
 const { start: startStats, stop: stopStats } = useStats();
 
@@ -21,7 +23,9 @@ useHead({
 });
 
 onMounted(async () => {
-  await startStats();
+  if ('stats' in $route.query) {
+    await startStats();
+  }
 });
 
 onUnmounted(() => {

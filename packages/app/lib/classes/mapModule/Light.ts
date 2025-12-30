@@ -32,7 +32,7 @@ export default class LightModule extends MapModule<State, Observables> {
 
     light.castShadow = true;
 
-    light.shadow.mapSize.set(512, 512);
+    light.shadow.mapSize.set(1024, 1024);
     light.shadow.radius = 0;
 
     light.shadow.bias = -0.0007;

@@ -33,8 +33,10 @@
       <span>Pos.:</span>
       {{ position?.round().toArray().join(' / ') }}<br />
     </p>
-    <bm-button @click="onClickFocusUnit"> Focus Unit </bm-button>
-    <bm-button :disabled="!canUseVehicle" @click="onClickUseVehicle">
+    <bm-button v-if="canFocusUnit" @click="onClickFocusUnit">
+      Focus Unit
+    </bm-button>
+    <bm-button v-if="canUseVehicle" @click="onClickUseVehicle">
       Use Vehicle
     </bm-button>
   </bm-panel>
@@ -139,6 +141,8 @@ const canUseVehicle = computed(() => {
   const playerUnitModule = unit.value.getModuleByType(PlayerUnitModule);
   return playerUnitModule && !playerUnitModule.hasPlayer();
 });
+
+const canFocusUnit = ref(true);
 
 function onClickUseVehicle() {
   const u = unit.value;

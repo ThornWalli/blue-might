@@ -241,45 +241,34 @@ export function updateOrthoCameraForObject(
 export function createScene() {
   const scene = new Scene();
 
-  const zoom = 20;
-
   //#region light
 
-  const ambient = new AmbientLight(0xffffff, 1);
-  scene.add(ambient);
+  const ambientLight = new AmbientLight(0xffffff, 1);
+  scene.add(ambientLight);
 
-  let light;
-  light = new DirectionalLight(0xffffff, 1);
-  light.position.copy(new Vector3(10, 15, 10));
-  light.shadow.mapSize.width = 256;
-  light.shadow.mapSize.height = 256;
-  light.shadow.camera.left = -zoom;
-  light.shadow.camera.right = zoom;
-  light.shadow.camera.top = zoom;
-  light.shadow.camera.bottom = -zoom;
-  light.shadow.camera.near = 1;
-  light.shadow.camera.far = 60;
-  light.shadow.camera.updateProjectionMatrix();
+  const light = new DirectionalLight(0xffffff, 1);
+  light.position.set(20, 50, 20);
 
   light.castShadow = true;
+
+  light.shadow.mapSize.set(1024, 1024);
+  light.shadow.radius = 0;
+
+  light.shadow.bias = -0.0007;
+  light.shadow.normalBias = 0.03;
+
   light.lookAt(0, 0, 0);
 
-  scene.add(light);
+  const SHADOW_RANGE = 12;
 
-  light = new DirectionalLight(0xffffff, 1);
-  light.position.set(10, 15, 10);
-  light.shadow.mapSize.width = 256;
-  light.shadow.mapSize.height = 256;
-  light.shadow.camera.left = -zoom;
-  light.shadow.camera.right = zoom;
-  light.shadow.camera.top = zoom;
-  light.shadow.camera.bottom = -zoom;
-  light.shadow.camera.near = 1;
-  light.shadow.camera.far = 60;
+  light.shadow.camera.left = -SHADOW_RANGE;
+  light.shadow.camera.right = SHADOW_RANGE;
+  light.shadow.camera.top = SHADOW_RANGE;
+  light.shadow.camera.bottom = -SHADOW_RANGE;
+
+  light.shadow.camera.near = 2;
+  light.shadow.camera.far = 40;
   light.shadow.camera.updateProjectionMatrix();
-
-  light.castShadow = true;
-  light.lookAt(0, 0, 0);
 
   scene.add(light);
 
