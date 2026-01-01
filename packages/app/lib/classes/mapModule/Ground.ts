@@ -1,7 +1,6 @@
 import {
-  AddOperation,
   CanvasTexture,
-  MultiplyOperation,
+  LinearSRGBColorSpace,
   Raycaster,
   ShadowMaterial,
   Vector2,
@@ -24,9 +23,10 @@ import MapModule, {
 import type Map from '../Map';
 import { getCostsFromImage, TILE_TYPE } from '../../utils/pathfinding';
 import type Unit from '../Unit';
-import { getAllMeshes } from '../../utils/object';
+import { getAllMeshes, OBJECT_USER_DATA } from '../../utils/object';
 import BuildingUnit from '../unit/Building';
 import { generateNoiseTexture } from '../../utils/texture';
+import { resizeCanvas } from '../../utils/canvas';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -246,6 +246,61 @@ export default class GroundModule extends MapModule<State, Observables> {
     return groundHeight;
   }
 
+  getTerrainInfoAt(
+    x: number | Vector2,
+    z?: number,
+    ignoredUnits: Unit[] = [],
+    maxDistance = 100
+  ): {
+    position: Vector3;
+    unit?: Unit;
+  } {
+    if (x instanceof Vector2) {
+      z = x.y;
+      x = x.x;
+    }
+
+    this.surfaceData.position.set(x, 50, z!);
+
+    const raycaster = this.surfaceData.raycaster;
+    raycaster.far = maxDistance; // Maximale Distanz
+    raycaster.set(this.surfaceData.position, this.surfaceData.direction);
+
+    const allMeshes: Object3D[] = [];
+    this.map.modules.units.getUnits().forEach(unit => {
+      if (!ignoredUnits.includes(unit) && unit instanceof BuildingUnit) {
+        allMeshes.push(...getAllMeshes(unit.root));
+      }
+    });
+
+    // this.root!.traverse(child => {
+    //   if (child instanceof Mesh) {
+    //     allMeshes.push(child);
+    //   }
+    // });
+
+    const intersections = raycaster.intersectObjects(allMeshes, false);
+    const height = this.getHeightAt(x, z);
+
+    if (intersections.length > 0) {
+      let height_ = intersections[0]!.point.y;
+      if (intersections[0]!.point.y - height > 1) {
+        height_ = height;
+      }
+      return {
+        unit: this.map.app
+          .getScene()
+          .getObjectById(
+            intersections[0]!.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
+          )?.userData.unit as Unit,
+        position: new Vector3(x, height_, z)
+      };
+    }
+    return {
+      position: new Vector3(x, height, z)
+    };
+  }
+
   private createRaycaster() {
     const raycaster = new Raycaster();
     this.surfaceData.raycaster = raycaster;
@@ -288,9 +343,6 @@ export default class GroundModule extends MapModule<State, Observables> {
 
   async createMeshes() {
     const backgroundTexture = this.map.textures.backgroundTexture!;
-    backgroundTexture.minFilter = NearestFilter;
-    backgroundTexture.magFilter = NearestFilter;
-    backgroundTexture.generateMipmaps = false;
 
     const width = backgroundTexture.width; // Terraingröße
     const height = backgroundTexture.height;
@@ -303,28 +355,26 @@ export default class GroundModule extends MapModule<State, Observables> {
     this.state.heights = heights;
 
     const foregroundTexture = this.map.textures.foregroundTexture!;
-    foregroundTexture.minFilter = NearestFilter;
-    foregroundTexture.magFilter = NearestFilter;
-    foregroundTexture.generateMipmaps = false;
-
-    // const noiseTexture = await assetLoader.add<Texture<ImageBitmap>>({
-    //   value: noiseTextureUrl,
-    //   loader: LOADER.TEXTURE
-    // });
-
     const noiseTexture = new CanvasTexture(
-      generateNoiseTexture({
-        width: width * 1,
-        height: height * 1,
-        intensity: 0.4,
-        opacity: 0.2,
-        monochrome: false
-      })
+      resizeCanvas(
+        generateNoiseTexture({
+          width: width * 2,
+          height: height * 2,
+          intensity: 0.4,
+          opacity: 1,
+          monochrome: false
+        }),
+        foregroundTexture.image.width
+      )
     );
 
-    noiseTexture.minFilter = NearestFilter;
-    noiseTexture.magFilter = NearestFilter;
-    noiseTexture.generateMipmaps = false;
+    const combinedTexture = combineTerrainTextures(
+      backgroundTexture,
+      noiseTexture,
+      foregroundTexture,
+      width,
+      height
+    );
 
     const geometry = new PlaneGeometry(width, height, segments, segments);
     geometry.rotateX(-Math.PI / 2);
@@ -336,36 +386,15 @@ export default class GroundModule extends MapModule<State, Observables> {
 
     geometry.computeVertexNormals();
 
-    const backgroundMaterial = new MeshLambertMaterial({
-      // color: 0x88aa55,
-      map: backgroundTexture,
+    // Einziges Material mit kombinierter Texture
+    const terrainMaterial = new MeshLambertMaterial({
+      map: combinedTexture,
       flatShading: true,
       wireframe: false
     });
-    const foregroundMaterial = new MeshLambertMaterial({
-      // color: 0x88aa55,
-      map: foregroundTexture,
-      flatShading: true,
-      wireframe: false,
-      transparent: true,
-      combine: AddOperation
-    });
-    const noiseMaterial = new MeshLambertMaterial({
-      color: 0x88aa55,
-      map: noiseTexture,
-      flatShading: true,
-      wireframe: false,
-      transparent: true,
-      combine: MultiplyOperation
-    });
 
-    const backgroundTerrain = new Mesh(geometry, backgroundMaterial);
-    backgroundTerrain.name = 'Ground Background';
-    const noiseTerrain = new Mesh(geometry, noiseMaterial);
-    noiseTerrain.name = 'Ground Noise';
-
-    const foregroundTerrain = new Mesh(geometry, foregroundMaterial);
-    foregroundTerrain.name = 'Ground Foreground';
+    const backgroundTerrain = new Mesh(geometry, terrainMaterial);
+    backgroundTerrain.name = 'Terrain Background';
 
     const shadowTerrain = new Mesh(geometry, new ShadowMaterial());
     shadowTerrain.name = 'Ground Shadow';
@@ -385,8 +414,6 @@ export default class GroundModule extends MapModule<State, Observables> {
 
     const object = new Object3D();
     object.add(backgroundTerrain);
-    object.add(noiseTerrain);
-    object.add(foregroundTerrain);
     object.add(shadowTerrain);
     object.add(water);
     object.position.copy(new Vector3(0, 9, 0));
@@ -536,4 +563,55 @@ function getPixelsFromTexture(texture: Texture<ImageBitmap>) {
   ctx.drawImage(img, 0, 0);
 
   return ctx.getImageData(0, 0, img.width, img.height).data;
+}
+
+function combineTerrainTextures(
+  backgroundTexture: Texture<ImageBitmap>,
+  noiseTexture: CanvasTexture<HTMLCanvasElement>,
+  foregroundTexture: Texture<ImageBitmap>,
+  width: number,
+  height: number
+): CanvasTexture {
+  let canvas: HTMLCanvasElement | OffscreenCanvas =
+    document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D =
+    canvas.getContext('2d')!;
+
+  ctx.drawImage(backgroundTexture.image, 0, 0, width, height);
+  // Canvas resize for foreground texture
+  canvas = resizeCanvas(canvas, foregroundTexture.image.width);
+
+  ctx = canvas.getContext('2d')!;
+
+  ctx.globalCompositeOperation = 'multiply';
+  ctx.globalAlpha = 0.5;
+  ctx.drawImage(
+    noiseTexture.image,
+    0,
+    0,
+    noiseTexture.width,
+    noiseTexture.height
+  );
+
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.globalAlpha = 1;
+
+  ctx.drawImage(
+    foregroundTexture.image,
+    0,
+    0,
+    foregroundTexture.image.width,
+    foregroundTexture.image.height
+  );
+
+  // Zurück zu Default
+
+  const combinedTexture = new CanvasTexture(canvas);
+  combinedTexture.minFilter = NearestFilter;
+  combinedTexture.magFilter = NearestFilter;
+  combinedTexture.generateMipmaps = false;
+  combinedTexture.colorSpace = LinearSRGBColorSpace;
+  return combinedTexture;
 }

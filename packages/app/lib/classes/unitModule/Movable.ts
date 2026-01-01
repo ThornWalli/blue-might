@@ -38,24 +38,28 @@ export interface PowerInfo {
 export interface MovableUnitModuleObservables extends UnitModuleObservables {
   active$: ReplaySubject<boolean>;
   powerInfo$: ReplaySubject<PowerInfo>;
+  fuel$: ReplaySubject<number>;
   move$: Subject<void>;
   rotate$: Subject<void>;
   stop$: Subject<void>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface MovableUnitModuleOptions extends UnitModuleOptions {}
+export interface MovableUnitModuleOptions extends UnitModuleOptions {
+  fuelConsumption: number;
+  idleFuelConsumption: number;
+  maxPower: number;
+  minPower: number;
+  idlePower: number;
+  maxFuel: number;
+}
 
 export interface MovableUnitModuleState extends UnitModuleState {
   velocity: Vector3;
   active: boolean;
   rawPower: number;
-  maxPower: number;
-  minPower: number;
-  idlePower: number;
-
   lastActive?: boolean;
   lastPower?: number;
+  fuel: number;
 }
 
 export default class MovableUnitModule<
@@ -73,16 +77,32 @@ export default class MovableUnitModule<
     super(
       unit,
       {
-        ...options
+        ...options,
+
+        //#region power
+        maxPower: options.maxPower ?? 1,
+        minPower: options.minPower ?? 0.4,
+        idlePower: options.idlePower ?? 0.2,
+        //#endregion
+
+        //#region full
+        maxFuel: options.maxFuel ?? 100,
+        fuelConsumption: options.fuelConsumption ?? 1,
+        idleFuelConsumption: options.idleFuelConsumption ?? 0.01
+        //#endregion
       },
       {
         ...state,
         velocity: state.velocity ?? new Vector3(0, 0, 0),
         active: state.active ?? false,
+
+        //#region power
         rawPower: state.rawPower ?? 0,
-        maxPower: state.maxPower ?? 1,
-        minPower: state.minPower ?? 0.4,
-        idlePower: state.idlePower ?? 0.2
+        //#endregion
+
+        //#region fuel
+        fuel: state.fuel ?? 100
+        //#endregion
       },
       debug
     );
@@ -94,11 +114,12 @@ export default class MovableUnitModule<
     this.observables.powerInfo$.next({
       flightPower: this.getCurrentPower(),
       currentPower: this.state.rawPower,
-      maxPower: this.state.maxPower,
-      minPower: this.state.minPower,
-      idlePower: this.state.idlePower
+      maxPower: this.options.maxPower,
+      minPower: this.options.minPower,
+      idlePower: this.options.idlePower
     });
-
+    this.observables.fuel$ = new ReplaySubject<number>(1);
+    this.observables.fuel$.next(this.state.fuel);
     this.observables.move$ = new Subject<void>();
     this.observables.rotate$ = new Subject<void>();
     this.observables.stop$ = new Subject<void>();
@@ -139,12 +160,30 @@ export default class MovableUnitModule<
   override update({ delta: _delta }: AnimationLoopValue): void {
     let currentPower = this.state.rawPower ?? 0;
 
+    const active = this.state.active && this.state.fuel > 0;
+
+    if (active && currentPower >= this.getMaxPower()) {
+      this.state.fuel = Math.max(
+        this.state.fuel -
+          Math.max(
+            this.options.idleFuelConsumption,
+            this.options.fuelConsumption * this.state.velocity.length()
+          ) *
+            _delta,
+        0
+      );
+      this.observables.fuel$.next(this.state.fuel);
+
+      if (this.state.fuel <= 0) {
+        this.turnOff();
+      }
+    }
     if (
-      (!this.state.active && currentPower > 0) || // Off
-      (this.state.active && currentPower < this.getMaxPower()) ||
-      (this.state.active && currentPower > this.getMaxPower())
+      (!active && currentPower > 0) || // Off
+      (active && currentPower < this.getMaxPower()) ||
+      (active && currentPower > this.getMaxPower())
     ) {
-      if (this.state.active) {
+      if (active) {
         if (currentPower > this.getMaxPower()) {
           currentPower = Math.max(
             (currentPower ?? 0) - 0.01,
@@ -160,18 +199,35 @@ export default class MovableUnitModule<
         currentPower = Math.max(this.state.rawPower - 0.02, 0);
       }
 
-      this.state.lastActive = this.state.active;
+      this.state.lastActive = active;
       this.state.lastPower = this.state.rawPower;
       this.state.rawPower = currentPower;
 
       this.observables.powerInfo$.next({
         flightPower: this.getCurrentPower(),
         currentPower: this.state.rawPower,
-        maxPower: this.state.maxPower,
-        minPower: this.state.minPower,
-        idlePower: this.state.idlePower
+        maxPower: this.options.maxPower,
+        minPower: this.options.minPower,
+        idlePower: this.options.idlePower
       });
     }
+  }
+
+  getFuel() {
+    return this.state.fuel;
+  }
+
+  setFuel(fuel: number) {
+    this.state.fuel = Math.max(0, Math.min(fuel, this.options.maxFuel));
+    this.observables.fuel$.next(this.state.fuel);
+  }
+
+  getMaxFuel() {
+    return this.options.maxFuel;
+  }
+
+  canTurnOn() {
+    return !this.getUnit().modules.damage.isDestroyed();
   }
 
   isTurnOn() {
@@ -179,7 +235,9 @@ export default class MovableUnitModule<
   }
 
   turnOn() {
-    this.setActive(true);
+    if (this.canTurnOn()) {
+      this.setActive(true);
+    }
   }
 
   turnOff() {
@@ -242,6 +300,8 @@ export default class MovableUnitModule<
       [ControlAction.SPACE]: ai?.space ?? human?.space ?? false,
       [ControlAction.POWER]: ai?.power ?? human?.power ?? false,
       [ControlAction.GEAR]: ai?.gear ?? human?.gear ?? false,
+      [ControlAction.SWITCH_WEAPON]:
+        ai?.switchWeapon ?? human?.switchWeapon ?? false,
       [ControlAction.LANDING]: ai?.landing ?? human?.landing ?? false,
       [ControlAction.MODIFIER]: ai?.modifier ?? human?.modifier ?? false,
       [ControlAction.ROTATE_LEFT]: ai?.rotateLeft ?? human?.rotateLeft ?? false,
@@ -257,7 +317,7 @@ export default class MovableUnitModule<
   }
 
   hasMinPower() {
-    return this.state.rawPower >= this.state.minPower;
+    return this.state.rawPower >= this.options.minPower;
   }
 
   getRawPower() {
@@ -273,13 +333,13 @@ export default class MovableUnitModule<
 
   getMaxPower() {
     if (this.state.active) {
-      return this.state.maxPower;
+      return this.options.maxPower;
     }
     return 0;
   }
 
   getMinPower() {
-    return this.state.minPower;
+    return this.options.minPower;
   }
 
   getActive() {

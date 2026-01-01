@@ -5,8 +5,16 @@ export class Particle {
   sprite: Sprite;
   velocity = new Vector3();
   life = 1;
+  options: { fade: boolean };
 
-  constructor(texture: Texture, position: Vector3, scale = 1) {
+  constructor(
+    texture: Texture,
+    position: Vector3,
+    scale = 1,
+    options?: { fade?: boolean }
+  ) {
+    this.options = { fade: true, ...options };
+
     const material = new SpriteMaterial({
       map: texture,
       transparent: true,
@@ -21,6 +29,8 @@ export class Particle {
   update(dt: number) {
     this.sprite.position.addScaledVector(this.velocity, dt);
     this.life -= dt;
-    this.sprite.material.opacity = this.life;
+    if (this.options.fade) {
+      this.sprite.material.opacity = this.life;
+    }
   }
 }

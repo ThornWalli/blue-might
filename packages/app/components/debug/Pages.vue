@@ -16,7 +16,7 @@ import BmDetails from '../Details.vue';
 
 const links = ref([
   { title: 'Default', href: '/' },
-  { title: 'Shoot', href: '/debug/shoot' },
+  { title: 'Attack', href: '/debug/attack' },
   { title: 'Patrol', href: '/debug/patrol' },
   { title: 'Helicopter', href: '/debug/helicopter' },
   { title: 'Tank', href: '/debug/tank' },

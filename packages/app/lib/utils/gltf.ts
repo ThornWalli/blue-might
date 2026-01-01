@@ -1,7 +1,8 @@
 import type { GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import assetLoader from '@blue-might/app/services/assetLoader';
 import { clone as skeletonClone } from 'three/addons/utils/SkeletonUtils.js';
-import { Group, Mesh, type Object3D } from 'three';
+import type { MeshStandardMaterial, Object3D } from 'three';
+import { Group, LinearSRGBColorSpace, Mesh, NearestFilter } from 'three';
 
 import { OBJECT_NAME } from '../utils/object';
 import { LOADER } from '../classes/AssetLoader';
@@ -30,12 +31,25 @@ export async function loadGltf(
   object.traverse(child => {
     if (child instanceof Mesh && child.material) {
       if (Array.isArray(child.material)) {
-        child.material = child.material.map(mat => mat.clone());
+        child.material = child.material.map(mat =>
+          prepareMaterial(mat.clone())
+        );
       } else {
-        child.material = child.material.clone();
+        child.material = prepareMaterial(child.material.clone());
       }
     }
   });
 
   return { scene: scene, object, animations: gltf.animations };
+}
+
+function prepareMaterial(material: MeshStandardMaterial) {
+  const texture = material.map;
+  if (texture) {
+    texture.minFilter = NearestFilter;
+    texture.magFilter = NearestFilter;
+    texture.generateMipmaps = false;
+    texture.colorSpace = LinearSRGBColorSpace;
+  }
+  return material;
 }

@@ -4,6 +4,35 @@
     class="bm-panel-player-unit"
     :title="panelTitle">
     <div>
+      <!-- fuel -->
+      <div
+        v-if="fuelInfo"
+        class="graph fuel"
+        :class="{ warning: hasFuelWarning }"
+        :style="{
+          '--value': fuelInfo.fuel / fuelInfo.fuelMax,
+          '--min': fuelWarningMinValue
+        }">
+        <div class="label" title="Fuel">F</div>
+        <div>
+          <div class="value"></div>
+          <div class="min"></div>
+        </div>
+      </div>
+      <!-- ammunition -->
+      <div
+        v-for="(slot, index) in weaponSlots"
+        :key="index"
+        class="graph ammunition"
+        :style="{
+          '--value': slot.ammunition / slot.maxAmmunition
+        }">
+        <div class="label" title="Ammunition">{{ `A-${index + 1}` }}</div>
+        <div>
+          <div class="value"></div>
+        </div>
+      </div>
+
       <!-- altitude -->
       <div
         class="graph altitude"
@@ -61,11 +90,19 @@
               :model-value="previewOptions" />
           </div>
           <base-button
-            class="gears"
+            v-if="unitGears.has"
+            :disabled="isDestroyed"
+            class="gears-button"
             :class="{ active: unitGears.active, opened: unitGears.opened }"
             @click="onClickGears">
             Gears
           </base-button>
+          <div v-if="isDestroyed" class="warning destroyed">
+            <span>Destroyed!</span>
+          </div>
+          <div v-else-if="hasFuelWarning" class="warning fuel">
+            <span>WARNING: Low Fuel!</span>
+          </div>
         </div>
       </div>
 
@@ -73,7 +110,7 @@
       <div
         class="graph damage"
         :class="{
-          destroyed: unitDamage.value >= DAMAGE_LEVEL.DESTROYED / 2,
+          destroyed: isDestroyed,
           damaged: unitDamage.value >= DAMAGE_LEVEL.DAMAGED / 2
         }"
         :style="{
@@ -113,6 +150,7 @@ import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import {
   combineLatest,
   concatMap,
+  distinctUntilChanged,
   EMPTY,
   filter,
   map,
@@ -131,9 +169,10 @@ import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
 import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
 import AirVehicleUnit from '@blue-might/app/lib/classes/unit/AirVehicle';
-import GunUnitModule from '@blue-might/app/lib/classes/unitModule/Gun';
+import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 import { MAX_AIR_VEHICLE_ALTITUDE } from '@blue-might/app/lib/classes/unitModule/movable/AirVehicle';
+import type { WeaponSlot } from '@blue-might/app/lib/classes/WeaponSlot';
 
 import BaseButton from '../base/Button.vue';
 import type App from '../../lib/classes/App';
@@ -153,11 +192,16 @@ const unitDamage = ref<{
   value: 0,
   level: 0
 });
+const isDestroyed = computed(
+  () => unitDamage.value.value >= DAMAGE_LEVEL.DESTROYED / 2
+);
 
 const unitGears = ref<{
+  has: boolean;
   active: boolean;
   opened: boolean;
 }>({
+  has: false,
   active: false,
   opened: false
 });
@@ -216,37 +260,50 @@ const powerInfo = ref<PowerInfo>({
 const autoAimActive = ref<boolean>(false);
 const unitActive = ref<boolean>(false);
 
+const fuelWarningMinValue = ref<number>(0.4);
+const hasFuelWarning = computed(() => {
+  if (!fuelInfo.value) return false;
+  return (
+    fuelInfo.value.fuel / fuelInfo.value.fuelMax <= fuelWarningMinValue.value
+  );
+});
+const fuelInfo = ref<{
+  fuel: number;
+  fuelMax: number;
+}>();
+const weaponSlots = ref<WeaponSlot[]>([]);
+
 async function setup() {
   const app = $props.app;
 
   const vehicle$ = app.modules.player.observables.currentPlayer$.pipe(
-    switchMap(player => player.modules.vehicle.observables.vehicle$)
+    switchMap(player => player.modules.vehicle.observables.vehicle$),
+    map(({ current }) => current)
   );
 
   const followedUnit$ = app.modules.unitFocus.observables.followedUnit$;
 
   const vehicleModule$ = vehicle$.pipe(
-    filter(({ current }) => current?.hasModuleType(MovableUnitModule) ?? false),
+    filter(vehicle => vehicle?.hasModuleType(MovableUnitModule) ?? false),
     switchMap(
-      ({ current }) =>
-        of(current?.getModuleByType<MovableUnitModule>(MovableUnitModule)) ??
+      vehicle =>
+        of(vehicle?.getModuleByType<MovableUnitModule>(MovableUnitModule)) ??
         EMPTY
     ),
     filter(Boolean)
   );
-  const gunModule$ = vehicle$.pipe(
-    filter(({ current }) => current?.hasModuleType(GunUnitModule) ?? false),
+  const weaponModule$ = vehicle$.pipe(
+    filter(vehicle => vehicle?.hasModuleType(WeaponUnitModule) ?? false),
     switchMap(
-      ({ current }) => of(current?.getModuleByType(GunUnitModule)) ?? EMPTY
+      vehicle => of(vehicle?.getModuleByType(WeaponUnitModule)) ?? EMPTY
     ),
     filter(Boolean)
   );
 
   const helicopterModule$ = vehicle$.pipe(
-    filter(({ current }) => current instanceof HelicopterUnit),
+    filter(vehicle => vehicle instanceof HelicopterUnit),
     switchMap(
-      ({ current }) =>
-        of(current?.getModuleByType(HelicopterUnitModule)) ?? EMPTY
+      vehicle => of(vehicle?.getModuleByType(HelicopterUnitModule)) ?? EMPTY
     ),
     filter(Boolean)
   );
@@ -262,14 +319,43 @@ async function setup() {
   //#region vehicle
 
   subscription.add(
+    vehicle$
+      .pipe(
+        map(
+          vehicle =>
+            vehicle?.getModuleByType(WeaponUnitModule)?.getSlots() ?? []
+        )
+      )
+      .subscribe(slots => (weaponSlots.value = slots))
+  );
+  subscription.add(
+    vehicle$
+      .pipe(
+        switchMap(vehicle => {
+          const movableModule = vehicle?.getModuleByType(MovableUnitModule);
+          return (
+            movableModule?.observables.fuel$.pipe(
+              distinctUntilChanged(),
+              map(fuel => ({
+                fuel: fuel ?? 0,
+                fuelMax: movableModule?.getMaxFuel() ?? 0
+              }))
+            ) ?? EMPTY
+          );
+        })
+      )
+      .subscribe(info => (fuelInfo.value = info))
+  );
+
+  subscription.add(
     vehicle$.subscribe(
-      ({ current }) => (unit.value = current ? markRaw(current) : null)
+      vehicle => (unit.value = vehicle ? markRaw(vehicle) : null)
     )
   );
 
   subscription.add(
     vehicle$
-      .pipe(switchMap(({ current }) => current?.observables.position$ ?? EMPTY))
+      .pipe(switchMap(vehicle => vehicle?.observables.position$ ?? EMPTY))
       .subscribe(p => (position.value = p.clone()))
   );
 
@@ -281,10 +367,22 @@ async function setup() {
 
   //#endregion
 
-  //#region gun
+  //#region weapon
 
   subscription.add(
-    gunModule$
+    weaponModule$
+      .pipe(
+        switchMap(weaponModule =>
+          weaponModule.observables.shoot$.pipe(
+            map(() => weaponModule.getSlots())
+          )
+        )
+      )
+      .subscribe(slots => (weaponSlots.value = slots))
+  );
+
+  subscription.add(
+    weaponModule$
       .pipe(switchMap(({ observables }) => observables.autoAimActive$))
       .subscribe(v => (autoAimActive.value = v))
   );
@@ -308,9 +406,9 @@ async function setup() {
   subscription.add(
     vehicle$
       .pipe(
-        switchMap(({ current }) =>
-          current
-            ? timer(0, 100).pipe(concatMap(() => current.observables.rotation$))
+        switchMap(vehicle =>
+          vehicle
+            ? timer(0, 100).pipe(concatMap(() => vehicle.observables.rotation$))
             : EMPTY
         )
       )
@@ -321,11 +419,11 @@ async function setup() {
     vehicle$
       .pipe(
         switchMap(
-          ({ current }) =>
-            current?.modules.damage.observables.damage$.pipe(
+          vehicle =>
+            vehicle?.modules.damage.observables.damage$.pipe(
               map(() => ({
-                value: current?.modules.damage.getDamageValue(),
-                level: current?.modules.damage.getDamageLevel()
+                value: vehicle?.modules.damage.getDamageValue(),
+                level: vehicle?.modules.damage.getDamageLevel()
               }))
             ) ?? EMPTY
         )
@@ -352,6 +450,7 @@ async function setup() {
       .subscribe(
         ([active, opened]) =>
           (unitGears.value = {
+            has: true,
             active,
             opened
           })
@@ -421,7 +520,7 @@ function onClickAimActive(e: Event) {
   autoAimActive.value = !autoAimActive.value;
   const vehicle = player.value?.modules.vehicle;
   if (!vehicle) return;
-  const gunModule = vehicle.getVehicle()!.getModuleByType(GunUnitModule);
+  const gunModule = vehicle.getVehicle()!.getModuleByType(WeaponUnitModule);
 
   if (gunModule) {
     gunModule.setAutoAimActive(autoAimActive.value);
@@ -464,12 +563,51 @@ function onClickGears() {
       padding-bottom: 4px;
       font-size: 12px;
       font-weight: bold;
+      white-space: nowrap;
     }
 
     & .label + div {
       position: relative;
       flex: 1;
       background: #222;
+    }
+  }
+
+  & .fuel {
+    & .value {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: calc(var(--value) * 100%);
+      background: green;
+    }
+
+    &.warning {
+      & .value {
+        background: red;
+      }
+    }
+
+    & .min {
+      position: absolute;
+      top: calc(100% - (50% + (-50% + var(--min) * 100%)));
+      left: 0;
+      width: 100%;
+      border-top: dashed 2px white;
+      opacity: 0.4;
+      transform: translateY(-50%);
+    }
+  }
+
+  & .ammunition {
+    & .value {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: calc(var(--value) * 100%);
+      background: green;
     }
   }
 
@@ -614,7 +752,7 @@ function onClickGears() {
     } */
   }
 
-  & .gears {
+  & .gears-button {
     position: absolute;
     top: 0;
     left: 0;
@@ -632,6 +770,10 @@ function onClickGears() {
     &.active {
       color: var(--color-black);
       background-color: yellow;
+    }
+
+    &[disabled] {
+      opacity: 0.4;
     }
   }
 
@@ -695,5 +837,45 @@ function onClickGears() {
   padding-bottom: 4px;
   font-size: 12px;
   font-weight: 700;
+}
+
+.warning {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: 100%;
+  font-size: 10px;
+
+  /* font-family: var(--font-bit-font); */
+  font-weight: bold;
+
+  & span {
+    padding: var(--bm-spacing-small) var(--bm-spacing-medium);
+    line-height: 1;
+    color: black;
+    background: #f00;
+  }
+
+  text-align: center;
+  text-transform: uppercase;
+
+  &.fuel {
+    animation: blink 1s infinite steps(1);
+  }
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
 }
 </style>

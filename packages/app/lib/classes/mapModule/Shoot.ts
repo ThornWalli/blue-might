@@ -1,8 +1,10 @@
-import type { Mesh } from 'three';
+import textureSmokeLight from '@blue-might/app/assets/fire/smoke/light.png?url';
+import type { Mesh, Texture } from 'three';
 import {
   BufferGeometry,
   Line,
   LineBasicMaterial,
+  NearestFilter,
   Object3D,
   Raycaster,
   Sphere,
@@ -13,7 +15,7 @@ import {
   createDustCone,
   type DustConeOptions
 } from '@blue-might/app/lib/utils/dustCone';
-import { getGlb } from '@blue-might/weapon/projectile';
+import assetLoader from '@blue-might/app/services/assetLoader';
 
 import MapModule, {
   type MapModuleObservables,
@@ -21,9 +23,16 @@ import MapModule, {
 } from '../MapModule';
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
-import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
+import {
+  disableRaycaster,
+  disposeObject3D,
+  OBJECT_USER_DATA
+} from '../../utils/object';
 import { loadGltf } from '../../utils/gltf';
 import type Projectile from '../Projectile';
+import type Weapon from '../Weapon';
+import { Particle } from '../Particle';
+import { LOADER } from '../AssetLoader';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -37,7 +46,7 @@ interface Observables extends MapModuleObservables {}
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface State extends MapModuleState {}
 
-interface ShootDescription {
+export interface ShootDescription {
   projectile: Projectile;
   object: Object3D;
   ignoredObjects: Object3D[];
@@ -47,6 +56,7 @@ interface ShootDescription {
    */
   velocity: Vector3;
   isActive: boolean;
+  enableSmoke?: boolean;
 }
 
 export default class ShootModule extends MapModule<State, Observables> {
@@ -84,6 +94,8 @@ export default class ShootModule extends MapModule<State, Observables> {
   private shootByProjectile: {
     [key: string]: Object3D;
   } = {};
+  private smokeParticles: Particle[] = []; // Neue Liste für Rauch-Partikel
+  private smokeTexture: Texture | null = null; // Rauch-Textur
 
   override destroy(): void {
     Object.values(this.shootByProjectile).forEach(obj => {
@@ -107,10 +119,20 @@ export default class ShootModule extends MapModule<State, Observables> {
 
   override async setup(): Promise<void> {
     this.raycaster.camera = this.map.app.renderer.modules.camera.getCamera();
+
+    //#region smoke texture
+    this.smokeTexture = await assetLoader.add<Texture>({
+      value: textureSmokeLight,
+      loader: LOADER.TEXTURE
+    });
+    this.smokeTexture.magFilter = NearestFilter;
+    this.smokeTexture.minFilter = NearestFilter;
+
+    //#endregion
   }
 
   private async createShootObj(projectile: Projectile) {
-    const { object: shootObject } = await loadGltf(await getGlb(projectile.id));
+    const { object: shootObject } = await loadGltf(await projectile.getGlb());
     shootObject.scale.set(0.4, 0.4, 0.4);
     shootObject.traverse(child => {
       if ((child as Mesh).isMesh) {
@@ -133,7 +155,7 @@ export default class ShootModule extends MapModule<State, Observables> {
   async createShoot(
     position: Vector3,
     direction: Vector3 = new Vector3(0, 0, 1),
-    projectile: Projectile,
+    weapon: Weapon,
     {
       enableSpread,
       spreadAmount,
@@ -146,9 +168,9 @@ export default class ShootModule extends MapModule<State, Observables> {
   ) {
     const activeCount = this.shoots.filter(s => s.isActive).length;
     if (activeCount >= 50) {
-      // Ignoriere neuen Schuss
       return;
     }
+    const projectile = weapon.projectile;
 
     if (!this.shootByProjectile[projectile.id]) {
       this.shootByProjectile[projectile.id] =
@@ -166,13 +188,12 @@ export default class ShootModule extends MapModule<State, Observables> {
     } else {
       // Erstelle ein neues Objekt, wenn der Pool leer ist
       const newShootObject = this.shootByProjectile[projectile.id]!.clone();
-      const obj = new Object3D();
-      obj.add(newShootObject);
-      this.addToScene(obj);
-
+      const object = new Object3D();
+      object.add(newShootObject);
+      this.addToScene(object);
       shootDesc = {
         projectile,
-        object: obj,
+        object,
         ignoredObjects: [],
         startPosition: new Vector3(),
         velocity: new Vector3(),
@@ -196,12 +217,16 @@ export default class ShootModule extends MapModule<State, Observables> {
 
     // Aktiviere und konfiguriere das Projektil
     shootDesc.isActive = true;
+    shootDesc.enableSmoke = projectile.smoke;
     shootDesc.ignoredObjects = ignoredObjects ?? [];
     shootDesc.startPosition.copy(position);
     shootDesc.velocity.copy(direction).multiplyScalar(projectile.speed);
+
+    return shootDesc;
   }
   // eslint-disable-next-line complexity
-  override update({ delta }: AnimationLoopValue): void {
+  override update(animationLoopValue: AnimationLoopValue): void {
+    const { delta } = animationLoopValue;
     const raycaster = this.raycaster;
     this.raycastFrameCounter++;
 
@@ -238,6 +263,15 @@ export default class ShootModule extends MapModule<State, Observables> {
         obj.position.y + shoot.velocity.y,
         obj.position.z + shoot.velocity.z
       );
+
+      if (
+        shoot.projectile.smoke &&
+        shoot.enableSmoke &&
+        this.smokeTexture &&
+        Math.random() < 1 / 3
+      ) {
+        this.spawnSmoke(shoot.object.position.clone());
+      }
 
       let hit = false;
 
@@ -299,6 +333,18 @@ export default class ShootModule extends MapModule<State, Observables> {
       }
     }
 
+    // Aktualisiere Rauch-Partikel
+    for (let i = this.smokeParticles.length - 1; i >= 0; i--) {
+      const p = this.smokeParticles[i]!;
+      p.update(delta);
+      p.sprite.scale.multiplyScalar(1.01); // Rauch größer machen
+      if (p.life <= 0) {
+        this.removeFromScene(p.sprite);
+        disposeObject3D(p.sprite);
+        this.smokeParticles.splice(i, 1);
+      }
+    }
+
     this.dustCones = this.dustCones.filter(cone => {
       const scale = cone.userData.scale ?? 1;
       cone.scale.x = 0.6 + scale * 0.4;
@@ -313,6 +359,26 @@ export default class ShootModule extends MapModule<State, Observables> {
       }
       return true;
     });
+  }
+
+  private spawnSmoke(position: Vector3) {
+    if (!this.smokeTexture) return;
+    const p = new Particle(
+      this.smokeTexture,
+      position,
+      0.8, // Lebensdauer
+      { fade: false }
+    );
+
+    p.velocity.set(
+      (Math.random() - 0.5) * 0.1, // Leichte zufällige Bewegung
+      0.6, // Nach oben
+      (Math.random() - 0.5) * 0.1
+    );
+
+    disableRaycaster(p.sprite);
+    this.addToScene(p.sprite);
+    this.smokeParticles.push(p);
   }
 
   private hitUnit(unit: Unit, shoot: ShootDescription) {

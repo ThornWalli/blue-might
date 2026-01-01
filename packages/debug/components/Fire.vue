@@ -104,7 +104,6 @@ function onUpdateAnimation({ scene }: { scene: Scene }) {
     } else {
       p.sprite.scale.multiplyScalar(1.01);
     }
-
     if (p.life <= 0) {
       scene.remove(p.sprite);
       disposeObject3D(p.sprite);

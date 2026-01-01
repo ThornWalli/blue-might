@@ -198,6 +198,7 @@ function setupRenderer() {
     renderer.render(previewScene, previewCamera);
 
     $emit('animation-loop', {
+      scene: previewScene,
       time,
       delta: $props.mode === 'loop' ? clock.value.getDelta() : 1000
     });

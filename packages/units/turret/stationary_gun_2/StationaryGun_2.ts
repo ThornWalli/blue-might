@@ -12,11 +12,10 @@ import BuildingUnit, {
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
-import GunUnitModule, {
-  type GunUnitModuleOptions
-} from '@blue-might/app/lib/classes/unitModule/Gun';
+import WeaponUnitModule, {
+  type WeaponUnitModuleOptions
+} from '@blue-might/app/lib/classes/unitModule/Weapon';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
-import { getSfx } from '@blue-might/weapon/projectile';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import type { ControlState } from '@blue-might/app/lib/classes/playerModule/Controls';
@@ -42,7 +41,7 @@ export type Options = BuildingUnitOptions;
 
 export interface Modules extends BuildingUnitModules {
   attack: AttackUnitModule;
-  gun: GunUnitModule;
+  weapon: WeaponUnitModule;
   player: PlayerUnitModule;
   movable: MovableUnitModule;
 }
@@ -50,7 +49,7 @@ export interface Modules extends BuildingUnitModules {
 export type ModuleList = BuildingUnitModuleList &
   [
     | typeof AttackUnitModule
-    | typeof GunUnitModule
+    | typeof WeaponUnitModule
     | typeof PlayerUnitModule
     | typeof MovableUnitModule
   ];
@@ -91,7 +90,7 @@ export default class StationaryGun_2 extends BuildingUnit<
   ) {
     moduleList.push(
       AttackUnitModule,
-      GunUnitModule,
+      WeaponUnitModule,
       PlayerUnitModule,
       MovableUnitModule
     );
@@ -101,10 +100,13 @@ export default class StationaryGun_2 extends BuildingUnit<
         name: 'StationaryGun 1',
         moduleOptions: {
           ...options.moduleOptions,
-          gun: {
-            weapons: (options.moduleOptions?.gun as GunUnitModuleOptions)
-              ?.weapons ?? [new weapons.default(), new weapons.default()],
-            ...options.moduleOptions?.gun
+          weapon: {
+            slots: (options.moduleOptions?.weapon as WeaponUnitModuleOptions)
+              ?.slots ?? [
+              new weapons.default('light_projectile'),
+              new weapons.default('light_projectile')
+            ],
+            ...options.moduleOptions?.weapon
           },
           collision: {
             ...options.moduleOptions?.collision,
@@ -119,22 +121,21 @@ export default class StationaryGun_2 extends BuildingUnit<
 
   override setup(context: SetupContext): Promise<void> {
     this.subscription.add(
-      this.modules.gun.observables.shoot$.subscribe(async ({ index }) => {
-        this.objects.barrelTargetShoots[index]!.visible = true;
-        playSound(
-          await getSfx(this.modules.gun.getWeapon(index)!.projectile.id),
-          0.3
-        );
-      })
+      this.modules.weapon.observables.shoot$.subscribe(
+        async ({ index, shoot }) => {
+          this.objects.barrelTargetShoots[index]!.visible = true;
+          playSound(await shoot.projectile.getSfx(), 0.3);
+        }
+      )
     );
 
     this.subscription.add(
-      this.modules.gun.observables.cooldown$.subscribe(({ index }) => {
+      this.modules.weapon.observables.cooldown$.subscribe(({ index }) => {
         this.objects.barrelTargetShoots[index]!.visible = false;
       })
     );
     this.subscription.add(
-      this.modules.gun.observables.active$.subscribe(v => {
+      this.modules.weapon.observables.active$.subscribe(v => {
         if (!v) {
           Object.values(this.objects.barrelTargetShoots).forEach(shoot => {
             shoot.visible = false;
@@ -198,8 +199,8 @@ export default class StationaryGun_2 extends BuildingUnit<
       barrelTargetShoots: [barrelTargetShootPrimary, barrelTargetShootSecondary]
     };
 
-    this.modules.gun.registerBarrelTarget(barrelPrimaryTargetObj);
-    this.modules.gun.registerBarrelTarget(barrelSecondaryTargetObj);
+    this.modules.weapon.registerBarrelTarget(barrelPrimaryTargetObj);
+    this.modules.weapon.registerBarrelTarget(barrelSecondaryTargetObj);
 
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
@@ -260,7 +261,7 @@ export default class StationaryGun_2 extends BuildingUnit<
     if (controls.moveRight) {
       this.state.velocity.x -= 0.005;
     }
-    this.modules.gun.setActive(controls.space ?? false);
+    this.modules.weapon.setActive(controls.space ?? false);
   }
 
   private updateObjects() {
@@ -288,8 +289,8 @@ export default class StationaryGun_2 extends BuildingUnit<
       if (this.state.velocity.length() < 0.001) {
         this.state.velocity.set(0, 0);
       } else {
-        this.modules.gun.updateSourcePosition(0);
-        this.modules.gun.updateSourcePosition(1);
+        this.modules.weapon.updateSourcePosition(0);
+        this.modules.weapon.updateSourcePosition(1);
       }
     }
   }

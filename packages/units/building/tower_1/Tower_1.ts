@@ -3,7 +3,8 @@ import type {
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { Mesh, SkinnedMesh } from 'three';
+import type { MeshStandardMaterial } from 'three';
+import { DoubleSide, Mesh, SkinnedMesh } from 'three';
 import BuildingUnit, {
   type BuildingUnitModuleList,
   type BuildingUnitModules,
@@ -47,7 +48,7 @@ export default class Tower_1<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-
+        (child.material as MeshStandardMaterial).side = DoubleSide;
         // replaceColors(
         //   [
         //     [

@@ -71,9 +71,9 @@ export default class GroundVehicleUnitModule<
     );
   }
 
-  override update({ delta, time }: AnimationLoopValue): void {
-    super.update({ delta, time });
-    this.moveUpdate({ delta });
+  override update(v: AnimationLoopValue): void {
+    super.update(v);
+    this.moveUpdate({ delta: v.delta });
   }
 
   getTmpRotationDirection() {

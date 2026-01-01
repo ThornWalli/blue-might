@@ -18,7 +18,7 @@
 import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import type Weapon from '@blue-might/app/lib/classes/Weapon';
+import { WeaponSlot } from '@blue-might/app/lib/classes/WeaponSlot';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import {
   CombatHelicopter_1,
@@ -43,25 +43,28 @@ onUnmounted(() => {
   if (gui) gui.destroy();
 });
 
-const unitWeapons: Weapon[] = [new weapons.default(), new weapons.default()];
+const unitWeapons: WeaponSlot[] = [
+  new WeaponSlot({ slot: 0, weapon: new weapons.default() }),
+  new WeaponSlot({ slot: 1, weapon: new weapons.default() })
+];
 
 const unitA = new Turret_1({
   id: 'turret-1',
   position: new Vector3(0, 0, 0),
   moduleDebug: {
     attack: false,
-    gun: false
+    weapon: false
   },
   moduleOptions: {
-    gun: {
-      weapons: unitWeapons.slice(0, 1)
+    weapon: {
+      slots: unitWeapons.slice(0, 1)
     }
   },
   moduleStates: {
     faction: {
       faction: blueFaction
     },
-    gun: {
+    weapon: {
       autoAimActive: true
     }
   }
@@ -71,7 +74,7 @@ const unitA = new Turret_1({
 //   id: 'stationary-gun-2',
 //   position: new Vector3(1, 0, 1),
 //   moduleOptions: {
-//     gun: {
+//     weapon: {
 //       weapons: unitWeapons.slice(),
 //       enableAutoAim: true,
 //       enableShootInterval: false,
@@ -150,16 +153,16 @@ function setupGUI({
 }: {
   app: App;
   map: Map;
-  weapons: Weapon[];
+  weapons: WeaponSlot[];
 }) {
-  const weapon = unitA.modules.gun.getWeapon(0)!;
+  const weaponSlot = unitA.modules.weapon.getSlot(0)!;
 
   gui = new GUI();
 
-  gui.add(unitA.modules.gun.state, 'autoAimActive').name('Enable Auto Aim');
+  gui.add(unitA.modules.weapon.state, 'autoAimActive').name('Enable Auto Aim');
 
   // gui.add(weapon, 'enableShootInterval').name('Enable Shoot Interval');
-  // gui.add(unit.modules.gun.options, 'shootInterval', 0, 2000, 1);
+  // gui.add(unit.modules.weapon.options, 'shootInterval', 0, 2000, 1);
 
   const dustConeOptions = map.modules.shoot.getDustConeOptions();
   const dustConeDir = gui.addFolder('Dust Cone');
@@ -177,14 +180,18 @@ function setupGUI({
     .name('Circle Opacity');
 
   const weaponDir = gui.addFolder('Weapon');
-  weaponDir.add(weapon, 'spreadAmount', 0, 0.5, 0.01).name('Spread Amount (%)');
-  weaponDir.add(weapon, 'perSeconds', 1, 60, 1).name('Shots Per Second');
+  weaponDir
+    .add(weaponSlot.weapon, 'spreadAmount', 0, 0.5, 0.01)
+    .name('Spread Amount (%)');
+  weaponDir
+    .add(weaponSlot.weapon, 'perSeconds', 1, 60, 1)
+    .name('Shots Per Second');
   const projectileDir = weaponDir.addFolder('Projectile');
   projectileDir
-    .add(weapons[0]!.projectile, 'speed', 0, 1, 0.01)
+    .add(weapons[0]!.weapon.projectile, 'speed', 0, 1, 0.01)
     .name('Speed (%)')
     .onChange(() => {
-      weapons[1]!.projectile.speed = weapons[0]!.projectile.speed;
+      weapons[1]!.weapon.projectile.speed = weapons[0]!.weapon.projectile.speed;
     });
 }
 </script>

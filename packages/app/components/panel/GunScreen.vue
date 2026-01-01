@@ -8,7 +8,7 @@
 import { markRaw, onMounted, ref, type Raw } from 'vue';
 import { EMPTY, map, Subscription, switchMap } from 'rxjs';
 import type Unit from '@blue-might/app/lib/classes/Unit';
-import GunUnitModule from '@blue-might/app/lib/classes/unitModule/Gun';
+import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 
 import BmGunScreen from '../GunScreen.vue';
 import BmPanel from '../Panel.vue';
@@ -32,7 +32,7 @@ onMounted(() => {
         map(({ current }) => current)
       )
       .subscribe(u => {
-        unit.value = u?.hasModuleType(GunUnitModule) ? markRaw(u) : null;
+        unit.value = u?.hasModuleType(WeaponUnitModule) ? markRaw(u) : null;
       })
   );
 });

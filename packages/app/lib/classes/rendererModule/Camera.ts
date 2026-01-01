@@ -63,6 +63,7 @@ export default class CameraRendererModule extends RendererModule<
     position: Vector3;
     quaternion: Quaternion;
     lerpFactor?: number;
+    view?: 'back' | 'side';
   }) {
     const { controls } = this.renderer.modules.controls;
     if (!controls) return;
@@ -76,12 +77,20 @@ export default class CameraRendererModule extends RendererModule<
       const { position, quaternion } = options;
       let { lerpFactor } = options;
 
-      const cameraOffset = new Vector3(0, 5, -5);
+      let cameraOffset = new Vector3(0, 5, -5);
+      let applyRotation = true; // Standard: Offset rotieren
+      if (options.view === 'side') {
+        cameraOffset = new Vector3(6, 1, 0);
+        applyRotation = false; // Für Side-Ansicht: Offset nicht rotieren, damit die Ansicht absolut (immer von rechts) ist
+      }
+
       lerpFactor = lerpFactor ?? 0.1;
 
-      const idealPosition = position
-        .clone()
-        .add(cameraOffset.clone().applyQuaternion(quaternion));
+      const offsetToApply = applyRotation
+        ? cameraOffset.clone().applyQuaternion(quaternion)
+        : cameraOffset;
+
+      const idealPosition = position.clone().add(offsetToApply);
 
       camera.position.lerp(idealPosition, lerpFactor);
       camera.lookAt(position);

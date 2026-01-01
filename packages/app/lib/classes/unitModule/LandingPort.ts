@@ -1,11 +1,12 @@
-import { Object3D } from 'three';
+import { ReplaySubject } from 'rxjs';
 
 import UnitModule, {
+  type UnitModuleObservables,
   type UnitModuleOptions,
-  type UnitModuleSetupContext,
   type UnitModuleState
 } from '../UnitModule';
-import type Unit from '../Unit';
+import type AirVehicleUnit from '../unit/AirVehicle';
+import type LandingPortUnit from '../unit/LandingPort';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -18,32 +19,55 @@ declare module '../Unit' {
     landingPort: boolean;
   }
 }
-
-export type LandingPortUnitModuleOptions = UnitModuleOptions;
-export type LandingPortUnitModuleState = UnitModuleState;
+export interface LandingPortUnitModuleObservables extends UnitModuleObservables {
+  landedUnit: ReplaySubject<AirVehicleUnit | null>;
+}
+export interface LandingPortUnitModuleOptions extends UnitModuleOptions {
+  /**
+   * Whether the landing port supports air vehicles.
+   */
+  support: boolean;
+}
+export interface LandingPortUnitModuleState extends UnitModuleState {
+  /**
+   * The unit that is currently using the landing port.
+   */
+  landedUnit: AirVehicleUnit | null;
+}
 
 export default class LandingPortUnitModule extends UnitModule<
   LandingPortUnitModuleOptions,
-  LandingPortUnitModuleState
+  LandingPortUnitModuleState,
+  LandingPortUnitModuleObservables,
+  LandingPortUnit
 > {
-  static override TYPE = 'landing_port';
-
-  root: Object3D;
+  static override TYPE = 'landingPort';
 
   constructor(
-    unit: Unit,
+    unit: LandingPortUnit,
     options: LandingPortUnitModuleOptions,
     state: LandingPortUnitModuleState,
     debug: boolean
   ) {
-    super(unit, options, state, debug);
+    super(unit, options, { ...state, landedUnit: null }, debug);
 
-    this.root = new Object3D();
+    //#region observables
+    this.observables.landedUnit = new ReplaySubject<AirVehicleUnit | null>(1);
+    this.observables.landedUnit.next(null);
+    //#endregion
   }
 
-  override async setupMesh(context: UnitModuleSetupContext) {
-    const mesh = await super.setupMesh(context);
-    this.root.add(mesh);
-    return this.root;
+  hasUnit(unit: AirVehicleUnit | null) {
+    return this.state.landedUnit === unit;
+  }
+
+  setLandedUnit(unit: AirVehicleUnit | null) {
+    if (unit === this.state.landedUnit) return;
+
+    this.state.landedUnit = unit;
+
+    unit?.modules.airVehicle.setLandingPort(this.getUnit());
+
+    this.observables.landedUnit.next(unit);
   }
 }

@@ -35,11 +35,11 @@ const appConfig = defu($props.config ?? {}, {
 onUnmounted(() => {
   subscription.unsubscribe();
 });
-
+const map_ = debugMap();
 const map: MapDescription = defu($props.map ?? {}, {
-  ...debugMap,
-  factions: [...debugMap.factions],
-  units: [...debugMap.units]
+  ...map_,
+  factions: [...map_.factions],
+  units: [...map_.units]
 }) as MapDescription;
 
 const AppComponent = defineAsyncComponent(

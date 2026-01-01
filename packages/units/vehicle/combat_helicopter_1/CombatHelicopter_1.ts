@@ -22,9 +22,9 @@ import HelicopterUnit, {
 } from '@blue-might/app/lib/classes/unit/vehicle/Helicopter';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
-import GunUnitModule, {
+import WeaponUnitModule, {
   type AutoAimFnOptions
-} from '@blue-might/app/lib/classes/unitModule/Gun';
+} from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { weapons } from '@blue-might/weapon';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import {
@@ -33,7 +33,6 @@ import {
 } from '@blue-might/app/lib/classes/playerModule/Controls';
 import { lerp } from 'three/src/math/MathUtils.js';
 import { playSound } from '@blue-might/weapon/utils';
-import { getSfx } from '@blue-might/weapon/projectile';
 import {
   createBarrelTargetShoot,
   normalizeAngle
@@ -55,10 +54,10 @@ export interface CombatHelicopterOptions extends HelicopterUnitOptions {
 
 export interface CombatHelicopterModules extends HelicopterUnitModules {
   attack: AttackUnitModule;
-  gun: GunUnitModule;
+  weapon: WeaponUnitModule;
 }
 export type CombatHelicopterModuleList = HelicopterUnitModuleList &
-  [typeof AttackUnitModule | typeof GunUnitModule];
+  [typeof AttackUnitModule | typeof WeaponUnitModule];
 
 export default class CombatHelicopter_1 extends HelicopterUnit<
   CombatHelicopterOptions,
@@ -101,7 +100,7 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     options: Omit<UnitConstructorOptions<CombatHelicopterOptions>, 'name'> = {},
     moduleList: unknown[] = []
   ) {
-    moduleList.push(AttackUnitModule, GunUnitModule);
+    moduleList.push(AttackUnitModule, WeaponUnitModule);
     super(
       {
         ...options,
@@ -119,12 +118,27 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
 
         moduleOptions: {
           ...options.moduleOptions,
-          gun: {
+          movable: {
+            ...options.moduleOptions?.movable,
+            maxFuel: 100
+          },
+          weapon: {
             autoAimFn: (options: AutoAimFnOptions) => this.autoAimFn(options),
-            weapons: options.moduleOptions?.gun?.weapons ?? [
-              new weapons.default()
+            slots: options.moduleOptions?.weapon?.slots ?? [
+              {
+                slot: 0,
+                weapon: new weapons.default(),
+                maxAmmunition: 100,
+                ammunition: 100
+              },
+              {
+                slot: 0,
+                weapon: new weapons.air_surface_missile_1(),
+                maxAmmunition: 4,
+                ammunition: 4
+              }
             ],
-            ...options.moduleOptions?.gun
+            ...options.moduleOptions?.weapon
           },
           helicopter: {
             ...options.moduleOptions?.helicopter,
@@ -135,6 +149,13 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
             targetName: 'base',
             targetChildIndex: 1
           }
+        },
+        moduleStates: {
+          ...options.moduleStates,
+          movable: {
+            ...options.moduleStates?.movable,
+            fuel: 100
+          }
         }
       },
       moduleList
@@ -143,21 +164,21 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
 
   override async setup(context: SetupContext) {
     this.subscription.add(
-      this.modules.gun.observables.shoot$.subscribe(async ({ index }) => {
+      this.modules.weapon.observables.shoot$.subscribe(async ({ index }) => {
         this.objects.barrelTargetShoots[index]!.visible = true;
         playSound(
-          await getSfx(this.modules.gun.getWeapon(index)!.projectile.id),
+          await this.modules.weapon.getSlot(index)!.weapon.projectile.getSfx(),
           0.3
         );
       })
     );
     this.subscription.add(
-      this.modules.gun.observables.cooldown$.subscribe(({ index }) => {
+      this.modules.weapon.observables.cooldown$.subscribe(({ index }) => {
         this.objects.barrelTargetShoots[index]!.visible = false;
       })
     );
     this.subscription.add(
-      this.modules.gun.observables.active$.subscribe(v => {
+      this.modules.weapon.observables.active$.subscribe(v => {
         if (!v) {
           Object.values(this.objects.barrelTargetShoots).forEach(shoot => {
             shoot.visible = false;
@@ -343,7 +364,7 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
         barrelTargetShoots: [barrelTargetShoot]
       };
 
-      this.modules.gun.registerBarrelTarget(barrelTargetObj);
+      this.modules.weapon.registerBarrelTarget(barrelTargetObj);
     }
 
     object.traverse(child => {
@@ -351,6 +372,7 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
         child.castShadow = true;
         child.receiveShadow = false;
         // (child.material as MeshMatcapMaterial).wireframe = true;
+
         replaceColors(
           [
             [
@@ -399,8 +421,10 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     if (controls[ControlAction.RIGHT]) {
       this.state.weaponVelocity.x -= 0.005;
     }
-    // if (this.modules.gun.state.autoAimActive) return;
-    this.modules.gun.setActive(controls[ControlAction.FIRE_PRIMARY] ?? false);
+    // if (this.modules.weapon.state.autoAimActive) return;
+    this.modules.weapon.setActive(
+      controls[ControlAction.FIRE_PRIMARY] ?? false
+    );
   }
 
   private updateObjects() {
@@ -427,7 +451,7 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
       if (this.state.weaponVelocity.length() < 0.001) {
         this.state.weaponVelocity.set(0, 0);
       } else {
-        this.modules.gun.updateSourcePosition(0);
+        this.modules.weapon.updateSourcePosition(0);
       }
     }
   }

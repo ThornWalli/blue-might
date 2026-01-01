@@ -1,6 +1,6 @@
 import type { Line, Object3D } from 'three';
 import { Vector3 } from 'three';
-import { ReplaySubject, Subject } from 'rxjs';
+import { EMPTY, ReplaySubject, Subject, switchMap } from 'rxjs';
 
 import type Unit from '../Unit';
 import UnitModule, {
@@ -11,24 +11,32 @@ import UnitModule, {
 import type { AnimationLoopValue } from '../Renderer';
 import type Weapon from '../Weapon';
 import { disposeObject3D } from '../../utils/object';
+import { WeaponSlot } from '../WeaponSlot';
+import type { ShootDescription } from '../mapModule/Shoot';
+import { ControlAction } from '../playerModule/Controls';
 
 import AttackUnitModule from './Attack';
+import PlayerUnitModule from './Player';
 
 declare module '../Unit' {
   interface ModuleStates {
-    gun: Partial<GunUnitModuleState>;
+    weapon: Partial<WeaponUnitModuleState>;
   }
   interface ModuleOptions {
-    gun: Partial<GunUnitModuleOptions>;
+    weapon: Partial<WeaponUnitModuleOptions>;
   }
   interface ModuleDebug {
-    gun: boolean;
+    weapon: boolean;
   }
 }
 
-export interface GunUnitModuleObservables extends UnitModuleObservables {
+export interface WeaponUnitModuleObservables extends UnitModuleObservables {
   active$: Subject<boolean>;
-  shoot$: Subject<{ index: number }>;
+  shoot$: Subject<{
+    index: number;
+    slot: WeaponSlot;
+    shoot: ShootDescription;
+  }>;
   cooldown$: Subject<{ index: number }>;
   autoAimActive$: ReplaySubject<boolean>;
   autoAimTarget$: ReplaySubject<Unit | null>;
@@ -42,11 +50,11 @@ export type AutoAimFnOptions = {
 };
 export type AutoAimFn = (options: AutoAimFnOptions) => boolean;
 
-export interface GunUnitModuleOptions extends UnitModuleOptions {
+export interface WeaponUnitModuleOptions extends UnitModuleOptions {
   autoAimFn: AutoAimFn;
-  weapons: Weapon[];
+  slots: WeaponSlot[];
 }
-export interface GunUnitModuleState extends UnitModuleState {
+export interface WeaponUnitModuleState extends UnitModuleState {
   active: boolean;
   lastShootTime: number[];
   sourcePositions: Vector3[];
@@ -56,31 +64,23 @@ export interface GunUnitModuleState extends UnitModuleState {
   autoAimTarget: Unit | null;
   autoAimFollowTarget: boolean;
   autoAimAutoShoot: boolean;
+  currentSlot: number;
 }
 
 const DEFAULT_DIRECTION: [number, number, number] = [0, 0, 1];
 
-export default class GunUnitModule<
-  Options extends GunUnitModuleOptions = GunUnitModuleOptions,
-  State extends GunUnitModuleState = GunUnitModuleState,
-  Obervables extends GunUnitModuleObservables = GunUnitModuleObservables
+export default class WeaponUnitModule<
+  Options extends WeaponUnitModuleOptions = WeaponUnitModuleOptions,
+  State extends WeaponUnitModuleState = WeaponUnitModuleState,
+  Obervables extends WeaponUnitModuleObservables = WeaponUnitModuleObservables
 > extends UnitModule<Options, State, Obervables> {
-  getSourcePositions() {
-    return this.state.sourcePositions;
-  }
-  getSourceDirections() {
-    return this.state.sourceDirections;
-  }
-  getBarrelTargets() {
-    return this.state.barrelTargets;
-  }
-  static override TYPE = 'gun';
+  static override TYPE = 'weapon';
   constructor(unit: Unit, options: Options, state: State, debug?: boolean) {
     super(
       unit,
       {
         ...options,
-        weapons: options.weapons ?? {}
+        slots: (options.slots ?? []).map(slot => new WeaponSlot(slot))
       },
       {
         ...state,
@@ -92,15 +92,30 @@ export default class GunUnitModule<
         autoAimActive: state.autoAimActive ?? false,
         autoAimFollowTarget: state.autoAimFollowTarget ?? false,
         autoAimAutoShoot: state.autoAimAutoShoot ?? true,
-        autoAimTarget: state.autoAimTarget ?? null
+        autoAimTarget: state.autoAimTarget ?? null,
+        currentSlot: state.currentSlot ?? 0
       },
       debug
     );
 
+    // deaktivere alle slots die schon verwendet werden
+    this.getSlots().reduce<{ [key: number]: boolean }>((result, slot) => {
+      if (result[slot.slot]) {
+        slot.active = false;
+      } else {
+        result[slot.slot] = true;
+      }
+      return result;
+    }, {});
+
     //#region observables
     this.observables.active$ = new Subject<boolean>();
     this.observables.active$.next(this.state.active);
-    this.observables.shoot$ = new Subject<{ index: number }>();
+    this.observables.shoot$ = new Subject<{
+      index: number;
+      slot: WeaponSlot;
+      shoot: ShootDescription;
+    }>();
     this.observables.cooldown$ = new Subject<{ index: number }>();
     this.observables.autoAimActive$ = new ReplaySubject<boolean>();
     this.observables.autoAimActive$.next(this.state.autoAimActive);
@@ -110,7 +125,10 @@ export default class GunUnitModule<
 
   override async setup() {
     await super.setup();
-    const attackModule = this.getUnit().getModuleByType(AttackUnitModule);
+
+    const unit = this.getUnit();
+
+    const attackModule = unit.getModuleByType(AttackUnitModule);
     if (attackModule) {
       this.subscription.add(
         attackModule.observables.target$.subscribe(target => {
@@ -120,12 +138,47 @@ export default class GunUnitModule<
     }
 
     this.subscription.add(
-      this.getUnit().observables.rotation$.subscribe(() => {
+      unit.observables.rotation$.subscribe(() => {
         this.state.barrelTargets.forEach((barrel, index) => {
           this.updateSourcePosition(index);
         });
       })
     );
+
+    const playerUnitModule = unit.getModuleByType(PlayerUnitModule);
+    if (playerUnitModule) {
+      this.subscription.add(
+        playerUnitModule.observables.player$
+          .pipe(
+            switchMap(
+              player => player?.modules.controls.observables.controls$ ?? EMPTY
+            )
+          )
+          .subscribe(controls => {
+            if (controls[ControlAction.SWITCH_WEAPON]) {
+              this.switchSlot();
+            }
+          })
+      );
+    }
+  }
+
+  switchSlot() {
+    const currentSlot = this.state.currentSlot;
+    const slots = this.getSlots();
+
+    // Deactivate the current slot
+    if (slots[currentSlot]) {
+      slots[currentSlot].active = false;
+    }
+
+    // Move to the next slot
+    this.state.currentSlot = (currentSlot + 1) % slots.length;
+
+    // Activate the new current slot
+    if (slots[this.state.currentSlot]) {
+      slots[this.state.currentSlot]!.active = true;
+    }
   }
 
   override async addToScene() {
@@ -150,14 +203,14 @@ export default class GunUnitModule<
     const shootModule = this.getUnit().getMap()?.modules.shoot;
     if (!shootModule) return;
 
-    shootModule.createShoot(position, direction, weapon.projectile, {
+    return shootModule.createShoot(position, direction, weapon, {
       enableSpread: weapon.spreadAmount > 0,
       spreadAmount: weapon.spreadAmount,
       ignoredObjects: [this.getUnit().getRoot()]
     });
   }
 
-  override update(_v: AnimationLoopValue) {
+  override async update(_v: AnimationLoopValue) {
     this.updateShoot(_v);
     this.updateAutoAIM();
     if (this.debug) {
@@ -166,34 +219,52 @@ export default class GunUnitModule<
   }
 
   private updateShoot({ time }: { time: number }) {
-    const weapons = this.getWeapons();
+    const weapons = this.getSlots();
 
-    weapons.forEach((weapon, index) => {
-      if (!weapon) return;
+    weapons
+      .filter(slot => slot.active)
+      .forEach((weaponSlot, index) => {
+        index = weaponSlot.slot ?? index;
 
-      const currentTime = time / 1000;
-      const shootCooldown = 1 / weapon.perSeconds;
+        if (!weaponSlot) return;
 
-      if (this.state.active) {
-        if (
-          currentTime - (this.state.lastShootTime[index] ?? 0) >
-          shootCooldown
-        ) {
-          this.updateSourcePosition(index);
+        const weapon = weaponSlot.weapon;
 
-          this.shoot(
-            this.state.sourcePositions[index]!,
-            this.state.sourceDirections[index]!,
-            weapon
-          );
+        const currentTime = time / 1000;
+        const shootCooldown = 1 / weapon.perSeconds;
 
-          this.observables.shoot$.next({ index });
-          this.state.lastShootTime[index] = currentTime;
-        } else {
-          this.observables.cooldown$.next({ index });
+        if (this.state.active) {
+          if (weaponSlot.ammunition <= 0) {
+            return;
+          }
+
+          if (
+            currentTime - (this.state.lastShootTime[index] ?? 0) >
+            shootCooldown
+          ) {
+            this.updateSourcePosition(index);
+
+            this.shoot(
+              this.state.sourcePositions[index]!,
+              this.state.sourceDirections[index]!,
+              weapon
+            )?.then(shoot => {
+              weaponSlot.ammunition--;
+              if (shoot) {
+                this.observables.shoot$.next({
+                  index,
+                  slot: weaponSlot,
+                  shoot
+                });
+              }
+            });
+
+            this.state.lastShootTime[index] = currentTime;
+          } else {
+            this.observables.cooldown$.next({ index });
+          }
         }
-      }
-    });
+      });
   }
 
   public updateSourcePosition(index: number) {
@@ -213,19 +284,22 @@ export default class GunUnitModule<
     if (this.state.autoAimActive) {
       const target = this.state.autoAimTarget;
       if (target) {
-        this.getWeapons().forEach((weapon, index) => {
-          this.updateSourcePosition(index);
-          const sourcePosition = this.state.sourcePositions[index]!;
-          const shoot = this.options.autoAimFn({
-            target,
-            sourcePosition,
-            weapon,
-            index
+        this.getSlots()
+          .filter(({ active }) => active)
+          .forEach((weaponSlot, index) => {
+            index = weaponSlot.slot;
+            this.updateSourcePosition(index);
+            const sourcePosition = this.state.sourcePositions[index]!;
+            const shoot = this.options.autoAimFn({
+              target,
+              sourcePosition,
+              weapon: weaponSlot.weapon,
+              index
+            });
+            if (this.state.autoAimAutoShoot) {
+              this.setActive(shoot);
+            }
           });
-          if (this.state.autoAimAutoShoot) {
-            this.setActive(shoot);
-          }
-        });
       } else {
         this.setActive(false);
       }
@@ -241,11 +315,11 @@ export default class GunUnitModule<
   private getBarrelTargetbyIndex(index: number) {
     return this.state.barrelTargets.at(index) ?? null;
   }
-  public getWeapon(index: number) {
-    return this.options.weapons.at(index) ?? null;
+  public getSlot(index: number) {
+    return this.options.slots.at(index) ?? null;
   }
-  public getWeapons() {
-    return Object.values(this.options.weapons);
+  public getSlots() {
+    return Object.values(this.options.slots);
   }
 
   public setActive(active: boolean) {
@@ -281,13 +355,23 @@ export default class GunUnitModule<
     this.observables.autoAimTarget$.next(target);
   }
 
+  getSourcePositions() {
+    return this.state.sourcePositions;
+  }
+  getSourceDirections() {
+    return this.state.sourceDirections;
+  }
+  getBarrelTargets() {
+    return this.state.barrelTargets;
+  }
+
   //#region debug
 
   debugWeaponLines: Record<number, Line | null> = {};
 
   updateDebug() {
     const shootModule = this.getUnit().getMap()?.modules.shoot;
-    this.getWeapons().forEach((weapon, index) => {
+    this.getSlots().forEach((weaponSlot, index) => {
       if (this.debugWeaponLines[index]) {
         shootModule?.removeFromScene(this.debugWeaponLines[index]);
         disposeObject3D(this.debugWeaponLines[index]);
@@ -297,7 +381,7 @@ export default class GunUnitModule<
       const line = shootModule?.createDebugVisualizePath(
         this.state.sourcePositions[index]!,
         this.state.sourceDirections[index]!,
-        weapon.projectile
+        weaponSlot.weapon.projectile
       );
       if (line) {
         this.debugWeaponLines[index] = line;

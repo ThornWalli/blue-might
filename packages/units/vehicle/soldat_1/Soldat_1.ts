@@ -56,7 +56,7 @@ export default class Human_1<
 
     this.modules.animation.setAnimations(animations);
 
-    const scale = 0.056 / 1;
+    const scale = 0.07 / 1;
     object.scale.set(scale, scale, scale);
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {

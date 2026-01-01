@@ -222,7 +222,8 @@ export default class DamageUnitModule extends UnitModule<
     const p = new Particle(
       this.textures?.smokeTexture[type],
       new Vector3(0, 0, 0),
-      0.8
+      0.8,
+      { fade: false }
     );
 
     p.velocity.set(
@@ -231,7 +232,7 @@ export default class DamageUnitModule extends UnitModule<
       (Math.random() - 0.5) * 0.1
     );
 
-    p.sprite.material.opacity = 0.6;
+    // p.sprite.material.opacity = 0.6;
 
     disableRaycaster(p.sprite);
     this.root?.add(p.sprite);
@@ -243,7 +244,8 @@ export default class DamageUnitModule extends UnitModule<
     const p = new Particle(
       this.textures.fireTexture,
       new Vector3(0, 0, 0),
-      0.5 + Math.random() * 0.3
+      0.5 + Math.random() * 0.3,
+      { fade: false }
     );
 
     p.velocity.set(

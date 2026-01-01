@@ -11,6 +11,7 @@ export enum ControlAction {
   SPACE = 'space',
   POWER = 'power',
   GEAR = 'gear',
+  SWITCH_WEAPON = 'switchWeapon',
   LANDING = 'landing',
   MODIFIER = 'modifier',
   MOVE_FORWARD = 'moveForward',
@@ -49,6 +50,10 @@ const actionBindings: KeyBindings = {
   [ControlAction.GEAR]: {
     keyCode: ['KeyG']
   },
+  [ControlAction.SWITCH_WEAPON]: {
+    keyCode: ['KeyX']
+  },
+
   [ControlAction.MOVE_FORWARD]: {
     keyCode: ['KeyW']
   },
@@ -283,6 +288,7 @@ export interface ControlState {
   [ControlAction.SPACE]: boolean;
   [ControlAction.POWER]: boolean;
   [ControlAction.GEAR]: boolean;
+  [ControlAction.SWITCH_WEAPON]: boolean;
   [ControlAction.LANDING]: boolean;
   [ControlAction.MODIFIER]: boolean;
 

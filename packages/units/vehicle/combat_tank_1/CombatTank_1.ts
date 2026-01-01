@@ -12,9 +12,9 @@ import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Object3D, Vector2, Mesh, SkinnedMesh, Vector3 } from 'three';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import GunUnitModule from '@blue-might/app/lib/classes/unitModule/Gun';
+import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
-import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/Gun';
+import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { weapons } from '@blue-might/weapon';
 import { lerp } from 'three/src/math/MathUtils.js';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
@@ -22,7 +22,6 @@ import {
   ControlAction,
   type ControlState
 } from '@blue-might/app/lib/classes/playerModule/Controls';
-import { getSfx } from '@blue-might/weapon/projectile';
 import { playSound } from '@blue-might/weapon/utils';
 
 import {
@@ -45,11 +44,11 @@ export interface CombatTankOptions extends TankUnitOptions {
 }
 export interface CombatTankModules extends TankUnitModules {
   attack: AttackUnitModule;
-  gun: GunUnitModule;
+  weapon: WeaponUnitModule;
   player: PlayerUnitModule;
 }
 export type CombatTankModuleList = TankUnitModuleList &
-  [typeof AttackUnitModule | typeof GunUnitModule | typeof PlayerUnitModule];
+  [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
 export default class CombatTank_1<
   Options extends CombatTankOptions = CombatTankOptions,
@@ -79,7 +78,7 @@ export default class CombatTank_1<
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []
   ) {
-    moduleList.push(AttackUnitModule, GunUnitModule, PlayerUnitModule);
+    moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
     super(
       {
         ...options,
@@ -92,12 +91,17 @@ export default class CombatTank_1<
         },
         moduleOptions: {
           ...options.moduleOptions,
-          gun: {
+          weapon: {
             autoAimFn: (options: AutoAimFnOptions) => this.autoAimFn(options),
-            weapons: options.moduleOptions?.gun?.weapons ?? [
-              new weapons.tank()
+            slots: options.moduleOptions?.weapon?.slots ?? [
+              {
+                slot: 0,
+                weapon: new weapons.default('heavy_projectile'),
+                maxAmmunition: 100,
+                ammunition: 100
+              }
             ],
-            ...options.moduleOptions?.gun
+            ...options.moduleOptions?.weapon
           },
           collision: {
             ...options.moduleOptions?.collision,
@@ -111,21 +115,20 @@ export default class CombatTank_1<
 
   override setup(context: SetupContext) {
     this.subscription.add(
-      this.modules.gun.observables.shoot$.subscribe(async ({ index }) => {
-        this.objects.barrelTargetShoots[index]!.visible = true;
-        playSound(
-          await getSfx(this.modules.gun.getWeapon(index)!.projectile.id),
-          0.3
-        );
-      })
+      this.modules.weapon.observables.shoot$.subscribe(
+        async ({ index, shoot }) => {
+          this.objects.barrelTargetShoots[index]!.visible = true;
+          playSound(await shoot.projectile.getSfx(), 0.3);
+        }
+      )
     );
     this.subscription.add(
-      this.modules.gun.observables.cooldown$.subscribe(({ index }) => {
+      this.modules.weapon.observables.cooldown$.subscribe(({ index }) => {
         this.objects.barrelTargetShoots[index]!.visible = false;
       })
     );
     this.subscription.add(
-      this.modules.gun.observables.active$.subscribe(v => {
+      this.modules.weapon.observables.active$.subscribe(v => {
         if (!v) {
           Object.values(this.objects.barrelTargetShoots).forEach(shoot => {
             shoot.visible = false;
@@ -167,7 +170,7 @@ export default class CombatTank_1<
       barrelTargetShoots: [barrelTargetShoot]
     };
 
-    this.modules.gun.registerBarrelTarget(barrelTargetObj);
+    this.modules.weapon.registerBarrelTarget(barrelTargetObj);
 
     //#endregion
 
@@ -224,8 +227,10 @@ export default class CombatTank_1<
     if (controls[ControlAction.RIGHT]) {
       this.state.weaponVelocity.x -= 0.005;
     }
-    if (this.modules.gun.isAutoAimActive()) return;
-    this.modules.gun.setActive(controls[ControlAction.FIRE_PRIMARY] ?? false);
+    if (this.modules.weapon.isAutoAimActive()) return;
+    this.modules.weapon.setActive(
+      controls[ControlAction.FIRE_PRIMARY] ?? false
+    );
   }
 
   private updateObjects() {
@@ -236,7 +241,7 @@ export default class CombatTank_1<
 
     if (headObj && barrelObj) {
       // NEU: Manuelle Bewegung nur, wenn Auto-Aim nicht aktiv ist
-      if (!this.modules.gun.isAutoAimActive()) {
+      if (!this.modules.weapon.isAutoAimActive()) {
         headObj.rotation.y += this.state.weaponVelocity.x;
         barrelObj.rotation.x += this.state.weaponVelocity.y;
       }
@@ -251,7 +256,7 @@ export default class CombatTank_1<
       if (this.state.weaponVelocity.length() < 0.001) {
         this.state.weaponVelocity.set(0, 0);
       } else {
-        this.modules.gun.updateSourcePosition(0);
+        this.modules.weapon.updateSourcePosition(0);
       }
     }
   }

@@ -13,7 +13,11 @@ import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
-import { CombatHelicopter_1, LandingPort_1, Tank_1 } from '@blue-might/units';
+import {
+  CombatHelicopter_1,
+  LandingPortSupplyStation,
+  Tank_1
+} from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
@@ -31,7 +35,10 @@ const playerUnitId = 'combat-helicopter-1';
 const map: Partial<MapDescription> = {
   factions: [blueFaction, enemyFaction],
   units: [
-    new LandingPort_1({
+    new LandingPortSupplyStation({
+      moduleDebug: {
+        collision: true
+      },
       position: new Vector3(0, 0, 0)
     }),
     new CombatHelicopter_1({
@@ -42,7 +49,7 @@ const map: Partial<MapDescription> = {
         attack: false,
         pathfinding: false,
         patrol: false,
-        gun: false
+        weapon: false
       },
       moduleOptions: {
         patrol: {
@@ -58,7 +65,7 @@ const map: Partial<MapDescription> = {
         damage: {
           damage: 0.4
         },
-        gun: {
+        weapon: {
           autoAimActive: true,
           autoAimAutoShoot: false
         },

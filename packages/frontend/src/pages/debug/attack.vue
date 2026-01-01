@@ -1,11 +1,11 @@
 <template>
   <div>
     <client-only>
-      <debug-shoot />
+      <debug-attack />
     </client-only>
   </div>
 </template>
 
 <script setup lang="ts">
-import DebugShoot from '@blue-might/debug/components/Shoot.vue';
+import DebugAttack from '@blue-might/debug/components/Attack.vue';
 </script>

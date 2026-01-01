@@ -63,7 +63,7 @@ export default class GroundNavigator extends BaseNavigator {
         }
       } else {
         const colliderSize = box.getSize(new Vector3());
-        const buffer = Math.max(colliderSize.x, colliderSize.z) / 4;
+        const buffer = Math.max(colliderSize.x, colliderSize.z) / 8;
         const expandedBox = box.clone().expandByScalar(buffer);
         if (expandedBox.containsPoint(pos)) {
           walkable = false;

@@ -1,7 +1,10 @@
 <template>
   <div>
     <client-only>
-      <app-component :config="config" :map="extendedMap" :on-setup="onSetup" />
+      <app-component
+        :config="config"
+        :map="extendedMap()"
+        :on-setup="onSetup" />
     </client-only>
   </div>
 </template>

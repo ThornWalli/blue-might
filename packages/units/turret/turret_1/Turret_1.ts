@@ -14,9 +14,9 @@ import BuildingUnit, {
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
-import GunUnitModule, {
+import WeaponUnitModule, {
   type AutoAimFnOptions
-} from '@blue-might/app/lib/classes/unitModule/Gun';
+} from '@blue-might/app/lib/classes/unitModule/Weapon';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
@@ -26,7 +26,6 @@ import {
   type ControlState
 } from '@blue-might/app/lib/classes/playerModule/Controls';
 import { playSound } from '@blue-might/weapon/utils';
-import { getSfx } from '@blue-might/weapon/projectile';
 import {
   createBarrelTargetShoot,
   normalizeAngle
@@ -48,7 +47,7 @@ export interface TurretOptions extends BuildingUnitOptions {
 
 export interface TurretModules extends BuildingUnitModules {
   attack: AttackUnitModule;
-  gun: GunUnitModule;
+  weapon: WeaponUnitModule;
   player: PlayerUnitModule;
   movable: MovableUnitModule;
 }
@@ -56,7 +55,7 @@ export interface TurretModules extends BuildingUnitModules {
 export type TurretModuleList = BuildingUnitModuleList &
   [
     | typeof AttackUnitModule
-    | typeof GunUnitModule
+    | typeof WeaponUnitModule
     | typeof PlayerUnitModule
     | typeof MovableUnitModule
   ];
@@ -91,7 +90,7 @@ export default class Turret_1 extends BuildingUnit<
   ) {
     moduleList.push(
       AttackUnitModule,
-      GunUnitModule,
+      WeaponUnitModule,
       PlayerUnitModule,
       MovableUnitModule
     );
@@ -107,12 +106,17 @@ export default class Turret_1 extends BuildingUnit<
         },
         moduleOptions: {
           ...options.moduleOptions,
-          gun: {
+          weapon: {
             autoAimFn: (options: AutoAimFnOptions) => this.autoAimFn(options),
-            weapons: options.moduleOptions?.gun?.weapons ?? [
-              new weapons.default()
+            slots: options.moduleOptions?.weapon?.slots ?? [
+              {
+                slot: 0,
+                weapon: new weapons.default('light_projectile'),
+                maxAmmunition: 100,
+                ammunition: 100
+              }
             ],
-            ...options.moduleOptions?.gun
+            ...options.moduleOptions?.weapon
           },
           collision: {
             ...options.moduleOptions?.collision,
@@ -128,21 +132,20 @@ export default class Turret_1 extends BuildingUnit<
 
   override setup(context: SetupContext) {
     this.subscription.add(
-      this.modules.gun.observables.shoot$.subscribe(async ({ index }) => {
-        this.objects.barrelTargetShoots[index]!.visible = true;
-        playSound(
-          await getSfx(this.modules.gun.getWeapon(index)!.projectile.id),
-          0.3
-        );
-      })
+      this.modules.weapon.observables.shoot$.subscribe(
+        async ({ index, shoot }) => {
+          this.objects.barrelTargetShoots[index]!.visible = true;
+          playSound(await shoot.projectile.getSfx(), 0.3);
+        }
+      )
     );
     this.subscription.add(
-      this.modules.gun.observables.cooldown$.subscribe(({ index }) => {
+      this.modules.weapon.observables.cooldown$.subscribe(({ index }) => {
         this.objects.barrelTargetShoots[index]!.visible = false;
       })
     );
     this.subscription.add(
-      this.modules.gun.observables.active$.subscribe(v => {
+      this.modules.weapon.observables.active$.subscribe(v => {
         if (!v) {
           Object.values(this.objects.barrelTargetShoots).forEach(shoot => {
             shoot.visible = false;
@@ -186,7 +189,7 @@ export default class Turret_1 extends BuildingUnit<
       barrelTargetShoots: [barrelTargetShoot]
     };
 
-    this.modules.gun.registerBarrelTarget(barrelTargetObj);
+    this.modules.weapon.registerBarrelTarget(barrelTargetObj);
 
     //#endregion
 
@@ -243,8 +246,10 @@ export default class Turret_1 extends BuildingUnit<
     if (controls[ControlAction.RIGHT]) {
       this.state.weaponVelocity.x -= 0.005;
     }
-    if (this.modules.gun.isAutoAimActive()) return;
-    this.modules.gun.setActive(controls[ControlAction.FIRE_PRIMARY] ?? false);
+    if (this.modules.weapon.isAutoAimActive()) return;
+    this.modules.weapon.setActive(
+      controls[ControlAction.FIRE_PRIMARY] ?? false
+    );
   }
 
   private updateObjects() {
@@ -255,7 +260,7 @@ export default class Turret_1 extends BuildingUnit<
 
     if (headObj && barrelObj) {
       // NEU: Manuelle Bewegung nur, wenn Auto-Aim nicht aktiv ist
-      if (!this.modules.gun.isAutoAimActive()) {
+      if (!this.modules.weapon.isAutoAimActive()) {
         headObj.rotation.y += this.state.weaponVelocity.x;
         barrelObj.rotation.x += this.state.weaponVelocity.y;
       }
@@ -270,7 +275,7 @@ export default class Turret_1 extends BuildingUnit<
       if (this.state.weaponVelocity.length() < 0.001) {
         this.state.weaponVelocity.set(0, 0);
       } else {
-        this.modules.gun.updateSourcePosition(0);
+        this.modules.weapon.updateSourcePosition(0);
       }
     }
   }

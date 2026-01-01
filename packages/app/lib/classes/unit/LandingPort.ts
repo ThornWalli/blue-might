@@ -11,7 +11,7 @@ import BuildingUnit, {
 export interface LandingPortUnitOptions extends BuildingUnitOptions {}
 
 export type LandingPortUnitModules = BuildingUnitModules & {
-  landingPortal: LandingPortUnitModule;
+  landingPort: LandingPortUnitModule;
 };
 
 export type LandingPortUnitModuleList = (typeof LandingPortUnitModule)[] &

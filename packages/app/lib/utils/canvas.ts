@@ -42,10 +42,11 @@ export function resizeCanvas(
   } else if (!height) {
     height = width * (canvas.height / canvas.width);
   }
-  const resizedCanvas = new OffscreenCanvas(width, height);
-  const ctx = resizedCanvas.getContext(
-    '2d'
-  ) as OffscreenCanvasRenderingContext2D;
+
+  const resizedCanvas = document.createElement('canvas');
+  resizedCanvas.width = width;
+  resizedCanvas.height = height;
+  const ctx = resizedCanvas.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(canvas, 0, 0, width, height);
   return resizedCanvas;

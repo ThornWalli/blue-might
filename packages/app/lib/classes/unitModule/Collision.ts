@@ -56,6 +56,7 @@ export interface CollisionUnitModuleOptions extends UnitModuleOptions {
   type: COLLISION_TYPE;
   targetName: string;
   targetChildIndex?: number;
+  targetChilds?: boolean;
 }
 
 export default class CollisionUnitModule<
@@ -99,16 +100,15 @@ export default class CollisionUnitModule<
     super.destroy();
   }
 
-  override async setup() {
-    if (this.debug) {
-      this.createDebugHelper();
-    }
-  }
-
   override async afterSetup() {
+    await super.afterSetup();
     this.setupLocalOBB();
     this.refreshWorldOBB();
     this.refreshDebugHelper();
+
+    if (this.debug) {
+      this.createDebugHelper();
+    }
   }
 
   getCollisionType() {

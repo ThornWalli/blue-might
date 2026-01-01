@@ -74,7 +74,6 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       },
       this.debug
     );
-    await this.groundNavigationSmall.setup();
 
     this.groundNavigationLarge = new GroundNavigator(
       this.map,
@@ -89,7 +88,6 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       },
       this.debug
     );
-    await this.groundNavigationLarge.setup();
 
     this.airNavigation = new AirNavigator(
       this.map,
@@ -107,7 +105,12 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       },
       this.debug
     );
-    await this.airNavigation.setup();
+
+    await Promise.all([
+      this.groundNavigationSmall.setup(),
+      this.groundNavigationLarge.setup(),
+      this.airNavigation.setup()
+    ]);
 
     if (this.debug) {
       this.groundNavigationLarge.setupDebugGridObjects();

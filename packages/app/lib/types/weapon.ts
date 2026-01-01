@@ -15,13 +15,14 @@ export interface ProjectileDescription {
   id: ProjectileIdentifier;
   speed: number;
   strength: number;
+  smoke?: boolean;
 }
 
 export type WeaponId = Values<Weapon>;
 export type WeaponIdentifier = string;
-export interface WeaponDescription {
+export interface WeaponDescription<P = ProjectileIdentifier> {
   id: WeaponIdentifier;
-  projectile: ProjectileDescription;
+  projectile: P;
   spreadAmount: number;
   speed: number;
   perSeconds: number;

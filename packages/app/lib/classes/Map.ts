@@ -98,9 +98,9 @@ export default class Map<
       UnitsModule,
       GroundModule,
       LightModule,
-      PathfindingModule,
       ShootModule,
       FactionModule,
+      PathfindingModule,
       EffectModule
     );
 

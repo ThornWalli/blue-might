@@ -16,6 +16,7 @@ import type {
 } from '../AirVehicle';
 import AirUnitModule from '../AirVehicle';
 import { COLLISION_TYPE } from '../../Collision';
+import LandingPortUnitModule from '../../LandingPort';
 
 declare module '../../../Unit' {
   interface ModuleStates {
@@ -29,6 +30,14 @@ declare module '../../../Unit' {
   }
 }
 
+export enum FLIGHT_STATUS {
+  NONE = 'none',
+  LANDED = 'landed',
+  TAKING_OFF = 'taking_off',
+  FLYING = 'flying',
+  LANDING = 'landing'
+}
+
 type HelicopterUnitObservables = AirVehicleUnitModuleObservables;
 
 export interface HelicopterUnitModuleOptions extends AirVehicleUnitModuleOptions {
@@ -39,23 +48,20 @@ export interface HelicopterUnitModuleOptions extends AirVehicleUnitModuleOptions
   rollPower: number; // side tilt strength
   friction: number;
   liftPower: number; // vertical acceleration
+  autoLevelRate?: number; // how fast tilt recenters
+  //#region altitude
   fixedAltitude?: number; // if set, use takeoff/land to snap here
   autoAltitude?: boolean; // if true, automatically maintain a certain altitude
-  autoLevelRate?: number; // how fast tilt recenters
-}
-
-export enum FLIGHT_STATUS {
-  LANDED = 'landed',
-  TAKING_OFF = 'taking_off',
-  FLYING = 'flying',
-  LANDING = 'landing'
+  //#endregion
 }
 
 export interface HelicopterUnitModuleState extends AirVehicleUnitModuleState {
   tilt: Vector3; // x=pitch, y=unused, z=roll (right-handed; adjust as needed)
   groundNormal: Vector3;
   yawVelocity?: number;
+  //#region altitude
   targetAltitude?: number;
+  //#endregion
 }
 
 export default class HelicopterUnitModule<
@@ -103,16 +109,16 @@ export default class HelicopterUnitModule<
         friction: options.friction ?? 0.96,
         liftPower: options.liftPower ?? 2,
         autoAltitude: options.autoAltitude ?? true,
-        autoLevelRate: options.autoLevelRate ?? 2
+        autoLevelRate: options.autoLevelRate ?? 2,
+        maxPower: options.maxPower ?? 4,
+        minPower: options.minPower ?? 2,
+        idlePower: options.idlePower ?? 0.2
       } as Options,
       {
         ...state,
         tilt: state.tilt ?? new Vector3(0, 0, 0),
         groundNormal: state.groundNormal ?? new Vector3(0, 1, 0),
-        yawVelocity: state.yawVelocity ?? 0,
-        maxPower: state.maxPower ?? 4,
-        minPower: state.minPower ?? 2,
-        idlePower: state.idlePower ?? 0.2
+        yawVelocity: state.yawVelocity ?? 0
       } as State,
       debug
     );
@@ -122,6 +128,14 @@ export default class HelicopterUnitModule<
     await super.afterSetup();
 
     const unit = this.getUnit();
+
+    if (unit.preview) return;
+
+    this.subscription.add(
+      unit.modules.airVehicle.observables.landingPort$.subscribe(unit => {
+        console.log(unit);
+      })
+    );
 
     this.subscription.add(
       unit.modules.collision.observables.collision$.subscribe(({ type }) => {
@@ -167,9 +181,9 @@ export default class HelicopterUnitModule<
         this.state.flightStatus === FLIGHT_STATUS.TAKING_OFF ||
         this.state.flightStatus === FLIGHT_STATUS.LANDING
       ) {
-        return this.state.maxPower;
+        return this.options.maxPower;
       }
-      return this.state.idlePower;
+      return this.options.idlePower;
     }
     return 0;
   }
@@ -183,12 +197,15 @@ export default class HelicopterUnitModule<
     // Wenn die Gears gerade animiert werden ODER ausgefahren sind, begrenze die Neigung stark.
     return this.state.gearsActive || this.state.gearsOpened ? 0.2 : 0.6;
   }
-  override update({ delta, time }: AnimationLoopValue): void {
-    super.update({ delta, time });
-    this.moveUpdate({ delta });
+  override update(v: AnimationLoopValue): void {
+    super.update(v);
+    this.moveUpdate({ delta: v.delta });
   }
 
-  lastPosition = new Vector3();
+  helpers = {
+    horizontalVelocity: new Vector3()
+  };
+
   moveUpdate({ delta }: { delta: number }) {
     const unit = this.getUnit();
 
@@ -334,6 +351,8 @@ export default class HelicopterUnitModule<
 
       // Roll → seitliche Bewegung: gleiches Vorzeichen wie strafeInput
       velocity.addScaledVector(right, strafeAccel * tilt.z * delta);
+
+      velocity.multiplyScalar(friction);
     }
 
     let status = this.getFlightStatus();
@@ -394,13 +413,14 @@ export default class HelicopterUnitModule<
     }
 
     // Friction & clamps
-    velocity.multiplyScalar(friction);
-    const horizontal = new Vector3(velocity.x, 0, velocity.z);
-    const hSpeed = horizontal.length();
+    // velocity.multiplyScalar(friction);
+    const horizontalVelocity = this.helpers.horizontalVelocity;
+    horizontalVelocity.set(velocity.x, 0, velocity.z);
+    const hSpeed = horizontalVelocity.length();
     if (hSpeed > maxSpeed) {
-      horizontal.setLength(maxSpeed);
-      velocity.x = horizontal.x;
-      velocity.z = horizontal.z;
+      horizontalVelocity.setLength(maxSpeed);
+      velocity.x = horizontalVelocity.x;
+      velocity.z = horizontalVelocity.z;
     }
     if (this.state.isAirborne) {
       if (currentPower > 0) {
@@ -431,6 +451,7 @@ export default class HelicopterUnitModule<
     }
 
     if (!active || !controls.ascend) {
+      const isDestroyed = unit.modules.damage.isDestroyed();
       const position = unit.getPosition();
       let minY =
         unit
@@ -438,24 +459,50 @@ export default class HelicopterUnitModule<
           ?.modules.ground.getSurfaceHeightAt(position.x, position.z, [unit]) ??
         0;
 
-      if (this.state.gearsOpened) {
+      if (!isDestroyed && this.state.gearsOpened) {
         minY += this.options.gearsHeight;
       }
 
       if (
-        (this.state.isAirborne && position.y <= minY + 0.1) ||
+        (this.state.isAirborne && position.y <= minY) ||
         (status === FLIGHT_STATUS.LANDED && position.y < minY)
       ) {
+        if (!isDestroyed) {
+          const impactStrength = Math.abs(velocity.y);
+          const damageThreshold = 0.8;
+          if (impactStrength > damageThreshold || !this.state.gearsOpened) {
+            unit.modules.damage.setValue(1);
+          }
+        }
+
         this.state.isAirborne = false;
-        velocity.y = 0;
-        position.y = minY;
+        velocity.set(0, 0, 0);
+        position.setY(minY);
         unit.setPosition(position);
-        this.lastPosition.copy(position);
+        console.log('updateGroundAlignment', this.getLastFlightStatus());
+
+        if (this.getLastFlightStatus() !== FLIGHT_STATUS.LANDED) {
+          const { unit: targetUnit } = unit.updateGroundAlignment();
+
+          unit.calculateGroundNormal();
+          if (targetUnit) {
+            const landingPort = targetUnit.getModuleByType(
+              LandingPortUnitModule
+            );
+            if (landingPort) {
+              landingPort.setLandedUnit(unit);
+            }
+          }
+        }
         status = FLIGHT_STATUS.LANDED;
-        // console.log('Helicopter landed');
-        unit.updateGroundAlignment();
-        unit.calculateGroundNormal();
       }
+    }
+
+    if (
+      unit.modules.airVehicle.getLandingPort() &&
+      status !== FLIGHT_STATUS.LANDED
+    ) {
+      unit.modules.airVehicle.setLandingPort(null);
     }
 
     // Integrate position

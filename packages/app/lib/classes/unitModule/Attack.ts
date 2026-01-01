@@ -15,6 +15,7 @@ import UnitModule, {
 } from '../UnitModule';
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
+import { disposeObject3D } from '../../utils/object';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -29,7 +30,7 @@ declare module '../Unit' {
 }
 
 export interface AttackUnitModuleObservables extends UnitModuleObservables {
-  target$: ReplaySubject<Unit | undefined>;
+  target$: ReplaySubject<Unit | null>;
 }
 
 export interface AttackUnitModuleOptions extends UnitModuleOptions {
@@ -38,7 +39,7 @@ export interface AttackUnitModuleOptions extends UnitModuleOptions {
 
 export interface AttackUnitModuleState extends UnitModuleState {
   radius: number;
-  target?: Unit;
+  target: Unit | null;
 }
 
 export default class AttackUnitModule extends UnitModule<
@@ -60,7 +61,8 @@ export default class AttackUnitModule extends UnitModule<
     super(unit, options, { ...state, radius: state.radius ?? 4 }, debug);
 
     //#region observables
-    this.observables.target$ = new ReplaySubject<Unit | undefined>(1);
+    this.observables.target$ = new ReplaySubject<Unit | null>(1);
+    this.observables.target$.next(null);
     //#endregion
 
     this.sphere = new Sphere(new Vector3(), this.state.radius);
@@ -71,13 +73,23 @@ export default class AttackUnitModule extends UnitModule<
     this.subscription.add(
       this.getUnit().observables.position$.subscribe(position => {
         this.sphere.center.copy(position);
-        // this.debugSphere?.position.copy(position);
+        this.debugSphere?.position.copy(position);
       })
     );
 
     if (this.debug) {
       this.setupDebug();
     }
+  }
+
+  override destroy() {
+    if (this.debugSphere) {
+      this.debugSphere.removeFromParent();
+      disposeObject3D(this.debugSphere);
+      this.debugSphere = null;
+    }
+
+    super.destroy();
   }
 
   lastUpdateTime = 0;
@@ -103,6 +115,7 @@ export default class AttackUnitModule extends UnitModule<
 
     const intersectingUnits: Unit[] = [];
     for (const targetUnit of unitsInRadius) {
+      if (targetUnit === unit) continue;
       if (!this.isAttackAllowed(targetUnit)) {
         continue;
       }
@@ -118,8 +131,6 @@ export default class AttackUnitModule extends UnitModule<
         this.setTarget(intersectingUnits[0]);
       }
       (this.debugSphere?.material as MeshLambertMaterial)?.color.set(0xff0000);
-      // console.log('Units intersecting attack sphere:', intersectingUnits);
-      // Hier kannst du Angriffe auslösen, z.B. targetUnit.getModule('damage')?.takeDamage(...)
     }
   }
 
@@ -142,8 +153,8 @@ export default class AttackUnitModule extends UnitModule<
     }
   }
 
-  private setTarget(target: Unit | undefined) {
-    this.state.target = target;
+  private setTarget(target?: Unit | null) {
+    this.state.target = target ?? null;
     if (target) {
       const unitSubscription = new Subscription();
       unitSubscription.add(
@@ -178,7 +189,7 @@ export default class AttackUnitModule extends UnitModule<
   private setupDebug() {
     const debugSphere = new Mesh(
       new SphereGeometry(this.sphere.radius, 16, 16),
-      new MeshLambertMaterial({ color: 0xff0000, wireframe: true })
+      new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
     );
     this.debugSphere = debugSphere;
     this.getUnit().getMap()?.app.getScene().add(this.debugSphere);

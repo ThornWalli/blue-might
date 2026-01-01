@@ -48,6 +48,7 @@ export const DEFAULT_SHADOW_QUALITY = ShadowQuality.LOW;
 export type AnimationLoopValue = {
   time: number;
   delta: number;
+  scene: Scene;
 };
 export type AnimationLoopSubject = ReplaySubject<AnimationLoopValue>;
 
@@ -104,10 +105,7 @@ export default class Renderer<
 
     this.observables = {
       shadowQuality$: new ReplaySubject<ShadowQuality>(1),
-      animationLoop$: new ReplaySubject<{
-        time: number;
-        delta: number;
-      }>(0),
+      animationLoop$: new ReplaySubject<AnimationLoopValue>(0),
       pointerDown$: fromEvent<PointerEvent>(canvas, 'pointerdown'),
       pointerMove$: fromEvent<PointerEvent>(canvas, 'pointermove'),
       pointerUp$: fromEvent<PointerEvent>(canvas, 'pointerup'),
@@ -165,7 +163,8 @@ export default class Renderer<
       const delta = Math.min(rawDelta, 1 / 60);
       this.observables.animationLoop$.next({
         time,
-        delta
+        delta,
+        scene: this.scene
       });
 
       this.getComposer().render(time);

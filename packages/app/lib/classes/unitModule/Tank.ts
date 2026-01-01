@@ -27,11 +27,11 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
     super(
       unit,
       {
-        ...options,
-        maxSpeed: options.maxSpeed ?? 1,
-        acceleration: options.acceleration ?? 1 / 3,
-        turnSpeed: options.turnSpeed ?? 1 / 2,
-        turnMovementSpeed: options.turnMovementSpeed ?? 1 / 3
+        ...options
+        // maxSpeed: options.maxSpeed ?? 1,
+        // acceleration: options.acceleration ?? 1 / 3,
+        // turnSpeed: options.turnSpeed ?? 1 / 2,
+        // turnMovementSpeed: options.turnMovementSpeed ?? 1 / 3
       },
       {
         ...state,
@@ -135,7 +135,9 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
     if (Math.abs(dx) > eps || Math.abs(dz) > eps) {
       pos.x += dx;
       pos.z += dz;
-      unit.setPosition(pos);
+      if (!unit.setPosition(pos)) {
+        velocity.set(0, 0, 0);
+      }
     }
   }
 }

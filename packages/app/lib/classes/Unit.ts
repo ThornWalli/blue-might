@@ -123,6 +123,10 @@ export default class Unit<
     GROUND_ADJUSTMENT_MODE.GROUND;
   private _position: Vector3 = new Vector3(0, 0, 0);
   private _rotation: Euler = new Euler(0, 0, 0);
+
+  private _playerPitch = 0;
+  private _playerRoll = 0;
+
   /**
    * Gelände-Neigung (Pitch/Roll)
    * x = pitch
@@ -130,10 +134,6 @@ export default class Unit<
    * z = roll
    */
   private _tilt: Vector3 = new Vector3(0, 0, 0);
-
-  getTilt() {
-    return this._tilt;
-  }
 
   constructor(
     {
@@ -186,12 +186,12 @@ export default class Unit<
     //#region modules
 
     moduleList.unshift(
+      FactionUnitModule,
       CollisionUnitModule,
       DamageUnitModule,
       AnimationUnitModule,
       SelectionUnitModule,
-      PathfindingUnitModule,
-      FactionUnitModule
+      PathfindingUnitModule
     );
 
     this.moduleList = moduleList as ModuleList;
@@ -256,7 +256,9 @@ export default class Unit<
   async setup(context: SetupContext) {
     this._map = context.map ?? null;
 
-    const modules: UnitModule[] = Object.values(this.modules);
+    const modules: UnitModule[] = Array.from(
+      new Set(Object.values(this.modules))
+    );
 
     for (const module of modules) {
       await module.setup();
@@ -304,7 +306,7 @@ export default class Unit<
   }
 
   async afterSetup(_context: SetupContext) {
-    for (const module of Object.values(this.modules)) {
+    for (const module of new Set(Object.values(this.modules))) {
       await module.afterSetup();
     }
     this.setPosition(this._position!);
@@ -360,73 +362,6 @@ export default class Unit<
     this.groundAdjustmentMode = groundAdjustmentMode;
   }
 
-  updateGroundAlignment(position?: Vector3, ignoredUnits: Unit[] = []) {
-    const groundModule = this._map?.modules.ground;
-    if (!groundModule) {
-      this.updateMeshTransform();
-      return;
-    }
-    if (position) {
-      this._position.copy(position);
-    }
-    position = this._position;
-
-    switch (this.groundAdjustmentMode) {
-      case GROUND_ADJUSTMENT_MODE.MIN_HEIGHT:
-        this._position.y = this.getMinGroundHeight();
-        // const groundHeight = groundModule.getTerrainHeightAt(
-        //   position.x,
-        //   position.z,
-        //   ignoredUnits
-        // );
-        // this._position.y = groundHeight;
-        break;
-
-      case GROUND_ADJUSTMENT_MODE.GROUND:
-        {
-          const groundHeight = groundModule.getTerrainHeightAt(
-            position.x,
-            position.z,
-            ignoredUnits
-          );
-          this._position.y = groundHeight;
-
-          // Gelände-Normale berechnen (für Neigung)
-          this.calculateGroundNormal();
-        }
-        break;
-
-      case GROUND_ADJUSTMENT_MODE.FLIGHT:
-        // const groundHeight = groundModule.getSurfaceHeightAt(
-        //   position.x,
-        //   position.z,
-        //   ignoredUnits
-        // );
-        // this._position.y = groundHeight;
-
-        // // Gelände-Normale berechnen (für Neigung)
-        // this.calculateGroundNormal();
-        // Keine Anpassung
-        this._position.y = Math.max(
-          this._position.y,
-          Math.max(this.getMinGroundHeight(), 0)
-        );
-        break;
-
-      case GROUND_ADJUSTMENT_MODE.NONE: // NEU: Y-Position unverändert lassen
-        // Keine Anpassung
-        break;
-
-      default:
-        break;
-    }
-
-    // Rotation berechnen
-    this.updateMeshTransform();
-
-    return this._position;
-  }
-
   getRotation() {
     return this._rotation;
   }
@@ -434,70 +369,6 @@ export default class Unit<
   setRotation(rotation: Euler) {
     this.setYaw(rotation.y); // Nur Heading
   }
-
-  calculateGroundNormal() {
-    const sampleDistance = 1;
-    const rotation = this._rotation.y;
-    const groundModule = this._map?.modules.ground;
-    if (!groundModule) return;
-    // 4 Punkte um das Fahrzeug herum samplen
-    const front = groundModule.getHeightAt(
-      this._position.x + Math.sin(rotation) * sampleDistance,
-      this._position.z + Math.cos(rotation) * sampleDistance
-    );
-
-    const back = groundModule.getHeightAt(
-      this._position.x - Math.sin(rotation) * sampleDistance,
-      this._position.z - Math.cos(rotation) * sampleDistance
-    );
-
-    const left = groundModule.getHeightAt(
-      this._position.x + Math.cos(rotation) * sampleDistance,
-      this._position.z - Math.sin(rotation) * sampleDistance
-    );
-
-    const right = groundModule.getHeightAt(
-      this._position.x - Math.cos(rotation) * sampleDistance,
-      this._position.z + Math.sin(rotation) * sampleDistance
-    );
-
-    // Pitch (Neigung vorne/hinten)
-    const pitch = Math.atan2(back - front, sampleDistance * 2);
-
-    // Roll (Neigung links/rechts)
-    const roll = Math.atan2(left - right, sampleDistance * 2);
-
-    this._tilt.set(pitch, 0, roll);
-  }
-
-  getMinGroundHeight(): number {
-    const sampleDistance = 0;
-    const rotation = this._rotation.y;
-    const groundModule = this._map?.modules.ground;
-    if (!groundModule) return this._position.y;
-
-    const front = groundModule.getTerrainHeightAt(
-      this._position.x + Math.sin(rotation) * sampleDistance,
-      this._position.z + Math.cos(rotation) * sampleDistance
-    );
-    const back = groundModule.getTerrainHeightAt(
-      this._position.x - Math.sin(rotation) * sampleDistance,
-      this._position.z - Math.cos(rotation) * sampleDistance
-    );
-    const left = groundModule.getTerrainHeightAt(
-      this._position.x + Math.cos(rotation) * sampleDistance,
-      this._position.z - Math.sin(rotation) * sampleDistance
-    );
-    const right = groundModule.getTerrainHeightAt(
-      this._position.x - Math.cos(rotation) * sampleDistance,
-      this._position.z + Math.sin(rotation) * sampleDistance
-    );
-
-    return Math.min(front, back, left, right);
-  }
-
-  private _playerPitch = 0;
-  private _playerRoll = 0;
 
   private updateMeshTransform() {
     // 1. Position setzen
@@ -524,14 +395,57 @@ export default class Unit<
     return target.normalize();
   }
 
-  getYawQuaternion(): Quaternion {
-    return new Quaternion().setFromAxisAngle(
-      new Vector3(0, 1, 0),
-      this._rotation.y
-    );
-  }
-
   lastPosition: Vector3 = new Vector3();
+
+  // setPosition(position: Vector3) {
+  //   let desired = position.clone();
+  //   const from = this.lastPosition.clone();
+
+  //   // Schritt 1: Führe Bodenausrichtung für die gewünschte Position durch (wenn nötig)
+  //   if (
+  //     this._map &&
+  //     this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.NONE &&
+  //     this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT
+  //   ) {
+  //     desired = this.updateGroundAlignment(desired, [this]).position ?? desired;
+  //   }
+
+  //   // Schritt 2: Prüfe, ob die neue Position eine Kollision verursacht
+  //   this._position.copy(desired);
+  //   const collisionType = this.modules.collision.checkCollision();
+
+  //   // Fall A: Keine blockierende Kollision
+  //   if (collisionType < COLLISION_TYPE.BLOCKED) {
+  //     this._position.copy(desired);
+  //     this.lastPosition.copy(desired);
+  //     this.observables.position$.next(desired);
+  //     this.updateMeshTransform();
+  //     return true;
+  //   }
+
+  //   // Fall B: Blockierende Kollision!
+  //   const delta = desired.clone().sub(from);
+  //   const isHorizontalMove = Math.abs(delta.x) + Math.abs(delta.z) > 0.01;
+
+  //   // Fall B.1: Es ist eine Landung/Platzierung. Kollision ist erwartet (z.B. auf Gebäude). Akzeptieren.
+  //   if (!isHorizontalMove) {
+  //     this._position.copy(desired);
+  //     this.lastPosition.copy(desired);
+  //     this.observables.position$.next(desired);
+  //     this.updateMeshTransform();
+  //     return true;
+  //   }
+
+  //   this._position.copy(this.lastPosition);
+  //   this.root.position.copy(this.lastPosition);
+  //   this.observables.position$.next(this.lastPosition.clone());
+  //   this.updateMeshTransform();
+  //   console.log('Position updated:', this.lastPosition);
+  //   return false;
+  //   // Optional: Hier könnte man die "Sweep & Slide"-Logik (Binärsuche etc.)
+  //   // einfügen, um das Fahrzeug an der Wand entlang gleiten zu lassen, anstatt es nur zu stoppen.
+  //   // Fürs Erste stellen wir aber das simple "Stoppen" wieder her.
+  // }
 
   setPosition(position: Vector3) {
     let desired = position.clone();
@@ -543,7 +457,7 @@ export default class Unit<
       this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.NONE &&
       this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT
     ) {
-      desired = this.updateGroundAlignment(desired, [this]) ?? desired;
+      desired = this.updateGroundAlignment(desired, [this]).position ?? desired;
     }
 
     // Schritt 2: Prüfe, ob die neue Position eine Kollision verursacht
@@ -556,27 +470,29 @@ export default class Unit<
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       this.updateMeshTransform();
-      return;
+      return true;
     }
 
     // Fall B: Blockierende Kollision!
     const delta = desired.clone().sub(from);
     const isHorizontalMove = Math.abs(delta.x) + Math.abs(delta.z) > 0.01;
 
-    // Fall B.1: Es ist eine Landung/Platzierung. Kollision ist erwartet (z.B. auf Gebäude). Akzeptieren.
-    if (!isHorizontalMove) {
+    // Fall B.1: Es ist eine vertikale Landung/Platzierung (z.B. auf Gebäude). Kollision ist erwartet. Akzeptieren.
+    // Nur akzeptieren, wenn es tatsächlich eine vertikale Bewegung gibt (delta.y != 0) und keine horizontale.
+    if (Math.abs(delta.y) > 0.01 && !isHorizontalMove) {
       this._position.copy(desired);
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       this.updateMeshTransform();
-      return;
+      return true;
     }
 
+    // Fall B.2: Blockierende Kollision bei horizontaler Bewegung oder ohne vertikale Komponente – zurücksetzen
     this._position.copy(this.lastPosition);
     this.root.position.copy(this.lastPosition);
     this.observables.position$.next(this.lastPosition.clone());
     this.updateMeshTransform();
-
+    return false;
     // Optional: Hier könnte man die "Sweep & Slide"-Logik (Binärsuche etc.)
     // einfügen, um das Fahrzeug an der Wand entlang gleiten zu lassen, anstatt es nur zu stoppen.
     // Fürs Erste stellen wir aber das simple "Stoppen" wieder her.
@@ -619,7 +535,145 @@ export default class Unit<
   }
   //#endregion
 
-  // --- YAW (Root) --------------------------------------------------
+  getMinGroundInfo() {
+    const sampleDistance = 0;
+    const rotation = this._rotation.y;
+    const groundModule = this._map!.modules.ground!;
+
+    const info = groundModule.getTerrainInfoAt(
+      this._position.x,
+      this._position.z
+    );
+
+    const front = groundModule.getTerrainHeightAt(
+      this._position.x + Math.sin(rotation) * sampleDistance,
+      this._position.z + Math.cos(rotation) * sampleDistance
+    );
+    const back = groundModule.getTerrainHeightAt(
+      this._position.x - Math.sin(rotation) * sampleDistance,
+      this._position.z - Math.cos(rotation) * sampleDistance
+    );
+    const left = groundModule.getTerrainHeightAt(
+      this._position.x + Math.cos(rotation) * sampleDistance,
+      this._position.z - Math.sin(rotation) * sampleDistance
+    );
+    const right = groundModule.getTerrainHeightAt(
+      this._position.x - Math.cos(rotation) * sampleDistance,
+      this._position.z + Math.sin(rotation) * sampleDistance
+    );
+
+    return {
+      ...info,
+      position: info.position.clone().setY(Math.min(front, back, left, right))
+    };
+  }
+
+  calculateGroundNormal() {
+    const sampleDistance = 1;
+    const rotation = this._rotation.y;
+    const groundModule = this._map?.modules.ground;
+    if (!groundModule) return;
+    // 4 Punkte um das Fahrzeug herum samplen
+    const front = groundModule.getHeightAt(
+      this._position.x + Math.sin(rotation) * sampleDistance,
+      this._position.z + Math.cos(rotation) * sampleDistance
+    );
+
+    const back = groundModule.getHeightAt(
+      this._position.x - Math.sin(rotation) * sampleDistance,
+      this._position.z - Math.cos(rotation) * sampleDistance
+    );
+
+    const left = groundModule.getHeightAt(
+      this._position.x + Math.cos(rotation) * sampleDistance,
+      this._position.z - Math.sin(rotation) * sampleDistance
+    );
+
+    const right = groundModule.getHeightAt(
+      this._position.x - Math.cos(rotation) * sampleDistance,
+      this._position.z + Math.sin(rotation) * sampleDistance
+    );
+
+    // Pitch (Neigung vorne/hinten)
+    const pitch = Math.atan2(back - front, sampleDistance * 2);
+
+    // Roll (Neigung links/rechts)
+    const roll = Math.atan2(left - right, sampleDistance * 2);
+
+    this._tilt.set(pitch, 0, roll);
+  }
+
+  updateGroundAlignment(position?: Vector3, ignoredUnits: Unit[] = []) {
+    const groundModule = this._map?.modules.ground;
+
+    if (position) {
+      this._position.copy(position);
+    }
+    position = this._position;
+
+    let info: {
+      position: Vector3;
+      unit?: Unit;
+    } = {
+      position: position.clone()
+    };
+
+    if (!groundModule) {
+      this.updateMeshTransform();
+      return info;
+    }
+
+    switch (this.groundAdjustmentMode) {
+      case GROUND_ADJUSTMENT_MODE.MIN_HEIGHT:
+        info = this.getMinGroundInfo();
+        this._position.setY(info.position.y);
+        break;
+
+      case GROUND_ADJUSTMENT_MODE.GROUND:
+        {
+          info = groundModule.getTerrainInfoAt(
+            position.x,
+            position.z,
+            ignoredUnits
+          );
+          this._position.setY(info.position.y);
+          this.calculateGroundNormal();
+        }
+        break;
+
+      case GROUND_ADJUSTMENT_MODE.FLIGHT:
+        info = this.getMinGroundInfo();
+
+        this._position.y = Math.max(
+          this._position.y,
+          Math.max(info.position.y, 0)
+        );
+        info.position.setY(this._position.y);
+        break;
+
+      case GROUND_ADJUSTMENT_MODE.NONE:
+        // Keine Anpassung
+        break;
+
+      default:
+        break;
+    }
+
+    // Rotation berechnen
+    this.updateMeshTransform();
+
+    return info;
+  }
+
+  //#region yaw
+
+  getYawQuaternion(): Quaternion {
+    return new Quaternion().setFromAxisAngle(
+      new Vector3(0, 1, 0),
+      this._rotation.y
+    );
+  }
+
   getYaw() {
     return this._rotation.y;
   }
@@ -631,10 +685,8 @@ export default class Unit<
     this._rotation.y = yaw;
 
     if (this.modules.collision.checkCollision() >= COLLISION_TYPE.BLOCKED) {
-      this._rotation.y = lastYaw; // Wenn ja, mache es rückgängig.
+      this._rotation.y = lastYaw;
     }
-
-    // Aktualisiere nur die visuellen Aspekte. Ändere NICHT die Position.
 
     if (this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.GROUND) {
       this.calculateGroundNormal();
@@ -645,17 +697,31 @@ export default class Unit<
     this.observables.rotation$.next(this._rotation.clone());
   }
 
-  // --- PITCH --------------------------------------------------------
+  //#endregion
+
+  //#region tilt
+
+  getTilt() {
+    return this._tilt;
+  }
+
+  //#endregion
+
+  //#region pitch
+
   getPitch() {
     return this.pitchWrapper.rotation.x;
   }
 
   setPitch(p: number) {
     this._playerPitch = p;
-    this.updateMeshTransform(); // Nur Mesh aktualisieren, nicht die Position
+    this.updateMeshTransform();
   }
 
-  // --- ROLL ---------------------------------------------------------
+  //#endregion
+
+  //#region roll
+
   getRoll() {
     return this.rollWrapper.rotation.z;
   }
@@ -664,4 +730,6 @@ export default class Unit<
     this._playerRoll = r;
     this.updateMeshTransform();
   }
+
+  //#endregion
 }

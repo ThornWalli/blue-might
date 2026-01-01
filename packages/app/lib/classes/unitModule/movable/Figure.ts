@@ -72,9 +72,9 @@ export default class FigureUnitModule extends MovableUnitModule<
     );
   }
 
-  override update({ delta, time }: AnimationLoopValue): void {
-    super.update({ delta, time });
-    this.moveUpdate({ delta });
+  override update(v: AnimationLoopValue): void {
+    super.update(v);
+    this.moveUpdate({ delta: v.delta });
   }
 
   moveUpdate({ delta }: { delta: number }) {

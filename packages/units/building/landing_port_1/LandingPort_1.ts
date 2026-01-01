@@ -18,6 +18,7 @@ import LandingPortUnit, {
 } from '@blue-might/app/lib/classes/unit/LandingPort';
 import assetLoader from '@blue-might/app/services/assetLoader';
 import { LOADER } from '@blue-might/app/lib/classes/AssetLoader';
+import { getColor } from '@blue-might/app/lib/utils/color';
 
 import baseTexture from './texture.png?url';
 
@@ -58,7 +59,8 @@ export default class LandingPort_1 extends LandingPortUnit {
     const boxMesh = new Mesh(
       new BoxGeometry(1, height, 1),
       new MeshLambertMaterial({
-        color: 0xd9d9d9
+        color: getColor(0xd9d9d9),
+        flatShading: true
       })
     );
     boxMesh.receiveShadow = true;
