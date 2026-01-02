@@ -1,12 +1,4 @@
-import type { Texture } from 'three';
-import {
-  BoxGeometry,
-  Mesh,
-  MeshLambertMaterial,
-  NearestFilter,
-  Object3D,
-  PlaneGeometry
-} from 'three';
+import { Mesh, SkinnedMesh } from 'three';
 import type {
   SetupContext,
   UnitConstructorOptions
@@ -16,11 +8,10 @@ import LandingPortUnit, {
   type LandingPortUnitModules,
   type LandingPortUnitOptions
 } from '@blue-might/app/lib/classes/unit/LandingPort';
-import assetLoader from '@blue-might/app/services/assetLoader';
-import { LOADER } from '@blue-might/app/lib/classes/AssetLoader';
-import { getColor } from '@blue-might/app/lib/utils/color';
+import { loadGltf } from '@blue-might/app/lib/utils/gltf';
+import { replaceColors } from '@blue-might/app/lib/utils/object';
 
-import baseTexture from './texture.png?url';
+import baseGlb from './assets/landing_port_1.glb?url';
 
 export type Options = LandingPortUnitOptions;
 export type Modules = LandingPortUnitModules;
@@ -35,7 +26,15 @@ export default class LandingPort_1 extends LandingPortUnit {
     super(
       {
         ...options,
-        name: 'Landing Port 1'
+        name: 'Landing Port 1',
+        moduleOptions: {
+          ...options.moduleOptions,
+          collision: {
+            ...options.moduleOptions?.collision,
+            targetName: 'base',
+            targetChilds: true
+          }
+        }
       },
       moduleList as ModuleList
     );
@@ -47,41 +46,29 @@ export default class LandingPort_1 extends LandingPortUnit {
   }
 
   override async createMesh(_context: SetupContext) {
-    const texture = await assetLoader.add<Texture<ImageBitmap>>({
-      value: baseTexture,
-      loader: LOADER.TEXTURE
+    const { object, animations } = await loadGltf(baseGlb);
+
+    this.modules.animation.setAnimations(animations);
+
+    object.traverse(child => {
+      if (child instanceof Mesh || child instanceof SkinnedMesh) {
+        child.receiveShadow = true;
+        replaceColors(
+          [
+            [
+              'primary',
+              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
+            ],
+            [
+              'secondary',
+              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
+            ]
+          ],
+          child
+        );
+      }
     });
-    texture.minFilter = NearestFilter;
-    texture.magFilter = NearestFilter;
-    texture.generateMipmaps = false;
 
-    const height = 0.025;
-    const boxMesh = new Mesh(
-      new BoxGeometry(1, height, 1),
-      new MeshLambertMaterial({
-        color: getColor(0xd9d9d9),
-        flatShading: true
-      })
-    );
-    boxMesh.receiveShadow = true;
-    boxMesh.position.set(0, height / 2, 0);
-
-    const planeMesh = new Mesh(
-      new PlaneGeometry(1, 1),
-      new MeshLambertMaterial({
-        map: texture,
-        transparent: true
-      })
-    );
-    planeMesh.renderOrder = 100;
-    planeMesh.rotateX(-Math.PI / 2);
-    planeMesh.position.set(0, height + 0.001, 0);
-
-    const obj = new Object3D();
-
-    obj.add(boxMesh);
-    obj.add(planeMesh);
-
-    return obj;
+    return object;
   }
 }

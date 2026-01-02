@@ -1,5 +1,4 @@
-import type { MeshStandardMaterial } from 'three';
-import { LinearSRGBColorSpace, Mesh, NearestFilter, SkinnedMesh } from 'three';
+import { Mesh, SkinnedMesh } from 'three';
 import type {
   SetupContext,
   UnitConstructorOptions
@@ -67,16 +66,7 @@ export default class SupplyStation extends BuildingUnit {
 
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
-        // child.castShadow = child.name !== 'marker';
-        // child.receiveShadow = true;
-        console.log((child.material as MeshStandardMaterial).map);
-        const text = (child.material as MeshStandardMaterial).map;
-        if (text) {
-          text.minFilter = NearestFilter;
-          text.magFilter = NearestFilter;
-          text.generateMipmaps = false;
-          text.colorSpace = LinearSRGBColorSpace;
-        }
+        child.receiveShadow = true;
         replaceColors(
           [
             [

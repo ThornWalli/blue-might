@@ -13,6 +13,7 @@ import Turret_1 from './turret/turret_1/Turret_1';
 import StationaryGun_2 from './turret/stationary_gun_2/StationaryGun_2';
 import House_1 from './building/house_1/House_1';
 import Tower_1 from './building/tower_1/Tower_1';
+import FactoryChimney_1 from './building/factory_chimney_1/FactoryChimney_1';
 
 export { default as ControlTower_1 } from './building/control_tower_1/ControlTower_1';
 export { default as Tank_1 } from './vehicle/tank_1/Tank_1';
@@ -28,6 +29,7 @@ export { default as StationaryGun_2 } from './turret/stationary_gun_2/Stationary
 export { default as Soldat_1 } from './vehicle/soldat_1/Soldat_1';
 export { default as House_1 } from './building/house_1/House_1';
 export { default as Tower_1 } from './building/tower_1/Tower_1';
+export { default as FactoryChimney_1 } from './building/factory_chimney_1/FactoryChimney_1';
 
 const units = {
   [ControlTower_1.KEY]: ControlTower_1,
@@ -44,7 +46,8 @@ const units = {
   [StationaryGun_2.KEY]: StationaryGun_2,
   [Soldat_1.KEY]: Soldat_1,
   [House_1.KEY]: House_1,
-  [Tower_1.KEY]: Tower_1
+  [Tower_1.KEY]: Tower_1,
+  [FactoryChimney_1.KEY]: FactoryChimney_1
 };
 
 export { units };

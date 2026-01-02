@@ -3,8 +3,7 @@ import type {
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import type { MeshStandardMaterial } from 'three';
-import { DoubleSide, Mesh, SkinnedMesh } from 'three';
+import { Mesh, SkinnedMesh } from 'three';
 import BuildingUnit, {
   type BuildingUnitModuleList,
   type BuildingUnitModules,
@@ -12,15 +11,15 @@ import BuildingUnit, {
 } from '@blue-might/app/lib/classes/unit/Building';
 // import { replaceColors } from '@blue-might/app/lib/utils/object';
 
-import baseGlb from './assets/tower_1.glb?url';
+import baseGlb from './assets/factory_chimney_1.glb?url';
 
 export type Options = BuildingUnitOptions;
 
-export default class Tower_1<
+export default class FactoryChimney_1<
   Modules extends BuildingUnitModules = BuildingUnitModules,
   ModuleList extends BuildingUnitModuleList = BuildingUnitModuleList
 > extends BuildingUnit<BuildingUnitOptions, Modules, ModuleList> {
-  static override KEY = 'tower_1';
+  static override KEY = 'factory_chimney_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []
@@ -28,7 +27,7 @@ export default class Tower_1<
     super(
       {
         ...options,
-        name: 'Tower 1'
+        name: 'Factory Chimney 1'
       },
       moduleList as ModuleList
     );
@@ -47,8 +46,7 @@ export default class Tower_1<
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
-        child.receiveShadow = false;
-        (child.material as MeshStandardMaterial).side = DoubleSide;
+
         // replaceColors(
         //   [
         //     [

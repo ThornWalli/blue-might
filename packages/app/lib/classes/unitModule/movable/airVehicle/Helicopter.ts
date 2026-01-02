@@ -479,7 +479,6 @@ export default class HelicopterUnitModule<
         velocity.set(0, 0, 0);
         position.setY(minY);
         unit.setPosition(position);
-        console.log('updateGroundAlignment', this.getLastFlightStatus());
 
         if (this.getLastFlightStatus() !== FLIGHT_STATUS.LANDED) {
           const { unit: targetUnit } = unit.updateGroundAlignment();

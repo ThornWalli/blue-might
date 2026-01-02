@@ -13,7 +13,6 @@ import { replaceColors } from '@blue-might/app/lib/utils/object';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 
 import baseGlb from './assets/landing_port_supply_station.glb?url';
-// import baseTexture from './texture.png?url';
 
 export type Options = LandingPortUnitOptions;
 export interface Modules extends LandingPortUnitModules {
@@ -38,9 +37,6 @@ export default class LandingPortSupplyStation extends LandingPortUnit<
         name: 'Landing Port Supply Station',
         moduleOptions: {
           ...options.moduleOptions,
-          landingPort: {
-            ...options.moduleOptions?.landingPort
-          },
           collision: {
             ...options.moduleOptions?.collision,
             targetName: 'base',
@@ -71,7 +67,6 @@ export default class LandingPortSupplyStation extends LandingPortUnit<
 
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
-        child.castShadow = child.name !== 'marker';
         child.receiveShadow = true;
         replaceColors(
           [
