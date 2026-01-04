@@ -2,8 +2,8 @@ packages:
   - packages/**
 
 catalog:
-  '@commitlint/cli': 20.2.0
-  '@commitlint/config-conventional': 20.2.0
+  '@commitlint/cli': 20.3.0
+  '@commitlint/config-conventional': 20.3.0
   '@fullhuman/postcss-purgecss': 7.0.2
   '@nuxt/eslint': 1.12.1
   '@nuxtjs/critters': 0.9.0
@@ -12,8 +12,8 @@ catalog:
   '@types/node': 25.0.3
   '@types/pathfinding': 0.1.0
   '@types/three': 0.182.0
-  '@types/web': 0.0.309
-  '@typescript-eslint/eslint-plugin': 8.50.1
+  '@types/web': 0.0.312
+  '@typescript-eslint/eslint-plugin': 8.51.0
   change-case: 5.4.4
   consola: 3.4.2
   dotenv-mono: 1.5.1
@@ -44,7 +44,7 @@ catalog:
   three: 0.182.0
   tsx: 4.21.0
   typescript: 5.9.3
-  typescript-eslint: 8.50.1
+  typescript-eslint: 8.51.0
   ufo: 1.6.1
   vite: 7.3.0
   vite-plugin-checker: 0.12.0
