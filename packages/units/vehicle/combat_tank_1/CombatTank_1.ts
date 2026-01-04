@@ -117,7 +117,11 @@ export default class CombatTank_1<
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targetName: 'base'
+            targets: [
+              {
+                name: 'base'
+              }
+            ]
           }
         }
       },

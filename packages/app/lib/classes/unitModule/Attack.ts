@@ -17,9 +17,10 @@ import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D } from '../../utils/object';
 import { isUnitDestroyed } from '../../utils/unit';
+import type { UnitModules, UnitOptions } from '../Unit';
 
-import PatrolUnitModule from './Patrol';
-import WeaponUnitModule from './Weapon';
+import type PatrolUnitModule from './Patrol';
+import type WeaponUnitModule from './Weapon';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -124,11 +125,14 @@ export default class AttackUnitModule extends UnitModule<
 
   lastUpdateTime = 0;
   override update({ time }: AnimationLoopValue): void {
-    const unit = this.getUnit();
-    if (
-      isUnitDestroyed(unit) ||
-      !unit.getModuleByType(WeaponUnitModule).isAutoAimActive()
-    ) {
+    const unit = this.getUnit() as Unit<
+      UnitOptions,
+      UnitModules & {
+        weapon: WeaponUnitModule;
+        patrol: PatrolUnitModule;
+      }
+    >;
+    if (isUnitDestroyed(unit) || !unit.modules.weapon?.isAutoAimActive()) {
       return;
     }
     if ((time - this.lastUpdateTime) / 1000 < 2 / 3) {
@@ -174,7 +178,7 @@ export default class AttackUnitModule extends UnitModule<
       const pathfinding = unit.modules.pathfinding;
       const attackRadius = (this.options.radius * 3) / 4; // this.options.radius ?? 10; // Angriffsreichweite
 
-      const patrolModule = unit.getModuleByType(PatrolUnitModule);
+      const patrolModule = unit.modules.patrol;
       if (patrolModule) {
         patrolModule.pausePatrol();
         this.state.followStartPosition = null;
@@ -246,7 +250,12 @@ export default class AttackUnitModule extends UnitModule<
 
   private unitSubscription: Subscription | null = null;
   private setTarget(target?: Unit | null) {
-    const unit = this.getUnit();
+    const unit = this.getUnit() as Unit<
+      UnitOptions,
+      UnitModules & {
+        patrol: PatrolUnitModule;
+      }
+    >;
     this.state.target = target ?? null;
     if (target) {
       this.unitSubscription?.unsubscribe();
@@ -271,7 +280,7 @@ export default class AttackUnitModule extends UnitModule<
                   this.state.followStartPosition!
                 );
                 this.state.followStartPosition = null;
-                const patrolModule = unit.getModuleByType(PatrolUnitModule);
+                const patrolModule = unit.modules.patrol;
                 if (patrolModule) {
                   patrolModule.resumePatrol();
                 }
@@ -283,6 +292,7 @@ export default class AttackUnitModule extends UnitModule<
       this.unitSubscription.add(
         target.modules.damage.observables.destroyed$.subscribe(() => {
           this.setTarget(undefined);
+          this.state.followStartPosition = null;
           this.unitSubscription?.unsubscribe();
           this.subscription.remove(this.unitSubscription!);
         })

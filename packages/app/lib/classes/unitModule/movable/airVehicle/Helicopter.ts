@@ -134,14 +134,6 @@ export default class HelicopterUnitModule<
     if (unit.preview) return;
 
     this.subscription.add(
-      unit.modules.collision.observables.collision$.subscribe(({ type }) => {
-        if (type === COLLISION_TYPE.BLOCKED) {
-          // unit.modules.damage.takeMaxDamage();
-        }
-      })
-    );
-
-    this.subscription.add(
       unit.modules.player.observables.player$
         .pipe(
           switchMap(
@@ -167,6 +159,15 @@ export default class HelicopterUnitModule<
             this.setGearsOpened(e.direction < 0);
           }
         })
+    );
+
+    this.subscription.add(
+      unit.modules.collision.observables.collision$.subscribe(({ type }) => {
+        if (type === COLLISION_TYPE.BLOCKED) {
+          this.state.velocity.multiplyScalar(-0.5);
+          unit.modules.damage.takeMaxDamage(); // Aktiviere Schadensaufnahme
+        }
+      })
     );
   }
 
@@ -407,11 +408,11 @@ export default class HelicopterUnitModule<
         }
       }
     }
+    const unitPosition = unit.getPosition();
 
     // Approach target altitude
-    const pos = unit.getPosition();
     if (targetAltitude != null) {
-      const dy = targetAltitude - pos.y;
+      const dy = targetAltitude - unitPosition.y;
       const approach = Math.max(-liftPower, Math.min(liftPower, dy)) * 0.5;
       velocity.y += approach * delta;
       if (
@@ -448,7 +449,7 @@ export default class HelicopterUnitModule<
       targetAltitude != null &&
       !controls.ascend &&
       !controls.descend &&
-      Math.abs(targetAltitude - pos.y) < 0.5 &&
+      Math.abs(targetAltitude - unitPosition.y) < 0.5 &&
       Math.abs(velocity.y) < 0.25
     ) {
       status = FLIGHT_STATUS.LANDING;
@@ -456,19 +457,19 @@ export default class HelicopterUnitModule<
 
     // Clamp altitude
     const maxAlt = this.options.maxAltitude;
-    if (pos.y >= maxAlt && velocity.y > 0) velocity.y = 0;
-    // if (pos.y <= 0 && velocity.y < 0) {
-    //   velocity.y = 0;
-    //   pos.y = 0;
-    //   this.state.isAirborne = false;
-    // }
+    if (unitPosition.y >= maxAlt && velocity.y > 0) velocity.y = 0;
 
     // NEU: Sinken-Logik für zerstörte Helikopter auf Wasser
     const isDestroyed = isUnitDestroyed(unit);
     if (isDestroyed) {
-      const seaLevel = unit.getMap()?.modules.ground.getSeaLevel() ?? 0;
-      const position = unit.getPosition();
-      if (position.y <= seaLevel) {
+      const groundHeight =
+        unit
+          .getMap()
+          ?.modules.ground.getSurfaceHeightAt(unitPosition.x, unitPosition.z, [
+            unit
+          ]) ?? 0;
+
+      if (unitPosition.y <= groundHeight) {
         // Auf Wasser – sinken lassen
         const sinkSpeed = 1.0; // Anpassen: Sinkgeschwindigkeit (Einheiten pro Sekunde)
         velocity.y -= sinkSpeed * delta;
@@ -476,7 +477,7 @@ export default class HelicopterUnitModule<
         velocity.x = 0;
         velocity.z = 0;
         // Keine weitere Bewegung, wenn unter Wasser
-        if (position.y < seaLevel - 1.0) {
+        if (unitPosition.y <= groundHeight) {
           // Optional: Tiefer als 1 Einheit unter Wasser stoppen
           velocity.set(0, 0, 0);
         }
@@ -485,11 +486,12 @@ export default class HelicopterUnitModule<
 
     if (!active || !controls.ascend) {
       const isDestroyed = isUnitDestroyed(unit);
-      const position = unit.getPosition().clone();
 
       const groundModule = unit.getMap()!.modules.ground;
       let minY =
-        groundModule.getSurfaceHeightAt(position.x, position.z, [unit]) ?? 0;
+        groundModule.getSurfaceHeightAt(unitPosition.x, unitPosition.z, [
+          unit
+        ]) ?? 0;
 
       if (!isDestroyed && this.state.gearsOpened) {
         minY += this.options.gearsHeight;
@@ -497,8 +499,8 @@ export default class HelicopterUnitModule<
 
       if (
         (this.state.isAirborne &&
-          position.y <= Math.max(groundModule?.getSeaLevel(), minY)) ||
-        (status === FLIGHT_STATUS.LANDED && position.y < minY)
+          unitPosition.y <= Math.max(groundModule?.getSeaLevel(), minY)) ||
+        (status === FLIGHT_STATUS.LANDED && unitPosition.y < minY)
       ) {
         if (!isDestroyed) {
           const impactStrength = Math.abs(velocity.y);
@@ -507,15 +509,16 @@ export default class HelicopterUnitModule<
             unit.modules.damage.takeMaxDamage();
           }
         }
+        const position = unit.getPosition().clone();
 
         this.state.isAirborne = false;
         velocity.set(0, 0, 0);
         position.setY(minY);
 
-        // NEU: Bodenausrichtung vor dem Setzen der Position durchführen, um Positionsänderungen zu minimieren
+        // Bodenausrichtung vor dem Setzen der Position durchführen, um Positionsänderungen zu minimieren
         let targetUnit: Unit | undefined = undefined;
         if (this.getLastFlightStatus() !== FLIGHT_STATUS.LANDED) {
-          const alignmentResult = unit.updateGroundAlignment();
+          const alignmentResult = unit.updateGroundAlignment(undefined, [unit]);
           targetUnit = alignmentResult.unit;
           unit.calculateGroundNormal();
 
@@ -540,6 +543,7 @@ export default class HelicopterUnitModule<
           }
         }
         status = FLIGHT_STATUS.LANDED;
+        return;
       }
     }
 
@@ -563,10 +567,10 @@ export default class HelicopterUnitModule<
     const dy = velocity.y * delta;
     const dz = velocity.z * delta;
     if (Math.abs(dx) > eps || Math.abs(dy) > eps || Math.abs(dz) > eps) {
-      pos.x += dx;
-      pos.y += dy;
-      pos.z += dz;
-      unit.setPosition(pos);
+      unitPosition.x += dx;
+      unitPosition.y += dy;
+      unitPosition.z += dz;
+      unit.setPosition(unitPosition);
     }
 
     this.setFlightStatus(status);

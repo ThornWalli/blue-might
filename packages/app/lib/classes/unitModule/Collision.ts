@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 import type { Box3Helper, Object3D } from 'three';
 import {
   Box3,
@@ -54,18 +55,11 @@ export enum COLLISION_TYPE {
 export interface CollisionUnitModuleOptions extends UnitModuleOptions {
   disabled: boolean;
   type: COLLISION_TYPE;
-  targets?: Array<{
+  targets: {
     name: string;
     childIndex?: number;
     useChilds?: boolean; // Rekursiv Kinder einbeziehen
-  }>;
-
-  // @deprecated use targets
-  targetName: string;
-  // @deprecated use targets
-  targetChildIndex?: number;
-  // @deprecated use targets
-  targetChilds?: boolean;
+  }[];
 }
 
 export default class CollisionUnitModule<
@@ -84,7 +78,8 @@ export default class CollisionUnitModule<
       unit,
       {
         ...options,
-        type: options.type ?? COLLISION_TYPE.BLOCKED
+        type: options.type ?? COLLISION_TYPE.BLOCKED,
+        targets: options.targets ?? []
       },
       {
         ...state
@@ -115,10 +110,10 @@ export default class CollisionUnitModule<
     await super.afterSetup();
     this.setupLocalOBBs();
     this.refreshWorldOBBs();
-    this.refreshDebugHelpers();
 
     if (this.debug) {
       this.createDebugHelpers();
+      this.refreshDebugHelpers();
     }
   }
 
@@ -130,65 +125,43 @@ export default class CollisionUnitModule<
   }
 
   enableCollision() {
-    this.getCollisionObject().userData.ignorePathfinding = false;
+    this.getCollisionObjects().forEach(object => {
+      if ('_ignorePathfinding' in object.userData) {
+        object.userData.ignorePathfinding = object.userData._ignorePathfinding;
+        delete object.userData._ignorePathfinding;
+      } else {
+        object.userData.ignorePathfinding = false;
+      }
+    });
   }
 
   disableCollision() {
-    this.getCollisionObject().userData.ignorePathfinding = true;
-  }
-
-  getTarget() {
-    const { targetName, targetChildIndex } = this
-      .options as CollisionUnitModuleOptions;
-    const target = this.getUnit().root.getObjectByName(targetName);
-
-    if (targetChildIndex !== undefined) {
-      const children = target?.children[targetChildIndex] || null;
-      // if (!children) {
-      //   console.warn(
-      //     `CollisionUnitModule: Child index ${targetChildIndex} does not exist on target '${targetName}'.`
-      //   );
-      // }
-      return children;
-    }
-    return target || null;
+    this.getCollisionObjects().forEach(object => {
+      if (!('_ignorePathfinding' in object.userData)) {
+        object.userData._ignorePathfinding = object.userData.ignorePathfinding;
+      }
+      object.userData.ignorePathfinding = true;
+    });
   }
 
   getTargets(): Object3D[] {
-    const { targets } = this.options as CollisionUnitModuleOptions;
-
-    // Neue Konfiguration: Liste von Targets
-    if (targets && targets.length > 0) {
-      const result: Object3D[] = [];
-      targets.forEach(targetConfig => {
-        const obj = this.getUnit().root.getObjectByName(targetConfig.name);
-        if (obj) {
-          if (targetConfig.childIndex !== undefined) {
-            const child = obj.children[targetConfig.childIndex];
-            if (child) result.push(child);
-          } else if (targetConfig.useChilds) {
-            // Rekursiv alle Kinder sammeln (flach oder tief, je nach Bedarf)
-            obj.traverse(child => result.push(child));
-            result.splice(result.indexOf(obj), 1);
-          } else {
-            result.push(obj);
-          }
+    const result: Object3D[] = [];
+    this.options.targets.forEach(targetConfig => {
+      const obj = this.getUnit().root.getObjectByName(targetConfig.name);
+      if (obj) {
+        if (targetConfig.childIndex !== undefined) {
+          const child = obj.children[targetConfig.childIndex];
+          if (child) result.push(child);
+        } else if (targetConfig.useChilds) {
+          // Rekursiv alle Kinder sammeln (flach oder tief, je nach Bedarf)
+          obj.traverse(child => result.push(child));
+          result.splice(result.indexOf(obj), 1);
+        } else {
+          result.push(obj);
         }
-      });
-      return result;
-    }
-
-    // Legacy: Einzelnes Target
-    const legacyTarget = this.getTarget();
-    return legacyTarget ? [legacyTarget] : [this.getUnit().root];
-  }
-
-  getCollisionObjects(): Object3D[] {
-    const objs = this.getTargets();
-    objs.forEach(obj => {
-      obj.userData[OBJECT_USER_DATA.COLLISION_TYPE] = this.options.type;
+      }
     });
-    return objs;
+    return result;
   }
 
   setupLocalOBBs() {
@@ -243,6 +216,8 @@ export default class CollisionUnitModule<
     });
   }
 
+  lastCollision: { type: COLLISION_TYPE; target: Unit } | null = null;
+
   checkCollision() {
     const unit = this.getUnit();
     const cm1 = unit.modules.collision;
@@ -268,7 +243,13 @@ export default class CollisionUnitModule<
         for (const obb2 of cm2.worldOBBs) {
           if (obb1.intersectsOBB(obb2)) {
             const type = cm2.getCollisionType();
-            this.observables.collision$.next({ type, target });
+            if (
+              this.lastCollision?.target !== target &&
+              this.lastCollision?.type !== type
+            ) {
+              this.observables.collision$.next({ type, target });
+            }
+            this.lastCollision = { type, target };
             return type;
           }
         }
@@ -315,9 +296,15 @@ export default class CollisionUnitModule<
   getWorldOBB() {
     return this.worldOBBs[0] || new OBB();
   }
-  getCollisionObject() {
-    const obj = this.getTarget() || this.getUnit().root;
-    obj.userData[OBJECT_USER_DATA.COLLISION_TYPE] = this.options.type;
-    return obj;
+
+  getCollisionObjects(): Object3D[] {
+    const objs = this.getTargets();
+    if (!objs.length) {
+      objs.push(this.getUnit().root);
+    }
+    objs.forEach(obj => {
+      obj.userData[OBJECT_USER_DATA.COLLISION_TYPE] = this.options.type;
+    });
+    return objs;
   }
 }

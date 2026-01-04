@@ -49,6 +49,7 @@ export default class GroundVehicleUnitModule<
     GroundVehicleUnitModuleObservables,
   U extends MovableUnit = MovableUnit
 > extends MovableUnitModule<Options, State, Obervables, U> {
+  static override TYPE = 'groundVehicle';
   private _rotDir = new Vector3();
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {

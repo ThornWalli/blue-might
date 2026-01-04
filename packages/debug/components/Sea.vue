@@ -1,7 +1,6 @@
 <template>
   <div>
     <debug-app-component
-      :on-setup="onSetup"
       map-type="sea"
       :player-unit="playerUnitId"
       :map="map" />
@@ -9,15 +8,14 @@
 </template>
 
 <script setup lang="ts">
-import type App from '@blue-might/app/lib/classes/App';
-import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { neutralFaction } from '@blue-might/app/lib/classes/mapModule/Faction';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import {
   CombatHelicopter_1,
   CombatShip_1,
-  SeaLandingPortSupplyStation
+  SeaLandingPortSupplyStation,
+  Soldat_1
 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Vector3 } from 'three';
@@ -41,7 +39,6 @@ const map: Partial<MapDescription> = {
   units: [
     new CombatShip_1({
       debug: false,
-      id: playerUnitId,
       moduleDebug: {
         pathfinding: false,
         attack: false
@@ -121,6 +118,79 @@ const map: Partial<MapDescription> = {
         }
       }
     }),
+    new CombatShip_1({
+      debug: false,
+
+      moduleDebug: {
+        pathfinding: false,
+        attack: false,
+        patrol: false,
+        collision: false
+      },
+      position: new Vector3(13.67, 0, -2.9),
+      moduleOptions: {
+        attack: {
+          followTarget: true
+        },
+        patrol: {
+          path: [
+            [13.67, -2.9],
+            [3.88, -12.44]
+          ]
+        }
+      },
+      moduleStates: {
+        weapon: {
+          autoAimActive: true
+        },
+        movable: {
+          active: true
+        },
+        faction: {
+          faction: enemyFaction
+        },
+        patrol: {
+          active: true
+        }
+      }
+    }),
+    new CombatShip_1({
+      debug: false,
+
+      moduleDebug: {
+        pathfinding: false,
+        attack: false,
+        patrol: false,
+        collision: false
+      },
+      position: new Vector3(13.2, 0, 12.43),
+      moduleOptions: {
+        attack: {
+          followTarget: true
+        },
+        patrol: {
+          path: [
+            [13.2, 12.43],
+            [-2.35, 13.66]
+          ]
+        }
+      },
+      moduleStates: {
+        weapon: {
+          autoAimActive: true
+        },
+        movable: {
+          active: true
+        },
+        faction: {
+          faction: enemyFaction
+        },
+        patrol: {
+          active: true
+        }
+      }
+    }),
+
     // new Tank_1({
     //   debug: true,
     //   id: 'tank-2',
@@ -137,7 +207,6 @@ const map: Partial<MapDescription> = {
 
     new SeaLandingPortSupplyStation({
       id: 'sea-landing-port-1',
-      // position: new Vector3(-9.5, 0, -10.5),
       position: new Vector3(0, 0, 0),
       moduleDebug: {
         collision: false,
@@ -167,11 +236,33 @@ const map: Partial<MapDescription> = {
           faction: blueFaction
         }
       }
+    }),
+    new Soldat_1({
+      position: new Vector3(0.5, 0, 0.5),
+      moduleDebug: {
+        pathfinding: false,
+        attack: false,
+        patrol: false
+      },
+      moduleOptions: {
+        patrol: {
+          path: [
+            [0.5, 0.5],
+            [-0.5, 0.5],
+            [-0.5, -0.5],
+            [0.5, -0.5]
+          ]
+        }
+      },
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        },
+        patrol: {
+          active: true
+        }
+      }
     })
   ]
 };
-
-async function onSetup({ app, map }: { app: App; map: Map }) {
-  console.log(app, map);
-}
 </script>

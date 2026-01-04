@@ -21,7 +21,8 @@ const links = ref([
   { title: 'Helicopter', href: '/debug/helicopter' },
   { title: 'Tank', href: '/debug/tank' },
   { title: 'Pathfinding', href: '/debug/pathfinding' },
-  { title: 'Building', href: '/debug/building' }
+  { title: 'Building', href: '/debug/building' },
+  { title: 'Sea', href: '/debug/sea' }
 ]);
 </script>
 

@@ -37,7 +37,7 @@ export default abstract class BaseNavigator {
     { x: number; z: number }[]
   >();
   protected useSphere: boolean;
-  protected sphere = new Sphere(undefined, 1 / 2);
+  protected sphere = new Sphere(undefined, 1);
   protected box = new Box3();
   private tileCostsType: TileCostsType = 'ground';
   constructor(
@@ -99,9 +99,9 @@ export default abstract class BaseNavigator {
     return this.gridSize;
   }
 
-  addCollider(collider: Object3D) {
-    this.colliders.push(collider);
-    this.updateWalkabilityAroundObject(collider);
+  addColliders(collider: Object3D[]) {
+    this.colliders.push(...collider);
+    collider.forEach(obj => this.updateWalkabilityAroundObject(obj));
   }
 
   getGrid() {
@@ -180,15 +180,22 @@ export default abstract class BaseNavigator {
 
   updateWalkabilityAroundObject(object: Object3D) {
     const previous = this.occupiedByObject.get(object) || [];
-
     const cells = this.getCellsAroundObject(object);
-    const nodes = this.getNodeFromCells(cells.concat(previous));
+    const previousNodes = this.getNodeFromCells(previous);
+    const newNodes = this.getNodeFromCells(cells);
 
-    this.grid.update(nodes);
+    if (previousNodes.length > 0) {
+      this.grid.update(previousNodes, [object]);
+    }
+
+    if (newNodes.length > 0) {
+      this.grid.update(newNodes);
+    }
 
     this.occupiedByObject.set(object, cells);
+
     if (this.debug) {
-      this.updateDebugGridObjects(nodes);
+      this.updateDebugGridObjects([...previousNodes, ...newNodes]);
     }
   }
 
@@ -204,6 +211,7 @@ export default abstract class BaseNavigator {
     const cells = this.worldToGridCellsInAABB(aabb);
     return Array.from(new Set([...cells]));
   }
+
   getNodeFromCells(cells: { x: number; z: number }[]) {
     return cells.map(cell => this.grid.getNode(cell.x, cell.z));
   }

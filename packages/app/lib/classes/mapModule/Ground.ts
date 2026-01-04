@@ -188,22 +188,22 @@ export default class GroundModule extends MapModule<State, Observables> {
     }, -Infinity);
   }
 
-  getMinHeightAt(
-    x: number,
-    z: number,
-    sampleDistance = 1,
-    func = this.map.modules.ground.getHeightAt.bind(this.map.modules.ground)
-  ): number {
-    const directions = [
-      [0, 0],
-      [0, sampleDistance],
-      [sampleDistance, sampleDistance],
-      [sampleDistance, 0]
-    ];
-    return directions.reduce((acc, [dx, dz]) => {
-      return Math.min(acc, func(Math.round(x + dx!), Math.round(z + dz!)));
-    }, Infinity);
-  }
+  // getMinHeightAt(
+  //   x: number,
+  //   z: number,
+  //   sampleDistance = 1,
+  //   func = this.map.modules.ground.getHeightAt.bind(this.map.modules.ground)
+  // ): number {
+  //   const directions = [
+  //     [0, 0],
+  //     [0, sampleDistance],
+  //     [sampleDistance, sampleDistance],
+  //     [sampleDistance, 0]
+  //   ];
+  //   return directions.reduce((acc, [dx, dz]) => {
+  //     return Math.min(acc, func(Math.round(x + dx!), Math.round(z + dz!)));
+  //   }, Infinity);
+  // }
 
   private getHeightFromRaycast(
     x: number,
@@ -427,7 +427,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     this.surfaceData.position.set(x, 50, z!);
 
     const raycaster = this.surfaceData.raycaster;
-    raycaster.far = maxDistance; // Maximale Distanz
+    raycaster.far = maxDistance;
     raycaster.set(this.surfaceData.position, this.surfaceData.direction);
 
     const allMeshes: Object3D[] = [];
@@ -437,20 +437,12 @@ export default class GroundModule extends MapModule<State, Observables> {
       }
     });
 
-    // this.root!.traverse(child => {
-    //   if (child instanceof Mesh) {
-    //     allMeshes.push(child);
-    //   }
-    // });
-
     const intersections = raycaster.intersectObjects(allMeshes, false);
     const height = this.getHeightAt(x, z);
 
     if (intersections.length > 0) {
-      let height_ = intersections[0]!.point.y;
-      if (intersections[0]!.point.y - height > 1) {
-        height_ = height;
-      }
+      const height_ = intersections[0]!.point.y;
+      // Optional: Zusätzliche Logik, wenn nötig (z. B. Flying-Check)
       return {
         unit: this.map.app
           .getScene()
@@ -464,6 +456,55 @@ export default class GroundModule extends MapModule<State, Observables> {
       position: new Vector3(x, height, z)
     };
   }
+
+  // getTerrainInfoAt(
+  //   x: number | Vector2,
+  //   z?: number,
+  //   ignoredUnits: Unit[] = [],
+  //   maxDistance = 100
+  // ): {
+  //   position: Vector3;
+  //   unit?: Unit;
+  // } {
+  //   if (x instanceof Vector2) {
+  //     z = x.y;
+  //     x = x.x;
+  //   }
+
+  //   this.surfaceData.position.set(x, 50, z!);
+
+  //   const raycaster = this.surfaceData.raycaster;
+  //   raycaster.far = maxDistance; // Maximale Distanz
+  //   raycaster.set(this.surfaceData.position, this.surfaceData.direction);
+
+  //   const allMeshes: Object3D[] = [];
+  //   this.map.modules.units.getUnits().forEach(unit => {
+  //     if (!ignoredUnits.includes(unit) && unit instanceof BuildingUnit) {
+  //       allMeshes.push(...getAllMeshes(unit.root));
+  //     }
+  //   });
+
+  //   const intersections = raycaster.intersectObjects(allMeshes, false);
+  //   const height = this.getSurfaceHeightAt(x, z, ignoredUnits);
+
+  //   if (intersections.length > 0) {
+  //     let height_ = intersections[0]!.point.y;
+  //     if (intersections[0]!.point.y - height > 1) {
+  //       height_ = height;
+  //     }
+  //     return {
+  //       unit: this.map.app
+  //         .getScene()
+  //         .getObjectById(
+  //           intersections[0]!.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
+  //         )?.userData.unit as Unit,
+  //       position: new Vector3(x, height_, z)
+  //     };
+  //   }
+  //   return {
+  //     position: new Vector3(x, height, z)
+  //   };
+  // }
 
   private createRaycaster() {
     const raycaster = new Raycaster();

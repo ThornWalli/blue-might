@@ -11,6 +11,7 @@ import BuildingUnit, {
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
+import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
 
 import baseGlb from './assets/supply_station.glb?url';
 // import baseTexture from './texture.png?url';
@@ -44,7 +45,7 @@ export default class SupplyStation extends BuildingUnit {
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targets: [{ name: 'additional_1', useChilds: false }]
+            targets: [{ name: 'additional_1' }]
           }
         }
       },
@@ -62,6 +63,8 @@ export default class SupplyStation extends BuildingUnit {
     const { object, animations } = await loadGltf(baseGlb);
 
     this.modules.animation.setAnimations(animations);
+
+    setIgnorePathfinding(object.getObjectByName('base')!, true);
 
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {

@@ -66,6 +66,10 @@ export default class Module<
     // This method can be overridden by subclasses to handle updates
   }
 
+  renderUpdate(_v: AnimationLoopValue) {
+    // This method can be overridden by subclasses to handle render updates
+  }
+
   getState() {
     return {
       ...this.state

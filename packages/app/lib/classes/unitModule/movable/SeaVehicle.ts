@@ -49,6 +49,7 @@ export default class SeaVehicleUnitModule<
     SeaVehicleUnitModuleObservables,
   U extends MovableUnit = MovableUnit
 > extends MovableUnitModule<Options, State, Obervables, U> {
+  static override TYPE = 'seaVehicle';
   private _rotDir = new Vector3();
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {
@@ -291,18 +292,15 @@ export default class SeaVehicleUnitModule<
     const pos = unit.getPosition().clone();
     const dx = velocity.x * delta;
     const dz = velocity.z * delta;
+    const map = unit.getMap()!;
     if (Math.abs(dx) > eps || Math.abs(dz) > eps) {
       const newPos = pos.clone().add(new Vector3(dx, 0, dz));
 
-      const seaLevel = unit.getMap()?.modules.ground.getSeaLevel() ?? 0;
+      const seaLevel = map.modules.ground.getSeaLevel() ?? 0;
 
-      const map = unit.getMap()!;
-      const test = map.modules.ground.getMaxHeightAt(
-        newPos.x,
-        newPos.z,
-        1,
-        (x, z) => map.modules.ground.getSurfaceHeightAt(x, z, [unit])
-      );
+      const test = map.modules.ground.getSurfaceHeightAt(newPos.x, newPos.z, [
+        unit
+      ]);
 
       const terrainHeight = Math.max(seaLevel, test ?? seaLevel);
       if (terrainHeight > newPos.y) {

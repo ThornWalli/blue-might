@@ -24,7 +24,7 @@ const $props = defineProps<{
   mapType?: 'ground' | 'sea';
   map?: Partial<MapDescription>;
   playerUnit?: UnitIdentifier;
-  onSetup: (context: { app: App; map: Map }) => void;
+  onSetup?: (context: { app: App; map: Map }) => void;
 }>();
 
 const appConfig = defu($props.config ?? {}, {
@@ -56,10 +56,13 @@ async function onSetupApp(app: App) {
         map.modules.faction.getFactionById('blue-faction')!
       );
       if (!map) return;
-      $props.onSetup({
-        app,
-        map
-      });
+
+      if ($props.onSetup) {
+        $props.onSetup({
+          app,
+          map
+        });
+      }
     })
   );
 }

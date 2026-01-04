@@ -1,9 +1,4 @@
-import {
-  AmbientLight,
-  DirectionalLight,
-  DirectionalLightHelper,
-  Vector3
-} from 'three';
+import { AmbientLight, DirectionalLight, DirectionalLightHelper } from 'three';
 
 import MapModule, {
   type MapModuleObservables,
@@ -71,17 +66,25 @@ export default class LightModule extends MapModule<State, Observables> {
     this.setupLights();
   }
 
+  private lightAngle: number = 45;
+  private lightDistance: number = 6;
+
   private updateLightPosition() {
     if (!this.map.app.renderer?.modules.controls?.controls) return;
     const controls = this.map.app.renderer?.modules.controls.controls;
-    const camera = controls.object; // Kamera von Controls
+    const camera = controls.object;
 
-    // Licht relativ zur Kamera positionieren (z.B. über und hinter der Kamera)
     const light = this.lights[0] as DirectionalLight;
-    // light.position.copy(camera.position).add(new Vector3(10, 20, 10)); // Offset zur Kamera
 
-    light.position.copy(camera.position).add(new Vector3(6, 12, 6));
-    // light.position.copy(camera.position).add(new Vector3(8, 10, 2));
+    const angleRad = (this.lightAngle * Math.PI) / 180;
+    const offsetX = this.lightDistance * Math.sin(angleRad);
+    const offsetZ = this.lightDistance * Math.cos(angleRad);
+
+    light.position.set(
+      camera.position.x + offsetX,
+      12,
+      camera.position.z + offsetZ
+    );
 
     const SHADOW_RANGE = 12;
 
@@ -94,8 +97,8 @@ export default class LightModule extends MapModule<State, Observables> {
     light.shadow.camera.far = 40;
     light.shadow.camera.updateProjectionMatrix();
 
-    // Target des Lichts auf das Controls-Target setzen
-    light.target.position.copy(controls.target);
+    // light.target.position.copy(controls.target);
+    light.target.position.set(camera.position.x, 0, camera.position.z);
     light.target.updateMatrixWorld();
   }
 }

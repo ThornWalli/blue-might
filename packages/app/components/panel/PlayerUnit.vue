@@ -164,7 +164,6 @@ import { Euler, MathUtils, Vector3 } from 'three';
 import { ICON } from '@blue-might/app/utils/icons';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
-import HelicopterUnit from '@blue-might/app/lib/classes/unit/vehicle/Helicopter';
 import type { PowerInfo } from '@blue-might/app/lib/classes/unitModule/Movable';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import HelicopterUnitModule from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
@@ -302,11 +301,7 @@ async function setup() {
   );
 
   const helicopterModule$ = vehicle$.pipe(
-    filter(vehicle => vehicle instanceof HelicopterUnit),
-    switchMap(
-      vehicle => of(vehicle?.getModuleByType(HelicopterUnitModule)) ?? EMPTY
-    ),
-    filter(Boolean)
+    map(vehicle => vehicle?.getModuleByType(HelicopterUnitModule))
   );
 
   //#region unit
@@ -438,15 +433,30 @@ async function setup() {
 
   subscription.add(
     helicopterModule$
-      .pipe(switchMap(({ observables }) => observables.flightStatus$ ?? EMPTY))
+      .pipe(
+        filter(Boolean),
+        switchMap(({ observables }) => observables.flightStatus$ ?? EMPTY)
+      )
       .subscribe(s => (status.value = s))
   );
   subscription.add(
     helicopterModule$
       .pipe(
-        switchMap(({ observables }) =>
-          combineLatest([observables.gearsActive$, observables.gearsOpened$])
-        )
+        switchMap(module => {
+          if (!module) {
+            debugger;
+            unitGears.value = {
+              has: false,
+              active: false,
+              opened: false
+            };
+            return EMPTY;
+          }
+          return combineLatest([
+            module.observables.gearsActive$,
+            module.observables.gearsOpened$
+          ]);
+        })
       )
       .subscribe(
         ([active, opened]) =>
@@ -461,6 +471,7 @@ async function setup() {
   subscription.add(
     helicopterModule$
       .pipe(
+        filter(Boolean),
         switchMap(helicopterModule =>
           timer(0, 100).pipe(map(() => helicopterModule))
         )

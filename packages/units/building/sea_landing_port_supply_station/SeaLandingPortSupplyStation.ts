@@ -11,6 +11,7 @@ import LandingPortUnit, {
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
+import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
 
 import baseGlb from './assets/sea_landing_port_supply_station.glb?url';
 
@@ -79,6 +80,10 @@ export default class SeaLandingPortSupplyStation extends LandingPortUnit<
     const { object, animations } = await loadGltf(baseGlb);
 
     this.modules.animation.setAnimations(animations);
+
+    setIgnorePathfinding(object.getObjectByName('base')!, true);
+    setIgnorePathfinding(object.getObjectByName('plattform')!, true);
+
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.receiveShadow = true;

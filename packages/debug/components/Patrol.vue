@@ -36,7 +36,7 @@ const playerUnitId = 'tank-1';
 
 const config: Partial<AppConfig> = {
   debug: {
-    map: { pathfinding: false }
+    map: { pathfinding: true }
   }
 };
 
@@ -186,7 +186,7 @@ const map: Partial<MapDescription> = {
       .fill(null)
       .map((_, i) => {
         return new Soldat_1({
-          id: `soldat-${i + 1}`,
+          id: `soldat-1-${i + 1}`,
           position: new Vector3(1 + i * 0.2, 0, 1),
           rotation: new Euler(0, 0, 0),
 
@@ -217,7 +217,7 @@ const map: Partial<MapDescription> = {
       .fill(null)
       .map((_, i) => {
         return new Soldat_1({
-          id: `soldat-${i + 1}`,
+          id: `soldat-2-${i + 1}`,
           position: new Vector3(-1 + i * -0.2, 0, 1),
           rotation: new Euler(0, 0, 0),
 

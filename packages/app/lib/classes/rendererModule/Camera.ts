@@ -141,18 +141,17 @@ export default class CameraRendererModule extends RendererModule<
     const { controls } = this.renderer.modules.controls;
     if (!controls) return;
     if (value) {
-      controls.enableRotate = false; // Kein Drehen
-      controls.enablePan = true; // Nur bewegen
-      controls.enableZoom = true; // Zoom mit Mausrad
+      controls.enableRotate = true;
+      controls.enablePan = true;
+      controls.enableZoom = true;
     } else {
-      controls.enableRotate = true; // Kein Drehen
-      controls.enablePan = true; // Nur bewegen
-      controls.enableZoom = true; // Zoom mit Mausrad
+      controls.enableRotate = false;
+      controls.enablePan = false;
+      controls.enableZoom = false;
     }
   }
 
   get cameraZoom() {
-    // return 1 * 48 * (512 / window.innerWidth);
     return 1;
   }
 

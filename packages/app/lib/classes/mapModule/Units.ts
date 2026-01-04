@@ -133,21 +133,12 @@ export default class UnitsModule extends MapModule<State, Observables> {
   //#region methods
 
   override update(v: AnimationLoopValue) {
-    // Sammle Units, die sichtbar sind oder animieren
-    const animatingUnits = this.getUnits().filter(
-      unit =>
-        unit.modules.animation?.isForceUpdate() ||
-        unit.modules.pathfinding?.isForceUpdate()
-    );
-    const unitsToUpdate = new Set([
-      ...this.state.visibleUnits,
-      ...animatingUnits
-    ]);
-
-    // Update nur relevante Units
-    unitsToUpdate.forEach(unit => unit.update(v));
-
-    // this.state.visibleUnits.forEach(unit => unit.update(v));
+    this.getUnits().forEach(unit => {
+      if (this.state.visibleUnits.includes(unit)) {
+        unit.renderUpdate(v);
+      }
+      unit.update(v);
+    });
   }
 
   getUnits() {

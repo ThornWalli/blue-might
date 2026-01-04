@@ -121,7 +121,7 @@ export default class DebugAppModule extends AppModule<State, Observables> {
 
     const y = Math.max(
       map.modules.ground.getSeaLevel(),
-      map.modules.ground.getAvgHeightAt(position.x, position.y)
+      map.modules.ground.getSurfaceHeightAt(position.x, position.y)
     );
     helper.position.set(position.x, y, position.y);
   }
@@ -224,80 +224,6 @@ export default class DebugAppModule extends AppModule<State, Observables> {
         })
     );
 
-    // this.subscription.add(
-    //   app.modules.debug.observables.endMove$.subscribe(position => {
-    //     startMove.value = false;
-    //     const y = app.modules.map
-    //       .getMap()!
-    //       .modules.ground.getHeightAt(currentPosition.value);
-    //     unit.value?.modules.pathfinding.move(
-    //       new Vector3(position.x, y, position.y)
-    //     );
-    //   })
-    // );
-    // if (this.positionHelper) {
-    //   app.renderer.scene.remove(this.positionHelper);
-    //   this.positionHelper.remove();
-    // }
-
-    // this.positionHelper = this.createPositionMarker();
-    // app.renderer.scene.add(this.positionHelper);
-
-    // this.subscription.add(
-    //   map$
-    //     .pipe(
-    //       switchMap(
-    //         map =>
-    //           map?.modules.ground.observables.hover$.pipe(
-    //             rxjsMap(position => {
-    //               return {
-    //                 position,
-    //                 map
-    //               };
-    //             })
-    //           ) || EMPTY
-    //       ),
-    //       rxjsMap(({ position }) => {
-    //         // position an pathfinding grid anpassen
-    //         return position.clone().floor();
-    //       })
-    //     )
-    //     .subscribe(position => {
-    //       console.log('hover position', position);
-    //     })
-    // );
-
-    // this.subscription.add(
-    //   map$
-    //     .pipe(
-    //       switchMap(
-    //         map =>
-    //           map?.modules.ground.observables.select$.pipe(
-    //             rxjsMap(position => {
-    //               return {
-    //                 position,
-    //                 map
-    //               };
-    //             })
-    //           ) || EMPTY
-    //       )
-    //     )
-    //     .subscribe(({ position }) => {
-    //       if (this.state.selectMovePosition) {
-    //         this.state.selectMovePosition = false;
-    //         this.observables.endMove$.next(position);
-    //       } else if (this.state.selectMarkerPosition) {
-    //         this.state.selectMarkerPosition = false;
-    //         this.observables.endAddMarker$.next(position);
-    //         this.addMarker(position);
-    //       }
-    //     })
-    // );
-    // // // this.subscription.add(
-    // // //   this.app.modules.map.observables.map$
-    // // //     .pipe(switchMap(map => map ?? EMPTY))
-    // // //     .subscribe()
-    // // // );
     this.subscription.add(
       map$
         .pipe(
@@ -394,7 +320,7 @@ export default class DebugAppModule extends AppModule<State, Observables> {
       });
       const y = Math.max(
         map.modules.ground.getSeaLevel(),
-        map.modules.ground.getHeightAt(position.x, position.y)
+        map.modules.ground.getSurfaceHeightAt(position.x, position.y)
       );
       marker.position.set(position.x, y, position.y);
       this.app.getScene().add(marker);

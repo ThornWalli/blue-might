@@ -1,4 +1,5 @@
 /* eslint-disable complexity */
+import type { Object3D } from 'three';
 import { BufferGeometry, Line, LineBasicMaterial, Vector3 } from 'three';
 import { Subject } from 'rxjs';
 
@@ -11,6 +12,7 @@ import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import type MovableUnit from '../unit/Movable';
+import type { NAVIGATOR_TYPE } from '../mapModule/Pathfinding';
 
 import FigureUnitModule from './movable/Figure';
 import HelicopterUnitModule from './movable/airVehicle/Helicopter';
@@ -37,12 +39,18 @@ declare module '../../utils/object' {
 
 OBJECT_USER_DATA.IGNORE_PATHFINDING = 'ignorePathfinding';
 
+export function setIgnorePathfinding(object: Object3D, ignore: boolean) {
+  object.userData[OBJECT_USER_DATA.IGNORE_PATHFINDING] = ignore;
+}
+
 interface Observables extends UnitModuleObservables {
   moveStart$: Subject<void>;
   moveComplete$: Subject<void>;
 }
 
-export type PathfindingUnitModuleOptions = UnitModuleOptions;
+export interface PathfindingUnitModuleOptions extends UnitModuleOptions {
+  navigatorType: NAVIGATOR_TYPE;
+}
 export interface PathfindingUnitModuleState extends UnitModuleState {
   complete: boolean;
   currentPath: Vector3[] | null;
@@ -88,6 +96,10 @@ export default class PathfindingUnitModule extends UnitModule<
         this.abortMovement();
       })
     );
+  }
+
+  getNavigatorType() {
+    return this.options.navigatorType;
   }
 
   async move(targetPosition: Vector3) {
@@ -313,7 +325,6 @@ export default class PathfindingUnitModule extends UnitModule<
         }
       }
 
-      // NEU: Wie Helicopter – Schub reduzieren beim Lenken
       if (isTurning && goForward > 0) {
         const turnPenalty = 1.0 - Math.min(turnFactor, 1.0) * 0.5; // Weniger Strafe als Helicopter
         goForward *= turnPenalty;
@@ -332,7 +343,6 @@ export default class PathfindingUnitModule extends UnitModule<
         movableModule.getVelocity().addScaledVector(forward, 0.01);
       }
 
-      // NEU: Dynamische shiftThreshold wie beim Helicopter
       shiftThreshold = currentPath.length === 1 ? 0.2 : 0.8;
     } else {
       const step = 4 * delta;
@@ -423,9 +433,11 @@ export default class PathfindingUnitModule extends UnitModule<
 
     this.state.complete = false;
 
-    const path = await groundNavigator.findPath(unit.getPosition(), target, [
-      unit.modules.collision.getCollisionObject()
-    ]);
+    const path = await groundNavigator.findPath(
+      unit.getPosition(),
+      target,
+      unit.modules.collision.getCollisionObjects()
+    );
 
     if (!path) return false;
 
@@ -467,9 +479,11 @@ export default class PathfindingUnitModule extends UnitModule<
 
     this.state.complete = false;
 
-    const path = await airNavigator.findPath(unit.getPosition(), target, [
-      unit.modules.collision.getCollisionObject()
-    ]);
+    const path = await airNavigator.findPath(
+      unit.getPosition(),
+      target,
+      unit.modules.collision.getCollisionObjects()
+    );
 
     if (!path || path.length <= 1) return;
 
@@ -513,14 +527,11 @@ export default class PathfindingUnitModule extends UnitModule<
 
     this.state.complete = false;
 
-    // console.log('xxx', unit.getPosition(), target.clone().setY(1));
-    let path = await seaNavigator.findPath(
+    const path = await seaNavigator.findPath(
       unit.getPosition().setY(0),
       target.clone().setY(0),
-      [unit.modules.collision.getCollisionObject()]
+      unit.modules.collision.getCollisionObjects()
     );
-
-    path = path.slice(2, path.length);
 
     if (!path?.length) return false;
 

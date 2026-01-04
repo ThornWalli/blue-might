@@ -1,4 +1,8 @@
-import type { UnitConstructorOptions, UnitOptions } from '../Unit';
+import {
+  GROUND_ADJUSTMENT_MODE,
+  type UnitConstructorOptions,
+  type UnitOptions
+} from '../Unit';
 import FigureUnitModule from '../unitModule/movable/Figure';
 import PatrolUnitModule from '../unitModule/Patrol';
 import { COLLISION_TYPE } from '../unitModule/Collision';
@@ -52,5 +56,6 @@ export default class FigureUnit<
       },
       moduleList
     );
+    this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.GROUND);
   }
 }

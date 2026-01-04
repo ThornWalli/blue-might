@@ -34,7 +34,11 @@ export default class Tank_1<
           ...options.moduleOptions,
           collision: {
             ...options.moduleOptions?.collision,
-            targetName: 'base'
+            targets: [
+              {
+                name: 'base'
+              }
+            ]
           }
         }
       },

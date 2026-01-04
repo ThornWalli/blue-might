@@ -49,10 +49,9 @@ export default class AirVehicleUnitModule<
     AirVehicleUnitModuleObservables,
   U extends AirVehicleUnit = AirVehicleUnit
 > extends MovableUnitModule<Options, State, Observable, U> {
-  getLandingPort() {
-    return this.state.landingPort;
-  }
   static override TYPE = 'airVehicle';
+
+  private lastFlightStatus: FLIGHT_STATUS = FLIGHT_STATUS.LANDED;
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {
     super(
@@ -108,7 +107,6 @@ export default class AirVehicleUnitModule<
     return this.state.flightStatus;
   }
 
-  private lastFlightStatus: FLIGHT_STATUS = FLIGHT_STATUS.LANDED;
   setFlightStatus(flightStatus: FLIGHT_STATUS) {
     if (this.state.flightStatus === flightStatus) return;
     this.lastFlightStatus = flightStatus;
@@ -120,8 +118,8 @@ export default class AirVehicleUnitModule<
     return this.lastFlightStatus;
   }
 
-  isLandingPort(unit: LandingPortUnit) {
-    return this.state.landingPort === unit;
+  getLandingPort() {
+    return this.state.landingPort;
   }
 
   setLandingPort(landingPort: LandingPortUnit | null) {

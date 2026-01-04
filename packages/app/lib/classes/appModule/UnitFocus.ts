@@ -44,13 +44,18 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
             ).pipe(map(() => unit));
           })
         )
-        .subscribe(unit =>
+        .subscribe(unit => {
           this.app.renderer.modules.camera.updateCamera({
             position: unit.getPosition().clone(),
             quaternion: unit.root.quaternion.clone(),
             view: 'back'
-          })
-        )
+          });
+          // this.app.renderer.modules.camera.updateCamera({
+          //   position: unit.getPosition().clone(),
+          //   quaternion: unit.root.quaternion.clone(),
+          //   view: 'back'
+          // });
+        })
     );
   }
 
@@ -58,10 +63,11 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
     return this.state.followedUnit?.id === unit.id;
   }
 
-  followFocus(unit?: Unit | null) {
-    unit = unit ?? null;
+  followFocus(unit: Unit) {
     this.state.followedUnit = unit;
+    this.setCameraFocusClamp(true);
     this.observables.followedUnit$.next(unit);
+    this.focus(unit);
   }
 
   focus(unit: Unit) {
@@ -76,6 +82,23 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
 
   unfocus() {
     this.state.followedUnit = null;
+    this.setCameraFocusClamp(false);
     this.observables.followedUnit$.next(null);
+  }
+
+  setCameraFocusClamp(value: boolean) {
+    const { controls } = this.app.renderer.modules.controls;
+    if (!controls) return;
+
+    controls.enableRotate = true;
+    controls.enablePan = true;
+    controls.enableZoom = true;
+    if (value) {
+      controls.minPolarAngle = Math.PI / 3;
+      controls.maxPolarAngle = Math.PI / 3;
+    } else {
+      controls.minPolarAngle = 0;
+      controls.maxPolarAngle = Math.PI / 2;
+    }
   }
 }

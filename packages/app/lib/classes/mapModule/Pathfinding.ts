@@ -1,4 +1,4 @@
-import { Box3, Vector2, Vector3, type Object3D } from 'three';
+import { Vector2, type Object3D } from 'three';
 import type { Subscription } from 'rxjs';
 import { filter, throttleTime } from 'rxjs';
 
@@ -10,6 +10,7 @@ import GroundNavigator from '../pathfinding/GroundNavigator';
 import AirNavigator, { VehicleType } from '../pathfinding/AirNavigator';
 import type Unit from '../Unit';
 import SeaNavigator from '../pathfinding/SeaNavigator';
+import { isAirVehicle, isSeaVehicle, isUnitDestroyed } from '../../utils/unit';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -51,9 +52,9 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     this.subscription.add(
       this.map.modules.units.observables.addUnit$
         .pipe(
-          filter(unit => {
-            return !!unit.modules.collision.getCollisionObject();
-          })
+          filter(
+            unit => unit.modules.collision.getCollisionObjects().length > 0
+          )
         )
         .subscribe(unit => this.addUnit(unit))
     );
@@ -61,9 +62,9 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     this.subscription.add(
       this.map.modules.units.observables.removeUnit$
         .pipe(
-          filter(unit => {
-            return !!unit.modules.collision.getCollisionObject();
-          })
+          filter(
+            unit => unit.modules.collision.getCollisionObjects().length > 0
+          )
         )
         .subscribe(unit => this.removeUnit(unit))
     );
@@ -156,22 +157,20 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     ]);
 
     if (this.debug) {
-      this.seaNavigation.setupDebugGridObjects();
+      this.groundNavigationSmall.setupDebugGridObjects();
     }
 
-    this.groundNavigationSmall.getGrid().update();
-    this.groundNavigationLarge.getGrid().update();
-    this.airNavigation.getGrid().update();
+    // this.groundNavigationSmall.getGrid().update();
+    // this.groundNavigationLarge.getGrid().update();
+    // this.airNavigation.getGrid().update();
+    // this.seaNavigation.getGrid().update();
   }
 
   getGroundNavigatorForUnit(unit: Unit): GroundNavigator {
-    const collisionObject = unit.modules.collision.getCollisionObject();
-    const size = new Box3()
-      .setFromObject(collisionObject)
-      .getSize(new Vector3());
-    const isLarge = size.x > 1 / 2 || size.z > 1 / 2;
-
-    return isLarge ? this.groundNavigationLarge! : this.groundNavigationSmall!;
+    return unit.modules.pathfinding.getNavigatorType() ===
+      NAVIGATOR_TYPE.GROUND_LARGE
+      ? this.groundNavigationLarge!
+      : this.groundNavigationSmall!;
   }
 
   override destroy(): void {
@@ -189,25 +188,34 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     const collisionModule = unit.modules.collision;
     if (collisionModule?.options.disabled) return;
     this.units.push(unit);
-    this.airNavigation?.addCollider(
-      unit.modules.collision.getCollisionObject()
-    );
-    this.seaNavigation?.addCollider(
-      unit.modules.collision.getCollisionObject()
-    );
-    this.groundNavigationSmall?.addCollider(
-      unit.modules.collision.getCollisionObject()
-    );
-    this.groundNavigationLarge?.addCollider(
-      unit.modules.collision.getCollisionObject()
-    );
+
+    if (isSeaVehicle(unit)) {
+      this.seaNavigation?.addColliders(
+        unit.modules.collision.getCollisionObjects()
+      );
+    } else {
+      this.airNavigation?.addColliders(
+        unit.modules.collision.getCollisionObjects()
+      );
+      this.groundNavigationSmall?.addColliders(
+        unit.modules.collision.getCollisionObjects()
+      );
+      this.groundNavigationLarge?.addColliders(
+        unit.modules.collision.getCollisionObjects()
+      );
+    }
     this.unitSubscriptions.set(
       unit,
-      unit.observables.position$.pipe(throttleTime(250)).subscribe(() => {
-        this.airNavigation?.updateWalkabilityAroundObject(unit.root);
-        this.seaNavigation?.updateWalkabilityAroundObject(unit.root);
-        this.groundNavigationSmall?.updateWalkabilityAroundObject(unit.root);
-        this.groundNavigationLarge?.updateWalkabilityAroundObject(unit.root);
+      unit.observables.position$.pipe(throttleTime(1000 / 3)).subscribe(() => {
+        const isDestroyed = isUnitDestroyed(unit);
+        if (!isDestroyed && isSeaVehicle(unit)) {
+          this.seaNavigation?.updateWalkabilityAroundObject(unit.root);
+        } else if (!isDestroyed && isAirVehicle(unit)) {
+          this.airNavigation?.updateWalkabilityAroundObject(unit.root);
+        } else {
+          this.groundNavigationSmall?.updateWalkabilityAroundObject(unit.root);
+          this.groundNavigationLarge?.updateWalkabilityAroundObject(unit.root);
+        }
       })
     );
   }
@@ -218,7 +226,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     if (index !== -1) {
       this.units.splice(index, 1);
     }
-    this.removeFromColliders(unit.modules.collision.getCollisionObject());
+    this.removeFromColliders(unit.modules.collision.getCollisionObjects());
 
     const sub = this.unitSubscriptions.get(unit);
     if (sub) {
@@ -227,19 +235,21 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     }
   }
 
-  private addToColliders(object: Object3D) {
-    this.colliders.push(object);
-    this.airNavigation?.setColliders(this.colliders);
-    this.seaNavigation?.setColliders(this.colliders);
-    this.groundNavigationSmall?.setColliders(this.colliders);
-    this.groundNavigationLarge?.setColliders(this.colliders);
-  }
+  // private addToColliders(object: Object3D) {
+  //   this.colliders.push(object);
+  //   this.airNavigation?.setColliders(this.colliders);
+  //   this.seaNavigation?.setColliders(this.colliders);
+  //   this.groundNavigationSmall?.setColliders(this.colliders);
+  //   this.groundNavigationLarge?.setColliders(this.colliders);
+  // }
 
-  private removeFromColliders(object: Object3D) {
-    const index = this.colliders.indexOf(object);
-    if (index !== -1) {
-      this.colliders.splice(index, 1);
-    }
+  private removeFromColliders(objects: Object3D[]) {
+    objects.forEach(object => {
+      const index = this.colliders.indexOf(object);
+      if (index !== -1) {
+        this.colliders.splice(index, 1);
+      }
+    });
     this.airNavigation?.setColliders(this.colliders);
     this.seaNavigation?.setColliders(this.colliders);
     this.groundNavigationSmall?.setColliders(this.colliders);

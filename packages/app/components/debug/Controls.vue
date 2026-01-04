@@ -10,8 +10,11 @@
     <p>Tile Type: {{ tileType }}</p>
     <p>Surface Height: {{ surfaceHeight }}</p>
     <p>Terrain Height: {{ terrainHeight }}</p>
-    <base-form-field label="Navigator" label-top>
-      <bm-select v-model="currentNavigator" :options="navigatorOptions">
+    <base-form-field v-slot="{ id }" label="Navigator" label-top>
+      <bm-select
+        :id="id"
+        v-model="currentNavigator"
+        :options="navigatorOptions">
       </bm-select>
     </base-form-field>
     <bm-button @click="onClickLockGrid">

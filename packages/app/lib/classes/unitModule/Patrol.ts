@@ -160,7 +160,7 @@ export default class PatrolUnitModule extends UnitModule<
     return this.options.path.map(point => {
       const y = Math.max(
         map.modules.ground.getSeaLevel(),
-        map.modules.ground.getAvgHeightAt(point[0], point[1])
+        map.modules.ground.getTerrainHeightAt(point[0], point[1])
       );
       return new Vector3(point[0], y, point[1]);
     });
@@ -257,46 +257,6 @@ export default class PatrolUnitModule extends UnitModule<
       await this.patrolRecursive(worldPath, 0, pathfinding);
     }
   }
-
-  // private async patrolRecursive(
-  //   worldPath: Vector3[],
-  //   index: number,
-  //   pathfinding: PathfindingUnitModule
-  // ) {
-  //   this.currentIndex = index;
-
-  //   if (!this.state.active || index >= worldPath.length) {
-  //     return;
-  //   }
-
-  //   let nextIndex = index;
-  //   if (nextIndex >= worldPath.length) {
-  //     nextIndex = 0;
-  //     this.observables.loop$.next();
-  //   }
-
-  //   const point = worldPath[index]!;
-  //   debugger;
-  //   try {
-  //     if (!(await pathfinding.move(point))) {
-  //       this.stopPatrol();
-  //       return;
-  //     }
-  //   } catch (error) {
-  //     console.error('PatrolUnitModule: Move failed', error);
-  //     this.stopPatrol();
-  //     return;
-  //   }
-
-  //   // Rekursiver Aufruf für den nächsten Punkt
-  //   await this.patrolRecursive(worldPath, index + 1, pathfinding);
-
-  //   // Nach einem vollen Loop: Starte von vorne (für unendliche Patrol)
-  //   if (index === worldPath.length - 1) {
-  //     this.observables.loop$.next();
-  //     await this.patrolRecursive(worldPath, 0, pathfinding);
-  //   }
-  // }
 
   //#region debug
   private debugLine: Line | null = null;

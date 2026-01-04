@@ -89,7 +89,7 @@ export class AnimationUnitModule extends UnitModule<
     this.mixer?.stopAllAction();
   }
 
-  override update({ delta }: AnimationLoopValue) {
+  override renderUpdate({ delta }: AnimationLoopValue) {
     this.mixer?.update(delta);
   }
 

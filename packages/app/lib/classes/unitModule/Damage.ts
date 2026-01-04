@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import { ReplaySubject } from 'rxjs';
 import { Texture, NearestFilter, Vector3, Object3D } from 'three';
 import textureFire from '@blue-might/app/assets/fire/fire.png?url';
@@ -160,11 +159,16 @@ export default class DamageUnitModule extends UnitModule<
       }
     }
 
-    const particles = this.particles;
-
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i]!;
+    // Logik-Updates für Partikel (Bewegung und Lebenszeit)
+    this.particles.forEach(p => {
       p.update(dt);
+    });
+  }
+
+  override renderUpdate(_v: AnimationLoopValue): void {
+    // Rendering-Updates: Skalierung und Entfernung toter Partikel
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      const p = this.particles[i]!;
       // Feuer schmaler, Rauch größer
       if (p.sprite.material.map === this.textures?.fireTexture) {
         p.sprite.scale.multiplyScalar(0.97);
@@ -174,7 +178,7 @@ export default class DamageUnitModule extends UnitModule<
       if (p.life <= 0) {
         this.root?.remove(p.sprite);
         disposeObject3D(p.sprite);
-        particles.splice(i, 1);
+        this.particles.splice(i, 1);
       }
     }
   }

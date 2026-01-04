@@ -134,7 +134,7 @@ export class BaseApp<
           )
         )
         .subscribe(vehicle => {
-          this.modules.unitFocus.focus(vehicle);
+          this.modules.unitFocus.followFocus(vehicle);
         })
     );
 

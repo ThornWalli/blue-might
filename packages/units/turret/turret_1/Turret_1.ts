@@ -132,8 +132,12 @@ export default class Turret_1 extends BuildingUnit<
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targetName: 'head',
-            targetChildIndex: 1
+            targets: [
+              {
+                name: 'head',
+                childIndex: 1
+              }
+            ]
           }
         }
       },

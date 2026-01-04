@@ -286,7 +286,11 @@ export default class Renderer<
   }
 
   setPixelated(value: boolean) {
-    this.renderer?.setPixelRatio(value ? 640 / window.innerWidth : 1);
+    this.renderer?.setPixelRatio(
+      value
+        ? window.innerWidth / window.devicePixelRatio / window.innerWidth
+        : 1
+    );
     this.options.pixelated = value;
   }
 

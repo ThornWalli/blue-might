@@ -1,7 +1,7 @@
 <template>
   <div>
     <debug-app-component
-      :config="{ debug: { map: { pathfinding: false } } }"
+      :config="{ debug: { map: { pathfinding: true } } }"
       :on-setup="onSetup"
       :player-unit="playerUnitId"
       :map="map" />
@@ -49,8 +49,8 @@ const map: Partial<MapDescription> = {
       id: 'tank-1',
       position: new Vector3(0, 0, 0),
       moduleDebug: {
-        pathfinding: true,
-        patrol: true
+        pathfinding: false,
+        patrol: false
       },
       moduleOptions: {
         patrol: {
@@ -81,8 +81,8 @@ const map: Partial<MapDescription> = {
       position: new Vector3(2, 0, 2),
       rotation: new Euler(0, Math.PI, 0),
       moduleDebug: {
-        collision: true,
-        supply: true
+        collision: false,
+        supply: false
       },
       moduleStates: {
         faction: {
@@ -94,8 +94,8 @@ const map: Partial<MapDescription> = {
       position: new Vector3(-2, 0, 2),
       rotation: new Euler(0, Math.PI, 0),
       moduleDebug: {
-        collision: true,
-        supply: true
+        collision: false,
+        supply: false
       },
       moduleStates: {
         faction: {

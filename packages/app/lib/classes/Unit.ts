@@ -308,10 +308,19 @@ export default class Unit<
   }
 
   async afterSetup(_context: SetupContext) {
+    this.setPosition(
+      new Vector3(
+        this._position!.x,
+        this._map?.modules.ground.getSurfaceHeightAt(
+          this._position.x,
+          this._position.z
+        ),
+        this._position!.z
+      )
+    );
     for (const module of new Set(Object.values(this.modules))) {
       await module.afterSetup();
     }
-    this.setPosition(this._position!);
     // Override in subclasses
   }
 
@@ -341,6 +350,10 @@ export default class Unit<
 
   update(v: AnimationLoopValue) {
     this._updateModules.forEach(module => module.update(v));
+  }
+
+  renderUpdate(v: AnimationLoopValue) {
+    this._updateModules.forEach(module => module.renderUpdate(v));
   }
 
   equals(unit: Unit): boolean {
@@ -399,56 +412,6 @@ export default class Unit<
 
   lastPosition: Vector3 = new Vector3();
 
-  // setPosition(position: Vector3) {
-  //   let desired = position.clone();
-  //   const from = this.lastPosition.clone();
-
-  //   // Schritt 1: Führe Bodenausrichtung für die gewünschte Position durch (wenn nötig)
-  //   if (
-  //     this._map &&
-  //     this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.NONE &&
-  //     this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT
-  //   ) {
-  //     desired = this.updateGroundAlignment(desired, [this]).position ?? desired;
-  //   }
-
-  //   // Schritt 2: Prüfe, ob die neue Position eine Kollision verursacht
-  //   this._position.copy(desired);
-  //   const collisionType = this.modules.collision.checkCollision();
-
-  //   // Fall A: Keine blockierende Kollision
-  //   if (collisionType < COLLISION_TYPE.BLOCKED) {
-  //     this._position.copy(desired);
-  //     this.lastPosition.copy(desired);
-  //     this.observables.position$.next(desired);
-  //     this.updateMeshTransform();
-  //     return true;
-  //   }
-
-  //   // Fall B: Blockierende Kollision!
-  //   const delta = desired.clone().sub(from);
-  //   const isHorizontalMove = Math.abs(delta.x) + Math.abs(delta.z) > 0.01;
-
-  //   // Fall B.1: Es ist eine Landung/Platzierung. Kollision ist erwartet (z.B. auf Gebäude). Akzeptieren.
-  //   if (!isHorizontalMove) {
-  //     this._position.copy(desired);
-  //     this.lastPosition.copy(desired);
-  //     this.observables.position$.next(desired);
-  //     this.updateMeshTransform();
-  //     return true;
-  //   }
-
-  //   this._position.copy(this.lastPosition);
-  //   this.root.position.copy(this.lastPosition);
-  //   this.observables.position$.next(this.lastPosition.clone());
-  //   this.updateMeshTransform();
-  //   console.log('Position updated:', this.lastPosition);
-  //   return false;
-  //   // Optional: Hier könnte man die "Sweep & Slide"-Logik (Binärsuche etc.)
-  //   // einfügen, um das Fahrzeug an der Wand entlang gleiten zu lassen, anstatt es nur zu stoppen.
-  //   // Fürs Erste stellen wir aber das simple "Stoppen" wieder her.
-  // }
-
   setPosition(position: Vector3) {
     let desired = position.clone();
     const from = this.lastPosition.clone();
@@ -472,6 +435,7 @@ export default class Unit<
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       this.updateMeshTransform();
+      debugger;
       return true;
     }
 
@@ -481,11 +445,12 @@ export default class Unit<
 
     // Fall B.1: Es ist eine vertikale Landung/Platzierung (z.B. auf Gebäude). Kollision ist erwartet. Akzeptieren.
     // Nur akzeptieren, wenn es tatsächlich eine vertikale Bewegung gibt (delta.y != 0) und keine horizontale.
-    if (Math.abs(delta.y) > 0.01 && !isHorizontalMove) {
+    if (Math.abs(delta.y) >= 0.0 && !isHorizontalMove) {
       this._position.copy(desired);
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       this.updateMeshTransform();
+      debugger;
       return true;
     }
 

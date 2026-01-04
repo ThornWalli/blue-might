@@ -18,7 +18,7 @@ import {
   ControlTower_1,
   Factory_1,
   FactoryChimney_1,
-  LandingPort_1,
+  SeaLandingPortSupplyStation,
   Soldat_1,
   Tank_1,
   Tower_1
@@ -58,7 +58,7 @@ const map: Partial<MapDescription> = {
     new Tower_1({
       position: new Vector3(4.17, 0, 0.17)
     }),
-    new LandingPort_1({
+    new SeaLandingPortSupplyStation({
       position: new Vector3(2.83, 0, 2.17)
     }),
     new ControlTower_1({

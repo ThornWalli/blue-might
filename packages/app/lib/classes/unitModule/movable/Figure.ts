@@ -162,7 +162,7 @@ export default class FigureUnitModule extends MovableUnitModule<
       this.state.jumpCooldown -= delta;
     }
 
-    // 6. Gravitation
+    // // 6. Gravitation
     if (!this.state.isGrounded) {
       this.state.velocity.y -= gravity * delta;
     }
@@ -175,8 +175,9 @@ export default class FigureUnitModule extends MovableUnitModule<
 
     // 8. Bodenkontakt prüfen
     const groundHeight =
-      unit.getMap()?.modules.ground.getTerrainHeightAt(pos.x, pos.z, [unit]) ??
+      unit.getMap()?.modules.ground.getSurfaceHeightAt(pos.x, pos.z, [unit]) ??
       0;
+
     if (pos.y <= groundHeight) {
       pos.y = groundHeight;
       this.state.velocity.y = 0;
@@ -187,19 +188,6 @@ export default class FigureUnitModule extends MovableUnitModule<
 
     // Position setzen
     unit.setPosition(pos);
-    unit.updateGroundAlignment();
-
-    if (
-      controls[ControlAction.MOVE_LEFT] ||
-      controls[ControlAction.MOVE_RIGHT]
-    ) {
-      if (!this.moveState.rotating) {
-        this.observables.rotate$.next();
-        this.moveState.rotating = true;
-      }
-    } else {
-      this.moveState.rotating = false;
-    }
 
     if (
       controls[ControlAction.MOVE_FORWARD] ||

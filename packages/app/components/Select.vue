@@ -1,16 +1,19 @@
 <template>
   <div class="bm-select">
     <base-select
+      :id="id"
       :model-value="modelValue"
       :options="options"
       @update:model-value="$emit('update:modelValue', $event)" />
     <span class="indicator"> </span>
   </div>
 </template>
+
 <script lang="ts" setup generic="T">
 import BaseSelect from './base/Select.vue';
 
 defineProps<{
+  id?: string;
   modelValue: T;
   options: Array<{ label: string; value: T }>;
 }>();

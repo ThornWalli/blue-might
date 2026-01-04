@@ -32,28 +32,33 @@ export default function (): MapDescription {
       foregroundTexture
     },
 
-    debug: {
-      pathfinding: false
-    },
-
     factions: [blueFaction, enemyFaction],
 
     units: [
       new Tree_1({
-        position: new Vector3(37, 0, -23) // 3+34, 9-32
+        position: new Vector3(37, 0, -23)
       }),
       new Tree_1({
-        position: new Vector3(36.5, 0, -22) // 2.5+34, 10-32
+        position: new Vector3(36.5, 0, -22)
       }),
       new LandingPort_1({
-        position: new Vector3(43.5, 0, -26.5)
+        position: new Vector3(43.5, 0, -26.5),
+        moduleDebug: {
+          collision: false
+        }
       }),
       new LandingPort_1({
-        position: new Vector3(41.5, 0, -26.5)
+        position: new Vector3(41.5, 0, -26.5),
+        moduleDebug: {
+          collision: false
+        }
       }),
 
       new SupplyStation({
         position: new Vector3(41.5, 0, -30.17),
+        moduleDebug: {
+          collision: false
+        },
         moduleStates: {
           faction: {
             faction: blueFaction
@@ -64,7 +69,7 @@ export default function (): MapDescription {
       new LandingPortSupplyStation({
         position: new Vector3(39.5, 0, -26.5),
         moduleDebug: {
-          collision: true
+          collision: false
         },
         moduleStates: {
           faction: {
@@ -163,7 +168,7 @@ export default function (): MapDescription {
             faction: blueFaction
           },
           patrol: {
-            active: false
+            active: true
           }
         },
         moduleOptions: {
@@ -237,7 +242,6 @@ export default function (): MapDescription {
 
       new CombatShip_1({
         debug: false,
-        id: 'combat-ship-1',
         position: new Vector3(15.61, 0, -29.73),
         moduleOptions: {
           attack: {
@@ -277,7 +281,6 @@ export default function (): MapDescription {
       }),
       new CombatShip_1({
         debug: false,
-        id: 'combat-ship-1',
         position: new Vector3(30.33, 0, -51.45),
         moduleOptions: {
           attack: {
@@ -317,7 +320,6 @@ export default function (): MapDescription {
       }),
       new CombatShip_1({
         debug: false,
-        id: 'combat-ship-1',
         position: new Vector3(55.83, 0, -20.47),
         moduleOptions: {
           attack: {
