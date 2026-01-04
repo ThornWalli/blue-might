@@ -158,14 +158,14 @@ export default class DamageUnitModule extends UnitModule<
         this.spawnSmoke(SMOKE_TYPE.HEAVY);
       }
     }
+  }
 
+  override renderUpdate(_v: AnimationLoopValue): void {
+    const dt = 0.016;
     // Logik-Updates für Partikel (Bewegung und Lebenszeit)
     this.particles.forEach(p => {
       p.update(dt);
     });
-  }
-
-  override renderUpdate(_v: AnimationLoopValue): void {
     // Rendering-Updates: Skalierung und Entfernung toter Partikel
     for (let i = this.particles.length - 1; i >= 0; i--) {
       const p = this.particles[i]!;

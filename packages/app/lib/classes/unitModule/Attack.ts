@@ -244,7 +244,6 @@ export default class AttackUnitModule extends UnitModule<
     const distance = this.state.followStartPosition.distanceTo(
       this.state.target.getPosition()
     );
-    console.log(distance);
     return distance > 6;
   }
 
@@ -292,7 +291,6 @@ export default class AttackUnitModule extends UnitModule<
       this.unitSubscription.add(
         target.modules.damage.observables.destroyed$.subscribe(() => {
           this.setTarget(undefined);
-          this.state.followStartPosition = null;
           this.unitSubscription?.unsubscribe();
           this.subscription.remove(this.unitSubscription!);
         })

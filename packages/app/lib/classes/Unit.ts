@@ -435,7 +435,7 @@ export default class Unit<
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       this.updateMeshTransform();
-      debugger;
+
       return true;
     }
 
@@ -450,7 +450,7 @@ export default class Unit<
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       this.updateMeshTransform();
-      debugger;
+
       return true;
     }
 

@@ -229,6 +229,9 @@ const map: Partial<MapDescription> = {
       // position: new Vector3(-7.51, 0, 1.48),
       position: new Vector3(0, 0, 0),
       moduleStates: {
+        damage: {
+          maxDamage: Infinity
+        },
         movable: {
           active: true
         },
