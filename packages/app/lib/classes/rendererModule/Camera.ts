@@ -77,11 +77,18 @@ export default class CameraRendererModule extends RendererModule<
       const { position, quaternion } = options;
       let { lerpFactor } = options;
 
-      let cameraOffset = new Vector3(0, 5, -5);
-      let applyRotation = true; // Standard: Offset rotieren
-      if (options.view === 'side') {
-        cameraOffset = new Vector3(6, 1, 0);
-        applyRotation = false; // Für Side-Ansicht: Offset nicht rotieren, damit die Ansicht absolut (immer von rechts) ist
+      let cameraOffset;
+      let applyRotation;
+      switch (options.view) {
+        case 'side':
+          cameraOffset = new Vector3(6, 1, 0);
+          applyRotation = false; // Für Side-Ansicht: Offset nicht rotieren, damit die Ansicht absolut (immer von rechts) ist
+          break;
+        default:
+        case 'back':
+          cameraOffset = new Vector3(0, 5, -5);
+          applyRotation = true; // Standard: Offset rotieren
+          break;
       }
 
       lerpFactor = lerpFactor ?? 0.1;

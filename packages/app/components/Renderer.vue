@@ -52,6 +52,7 @@ const canvasEl = ref();
 const subscription = new Subscription();
 
 const defaultRendererOptions: RendererOptions = {
+  fog: true,
   pixelated: false,
   controls: true
 };

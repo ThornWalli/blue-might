@@ -48,7 +48,7 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
           this.app.renderer.modules.camera.updateCamera({
             position: unit.getPosition().clone(),
             quaternion: unit.root.quaternion.clone(),
-            view: 'side'
+            view: 'back'
           })
         )
     );
@@ -70,7 +70,7 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
       position: unit.getPosition().clone(),
       quaternion: unit.root.quaternion.clone(),
       lerpFactor: 1,
-      view: 'side'
+      view: 'back'
     });
   }
 

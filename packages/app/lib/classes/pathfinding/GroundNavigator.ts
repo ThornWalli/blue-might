@@ -87,7 +87,7 @@ export default class GroundNavigator extends BaseNavigator {
   }
 
   protected getTileTypeAtNode(node: GridNode): TILE_TYPE | undefined {
-    return this.map.modules.ground.pathfinderTileTypes[node.y]?.[node.x];
+    return this.map.modules.ground.getPathfinderTileTypes()[node.y]?.[node.x];
   }
 
   // private isCellOccupiedByOthers(x: number, z: number, self: Object3D) {

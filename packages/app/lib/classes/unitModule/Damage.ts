@@ -44,6 +44,7 @@ interface Observables extends UnitModuleObservables {
 }
 export interface DamageUnitModuleOptions extends UnitModuleOptions {
   burnTime: number;
+  enabled: boolean;
 }
 export interface DamageUnitModuleState extends UnitModuleState {
   /**
@@ -91,7 +92,8 @@ export default class DamageUnitModule extends UnitModule<
       unit,
       {
         ...options,
-        burnTime: options.burnTime ?? 5 // 60 Sekunden
+        burnTime: options.burnTime ?? 5, // 60 Sekunden
+        enabled: options.enabled ?? true // Standard: aktiviert
       },
       {
         ...state,
@@ -136,6 +138,8 @@ export default class DamageUnitModule extends UnitModule<
   override update(_v: AnimationLoopValue): void {
     const dt = 0.016;
 
+    if (!this.options.enabled) return; // Wenn deaktiviert, keine Updates
+
     if (this.state.burnTimeLeft > 0) {
       this.state.burnTimeLeft -= dt;
       if (
@@ -176,11 +180,20 @@ export default class DamageUnitModule extends UnitModule<
   }
 
   public hit(projectile: Projectile) {
-    if (this.isDestroyed()) {
+    if (!this.options.enabled || this.isDestroyed()) {
       return;
     }
-    this.setValue(this.state.damage + projectile.strength);
+    this.takeDamage(projectile.strength);
     this.spawnSmoke(SMOKE_TYPE.MEDIUM);
+  }
+
+  takeDamage(amount: number) {
+    if (!this.options.enabled) return;
+    this.setValue(this.state.damage + amount);
+  }
+
+  takeMaxDamage() {
+    this.setValue(this.state.maxDamage);
   }
 
   setValue(value: number) {
@@ -210,7 +223,7 @@ export default class DamageUnitModule extends UnitModule<
   }
 
   public canDamage() {
-    return this.state.damage < DAMAGE_LEVEL.DESTROYED;
+    return this.options.enabled && this.state.damage < DAMAGE_LEVEL.DESTROYED;
   }
 
   public isDestroyed() {

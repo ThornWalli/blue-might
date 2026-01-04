@@ -13,7 +13,12 @@ import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
-import { CombatTank_1, SupplyStation, Tank_1 } from '@blue-might/units';
+import {
+  CombatTank_1,
+  LandingPortSupplyStation,
+  SupplyStation,
+  Tank_1
+} from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Euler, Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
@@ -74,6 +79,20 @@ const map: Partial<MapDescription> = {
     }),
     new SupplyStation({
       position: new Vector3(2, 0, 2),
+      rotation: new Euler(0, Math.PI, 0),
+      moduleDebug: {
+        collision: true,
+        supply: true
+      },
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
+      }
+    }),
+    new LandingPortSupplyStation({
+      position: new Vector3(-2, 0, 2),
+      rotation: new Euler(0, Math.PI, 0),
       moduleDebug: {
         collision: true,
         supply: true

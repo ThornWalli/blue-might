@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ReplaySubject, Subscription } from 'rxjs';
 import type { Scene, Object3D } from 'three';
@@ -21,7 +22,8 @@ export enum GROUND_ADJUSTMENT_MODE {
   MIN_HEIGHT = 'min-height',
   GROUND = 'ground',
   FLIGHT = 'flight',
-  NONE = 'none'
+  NONE = 'none',
+  SEA = 'sea'
 }
 
 type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
@@ -568,6 +570,10 @@ export default class Unit<
     };
   }
 
+  resetGroundNormal() {
+    this._tilt.set(0, 0, 0);
+  }
+
   calculateGroundNormal() {
     const sampleDistance = 1;
     const rotation = this._rotation.y;
@@ -649,6 +655,18 @@ export default class Unit<
           Math.max(info.position.y, 0)
         );
         info.position.setY(this._position.y);
+        break;
+
+      case GROUND_ADJUSTMENT_MODE.SEA: // NEU: Für Boote
+        if (this.modules.damage.isDestroyed()) {
+          info = this.getMinGroundInfo();
+          this._position.y = Math.max(info.position.y, this._position.y);
+          info.position.setY(this._position.y);
+        } else {
+          const seaLevel = this._map?.modules.ground.getSeaLevel() ?? 0;
+          this._position.y = seaLevel; // Höhe auf Sea Level setzen
+          info.position.setY(seaLevel);
+        }
         break;
 
       case GROUND_ADJUSTMENT_MODE.NONE:

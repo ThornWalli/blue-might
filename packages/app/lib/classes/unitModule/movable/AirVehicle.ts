@@ -108,16 +108,16 @@ export default class AirVehicleUnitModule<
     return this.state.flightStatus;
   }
 
-  private lastStatus: FLIGHT_STATUS = FLIGHT_STATUS.NONE;
+  private lastFlightStatus: FLIGHT_STATUS = FLIGHT_STATUS.LANDED;
   setFlightStatus(flightStatus: FLIGHT_STATUS) {
     if (this.state.flightStatus === flightStatus) return;
-    this.lastStatus = flightStatus;
+    this.lastFlightStatus = flightStatus;
     this.state.flightStatus = flightStatus;
     this.observables.flightStatus$.next(flightStatus);
   }
 
   getLastFlightStatus() {
-    return this.lastStatus;
+    return this.lastFlightStatus;
   }
 
   isLandingPort(unit: LandingPortUnit) {

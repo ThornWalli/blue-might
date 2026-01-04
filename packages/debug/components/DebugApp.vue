@@ -12,7 +12,7 @@ import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 import type { UnitIdentifier } from '@blue-might/app/lib/types/unit';
-import { debugMap } from '@blue-might/maps';
+import { debugGroundMap, debugSeaMap } from '@blue-might/maps';
 import { filter, Subscription, map as rxjsMap } from 'rxjs';
 import { onUnmounted, defineAsyncComponent, markRaw } from 'vue';
 import { defu } from 'defu';
@@ -21,6 +21,7 @@ const subscription = new Subscription();
 
 const $props = defineProps<{
   config?: Partial<AppConfig>;
+  mapType?: 'ground' | 'sea';
   map?: Partial<MapDescription>;
   playerUnit?: UnitIdentifier;
   onSetup: (context: { app: App; map: Map }) => void;
@@ -28,6 +29,7 @@ const $props = defineProps<{
 
 const appConfig = defu($props.config ?? {}, {
   rendererOptions: {
+    fog: false,
     pixelated: false,
     controls: true
   }
@@ -35,7 +37,7 @@ const appConfig = defu($props.config ?? {}, {
 onUnmounted(() => {
   subscription.unsubscribe();
 });
-const map_ = debugMap();
+const map_ = $props.mapType === 'sea' ? debugSeaMap() : debugGroundMap();
 const map: MapDescription = defu($props.map ?? {}, {
   ...map_,
   factions: [...map_.factions],

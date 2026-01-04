@@ -9,12 +9,22 @@ import MapModule, {
 import GroundNavigator from '../pathfinding/GroundNavigator';
 import AirNavigator, { VehicleType } from '../pathfinding/AirNavigator';
 import type Unit from '../Unit';
+import SeaNavigator from '../pathfinding/SeaNavigator';
 
 declare module '../Map' {
   interface ModuleDebug {
     pathfinding: boolean;
   }
 }
+
+export enum NAVIGATOR_TYPE {
+  GROUND_LARGE = 'groundLarge',
+  GROUND_SMALL = 'groundSmall',
+  AIR = 'air',
+  SEA = 'sea'
+}
+
+export const DEFAULT_NAVIGATOR_TYPE = NAVIGATOR_TYPE.GROUND_LARGE;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Observables extends MapModuleObservables {}
@@ -29,6 +39,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
   private groundNavigationSmall: GroundNavigator | null = null;
   private groundNavigationLarge: GroundNavigator | null = null;
   private airNavigation: AirNavigator | null = null;
+  private seaNavigation: SeaNavigator | null = null;
   private debugObject: Object3D | null = null;
   private colliders: Object3D[] = [];
   private units: Unit[] = [];
@@ -56,6 +67,22 @@ export default class PathfindingModule extends MapModule<State, Observables> {
         )
         .subscribe(unit => this.removeUnit(unit))
     );
+  }
+
+  getNavigator(
+    type: NAVIGATOR_TYPE
+  ): GroundNavigator | AirNavigator | SeaNavigator {
+    switch (type) {
+      case NAVIGATOR_TYPE.GROUND_SMALL:
+        return this.groundNavigationSmall!;
+      case NAVIGATOR_TYPE.AIR:
+        return this.airNavigation!;
+      case NAVIGATOR_TYPE.SEA:
+        return this.seaNavigation!;
+      case NAVIGATOR_TYPE.GROUND_LARGE:
+      default:
+        return this.groundNavigationLarge!;
+    }
   }
 
   override async afterSetup() {
@@ -106,14 +133,30 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       this.debug
     );
 
+    this.seaNavigation = new SeaNavigator(
+      this.map,
+      this.colliders.slice(),
+      {
+        tileCostsType: 'sea',
+        gridSize: 1,
+        size: new Vector2(
+          this.map.modules.ground.state.terrainWidth,
+          this.map.modules.ground.state.terrainHeight
+        ),
+        sphere: true // Oder true, je nach Bedarf
+      },
+      this.debug
+    );
+
     await Promise.all([
       this.groundNavigationSmall.setup(),
       this.groundNavigationLarge.setup(),
-      this.airNavigation.setup()
+      this.airNavigation.setup(),
+      this.seaNavigation.setup()
     ]);
 
     if (this.debug) {
-      this.groundNavigationLarge.setupDebugGridObjects();
+      this.seaNavigation.setupDebugGridObjects();
     }
 
     this.groundNavigationSmall.getGrid().update();
@@ -149,6 +192,9 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     this.airNavigation?.addCollider(
       unit.modules.collision.getCollisionObject()
     );
+    this.seaNavigation?.addCollider(
+      unit.modules.collision.getCollisionObject()
+    );
     this.groundNavigationSmall?.addCollider(
       unit.modules.collision.getCollisionObject()
     );
@@ -159,6 +205,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       unit,
       unit.observables.position$.pipe(throttleTime(250)).subscribe(() => {
         this.airNavigation?.updateWalkabilityAroundObject(unit.root);
+        this.seaNavigation?.updateWalkabilityAroundObject(unit.root);
         this.groundNavigationSmall?.updateWalkabilityAroundObject(unit.root);
         this.groundNavigationLarge?.updateWalkabilityAroundObject(unit.root);
       })
@@ -183,6 +230,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
   private addToColliders(object: Object3D) {
     this.colliders.push(object);
     this.airNavigation?.setColliders(this.colliders);
+    this.seaNavigation?.setColliders(this.colliders);
     this.groundNavigationSmall?.setColliders(this.colliders);
     this.groundNavigationLarge?.setColliders(this.colliders);
   }
@@ -193,8 +241,14 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       this.colliders.splice(index, 1);
     }
     this.airNavigation?.setColliders(this.colliders);
+    this.seaNavigation?.setColliders(this.colliders);
     this.groundNavigationSmall?.setColliders(this.colliders);
     this.groundNavigationLarge?.setColliders(this.colliders);
+  }
+
+  getSeaNavigator(): SeaNavigator {
+    if (!this.seaNavigation) throw new Error('SeaNavigator not initialized');
+    return this.seaNavigation;
   }
 
   getAirNavigator() {

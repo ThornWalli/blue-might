@@ -93,11 +93,11 @@ export default class Grid {
 
   setup() {
     this.matrix = this.createMatrix();
-    console.log(
-      'Grid matrix created:',
-      this.matrix.length,
-      this.matrix[0]?.length
-    );
+    // console.log(
+    //   'Grid matrix created:',
+    //   this.matrix.length,
+    //   this.matrix[0]?.length
+    // );
     this.update();
   }
 

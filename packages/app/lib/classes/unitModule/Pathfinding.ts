@@ -15,6 +15,7 @@ import type MovableUnit from '../unit/Movable';
 import FigureUnitModule from './movable/Figure';
 import HelicopterUnitModule from './movable/airVehicle/Helicopter';
 import GroundVehicleUnitModule from './movable/GroundVehicle';
+import SeaVehicleUnitModule from './movable/SeaVehicle';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -43,6 +44,7 @@ interface Observables extends UnitModuleObservables {
 
 export type PathfindingUnitModuleOptions = UnitModuleOptions;
 export interface PathfindingUnitModuleState extends UnitModuleState {
+  complete: boolean;
   currentPath: Vector3[] | null;
 }
 
@@ -68,6 +70,7 @@ export default class PathfindingUnitModule extends UnitModule<
 
     this.state = {
       ...this.state,
+      complete: false,
       currentPath: state.currentPath ?? null
     };
 
@@ -93,6 +96,8 @@ export default class PathfindingUnitModule extends UnitModule<
       return await this.moveGroundVehicle(unit, targetPosition);
     } else if (this.isAirMovable()) {
       return this.moveAirVehicle(unit, targetPosition);
+    } else if (this.isSeaMovable()) {
+      return this.moveSeaVehicle(unit, targetPosition); // NEU: Ähnliche Methode wie moveGroundVehicle
     }
   }
 
@@ -262,6 +267,73 @@ export default class PathfindingUnitModule extends UnitModule<
 
         pitchUp: goForward
       });
+    } else if (movableModule instanceof SeaVehicleUnitModule) {
+      const pos = unit.getPosition();
+      const dx = target.x - pos.x;
+      const dz = target.z - pos.z;
+
+      const desiredYaw = Math.atan2(dx, dz);
+      const currentYaw = unit.getYaw();
+
+      let diff = desiredYaw - currentYaw;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+
+      const dist = Math.hypot(dx, dz);
+
+      const stopDist = 0.2;
+      const yawDeadzone = 0.1;
+      const maxTurnFactor = 0.5;
+
+      const turnFactor = Math.min(Math.abs(diff) / 1.0, maxTurnFactor);
+      const turnLeft = diff > yawDeadzone ? turnFactor : 0;
+      const turnRight = diff < -yawDeadzone ? turnFactor : 0;
+
+      // NEU: Wie Helicopter – erst drehen bei großen Winkeln, dann fahren
+      // NEU: Wie Helicopter – erst drehen bei großen Winkeln, dann fahren
+      const largeTurnThreshold = Math.PI / 8; // ~22.5 Grad
+      const isTurning = turnLeft > 0 || turnRight > 0;
+      let goForward = 0;
+
+      if (Math.abs(diff) > largeTurnThreshold && isTurning) {
+        // NEU: Bei kleinen Distanzen nur drehen, ohne fahren (verhindert Kreisen)
+        if (dist < 1.0) {
+          goForward = 0; // Nur drehen, kein Schub
+        } else {
+          goForward = 0.1; // Leichter Schub für weitere Distanzen
+        }
+      } else {
+        // Bremsen und Fahren wie beim Helicopter, aber vereinfacht
+        const brakingDist = 2.0;
+        if (dist > brakingDist) {
+          goForward = 1.0;
+        } else if (dist > stopDist) {
+          const brakingFactor = (dist - stopDist) / (brakingDist - stopDist);
+          goForward = Math.max(0.2, brakingFactor);
+        }
+      }
+
+      // NEU: Wie Helicopter – Schub reduzieren beim Lenken
+      if (isTurning && goForward > 0) {
+        const turnPenalty = 1.0 - Math.min(turnFactor, 1.0) * 0.5; // Weniger Strafe als Helicopter
+        goForward *= turnPenalty;
+      }
+
+      movableModule.setAutopilotControls({
+        moveForward: goForward > 0 || turnLeft || turnRight,
+        moveLeft: turnLeft,
+        moveRight: turnRight
+      });
+
+      // Hilfs-Schub, wenn stecken geblieben
+      const velLenSq = movableModule.getVelocity().lengthSq();
+      if (velLenSq < 1e-6 && (goForward > 0 || turnLeft || turnRight)) {
+        const forward = unit.getForwardXZFromYaw(new Vector3(0, 0, 0));
+        movableModule.getVelocity().addScaledVector(forward, 0.01);
+      }
+
+      // NEU: Dynamische shiftThreshold wie beim Helicopter
+      shiftThreshold = currentPath.length === 1 ? 0.2 : 0.8;
     } else {
       const step = 4 * delta;
       const position = unit.getPosition();
@@ -313,7 +385,7 @@ export default class PathfindingUnitModule extends UnitModule<
           });
         }
         this.state.currentPath = null;
-        this.observables.moveComplete$.next();
+        this.setMoveComplete();
       }
     }
 
@@ -326,6 +398,12 @@ export default class PathfindingUnitModule extends UnitModule<
       this.lastTargetDistanceCounter = 0;
     }
     this.lastTargetDistance = horizontalDistance;
+  }
+
+  setMoveComplete() {
+    if (this.state.complete) return;
+    this.state.complete = true;
+    this.observables.moveComplete$.next();
   }
 
   private async moveGroundVehicle(unit: Unit, target: Vector3) {
@@ -342,6 +420,8 @@ export default class PathfindingUnitModule extends UnitModule<
       this.abortMovement();
       return false;
     }
+
+    this.state.complete = false;
 
     const path = await groundNavigator.findPath(unit.getPosition(), target, [
       unit.modules.collision.getCollisionObject()
@@ -385,6 +465,8 @@ export default class PathfindingUnitModule extends UnitModule<
       return false;
     }
 
+    this.state.complete = false;
+
     const path = await airNavigator.findPath(unit.getPosition(), target, [
       unit.modules.collision.getCollisionObject()
     ]);
@@ -416,10 +498,69 @@ export default class PathfindingUnitModule extends UnitModule<
     });
   }
 
+  private async moveSeaVehicle(unit: Unit, target: Vector3) {
+    const seaNavigator = unit.getMap()?.modules.pathfinding.getSeaNavigator();
+
+    if (!seaNavigator) throw new Error('SeaNavigator not initialized');
+
+    if (this.state.currentPath) {
+      console.log(
+        'PathfindingUnitModule: Already moving, shortening path to current waypoint'
+      );
+      this.abortMovement();
+      return false;
+    }
+
+    this.state.complete = false;
+
+    // console.log('xxx', unit.getPosition(), target.clone().setY(1));
+    let path = await seaNavigator.findPath(
+      unit.getPosition().setY(0),
+      target.clone().setY(0),
+      [unit.modules.collision.getCollisionObject()]
+    );
+
+    path = path.slice(2, path.length);
+
+    if (!path?.length) return false;
+
+    this.state.currentPath = path;
+
+    this.yawIntegral = 0;
+
+    if (this.debug) {
+      this.updateDebugPathLine(unit);
+
+      const subscription = this.observables.moveComplete$.subscribe(() => {
+        subscription.unsubscribe();
+        this.updateDebugPathLine(unit);
+      });
+    }
+
+    this.observables.moveStart$.next();
+
+    return new Promise<boolean>(resolve => {
+      const subscription = this.observables.moveComplete$.subscribe(() => {
+        subscription.unsubscribe();
+        resolve(true);
+      });
+    });
+  }
+
   abortMovement(force?: boolean) {
     this.state.currentPath = force
       ? null
       : (this.state.currentPath?.slice(0, 1) ?? null);
+    return new Promise(resolve => {
+      if (this.state.complete) {
+        resolve(true);
+        return;
+      }
+      const subscription = this.observables.moveComplete$.subscribe(() => {
+        subscription.unsubscribe();
+        resolve(true);
+      });
+    });
   }
 
   isGroundMovable() {
@@ -433,6 +574,10 @@ export default class PathfindingUnitModule extends UnitModule<
   isAirMovable() {
     const unit = this.getUnit();
     return unit.hasModuleType(HelicopterUnitModule);
+  }
+
+  isMoving() {
+    return this.state.currentPath !== null;
   }
 
   override isForceUpdate() {
@@ -478,6 +623,13 @@ export default class PathfindingUnitModule extends UnitModule<
   }
 
   //#endregion
+
+  // In PathfindingUnitModule (packages/app/lib/classes/unitModule/Pathfinding.ts) erweitern:
+  isSeaMovable() {
+    // NEU: Ähnlich wie isGroundMovable
+    const unit = this.getUnit();
+    return unit.hasModuleType(SeaVehicleUnitModule); // Annahme: Dein SeaVehicle Modul
+  }
 }
 
 // function simplifyPath(path: Vector3[], tolerance = 0.1): Vector3[] {

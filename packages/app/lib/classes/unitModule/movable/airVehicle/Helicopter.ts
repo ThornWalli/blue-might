@@ -2,6 +2,7 @@
 
 import { Vector3 } from 'three';
 import { EMPTY, filter, fromEvent, switchMap } from 'rxjs';
+import { isUnitDestroyed } from '@blue-might/app/lib/utils/unit';
 
 import type { AnimationLoopValue } from '../../../Renderer';
 import type HelicopterUnit from '../../../unit/vehicle/Helicopter';
@@ -17,6 +18,7 @@ import type {
 import AirUnitModule from '../AirVehicle';
 import { COLLISION_TYPE } from '../../Collision';
 import LandingPortUnitModule from '../../LandingPort';
+import type Unit from '../../../Unit';
 
 declare module '../../../Unit' {
   interface ModuleStates {
@@ -132,15 +134,9 @@ export default class HelicopterUnitModule<
     if (unit.preview) return;
 
     this.subscription.add(
-      unit.modules.airVehicle.observables.landingPort$.subscribe(unit => {
-        console.log(unit);
-      })
-    );
-
-    this.subscription.add(
       unit.modules.collision.observables.collision$.subscribe(({ type }) => {
         if (type === COLLISION_TYPE.BLOCKED) {
-          unit.modules.damage.setValue(1);
+          // unit.modules.damage.takeMaxDamage();
         }
       })
     );
@@ -206,12 +202,29 @@ export default class HelicopterUnitModule<
     horizontalVelocity: new Vector3()
   };
 
+  /**
+   * Wenn abgelaufen, gibt es kein moveUpdate mehr.
+   */
+  destroyedTimeout: number = 0;
+
   moveUpdate({ delta }: { delta: number }) {
+    const active = this.state.active;
     const unit = this.getUnit();
 
-    const controls = this.getControls();
+    //#region destroyed
 
-    const active = this.state.active;
+    /**
+     * Wenn Zerstört und Timeout überschritten, gibt es kein moveUpdate mehr.
+     */
+    if (this.destroyedTimeout && Date.now() > this.destroyedTimeout) {
+      return;
+    } else if (!this.destroyedTimeout && isUnitDestroyed(unit)) {
+      this.destroyedTimeout = Date.now() + 5000;
+    }
+
+    //#endregion
+
+    const controls = this.getControls();
 
     if (controls.gear) {
       this.toggleGears();
@@ -444,57 +457,98 @@ export default class HelicopterUnitModule<
     // Clamp altitude
     const maxAlt = this.options.maxAltitude;
     if (pos.y >= maxAlt && velocity.y > 0) velocity.y = 0;
-    if (pos.y <= 0 && velocity.y < 0) {
-      velocity.y = 0;
-      pos.y = 0;
-      this.state.isAirborne = false;
+    // if (pos.y <= 0 && velocity.y < 0) {
+    //   velocity.y = 0;
+    //   pos.y = 0;
+    //   this.state.isAirborne = false;
+    // }
+
+    // NEU: Sinken-Logik für zerstörte Helikopter auf Wasser
+    const isDestroyed = isUnitDestroyed(unit);
+    if (isDestroyed) {
+      const seaLevel = unit.getMap()?.modules.ground.getSeaLevel() ?? 0;
+      const position = unit.getPosition();
+      if (position.y <= seaLevel) {
+        // Auf Wasser – sinken lassen
+        const sinkSpeed = 1.0; // Anpassen: Sinkgeschwindigkeit (Einheiten pro Sekunde)
+        velocity.y -= sinkSpeed * delta;
+        // Stoppe horizontale Bewegung
+        velocity.x = 0;
+        velocity.z = 0;
+        // Keine weitere Bewegung, wenn unter Wasser
+        if (position.y < seaLevel - 1.0) {
+          // Optional: Tiefer als 1 Einheit unter Wasser stoppen
+          velocity.set(0, 0, 0);
+        }
+      }
     }
 
     if (!active || !controls.ascend) {
-      const isDestroyed = unit.modules.damage.isDestroyed();
-      const position = unit.getPosition();
+      const isDestroyed = isUnitDestroyed(unit);
+      const position = unit.getPosition().clone();
+
+      const groundModule = unit.getMap()!.modules.ground;
       let minY =
-        unit
-          .getMap()
-          ?.modules.ground.getSurfaceHeightAt(position.x, position.z, [unit]) ??
-        0;
+        groundModule.getSurfaceHeightAt(position.x, position.z, [unit]) ?? 0;
 
       if (!isDestroyed && this.state.gearsOpened) {
         minY += this.options.gearsHeight;
       }
 
       if (
-        (this.state.isAirborne && position.y <= minY) ||
+        (this.state.isAirborne &&
+          position.y <= Math.max(groundModule?.getSeaLevel(), minY)) ||
         (status === FLIGHT_STATUS.LANDED && position.y < minY)
       ) {
         if (!isDestroyed) {
           const impactStrength = Math.abs(velocity.y);
           const damageThreshold = 0.8;
           if (impactStrength > damageThreshold || !this.state.gearsOpened) {
-            unit.modules.damage.setValue(1);
+            unit.modules.damage.takeMaxDamage();
           }
         }
 
         this.state.isAirborne = false;
         velocity.set(0, 0, 0);
         position.setY(minY);
-        unit.setPosition(position);
 
+        // NEU: Bodenausrichtung vor dem Setzen der Position durchführen, um Positionsänderungen zu minimieren
+        let targetUnit: Unit | undefined = undefined;
         if (this.getLastFlightStatus() !== FLIGHT_STATUS.LANDED) {
-          const { unit: targetUnit } = unit.updateGroundAlignment();
-
+          const alignmentResult = unit.updateGroundAlignment();
+          targetUnit = alignmentResult.unit;
           unit.calculateGroundNormal();
-          if (targetUnit) {
-            const landingPort = targetUnit.getModuleByType(
-              LandingPortUnitModule
-            );
-            if (landingPort) {
-              landingPort.setLandedUnit(unit);
-            }
+
+          // Nach Ausrichtung minY neu berechnen, falls Position geändert wurde
+          minY =
+            groundModule.getSurfaceHeightAt(position.x, position.z, [unit]) ??
+            0;
+          if (!isDestroyed && this.state.gearsOpened) {
+            minY += this.options.gearsHeight;
+          }
+          position.setY(minY);
+        }
+
+        if (position.clone().sub(unit.getPosition()).length() < 0.001) return;
+        unit.setPosition(position);
+        console.log('Helicopter landed at y=', position.toArray());
+
+        if (targetUnit) {
+          const landingPort = targetUnit.getModuleByType(LandingPortUnitModule);
+          if (landingPort) {
+            landingPort.setLandedUnit(unit);
           }
         }
         status = FLIGHT_STATUS.LANDED;
       }
+    }
+
+    // Reset ground normal when taking off
+    if (
+      this.getLastFlightStatus() === FLIGHT_STATUS.TAKING_OFF &&
+      status === FLIGHT_STATUS.FLYING
+    ) {
+      unit.resetGroundNormal();
     }
 
     if (

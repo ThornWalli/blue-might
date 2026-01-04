@@ -23,6 +23,8 @@ import AppModule, {
 } from '../AppModule';
 import type Map from '../Map';
 import { disposeObject3D } from '../../utils/object';
+import type { NAVIGATOR_TYPE } from '../mapModule/Pathfinding';
+import { DEFAULT_NAVIGATOR_TYPE } from '../mapModule/Pathfinding';
 
 export interface PositionMarker {
   id: string;
@@ -43,6 +45,7 @@ interface Observables extends AppModuleObservables {
   positionMarkers$: ReplaySubject<PositionMarker[]>;
   currentPosition$: ReplaySubject<Vector2>;
   lockGrid$: ReplaySubject<boolean>;
+  lockGridNavigator$: ReplaySubject<NAVIGATOR_TYPE | null>;
 }
 
 interface State extends AppModuleState {
@@ -51,6 +54,7 @@ interface State extends AppModuleState {
   selectMovePosition: boolean;
   selectMarkerPosition: boolean;
   lockGrid: boolean;
+  lockGridNavigator: NAVIGATOR_TYPE | null;
 }
 export default class DebugAppModule extends AppModule<State, Observables> {
   static override TYPE = 'debug';
@@ -67,7 +71,8 @@ export default class DebugAppModule extends AppModule<State, Observables> {
       positionMarkers: [],
       selectMovePosition: false,
       selectMarkerPosition: false,
-      lockGrid: false
+      lockGrid: false,
+      lockGridNavigator: DEFAULT_NAVIGATOR_TYPE
     } as State);
 
     //#region observables
@@ -79,12 +84,18 @@ export default class DebugAppModule extends AppModule<State, Observables> {
     this.observables.positionMarkers$ = new ReplaySubject<PositionMarker[]>(1);
     this.observables.currentPosition$ = new ReplaySubject<Vector2>(1);
     this.observables.lockGrid$ = new ReplaySubject<boolean>(1);
+    this.observables.lockGridNavigator$ =
+      new ReplaySubject<NAVIGATOR_TYPE | null>(1);
     //#endregion
   }
 
   setLockGrid(lock: boolean) {
     this.state.lockGrid = lock;
     this.observables.lockGrid$.next(lock);
+  }
+  setLockGridNavigator(navigator: NAVIGATOR_TYPE | null) {
+    this.state.lockGridNavigator = navigator;
+    this.observables.lockGridNavigator$.next(navigator);
   }
 
   private createPositionHelper(type: HELPER) {
@@ -108,7 +119,10 @@ export default class DebugAppModule extends AppModule<State, Observables> {
     const helper = this.helper[type];
     if (!helper) return;
 
-    const y = map.modules.ground.getAvgHeightAt(position.x, position.y);
+    const y = Math.max(
+      map.modules.ground.getSeaLevel(),
+      map.modules.ground.getAvgHeightAt(position.x, position.y)
+    );
     helper.position.set(position.x, y, position.y);
   }
 
@@ -313,9 +327,9 @@ export default class DebugAppModule extends AppModule<State, Observables> {
     ) =>
       source.pipe(
         rxjsMap(({ map, position }) => {
-          if (this.state.lockGrid) {
+          if (this.state.lockGrid && this.state.lockGridNavigator) {
             const size = map.modules.pathfinding
-              .getGroundNavigatorSmall()
+              .getNavigator(this.state.lockGridNavigator)
               .getGridSize();
             position.x = Math.ceil(position.x / size) * size - size / 2;
             position.y = Math.ceil(position.y / size) * size - size / 2;
@@ -378,7 +392,10 @@ export default class DebugAppModule extends AppModule<State, Observables> {
       const marker = this.createPositionMarker({
         color: 0xffff00
       });
-      const y = map.modules.ground.getHeightAt(position.x, position.y);
+      const y = Math.max(
+        map.modules.ground.getSeaLevel(),
+        map.modules.ground.getHeightAt(position.x, position.y)
+      );
       marker.position.set(position.x, y, position.y);
       this.app.getScene().add(marker);
       this.positionMarkerObjects.push(marker);

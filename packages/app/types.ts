@@ -1,6 +1,7 @@
 export type Values<T> = T[keyof T];
 
 export interface RendererOptions {
+  fog: boolean;
   pixelated: boolean;
   controls: boolean;
 }

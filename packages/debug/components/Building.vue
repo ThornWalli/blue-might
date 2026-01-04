@@ -16,6 +16,7 @@ import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import {
   CombatHelicopter_1,
   ControlTower_1,
+  Factory_1,
   FactoryChimney_1,
   LandingPort_1,
   Soldat_1,
@@ -63,8 +64,11 @@ const map: Partial<MapDescription> = {
     new ControlTower_1({
       position: new Vector3(1.5, 0, 3.17)
     }),
+    new Factory_1({
+      position: new Vector3(7.5, 0, -2.17)
+    }),
     new FactoryChimney_1({
-      position: new Vector3(2.83, 0, -2.17)
+      position: new Vector3(8.83, 0, -0.17)
     })
   ]
 };

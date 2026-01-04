@@ -47,6 +47,7 @@ interface Observables extends MapModuleObservables {}
 interface State extends MapModuleState {}
 
 export interface ShootDescription {
+  weapon: Weapon;
   projectile: Projectile;
   object: Object3D;
   ignoredObjects: Object3D[];
@@ -192,6 +193,7 @@ export default class ShootModule extends MapModule<State, Observables> {
       object.add(newShootObject);
       this.addToScene(object);
       shootDesc = {
+        weapon,
         projectile,
         object,
         ignoredObjects: [],
@@ -230,7 +232,7 @@ export default class ShootModule extends MapModule<State, Observables> {
     const raycaster = this.raycaster;
     this.raycastFrameCounter++;
 
-    // 1. Baue die Liste der Ziele nur einmal pro Frame auf
+    // Baue die Liste der Ziele nur einmal pro Frame auf
     const allPossibleTargets = [this.map.modules.ground.getRoot()];
     this.map.modules.units
       .getUnits()
@@ -241,7 +243,7 @@ export default class ShootModule extends MapModule<State, Observables> {
         continue;
       }
 
-      // 2. Physikberechnung mit wiederverwendeten Vektoren
+      // Physikberechnung mit wiederverwendeten Vektoren
       this.temp.gravity.copy(this.gravity).multiplyScalar(delta);
       shoot.velocity.add(this.temp.gravity);
 
@@ -291,11 +293,11 @@ export default class ShootModule extends MapModule<State, Observables> {
         }
       }
 
-      if (needsRaycast && this.raycastFrameCounter % 3 === 0) {
+      if (needsRaycast) {
         const direction = this.temp.drag.copy(shoot.velocity).normalize();
         raycaster.set(oldPosition, direction);
 
-        // 3. Raycast gegen eine gefilterte Liste von Zielen
+        // Raycast gegen eine gefilterte Liste von Zielen
         const intersections = raycaster.intersectObjects(
           this.getTargetObjects(allPossibleTargets, shoot.ignoredObjects)
         );
@@ -333,11 +335,11 @@ export default class ShootModule extends MapModule<State, Observables> {
       }
     }
 
-    // Aktualisiere Rauch-Partikel
+    //#region  Aktualisiere Rauch - Partikel
     for (let i = this.smokeParticles.length - 1; i >= 0; i--) {
       const p = this.smokeParticles[i]!;
       p.update(delta);
-      p.sprite.scale.multiplyScalar(1.01); // Rauch größer machen
+      p.sprite.scale.multiplyScalar(1.01);
       if (p.life <= 0) {
         this.removeFromScene(p.sprite);
         disposeObject3D(p.sprite);
@@ -359,6 +361,7 @@ export default class ShootModule extends MapModule<State, Observables> {
       }
       return true;
     });
+    //#endregion
   }
 
   private spawnSmoke(position: Vector3) {

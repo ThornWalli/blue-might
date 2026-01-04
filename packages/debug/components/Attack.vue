@@ -122,6 +122,9 @@ const map: Partial<MapDescription> = {
         }
       },
       moduleStates: {
+        damage: {
+          maxDamage: 500
+        },
         patrol: {
           active: true
         },

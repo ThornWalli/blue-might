@@ -24,6 +24,7 @@
         v-for="(slot, index) in weaponSlots"
         :key="index"
         class="graph ammunition"
+        :class="{ active: slot.active }"
         :style="{
           '--value': slot.ammunition / slot.maxAmmunition
         }">
@@ -608,6 +609,12 @@ function onClickGears() {
       width: 100%;
       height: calc(var(--value) * 100%);
       background: green;
+    }
+
+    opacity: 0.4;
+
+    &.active {
+      opacity: 1;
     }
   }
 

@@ -14,6 +14,9 @@ import {
   getDefaultControls,
   type ControlState
 } from '../playerModule/Controls';
+import { isUnitDestroyed } from '../../utils/unit';
+
+import PlayerUnitModule from './Player';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -157,12 +160,20 @@ export default class MovableUnitModule<
     );
   }
 
+  /**
+   * Gibt zurück, ob es einen verbraucht gibt.
+   * Beispiel: Im Autopilot gibt es kein Verbrauch.
+   */
+  hasConsumption() {
+    return !!this.getUnit().getModuleByType(PlayerUnitModule).getPlayer();
+  }
+
   override update({ delta: _delta }: AnimationLoopValue): void {
     let currentPower = this.state.rawPower ?? 0;
 
     const active = this.state.active && this.state.fuel > 0;
 
-    if (active && currentPower >= this.getMaxPower()) {
+    if (this.hasConsumption() && active && currentPower >= this.getMaxPower()) {
       this.state.fuel = Math.max(
         this.state.fuel -
           Math.max(
@@ -227,7 +238,7 @@ export default class MovableUnitModule<
   }
 
   canTurnOn() {
-    return !this.getUnit().modules.damage.isDestroyed();
+    return !isUnitDestroyed(this.getUnit());
   }
 
   isTurnOn() {

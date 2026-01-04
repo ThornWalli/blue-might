@@ -29,8 +29,14 @@ const AppComponent = defineAsyncComponent(
 const config = ref<AppConfig>({
   mode: APP_MODE.PLAYGROUND,
   rendererOptions: {
+    fog: true,
     pixelated: false,
     controls: true
+  },
+  debug: {
+    map: {
+      pathfinding: false
+    }
   }
 });
 

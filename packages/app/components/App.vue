@@ -7,7 +7,7 @@
         ? `url(${currentCursor?.src}) 0 0, auto`
         : currentCursor?.type
     }">
-    <bm-renderer ref="rendererEl" debug :options="config.rendererOptions" />
+    <bm-renderer ref="rendererEl" :options="config.rendererOptions" />
     <transition name="fade-short">
       <component :is="currentComponent" v-if="ready" :app="app!" />
     </transition>

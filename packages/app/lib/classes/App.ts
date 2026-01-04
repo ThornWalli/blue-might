@@ -54,6 +54,7 @@ export interface AppConfig {
   mode?: APP_MODE;
   rendererOptions: RendererOptions;
   debug?: {
+    renderer?: Partial<RendererOptions>;
     map?: Partial<MapModuleDebug>;
   };
 }
@@ -96,6 +97,10 @@ export class BaseApp<
     );
 
     this.moduleList = moduleList;
+
+    if (config.debug?.renderer) {
+      this.renderer.setOptions(config.debug.renderer);
+    }
   }
 
   async setup() {

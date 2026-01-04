@@ -14,6 +14,7 @@ import { disposeObject3D } from '../../utils/object';
 import { WeaponSlot } from '../WeaponSlot';
 import type { ShootDescription } from '../mapModule/Shoot';
 import { ControlAction } from '../playerModule/Controls';
+import { isUnitDestroyed } from '../../utils/unit';
 
 import AttackUnitModule from './Attack';
 import PlayerUnitModule from './Player';
@@ -211,11 +212,21 @@ export default class WeaponUnitModule<
   }
 
   override async update(_v: AnimationLoopValue) {
+    if (this.getUnit().preview) return;
+    if (isUnitDestroyed(this.getUnit())) return;
     this.updateShoot(_v);
     this.updateAutoAIM();
     if (this.debug) {
       this.updateDebug();
     }
+  }
+
+  /**
+   * Gibt zurück, ob es einen verbraucht gibt.
+   * Beispiel: Im Autopilot gibt es kein Verbrauch.
+   */
+  hasConsumption() {
+    return !!this.getUnit().getModuleByType(PlayerUnitModule).getPlayer();
   }
 
   private updateShoot({ time }: { time: number }) {
@@ -249,7 +260,9 @@ export default class WeaponUnitModule<
               this.state.sourceDirections[index]!,
               weapon
             )?.then(shoot => {
-              weaponSlot.ammunition--;
+              if (this.hasConsumption()) {
+                weaponSlot.ammunition--;
+              }
               if (shoot) {
                 this.observables.shoot$.next({
                   index,
@@ -333,6 +346,7 @@ export default class WeaponUnitModule<
   }
 
   setAutoAimActive(value: boolean) {
+    if (this.state.autoAimActive === value) return;
     this.state.autoAimActive = value;
     this.observables.autoAimActive$.next(value);
   }

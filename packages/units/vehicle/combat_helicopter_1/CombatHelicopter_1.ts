@@ -12,8 +12,7 @@ import {
   LoopRepeat,
   LoopOnce,
   AxesHelper,
-  Vector2,
-  Vector3
+  Vector2
 } from 'three';
 import HelicopterUnit, {
   type HelicopterUnitModuleList,
@@ -31,11 +30,10 @@ import {
   ControlAction,
   type ControlState
 } from '@blue-might/app/lib/classes/playerModule/Controls';
-import { lerp } from 'three/src/math/MathUtils.js';
 import { playSound } from '@blue-might/weapon/utils';
 import {
-  createBarrelTargetShoot,
-  normalizeAngle
+  autoAimFunction,
+  createBarrelTargetShoot
 } from '@blue-might/app/lib/utils/turret';
 
 import baseGlb from './assets/combat_helicopter_1.glb?url';
@@ -86,7 +84,7 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     rotor_off: { clampWhenFinished: false, loop: LoopRepeat, duration: 0 }
   };
 
-  objects: {
+  private objects: {
     barrels: [Object3D, Object3D][];
     barrelTargets: Object3D[];
     barrelTargetShoots: Object3D[];
@@ -123,7 +121,19 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
             maxFuel: 100
           },
           weapon: {
-            autoAimFn: (options: AutoAimFnOptions) => this.autoAimFn(options),
+            autoAimFn: (options: AutoAimFnOptions) =>
+              autoAimFunction(
+                this.getMap()!.modules.shoot,
+                options,
+                this.options.minWeaponAngle,
+                this.options.maxWeaponAngle,
+                this.options.rotationSpeed,
+                {
+                  barrels: this.objects.barrels as unknown as Object3D[]
+                },
+                this.state,
+                () => this.getRotation()
+              ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
                 slot: 0,
@@ -142,12 +152,16 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
           },
           helicopter: {
             ...options.moduleOptions?.helicopter,
-            gearsHeight: 0.15
+            gearsHeight: 0.15,
+            maxSpeed: 2
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targetName: 'base',
-            targetChildIndex: 1
+            targets: [
+              {
+                name: 'base'
+              }
+            ]
           }
         },
         moduleStates: {
@@ -162,29 +176,20 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     );
   }
 
-  override async setup(context: SetupContext) {
+  private barrelTargetShootTimeouts: number[] = [];
+  override setup(context: SetupContext) {
+    //#region barrel target shoot
     this.subscription.add(
-      this.modules.weapon.observables.shoot$.subscribe(async ({ index }) => {
-        this.objects.barrelTargetShoots[index]!.visible = true;
-        playSound(
-          await this.modules.weapon.getSlot(index)!.weapon.projectile.getSfx(),
-          0.3
-        );
-      })
-    );
-    this.subscription.add(
-      this.modules.weapon.observables.cooldown$.subscribe(({ index }) => {
-        this.objects.barrelTargetShoots[index]!.visible = false;
-      })
-    );
-    this.subscription.add(
-      this.modules.weapon.observables.active$.subscribe(v => {
-        if (!v) {
-          Object.values(this.objects.barrelTargetShoots).forEach(shoot => {
-            shoot.visible = false;
-          });
+      this.modules.weapon.observables.shoot$.subscribe(
+        async ({ index, shoot: { projectile, weapon } }) => {
+          this.objects.barrelTargetShoots[index]!.visible = true;
+          window.clearTimeout(this.barrelTargetShootTimeouts[index]);
+          this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
+            this.objects.barrelTargetShoots[index]!.visible = false;
+          }, 1000 / weapon.perSeconds);
+          playSound(await projectile.getSfx(), 0.3);
         }
-      })
+      )
     );
     return super.setup(context);
   }
@@ -232,94 +237,6 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     this.modules.animation.playAction('rotor_run');
   }
 
-  autoAimFn(options: AutoAimFnOptions) {
-    const { target, sourcePosition, index, weapon } = options;
-    const shootModule = this.getMap()?.modules.shoot;
-
-    if (shootModule && target && this.objects.barrels[index]) {
-      const [barrelObjX, barrelObjY] = this.objects.barrels[index]!;
-      const targetPosition = target.getPosition();
-      const delta = targetPosition.clone().sub(sourcePosition);
-      const horizontalDistance = Math.sqrt(delta.x ** 2 + delta.z ** 2);
-      const verticalDistance = delta.y;
-
-      // Gravitation und Geschwindigkeit
-      const g = Math.abs(shootModule.gravity.y);
-      const v = weapon.projectile.speed * (1 - shootModule.airResistance);
-      const rotation = this.getRotation();
-
-      // Prüfe, ob Schuss möglich
-      const discriminant =
-        v ** 4 -
-        g * (g * horizontalDistance ** 2 + 2 * verticalDistance * v ** 2);
-      if (discriminant < 0) {
-        const targetYaw = normalizeAngle(
-          Math.atan2(delta.x, delta.z) - rotation.y
-        );
-        const targetPitch = -Math.atan2(delta.y, horizontalDistance);
-        const isYawInRange =
-          targetYaw >= this.options.minWeaponAngle.x &&
-          targetYaw <= this.options.maxWeaponAngle.x;
-        const isPitchInRange =
-          targetPitch >= this.options.minWeaponAngle.y &&
-          targetPitch <= this.options.maxWeaponAngle.y;
-        if (isYawInRange && isPitchInRange) {
-          this.state.weaponTargetRotation.set(targetYaw, targetPitch);
-          barrelObjY.rotation.y = lerp(
-            barrelObjY.rotation.y,
-            this.state.weaponTargetRotation.x,
-            this.options.rotationSpeed
-          );
-          barrelObjX.rotation.x = lerp(
-            barrelObjX.rotation.x,
-            this.state.weaponTargetRotation.y,
-            this.options.rotationSpeed
-          );
-          return true;
-        }
-        return false;
-      }
-
-      // Berechne Elevation (hoher Schuss für bessere Reichweite, wenn Ziel höher)
-      const sqrtDisc = Math.sqrt(discriminant);
-      let elevation = Math.atan((v ** 2 - sqrtDisc) / (g * horizontalDistance)); // - für niedrigen Schuss
-      elevation = -elevation; // Minus für Helicopter-System
-
-      // Horizontale Richtung (Yaw)
-      const horizontalDirection = new Vector3(delta.x, 0, delta.z).normalize();
-      const targetYaw = normalizeAngle(
-        Math.atan2(horizontalDirection.x, horizontalDirection.z) - rotation.y // NEU: Normalisiere die Differenz
-      );
-
-      // Prüfe Winkel-Bereiche
-      const isYawInRange =
-        targetYaw >= this.options.minWeaponAngle.x &&
-        targetYaw <= this.options.maxWeaponAngle.x;
-      const isPitchInRange =
-        elevation >= this.options.minWeaponAngle.y &&
-        elevation <= this.options.maxWeaponAngle.y;
-
-      if (isYawInRange && isPitchInRange) {
-        this.state.weaponTargetRotation.set(targetYaw, elevation);
-
-        // Interpolation zur Ziel-Rotation
-        barrelObjY.rotation.y = lerp(
-          barrelObjY.rotation.y,
-          this.state.weaponTargetRotation.x,
-          this.options.rotationSpeed
-        );
-        barrelObjX.rotation.x = lerp(
-          barrelObjX.rotation.x,
-          this.state.weaponTargetRotation.y,
-          this.options.rotationSpeed
-        );
-
-        return true;
-      }
-    }
-    return false;
-  }
-
   override async createMesh(_context: SetupContext) {
     const { object, animations } = await loadGltf(baseGlb);
 
@@ -337,8 +254,7 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
       const barrelTargetShoot = createBarrelTargetShoot();
       barrelTargetObj.add(barrelTargetShoot);
 
-      barrelObj.position.set(0, 0.35, -2.8);
-      barrelWrapperX.position.set(0, -0.35, 2.8);
+      barrelObj.position.set(0, 0.03, -0.25);
       barrelWrapperX.add(barrelObj);
 
       if (this.debug) {
@@ -349,8 +265,7 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
         axesHelper = new AxesHelper(1);
         parent.add(axesHelper);
       }
-      barrelWrapperX.position.set(0, 0, 0);
-      barrelWrapperY.position.set(0, -0.35, 2.8);
+      barrelWrapperY.position.set(0, -0.03, 0.25);
 
       barrelWrapperY.add(barrelWrapperX);
 
@@ -371,7 +286,7 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-        // (child.material as MeshMatcapMaterial).wireframe = true;
+        // (child.material as MeshStandardMaterial).wireframe = true;
 
         replaceColors(
           [

@@ -38,18 +38,18 @@ const preparedId = computed(() => $props.id || defaultId);
 .bm-base-form-field {
   display: flex;
   flex-direction: column;
-  gap: 0.25em;
+  gap: var(--bm-spacing-small);
   font-family: var(--font-base);
   font-weight: bold;
 
   &:not(.label-top) {
     flex-direction: row;
-    gap: 0.5em;
+    gap: var(--bm-spacing-small);
     align-items: center;
   }
 
   & label {
-    font-size: 14px;
+    font-size: 12px;
     user-select: none;
 
     &.colon {
@@ -57,18 +57,6 @@ const preparedId = computed(() => $props.id || defaultId);
         content: ':';
       }
     }
-  }
-
-  &:not(mode-compact) {
-    font-size: 14px;
-  }
-
-  &.mode-compact {
-    & label {
-      font-size: 12px;
-    }
-
-    color: #fff;
   }
 }
 </style>

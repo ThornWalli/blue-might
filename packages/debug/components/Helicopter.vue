@@ -37,7 +37,8 @@ const map: Partial<MapDescription> = {
   units: [
     new LandingPortSupplyStation({
       moduleDebug: {
-        collision: true
+        collision: false,
+        supply: false
       },
       position: new Vector3(0, 0, 0)
     }),

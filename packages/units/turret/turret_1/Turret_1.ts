@@ -5,7 +5,7 @@ import {
   type UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { Vector2, Vector3, Mesh, SkinnedMesh, Object3D } from 'three';
+import { Vector2, Mesh, SkinnedMesh, Object3D } from 'three';
 import BuildingUnit, {
   type BuildingUnitModuleList,
   type BuildingUnitModules,
@@ -20,15 +20,14 @@ import WeaponUnitModule, {
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
-import { lerp } from 'three/src/math/MathUtils.js';
 import {
   ControlAction,
   type ControlState
 } from '@blue-might/app/lib/classes/playerModule/Controls';
 import { playSound } from '@blue-might/weapon/utils';
 import {
-  createBarrelTargetShoot,
-  normalizeAngle
+  autoAimFunction,
+  createBarrelTargetShoot
 } from '@blue-might/app/lib/utils/turret';
 
 import baseGlb from './assets/turret_1.glb?url';
@@ -100,14 +99,27 @@ export default class Turret_1 extends BuildingUnit<
         name: 'Turret 1',
         options: {
           ...options.options,
-          minAngle: options.options?.minAngle ?? new Vector2(-0.6, -Math.PI),
-          maxAngle: options.options?.maxAngle ?? new Vector2(0.2, Math.PI),
+          minAngle: options.options?.minAngle ?? new Vector2(-Math.PI, -0.6),
+          maxAngle: options.options?.maxAngle ?? new Vector2(Math.PI, 0.2),
           rotationSpeed: options.options?.rotationSpeed ?? 0.05
         },
         moduleOptions: {
           ...options.moduleOptions,
           weapon: {
-            autoAimFn: (options: AutoAimFnOptions) => this.autoAimFn(options),
+            autoAimFn: (options: AutoAimFnOptions) =>
+              autoAimFunction(
+                this.getMap()!.modules.shoot,
+                options,
+                this.options.minAngle,
+                this.options.maxAngle,
+                this.options.rotationSpeed,
+                {
+                  head: this.objects.head,
+                  barrels: this.objects.barrels as unknown as Object3D[]
+                },
+                this.state,
+                () => this.getRotation()
+              ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
                 slot: 0,
@@ -130,29 +142,22 @@ export default class Turret_1 extends BuildingUnit<
     this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.MIN_HEIGHT);
   }
 
+  private barrelTargetShootTimeouts: number[] = [];
   override setup(context: SetupContext) {
+    //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ index, shoot }) => {
+        async ({ index, shoot: { projectile, weapon } }) => {
           this.objects.barrelTargetShoots[index]!.visible = true;
-          playSound(await shoot.projectile.getSfx(), 0.3);
+          window.clearTimeout(this.barrelTargetShootTimeouts[index]);
+          this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
+            this.objects.barrelTargetShoots[index]!.visible = false;
+          }, 1000 / weapon.perSeconds);
+          playSound(await projectile.getSfx(), 0.3);
         }
       )
     );
-    this.subscription.add(
-      this.modules.weapon.observables.cooldown$.subscribe(({ index }) => {
-        this.objects.barrelTargetShoots[index]!.visible = false;
-      })
-    );
-    this.subscription.add(
-      this.modules.weapon.observables.active$.subscribe(v => {
-        if (!v) {
-          Object.values(this.objects.barrelTargetShoots).forEach(shoot => {
-            shoot.visible = false;
-          });
-        }
-      })
-    );
+    //#endregion
     return super.setup(context);
   }
 
@@ -278,101 +283,5 @@ export default class Turret_1 extends BuildingUnit<
         this.modules.weapon.updateSourcePosition(0);
       }
     }
-  }
-
-  autoAimFn(options: AutoAimFnOptions) {
-    const { target, sourcePosition, index, weapon } = options;
-    const shootModule = this.getMap()?.modules.shoot;
-    if (
-      shootModule &&
-      target &&
-      this.objects.head &&
-      this.objects.barrels[index]
-    ) {
-      const targetPosition = target.getPosition();
-      const delta = targetPosition.clone().sub(sourcePosition);
-      const horizontalDistance = Math.sqrt(delta.x ** 2 + delta.z ** 2);
-      const verticalDistance = delta.y;
-
-      // Gravitation und Geschwindigkeit
-      const g = Math.abs(shootModule.gravity.y);
-      const v = weapon.projectile.speed * (1 - shootModule.airResistance);
-      const rotation = this.getRotation();
-
-      // Prüfe, ob Schuss möglich
-      const discriminant =
-        v ** 4 -
-        g * (g * horizontalDistance ** 2 + 2 * verticalDistance * v ** 2);
-      if (discriminant < 0) {
-        const targetYaw = normalizeAngle(
-          Math.atan2(delta.x, delta.z) - rotation.y
-        );
-        const targetPitch = -Math.atan2(delta.y, horizontalDistance);
-
-        const isYawInRange =
-          !this.options.minAngle ||
-          (targetYaw >= this.options.minAngle.y &&
-            targetYaw <= this.options.maxAngle.y);
-        const isPitchInRange =
-          targetPitch >= this.options.minAngle.x &&
-          targetPitch <= this.options.maxAngle.x;
-
-        if (isYawInRange && isPitchInRange && horizontalDistance >= 0.96) {
-          this.state.weaponTargetRotation.set(targetYaw, targetPitch);
-          this.objects.head.rotation.y = lerp(
-            this.objects.head.rotation.y,
-            this.state.weaponTargetRotation.x,
-            this.options.rotationSpeed
-          );
-          this.objects.barrels[index].rotation.x = lerp(
-            this.objects.barrels[index].rotation.x,
-            this.state.weaponTargetRotation.y,
-            this.options.rotationSpeed
-          );
-          return true;
-        }
-
-        return false;
-      }
-
-      // Berechne Elevation (hoher Schuss für bessere Reichweite, wenn Ziel höher)
-      const sqrtDisc = Math.sqrt(discriminant);
-      let elevation = Math.atan((v ** 2 - sqrtDisc) / (g * horizontalDistance)); // - für niedrigen Schuss
-      elevation = -elevation; // Minus für Turret-System
-
-      // Horizontale Richtung (Yaw)
-      const horizontalDirection = new Vector3(delta.x, 0, delta.z).normalize();
-      const targetYaw = normalizeAngle(
-        Math.atan2(horizontalDirection.x, horizontalDirection.z) - rotation.y // NEU: Normalisiere die Differenz
-      );
-
-      // Prüfe Winkel-Bereiche
-      const isYawInRange =
-        !this.options.minAngle ||
-        (targetYaw >= this.options.minAngle.y &&
-          targetYaw <= this.options.maxAngle.y);
-      const isPitchInRange =
-        elevation >= this.options.minAngle.x &&
-        elevation <= this.options.maxAngle.x;
-
-      if (isYawInRange && isPitchInRange && horizontalDistance >= 0.96) {
-        this.state.weaponTargetRotation.set(targetYaw, elevation);
-
-        // Interpolation zur Ziel-Rotation
-        this.objects.head.rotation.y = lerp(
-          this.objects.head.rotation.y,
-          this.state.weaponTargetRotation.x,
-          this.options.rotationSpeed
-        );
-        this.objects.barrels[index].rotation.x = lerp(
-          this.objects.barrels[index].rotation.x,
-          this.state.weaponTargetRotation.y,
-          this.options.rotationSpeed
-        );
-
-        return true;
-      }
-    }
-    return false;
   }
 }

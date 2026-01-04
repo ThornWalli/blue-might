@@ -14,6 +14,7 @@ import {
   Scene,
   Fog
 } from 'three';
+import type { RendererOptions } from '@blue-might/app/types';
 
 import IntersectionRendererModule from './rendererModule/Intersection';
 import DebugRendererModule from './rendererModule/Debug';
@@ -73,11 +74,14 @@ export default class Renderer<
   private composer?: EffectComposer;
   private dimension: Vector2;
 
-  private pixelated: boolean;
-
   modules: Modules;
 
-  private _debug: boolean;
+  private options: {
+    fog: boolean;
+    pixelated: boolean;
+    controls: boolean;
+    debug: boolean;
+  };
   private canvas: HTMLCanvasElement;
 
   private subscription = new Subscription();
@@ -87,6 +91,7 @@ export default class Renderer<
     canvas: HTMLCanvasElement,
     dimension: Vector2,
     options: {
+      fog?: boolean;
       pixelated?: boolean;
       controls?: boolean;
       debug?: boolean;
@@ -98,6 +103,13 @@ export default class Renderer<
       ControlsRendererModule,
       IntersectionRendererModule
     );
+
+    this.options = {
+      fog: options.fog ?? true,
+      pixelated: options.pixelated ?? false,
+      controls: options.controls ?? false,
+      debug: options.debug ?? false
+    };
 
     if (this.debug) {
       modules.push(DebugRendererModule);
@@ -115,8 +127,6 @@ export default class Renderer<
 
     this.canvas = canvas;
     this.dimension = dimension;
-    this._debug = options.debug ?? false;
-    this.pixelated = options.pixelated ?? false;
 
     //#region Modules
     const preparedModules = modules
@@ -136,10 +146,10 @@ export default class Renderer<
     canvas.width = dimension.x;
     canvas.height = dimension.y;
 
-    const renderer = createRenderer(canvas, dimension, {
-      pixelated: this.pixelated
-    });
+    const renderer = createRenderer(canvas, dimension);
     this.renderer = renderer;
+
+    this.setupScene();
 
     //#region Modules
     await Promise.all(
@@ -147,7 +157,7 @@ export default class Renderer<
     );
     //#endregion
 
-    this.setupScene();
+    this.setOptions(this.options);
 
     this.composer = createComposer(
       renderer,
@@ -221,28 +231,13 @@ export default class Renderer<
       color
     }: {
       color: Color;
-      fogDistance: number;
     } = {
-      color: new Color(0x000000),
-      fogDistance: 30
+      color: new Color(0x000000)
     }
   ) {
     const scene = new Scene();
-
-    //#region setup for fog
-    scene.background = color;
-    scene.fog = new Fog(color, 30, 30.001);
-
-    const mainCamera = this.modules.camera.getCamera<PerspectiveCamera>();
-    if (mainCamera) {
-      mainCamera.far = 30;
-      mainCamera.updateProjectionMatrix();
-    } else {
-      throw new Error('Main camera not found');
-    }
-    //#endregion
-
     this.scene = scene;
+    scene.background = color;
   }
 
   getRenderer() {
@@ -252,8 +247,56 @@ export default class Renderer<
     return this.renderer;
   }
 
+  setFog(
+    value: boolean,
+    options: {
+      color: Color;
+      fogDistance: number;
+    } = {
+      color: new Color(0x000000),
+      fogDistance: 30
+    }
+  ) {
+    const scene = this.scene;
+    if (value) {
+      const color = options.color;
+      const fogDistance = options.fogDistance;
+      scene.background = color;
+      scene.fog = new Fog(
+        color,
+        options.fogDistance,
+        options.fogDistance + 0.001
+      );
+
+      const mainCamera = this.modules.camera.getCamera<PerspectiveCamera>();
+      if (mainCamera) {
+        mainCamera.far = fogDistance;
+        mainCamera.updateProjectionMatrix();
+      } else {
+        throw new Error('Main camera not found');
+      }
+    } else {
+      scene.fog = null;
+    }
+    this.options.fog = value;
+  }
+
   getPixelated() {
-    return this.pixelated;
+    return this.options.pixelated;
+  }
+
+  setPixelated(value: boolean) {
+    this.renderer?.setPixelRatio(value ? 640 / window.innerWidth : 1);
+    this.options.pixelated = value;
+  }
+
+  setOptions(options: Partial<RendererOptions>) {
+    if ('fog' in options) {
+      this.setFog(options.fog ?? false);
+    }
+    if ('pixelated' in options) {
+      this.setPixelated(options.pixelated ?? false);
+    }
   }
 
   getComposer() {
@@ -268,7 +311,7 @@ export default class Renderer<
   }
 
   get debug() {
-    return this._debug;
+    return this.options.debug;
   }
 
   get el() {
@@ -279,7 +322,7 @@ export default class Renderer<
 export function createRenderer(
   canvas: HTMLCanvasElement,
   dimension: Vector2,
-  options: { pixelated?: boolean } = {}
+  options: Pick<RendererOptions, 'pixelated'> = { pixelated: false }
 ) {
   const renderer = new WebGLRenderer({
     canvas,
@@ -291,13 +334,18 @@ export function createRenderer(
   renderer.outputColorSpace = SRGBColorSpace;
   renderer.toneMapping = NeutralToneMapping;
   renderer.toneMappingExposure = 1.0;
-  if (options.pixelated) {
-    renderer.setPixelRatio(640 / window.innerWidth);
-  }
   renderer.setSize(dimension.x, dimension.y);
+
+  if (options.pixelated) {
+    renderer.setPixelRatio(getPixelRationBase() / window.innerWidth);
+  }
   //#endregion
 
   return renderer;
+}
+
+function getPixelRationBase() {
+  return window.devicePixelRatio > 1 ? 640 : 320;
 }
 
 export function createComposer(

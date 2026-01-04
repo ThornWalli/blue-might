@@ -1,5 +1,6 @@
 /* eslint-disable complexity */
 import { ReplaySubject, Subscription } from 'rxjs';
+import type { Object3D } from 'three';
 import {
   Mesh,
   MeshLambertMaterial,
@@ -15,7 +16,7 @@ import UnitModule, {
 } from '../UnitModule';
 import type AirVehicleUnit from '../unit/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
-import type VehicleUnit from '../unit/Vehicle';
+import VehicleUnit from '../unit/Vehicle';
 import type Unit from '../Unit';
 import { disposeObject3D } from '../../utils/object';
 
@@ -39,6 +40,9 @@ export interface SupplyUnitModuleObservables extends UnitModuleObservables {
 export interface SupplyUnitModuleOptions extends UnitModuleOptions {
   changeByDistance: boolean;
   radius: number;
+  sphereTarget: {
+    name: string;
+  };
 }
 export interface SupplyUnitModuleState extends UnitModuleState {
   /**
@@ -57,6 +61,13 @@ export default class SupplyUnitModule extends UnitModule<
   static override TYPE = 'supply';
   private sphere: Sphere;
   private debugSphere: Mesh | null = null;
+  private supply = {
+    speed: 0.1,
+    progress: 0,
+    fuelConsumptionRatio: 0.1,
+    weaponSpeed: 1
+  };
+  private lastUpdateTime = 0;
 
   constructor(
     unit: VehicleUnit,
@@ -95,12 +106,24 @@ export default class SupplyUnitModule extends UnitModule<
     super.destroy();
   }
 
-  override async setup() {
-    await super.setup();
+  override async afterSetup() {
+    await super.afterSetup();
+    let sphereTargetObj: Object3D | undefined;
+
+    if (this.options.sphereTarget) {
+      this.getUnit().root.updateMatrixWorld(true);
+      sphereTargetObj = this.getUnit().root.getObjectByName(
+        this.options.sphereTarget.name
+      );
+    }
     this.subscription.add(
       this.getUnit().observables.position$.subscribe(position => {
-        this.sphere.center.copy(position);
-        this.debugSphere?.position.copy(position);
+        sphereTargetObj?.updateMatrixWorld(true);
+
+        const worldPos =
+          sphereTargetObj?.getWorldPosition(new Vector3()) ?? position;
+        this.sphere.center.copy(worldPos);
+        this.debugSphere?.position.copy(worldPos);
       })
     );
 
@@ -109,31 +132,22 @@ export default class SupplyUnitModule extends UnitModule<
     }
   }
 
-  private supply = {
-    speed: 0.1,
-    progress: 0,
-    fuelValue: 0.1,
-    weaponSpeed: 1
-  };
-
-  lastUpdateTime = 0;
-
   override update({ time }: AnimationLoopValue): void {
     //#region  supply
     if (this.state.unit) {
       const unit = this.state.unit;
       const weaponModule = unit.getModuleByType(WeaponUnitModule);
+      const movableModule = unit.modules.movable;
       if (this.supply.progress >= 1) {
         weaponModule.getSlots().forEach(slot => {
           if (slot.ammunition < slot.maxAmmunition) {
             slot.ammunition += Math.ceil(this.supply.weaponSpeed);
           }
         });
-        if (
-          unit.modules.movable.getFuel() < unit.modules.movable.getMaxFuel()
-        ) {
-          unit.modules.movable.setFuel(
-            unit.modules.movable.getFuel() + this.supply.fuelValue
+        if (movableModule.getFuel() < movableModule.getMaxFuel()) {
+          movableModule.setFuel(
+            movableModule.getFuel() +
+              movableModule.getMaxFuel() * this.supply.fuelConsumptionRatio
           );
         }
         this.supply.progress = 0;
@@ -151,21 +165,28 @@ export default class SupplyUnitModule extends UnitModule<
       return;
     }
     const unit = this.getUnit();
-    const unitsInRadius =
+    const unitsInRadius = (
       unit
         .getMap()
         ?.modules.units.chunkManager.getUnitsInRadius(
-          unit.getPosition(),
+          this.sphere.center,
           this.options.radius
-        ) ?? [];
+        ) ?? []
+    ).filter(u => u !== unit && u instanceof VehicleUnit) as VehicleUnit[];
 
-    const intersectingUnits: Unit[] = [];
+    const intersectingUnits: VehicleUnit[] = [];
     for (const targetUnit of unitsInRadius) {
-      if (targetUnit === unit) continue;
       const intersected = this.intersect(targetUnit);
       if (intersected) {
         intersectingUnits.push(intersected);
+        break;
       }
+    }
+
+    if (this.state.unit && !intersectingUnits.includes(this.state.unit)) {
+      this.setSupplyUnit(null);
+    } else if (intersectingUnits[0]) {
+      this.setSupplyUnit(intersectingUnits[0]);
     }
 
     //#region debug
@@ -185,6 +206,7 @@ export default class SupplyUnitModule extends UnitModule<
   }
 
   setSupplyUnit(unit: VehicleUnit | null) {
+    if (unit === this.state.unit) return;
     this.state.unit = unit;
     this.observables.unit$.next(unit);
   }
@@ -198,7 +220,7 @@ export default class SupplyUnitModule extends UnitModule<
     this.getUnit().getMap()?.app.getScene().add(this.debugSphere);
   }
 
-  private intersect(unit: Unit) {
+  private intersect(unit: VehicleUnit) {
     const collisionModule = unit.modules.collision;
     if (collisionModule) {
       // Hole die Welt-Bounding Box der Ziel-Unit
@@ -217,7 +239,7 @@ export default class SupplyUnitModule extends UnitModule<
     }
   }
 
-  private setTarget(target?: Unit | null) {
+  private setTarget(target?: VehicleUnit | null) {
     this.state.target = target ?? null;
     if (target) {
       const unitSubscription = new Subscription();

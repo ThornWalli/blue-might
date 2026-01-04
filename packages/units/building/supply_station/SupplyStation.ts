@@ -44,8 +44,7 @@ export default class SupplyStation extends BuildingUnit {
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targetName: 'base',
-            targetChilds: true
+            targets: [{ name: 'additional_1', useChilds: false }]
           }
         }
       },

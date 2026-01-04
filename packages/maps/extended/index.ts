@@ -12,7 +12,8 @@ import {
   CombatTank_1,
   House_1,
   LandingPortSupplyStation,
-  SupplyStation
+  SupplyStation,
+  CombatShip_1
 } from '@blue-might/units';
 import { weapons } from '@blue-might/weapon';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
@@ -63,7 +64,7 @@ export default function (): MapDescription {
       new LandingPortSupplyStation({
         position: new Vector3(39.5, 0, -26.5),
         moduleDebug: {
-          collision: false
+          collision: true
         },
         moduleStates: {
           faction: {
@@ -232,7 +233,157 @@ export default function (): MapDescription {
       new House_1({
         position: new Vector3(38.5, 0, -20.17),
         rotation: new Euler(0, Math.PI / 2, 0)
+      }),
+
+      new CombatShip_1({
+        debug: false,
+        id: 'combat-ship-1',
+        position: new Vector3(15.61, 0, -29.73),
+        moduleOptions: {
+          attack: {
+            followTarget: true
+          },
+          patrol: {
+            path: [
+              [15.61, -29.73],
+              [24.82, -30.45],
+              [15.97, -42.65],
+              [30.33, -51.45],
+              [46.35, -50.18],
+              [54.55, -35.34],
+              [55.83, -20.47],
+              [48.81, -10.18],
+              [39.07, -2.54],
+              [25.56, -2.82],
+              [15.32, -9.53],
+              [12.87, -19.34]
+            ]
+          }
+        },
+        moduleStates: {
+          weapon: {
+            autoAimActive: true
+          },
+          movable: {
+            active: true
+          },
+          faction: {
+            faction: enemyFaction
+          },
+          patrol: {
+            active: true
+          }
+        }
+      }),
+      new CombatShip_1({
+        debug: false,
+        id: 'combat-ship-1',
+        position: new Vector3(30.33, 0, -51.45),
+        moduleOptions: {
+          attack: {
+            followTarget: true
+          },
+          patrol: {
+            path: reversePath([
+              [46.35, -50.18],
+              [54.55, -35.34],
+              [55.83, -20.47],
+              [48.81, -10.18],
+              [39.07, -2.54],
+              [25.56, -2.82],
+              [15.32, -9.53],
+              [12.87, -19.34],
+              [15.61, -29.73],
+              [24.82, -30.45],
+              [15.97, -42.65],
+              [30.33, -51.45]
+            ]) as [number, number][]
+          }
+        },
+        moduleStates: {
+          weapon: {
+            autoAimActive: true
+          },
+          movable: {
+            active: true
+          },
+          faction: {
+            faction: enemyFaction
+          },
+          patrol: {
+            active: true
+          }
+        }
+      }),
+      new CombatShip_1({
+        debug: false,
+        id: 'combat-ship-1',
+        position: new Vector3(55.83, 0, -20.47),
+        moduleOptions: {
+          attack: {
+            followTarget: true
+          },
+          patrol: {
+            path: [
+              [55.83, -20.47],
+              [48.81, -10.18],
+              [39.07, -2.54],
+              [25.56, -2.82],
+              [15.32, -9.53],
+              [12.87, -19.34],
+              [15.61, -29.73],
+              [24.82, -30.45],
+              [15.97, -42.65],
+              [30.33, -51.45],
+              [46.35, -50.18],
+              [54.55, -35.34]
+            ]
+          }
+        },
+        moduleStates: {
+          weapon: {
+            autoAimActive: true
+          },
+          movable: {
+            active: true
+          },
+          faction: {
+            faction: enemyFaction
+          },
+          patrol: {
+            active: true
+          }
+        }
       })
+
+      // new CombatShip_1({
+      //   debug: false,
+      //   id: 'combat-ship-1',
+      //   position: new Vector3(55.83, 0, -20.47),
+      //   moduleDebug: {
+      //     pathfinding: true
+      //   },
+      //   moduleOptions: {
+      //     attack: {
+      //       followTarget: true
+      //     }
+      //   },
+      //   moduleStates: {
+      //     weapon: {
+      //       autoAimActive: false
+      //     },
+      //     movable: {
+      //       active: true
+      //     },
+      //     faction: {
+      //       faction: blueFaction
+      //     }
+      //   }
+      // })
     ]
   };
+}
+
+function reversePath(path: number[][]): number[][] {
+  return path.slice().reverse();
 }

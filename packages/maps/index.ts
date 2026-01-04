@@ -1,3 +1,4 @@
 export { default as defaultMap } from './default';
 export { default as extendedMap } from './extended';
-export { default as debugMap } from './debug';
+export { default as debugGroundMap } from './debugGround';
+export { default as debugSeaMap } from './debugSea';

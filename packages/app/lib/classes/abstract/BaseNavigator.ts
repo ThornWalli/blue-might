@@ -16,7 +16,12 @@ import { Subscription } from 'rxjs';
 import type Map from '../Map';
 import Grid, { type GridNode } from '../pathfinding/Grid';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
-import { TILE_TYPE, TILE_COSTS, TILE_INDEX } from '../../utils/pathfinding';
+import {
+  TILE_TYPE,
+  TILE_INDEX,
+  getTileCosts,
+  type TileCostsType
+} from '../../utils/pathfinding';
 import { COLLISION_TYPE } from '../unitModule/Collision';
 
 export default abstract class BaseNavigator {
@@ -34,11 +39,16 @@ export default abstract class BaseNavigator {
   protected useSphere: boolean;
   protected sphere = new Sphere(undefined, 1 / 2);
   protected box = new Box3();
-
+  private tileCostsType: TileCostsType = 'ground';
   constructor(
     map: Map,
     colliders: Object3D[],
-    options: { gridSize: number; size: Vector2; sphere: boolean },
+    options: {
+      tileCostsType?: TileCostsType;
+      gridSize: number;
+      size: Vector2;
+      sphere: boolean;
+    },
     debug = false
   ) {
     this.size = options.size ?? new Vector2(32, 32);
@@ -49,6 +59,8 @@ export default abstract class BaseNavigator {
 
     this.gridSize = options.gridSize ?? 2;
     this.useSphere = options.sphere ?? false;
+
+    this.tileCostsType = options.tileCostsType ?? 'ground';
   }
 
   setup() {
@@ -62,7 +74,10 @@ export default abstract class BaseNavigator {
             return TILE_TYPE.SOFT;
           }
           const tileType = this.getTileTypeAtNode(node);
-          return tileType ?? TILE_TYPE.GRASS;
+          if (!tileType) {
+            throw new Error('Tile type not found');
+          }
+          return tileType;
         } else {
           return TILE_TYPE.BLOCKED;
         }
@@ -256,7 +271,7 @@ export default abstract class BaseNavigator {
       };
 
       const paths = await new Promise<{ x: number; y: number }[]>(resolve => {
-        const easystar = createEasyStarInstance();
+        const easystar = createEasyStarInstance(this.tileCostsType);
         easystar.setGrid(this.grid.toMatrix());
         easystar.findPath(s.x, s.y, e.x, e.y, path => resolve(path || []));
         easystar.calculate();
@@ -420,7 +435,7 @@ export default abstract class BaseNavigator {
   //#endregion
 }
 
-function createEasyStarInstance() {
+function createEasyStarInstance(tileCostType: TileCostsType) {
   const easystar = new EasyStar.js();
   easystar.enableDiagonals();
   easystar.enableCornerCutting();
@@ -430,12 +445,12 @@ function createEasyStarInstance() {
   easystar.setAcceptableTiles(validTypes);
 
   validTypes.forEach(tileType => {
-    easystar.setTileCost(tileType, getTileCost(tileType));
+    easystar.setTileCost(tileType, getTileCost(tileCostType, tileType));
   });
 
   return easystar;
 }
 
-export function getTileCost(type: TILE_TYPE) {
-  return TILE_COSTS[type] as number;
+export function getTileCost(tileCostType: TileCostsType, tileType: TILE_TYPE) {
+  return getTileCosts(tileCostType)[tileType] as number;
 }

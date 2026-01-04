@@ -16,6 +16,10 @@ import UnitModule, {
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D } from '../../utils/object';
+import { isUnitDestroyed } from '../../utils/unit';
+
+import PatrolUnitModule from './Patrol';
+import WeaponUnitModule from './Weapon';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -34,12 +38,17 @@ export interface AttackUnitModuleObservables extends UnitModuleObservables {
 }
 
 export interface AttackUnitModuleOptions extends UnitModuleOptions {
+  /**
+   * The radius of the attack range. Defaults to 4.
+   */
+  radius: number;
   changeByDistance: boolean;
+  followTarget: boolean;
 }
 
 export interface AttackUnitModuleState extends UnitModuleState {
-  radius: number;
   target: Unit | null;
+  followStartPosition: Vector3 | null;
 }
 
 export default class AttackUnitModule extends UnitModule<
@@ -51,6 +60,9 @@ export default class AttackUnitModule extends UnitModule<
 
   private sphere: Sphere;
   private debugSphere: Mesh | null = null;
+  setFollowTarget(enabled: boolean) {
+    this.options.followTarget = enabled;
+  }
 
   constructor(
     unit: Unit,
@@ -58,20 +70,38 @@ export default class AttackUnitModule extends UnitModule<
     state: AttackUnitModuleState,
     debug: boolean
   ) {
-    super(unit, options, { ...state, radius: state.radius ?? 4 }, debug);
+    super(
+      unit,
+      {
+        ...options,
+        radius: options.radius ?? 6,
+        followTarget: options.followTarget ?? false
+      },
+      { ...state, followStartPosition: null },
+      debug
+    );
 
     //#region observables
     this.observables.target$ = new ReplaySubject<Unit | null>(1);
     this.observables.target$.next(null);
     //#endregion
 
-    this.sphere = new Sphere(new Vector3(), this.state.radius);
+    this.sphere = new Sphere(new Vector3(), this.options.radius);
   }
 
   override async setup() {
     await super.setup();
+
+    const unit = this.getUnit();
     this.subscription.add(
-      this.getUnit().observables.position$.subscribe(position => {
+      unit.modules.damage.observables.destroyed$.subscribe(() => {
+        this.unitSubscription?.unsubscribe();
+        this.subscription.remove(this.unitSubscription!);
+        this.unitSubscription = null;
+      })
+    );
+    this.subscription.add(
+      unit.observables.position$.subscribe(position => {
         this.sphere.center.copy(position);
         this.debugSphere?.position.copy(position);
       })
@@ -94,43 +124,95 @@ export default class AttackUnitModule extends UnitModule<
 
   lastUpdateTime = 0;
   override update({ time }: AnimationLoopValue): void {
+    const unit = this.getUnit();
+    if (
+      isUnitDestroyed(unit) ||
+      !unit.getModuleByType(WeaponUnitModule).isAutoAimActive()
+    ) {
+      return;
+    }
     if ((time - this.lastUpdateTime) / 1000 < 2 / 3) {
       return;
     }
     this.lastUpdateTime = time;
 
     // Wenn bereits ein Ziel vorhanden und die Option "changeByDistance" deaktiviert ist wird nicht automatisch ein neues Ziel gesucht.
-    if (!this.options.changeByDistance && this.state.target) {
-      return;
+    if (this.options.changeByDistance || !this.state.target) {
+      const unitsInRadius = (
+        unit
+          .getMap()
+          ?.modules.units.chunkManager.getUnitsInRadius(
+            unit.getPosition(),
+            this.options.radius
+          ) ?? []
+      ).filter(u => !isUnitDestroyed(u));
+
+      const intersectingUnits: Unit[] = [];
+      for (const targetUnit of unitsInRadius) {
+        if (targetUnit === unit) continue;
+        if (!this.isAttackAllowed(targetUnit)) {
+          continue;
+        }
+        const intersected = this.intersect(targetUnit);
+        if (intersected) {
+          intersectingUnits.push(intersected);
+        }
+      }
+
+      (this.debugSphere?.material as MeshLambertMaterial)?.color.set(0x00ff00);
+      if (intersectingUnits.length) {
+        if (this.state.target !== intersectingUnits[0]) {
+          this.setTarget(intersectingUnits[0]);
+        }
+        (this.debugSphere?.material as MeshLambertMaterial)?.color.set(
+          0xff0000
+        );
+      }
     }
 
-    const unit = this.getUnit();
-    const unitsInRadius =
-      unit
-        .getMap()
-        ?.modules.units.chunkManager.getUnitsInRadius(
-          unit.getPosition(),
-          this.state.radius
-        ) ?? [];
+    if (this.options.followTarget && this.state.target) {
+      const pathfinding = unit.modules.pathfinding;
+      const attackRadius = (this.options.radius * 3) / 4; // this.options.radius ?? 10; // Angriffsreichweite
 
-    const intersectingUnits: Unit[] = [];
-    for (const targetUnit of unitsInRadius) {
-      if (targetUnit === unit) continue;
-      if (!this.isAttackAllowed(targetUnit)) {
-        continue;
+      const patrolModule = unit.getModuleByType(PatrolUnitModule);
+      if (patrolModule) {
+        patrolModule.pausePatrol();
+        this.state.followStartPosition = null;
       }
-      const intersected = this.intersect(targetUnit);
-      if (intersected) {
-        intersectingUnits.push(intersected);
-      }
-    }
 
-    (this.debugSphere?.material as MeshLambertMaterial)?.color.set(0x00ff00);
-    if (intersectingUnits.length) {
-      if (this.state.target !== intersectingUnits[0]) {
-        this.setTarget(intersectingUnits[0]);
+      this.state.followStartPosition =
+        this.state.followStartPosition || unit.getPosition().clone();
+
+      // Berechne Distanz zum Ziel
+      const distance = unit
+        .getPosition()
+        .distanceTo(this.state.target.getPosition());
+
+      if (
+        (!this.isTargetOuterRange() || distance > attackRadius * 1.25) &&
+        !pathfinding.isMoving()
+      ) {
+        // Zielposition: Auf der Linie zum Ziel, in attackRadius Entfernung
+        const direction = new Vector3()
+          .subVectors(this.state.target.getPosition(), unit.getPosition())
+          .normalize();
+        const targetPosition = this.state.target
+          .getPosition()
+          .clone()
+          .sub(direction.multiplyScalar(attackRadius * 0.25));
+
+        // Für Boote: Stelle sicher, dass targetPosition auf Sea Level ist
+        // if (unit.hasModuleType(SeaVehicleUnitModule)) {
+        //   const seaLevel = unit.getMap()?.modules.ground.getSeaLevel() ?? 0;
+        //   targetPosition.y = seaLevel;
+        // }
+
+        // Starte Bewegung
+
+        console.log('Starting movement to:', this.state.followStartPosition);
+
+        pathfinding.move(targetPosition);
       }
-      (this.debugSphere?.material as MeshLambertMaterial)?.color.set(0xff0000);
     }
   }
 
@@ -147,31 +229,68 @@ export default class AttackUnitModule extends UnitModule<
       const distance = this.getUnit()
         .getPosition()
         .distanceTo(unit.getPosition());
-      if (distance <= this.state.radius) {
+      if (distance <= this.options.radius) {
         return unit;
       }
     }
   }
 
+  isTargetOuterRange() {
+    if (!this.state.target || !this.state.followStartPosition) return false;
+    const distance = this.state.followStartPosition.distanceTo(
+      this.state.target.getPosition()
+    );
+    console.log(distance);
+    return distance > 6;
+  }
+
+  private unitSubscription: Subscription | null = null;
   private setTarget(target?: Unit | null) {
+    const unit = this.getUnit();
     this.state.target = target ?? null;
     if (target) {
-      const unitSubscription = new Subscription();
-      unitSubscription.add(
+      this.unitSubscription?.unsubscribe();
+      this.unitSubscription = new Subscription();
+      this.unitSubscription.add(
         target.observables.position$.subscribe(() => {
-          if (!this.intersect(target)) {
+          const outerDistance = this.isTargetOuterRange();
+          if (outerDistance) {
+            console.log('outer distance', this.state.followStartPosition);
+          }
+          if (
+            outerDistance ||
+            (!this.state.target && !this.intersect(target))
+          ) {
             this.setTarget(undefined);
-            unitSubscription?.unsubscribe();
+            this.unitSubscription?.unsubscribe();
+
+            this.subscription.remove(this.unitSubscription!);
+            if (outerDistance && this.state.followStartPosition) {
+              unit.modules.pathfinding.abortMovement().then(async () => {
+                await unit.modules.pathfinding.move(
+                  this.state.followStartPosition!
+                );
+                this.state.followStartPosition = null;
+                const patrolModule = unit.getModuleByType(PatrolUnitModule);
+                if (patrolModule) {
+                  patrolModule.resumePatrol();
+                }
+              });
+            }
           }
         })
       );
-      unitSubscription.add(
+      this.unitSubscription.add(
         target.modules.damage.observables.destroyed$.subscribe(() => {
           this.setTarget(undefined);
-          unitSubscription?.unsubscribe();
+          this.unitSubscription?.unsubscribe();
+          this.subscription.remove(this.unitSubscription!);
         })
       );
-      this.subscription.add(unitSubscription);
+
+      this.subscription.add(this.unitSubscription);
+    } else {
+      this.state.followStartPosition = null;
     }
     this.observables.target$.next(this.state.target);
     console.log('New attack target:', target);

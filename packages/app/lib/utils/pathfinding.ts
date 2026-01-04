@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 import type { Object3D, Vector3, Texture } from 'three';
 import { Raycaster, Vector2 } from 'three';
 
@@ -19,15 +20,27 @@ export const TILE_INDEX: { [key: number]: TILE_TYPE } = {
   [TILE_TYPE.GRASS]: TILE_TYPE.GRASS,
   [TILE_TYPE.WATER]: TILE_TYPE.WATER
 };
-
-export const TILE_COSTS: { [key: number]: number } = {
-  [TILE_TYPE.BLOCKED]: Infinity, // Hohe Kosten für blockierte Zellen
+const TILE_COSTS_GROUND: { [key: number]: number } = {
+  [TILE_TYPE.BLOCKED]: Infinity,
   [TILE_TYPE.SOFT]: 9999,
   [TILE_TYPE.GRASS]: 1000,
   [TILE_TYPE.DRY_ROAD]: 200,
   [TILE_TYPE.BETON_ROAD]: 50,
-  [TILE_TYPE.WATER]: 2000 // Beispiel: Wasser hat höhere Kosten
+  [TILE_TYPE.WATER]: 2000
 };
+const TILE_COSTS_SEA: { [key: number]: number } = {
+  [TILE_TYPE.BLOCKED]: Infinity,
+  [TILE_TYPE.SOFT]: Infinity,
+  [TILE_TYPE.GRASS]: Infinity,
+  [TILE_TYPE.DRY_ROAD]: Infinity,
+  [TILE_TYPE.BETON_ROAD]: Infinity,
+  [TILE_TYPE.WATER]: 50
+};
+
+export type TileCostsType = 'ground' | 'sea';
+export function getTileCosts(type: TileCostsType = 'ground') {
+  return type === 'ground' ? TILE_COSTS_GROUND : TILE_COSTS_SEA;
+}
 
 export function lineOfSight(a: Vector3, b: Vector3, colliders: Object3D[]) {
   const dir = b.clone().sub(a).normalize();
@@ -46,9 +59,11 @@ export function getCostsFromImage(
     b: number,
     a: number
   ) => TILE_TYPE | undefined,
-  size: Vector2 = new Vector2(64, 64)
+  size: Vector2 = new Vector2(64, 64),
+  cellSize = 3,
+  existsTileMap: (TILE_TYPE | undefined)[][] = []
 ) {
-  size = size.clone().divideScalar(1 / 3); // Grid Size 3 Cells
+  size = size.clone().divideScalar(1 / cellSize); // Grid Size 3 Cells
 
   let canvas: HTMLCanvasElement | OffscreenCanvas =
     document.createElement('canvas');
@@ -61,8 +76,8 @@ export function getCostsFromImage(
   canvas = resizeCanvas(canvas, size.x);
   ctx = canvas.getContext('2d')!;
 
-  const test: (number | undefined)[][] = [];
   const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+  const tileMap: (TILE_TYPE | undefined)[][] = [];
 
   const y_ = canvas.height;
   const x_ = canvas.width;
@@ -77,11 +92,11 @@ export function getCostsFromImage(
       const b = data[index + 2] ?? 0;
       const a = data[index + 3] ?? 0;
 
-      if (!test[y]) test[y] = [];
+      if (!tileMap[y]) tileMap[y] = existsTileMap[y] ?? [];
 
-      test[y]![x] = tileTypeByColor(r, g, b, a);
+      tileMap[y]![x] = tileTypeByColor(r, g, b, a) ?? existsTileMap[y]?.[x];
     }
   }
 
-  return test;
+  return tileMap;
 }

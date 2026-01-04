@@ -37,10 +37,17 @@ export default class LandingPortSupplyStation extends LandingPortUnit<
         name: 'Landing Port Supply Station',
         moduleOptions: {
           ...options.moduleOptions,
+          supply: {
+            ...options.moduleOptions?.supply,
+            radius: 0.5
+          },
           collision: {
             ...options.moduleOptions?.collision,
-            targetName: 'base',
-            targetChilds: true
+            targets: [
+              { name: 'base' },
+              { name: 'additional_1', useChilds: false },
+              { name: 'additional_2', useChilds: false }
+            ]
           }
         }
       },
@@ -51,11 +58,11 @@ export default class LandingPortSupplyStation extends LandingPortUnit<
   override async afterSetup(_context: SetupContext): Promise<void> {
     await super.afterSetup(_context);
 
-    this.subscription.add(
-      this.modules.landingPort.observables.landedUnit.subscribe(unit =>
-        this.modules.supply.setSupplyUnit(unit)
-      )
-    );
+    // this.subscription.add(
+    //   this.modules.landingPort.observables.landedUnit.subscribe(unit =>
+    //     this.modules.supply.setSupplyUnit(unit)
+    //   )
+    // );
 
     this.setMaterialReady();
   }
