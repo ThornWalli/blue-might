@@ -35,6 +35,11 @@ export default class ControlTower_1<
 
   override async afterSetup(_context: SetupContext) {
     await super.afterSetup(_context);
+
+    this.setMaterialReady();
+
+    //#region Animation
+
     const action = this.modules.animation.getAction('radar');
     if (action) {
       action.clampWhenFinished = false;
@@ -42,7 +47,6 @@ export default class ControlTower_1<
       action.setDuration(2);
     }
 
-    this.setMaterialReady();
     this.modules.animation.playAction('radar');
 
     this.subscription.add(
@@ -50,6 +54,8 @@ export default class ControlTower_1<
         this.modules.animation.stopAction('radar');
       })
     );
+
+    //#endregion
   }
 
   override async createMesh(_context: SetupContext) {

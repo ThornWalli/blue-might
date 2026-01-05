@@ -1,32 +1,32 @@
-import { Mesh, SkinnedMesh } from 'three';
+import { LoopRepeat, Mesh, SkinnedMesh } from 'three';
 import type {
   SetupContext,
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
-import LandingPortUnit, {
-  type LandingPortUnitModuleList,
-  type LandingPortUnitModules,
-  type LandingPortUnitOptions
-} from '@blue-might/app/lib/classes/unit/LandingPort';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { replaceColors } from '@blue-might/app/lib/utils/object';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
+import BuildingUnit, {
+  type BuildingUnitModuleList,
+  type BuildingUnitModules,
+  type BuildingUnitOptions
+} from '@blue-might/app/lib/classes/unit/Building';
 
-import baseGlb from './assets/sea_landing_port_supply_station.glb?url';
+import baseGlb from './assets/sea_supply_station.glb?url';
 
-export type Options = LandingPortUnitOptions;
-export interface Modules extends LandingPortUnitModules {
+export type Options = BuildingUnitOptions;
+export interface Modules extends BuildingUnitModules {
   supply: SupplyUnitModule;
 }
-export type ModuleList = LandingPortUnitModuleList & [typeof SupplyUnitModule];
+export type ModuleList = BuildingUnitModuleList & [typeof SupplyUnitModule];
 
-export default class SeaLandingPortSupplyStation extends LandingPortUnit<
+export default class SeaSupplyStation extends BuildingUnit<
   Options,
   Modules,
   ModuleList
 > {
-  static override KEY = 'sea_landing_port_supply_station';
+  static override KEY = 'landing_port_supply_station';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []
@@ -35,31 +35,22 @@ export default class SeaLandingPortSupplyStation extends LandingPortUnit<
     super(
       {
         ...options,
-        name: 'Sea Landing Port Supply Station',
+        name: 'Landing Port Supply Station',
         moduleOptions: {
           ...options.moduleOptions,
-          damage: {
-            enabled: false
-          },
           supply: {
             ...options.moduleOptions?.supply,
-            radius: 0.5,
+            radius: 2,
             sphereTarget: {
-              name: 'base'
+              name: 'head'
             },
             allowedType: {
-              air: true
+              sea: true
             }
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targets: [
-              { name: 'base' },
-              { name: 'additional_1' },
-              { name: 'additional_2' },
-              { name: 'plattform' },
-              { name: 'stand' }
-            ]
+            targets: [{ name: 'base' }, { name: 'head' }]
           }
         }
       },
@@ -77,6 +68,25 @@ export default class SeaLandingPortSupplyStation extends LandingPortUnit<
     // );
 
     this.setMaterialReady();
+
+    //#region Animation
+
+    const action = this.modules.animation.getAction('radar');
+    if (action) {
+      action.clampWhenFinished = false;
+      action.setLoop(LoopRepeat, Infinity);
+      action.setDuration(2);
+    }
+
+    this.modules.animation.playAction('radar');
+
+    this.subscription.add(
+      this.modules.damage.observables.destroyed$.subscribe(() => {
+        this.modules.animation.stopAction('radar');
+      })
+    );
+
+    //#endregion
   }
 
   override async createMesh(_context: SetupContext) {
@@ -85,12 +95,10 @@ export default class SeaLandingPortSupplyStation extends LandingPortUnit<
     this.modules.animation.setAnimations(animations);
 
     setIgnorePathfinding(object.getObjectByName('base')!, true);
-    setIgnorePathfinding(object.getObjectByName('plattform')!, true);
 
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.receiveShadow = true;
-        child.castShadow = true;
         replaceColors(
           [
             [

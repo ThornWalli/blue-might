@@ -18,6 +18,7 @@ import FigureUnitModule from './movable/Figure';
 import HelicopterUnitModule from './movable/airVehicle/Helicopter';
 import GroundVehicleUnitModule from './movable/GroundVehicle';
 import SeaVehicleUnitModule from './movable/SeaVehicle';
+import type MovableUnitModule from './Movable';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -102,15 +103,47 @@ export default class PathfindingUnitModule extends UnitModule<
     return this.options.navigatorType;
   }
 
-  async move(targetPosition: Vector3) {
-    const unit = this.getUnit();
-    if (this.isGroundMovable()) {
-      return await this.moveGroundVehicle(unit, targetPosition);
-    } else if (this.isAirMovable()) {
-      return this.moveAirVehicle(unit, targetPosition);
-    } else if (this.isSeaMovable()) {
-      return this.moveSeaVehicle(unit, targetPosition); // NEU: Ähnliche Methode wie moveGroundVehicle
+  private pendingMove: {
+    target: Vector3;
+    resolve: (value: boolean) => void;
+  } | null = null;
+
+  async move(targetPosition: Vector3, force = false) {
+    if (this.isMoving() && !force) {
+      // Queue den Move, wenn bereits einer läuft (für Patrol/Attack-Integration)
+      return new Promise<boolean>(resolve => {
+        this.pendingMove = { target: targetPosition, resolve };
+      });
     }
+
+    // Abbrechen, wenn force=true (z.B. für Attack)
+    if (this.isMoving() && force) {
+      await this.abortMovement(true);
+    }
+
+    // Führe den Move aus (wie bisher)
+    const result = (await this.executeMove(targetPosition)) ?? false;
+
+    // Nach Move: Prüfe Pending
+    if (this.pendingMove) {
+      const { target, resolve } = this.pendingMove;
+      this.pendingMove = null;
+      resolve(await this.move(target, false)); // Rekursiv, aber ohne force
+    }
+
+    return result;
+  }
+
+  private async executeMove(targetPosition: Vector3) {
+    // Extrahiere gemeinsame Logik
+    if (this.isGroundMovable()) {
+      return await this.moveGroundVehicle(this.getUnit(), targetPosition);
+    } else if (this.isAirMovable()) {
+      return this.moveAirVehicle(this.getUnit(), targetPosition);
+    } else if (this.isSeaMovable()) {
+      return this.moveSeaVehicle(this.getUnit(), targetPosition);
+    }
+    return false;
   }
 
   override destroy() {
@@ -298,24 +331,25 @@ export default class PathfindingUnitModule extends UnitModule<
       const maxTurnFactor = 0.5;
 
       const turnFactor = Math.min(Math.abs(diff) / 1.0, maxTurnFactor);
-      const turnLeft = diff > yawDeadzone ? turnFactor : 0;
-      const turnRight = diff < -yawDeadzone ? turnFactor : 0;
+      let turnLeft = diff > yawDeadzone ? turnFactor : 0;
+      let turnRight = diff < -yawDeadzone ? turnFactor : 0;
 
-      // NEU: Wie Helicopter – erst drehen bei großen Winkeln, dann fahren
-      // NEU: Wie Helicopter – erst drehen bei großen Winkeln, dann fahren
-      const largeTurnThreshold = Math.PI / 8; // ~22.5 Grad
+      const largeTurnThreshold = Math.PI / 6; // Erhöht von /8 auf /6 (~30 Grad), um Kreisen zu reduzieren
       const isTurning = turnLeft > 0 || turnRight > 0;
       let goForward = 0;
 
+      // FIX: Kurskorrektur – Überprüfe, ob die Bewegung den Abstand verringert
+      const velocity = movableModule.getVelocity();
+      const dotProduct = velocity.dot(new Vector3(dx, 0, dz).normalize()); // Wie gut passt die Geschwindigkeit zur Zielrichtung?
+      const isMovingTowardsTarget = dotProduct > 0.5; // Schwellwert: Muss mindestens 50% in Richtung Ziel gehen
+
       if (Math.abs(diff) > largeTurnThreshold && isTurning) {
-        // NEU: Bei kleinen Distanzen nur drehen, ohne fahren (verhindert Kreisen)
         if (dist < 1.0) {
-          goForward = 0; // Nur drehen, kein Schub
+          goForward = 0; // Nur drehen bei kleinen Distanzen
         } else {
-          goForward = 0.1; // Leichter Schub für weitere Distanzen
+          goForward = 0.1; // Minimaler Schub
         }
       } else {
-        // Bremsen und Fahren wie beim Helicopter, aber vereinfacht
         const brakingDist = 2.0;
         if (dist > brakingDist) {
           goForward = 1.0;
@@ -325,8 +359,17 @@ export default class PathfindingUnitModule extends UnitModule<
         }
       }
 
+      // FIX: Wenn nicht in Richtung Ziel, erzwinge Korrektur (mehr drehen, weniger fahren)
+      if (!isMovingTowardsTarget && dist > stopDist) {
+        goForward *= 0.5; // Reduziere Schub, um Drehen zu priorisieren
+        // Optional: Erhöhe turnFactor leicht
+        const correctionFactor = 1.2;
+        turnLeft *= correctionFactor;
+        turnRight *= correctionFactor;
+      }
+
       if (isTurning && goForward > 0) {
-        const turnPenalty = 1.0 - Math.min(turnFactor, 1.0) * 0.5; // Weniger Strafe als Helicopter
+        const turnPenalty = 1.0 - Math.min(turnFactor, 1.0) * 0.5;
         goForward *= turnPenalty;
       }
 
@@ -336,7 +379,7 @@ export default class PathfindingUnitModule extends UnitModule<
         moveRight: turnRight
       });
 
-      // Hilfs-Schub, wenn stecken geblieben
+      // Hilfs-Schub bleibt
       const velLenSq = movableModule.getVelocity().lengthSq();
       if (velLenSq < 1e-6 && (goForward > 0 || turnLeft || turnRight)) {
         const forward = unit.getForwardXZFromYaw(new Vector3(0, 0, 0));
@@ -408,6 +451,20 @@ export default class PathfindingUnitModule extends UnitModule<
       this.lastTargetDistanceCounter = 0;
     }
     this.lastTargetDistance = horizontalDistance;
+    if (currentPath.length === 0) {
+      this.clearAutopilotAndComplete(movableModule);
+      // Pending Move starten
+      if (this.pendingMove) {
+        const { target, resolve } = this.pendingMove;
+        this.pendingMove = null;
+        this.move(target, false).then(v => resolve(v));
+      }
+    }
+  }
+
+  private clearAutopilotAndComplete(movableModule: MovableUnitModule) {
+    movableModule?.clearAutopilotControls();
+    this.setMoveComplete();
   }
 
   setMoveComplete() {
@@ -559,6 +616,11 @@ export default class PathfindingUnitModule extends UnitModule<
   }
 
   abortMovement(force?: boolean) {
+    this.pendingMove = null;
+    this.state.currentPath = force
+      ? null
+      : (this.state.currentPath?.slice(0, 1) ?? null);
+
     this.state.currentPath = force
       ? null
       : (this.state.currentPath?.slice(0, 1) ?? null);

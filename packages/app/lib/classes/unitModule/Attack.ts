@@ -152,6 +152,7 @@ export default class AttackUnitModule extends UnitModule<
       ).filter(u => !isUnitDestroyed(u));
 
       const intersectingUnits: Unit[] = [];
+
       for (const targetUnit of unitsInRadius) {
         if (targetUnit === unit) continue;
         if (!this.isAttackAllowed(targetUnit)) {
@@ -261,29 +262,43 @@ export default class AttackUnitModule extends UnitModule<
       this.unitSubscription = new Subscription();
       this.unitSubscription.add(
         target.observables.position$.subscribe(() => {
+          const stillInRange = this.intersect(target);
           const outerDistance = this.isTargetOuterRange();
-          if (outerDistance) {
-            console.log('outer distance', this.state.followStartPosition);
-          }
-          if (
-            outerDistance ||
-            (!this.state.target && !this.intersect(target))
-          ) {
+          if (outerDistance || !stillInRange) {
+            console.log('Target out of range or lost');
             this.setTarget(undefined);
             this.unitSubscription?.unsubscribe();
-
             this.subscription.remove(this.unitSubscription!);
-            if (outerDistance && this.state.followStartPosition) {
-              unit.modules.pathfinding.abortMovement().then(async () => {
-                await unit.modules.pathfinding.move(
-                  this.state.followStartPosition!
+            if (this.state.followStartPosition) {
+              const pathfinding = this.getUnit().modules.pathfinding;
+              pathfinding.abortMovement().then(async () => {
+                console.log(
+                  'Moving back to followStartPosition:',
+                  this.state.followStartPosition
                 );
-                this.state.followStartPosition = null;
-                const patrolModule = unit.modules.patrol;
-                if (patrolModule) {
-                  patrolModule.resumePatrol();
+                try {
+                  await pathfinding.move(this.state.followStartPosition!);
+                  console.log('Move back successful, resuming patrol');
+                  const patrolModule = unit.modules.patrol;
+                  if (patrolModule) {
+                    patrolModule.resumePatrol();
+                  }
+                  this.state.followStartPosition = null;
+                } catch (error) {
+                  console.error('Move back failed:', error);
+                  const patrolModule = unit.modules.patrol;
+                  if (patrolModule) {
+                    patrolModule.resumePatrol();
+                  }
+                  this.state.followStartPosition = null;
                 }
               });
+            } else {
+              console.warn('No followStartPosition, resuming patrol directly');
+              const patrolModule = unit.modules.patrol;
+              if (patrolModule) {
+                patrolModule.resumePatrol();
+              }
             }
           }
         })
@@ -298,7 +313,13 @@ export default class AttackUnitModule extends UnitModule<
 
       this.subscription.add(this.unitSubscription);
     } else {
+      console.log('Setting target to undefined, resuming patrol if paused');
       this.state.followStartPosition = null;
+      // FIX: Immer resume versuchen, wenn Target verloren
+      const patrolModule = unit.modules.patrol;
+      if (patrolModule) {
+        patrolModule.resumePatrol();
+      }
     }
     this.observables.target$.next(this.state.target);
     console.log('New attack target:', target);

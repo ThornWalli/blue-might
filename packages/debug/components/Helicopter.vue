@@ -40,17 +40,51 @@ const map: Partial<MapDescription> = {
         collision: false,
         supply: false
       },
-      position: new Vector3(0, 0, 0)
+      position: new Vector3(0, 0, 0),
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
+      }
     }),
+
     new CombatHelicopter_1({
+      position: new Vector3(9.83, 0, 11.5),
+      moduleDebug: {
+        attack: true
+      },
+      moduleOptions: {
+        attack: {
+          followTarget: true
+        },
+        patrol: {
+          path: [
+            [10.83, 11.5],
+            [-9.83, 10.17]
+          ]
+        }
+      },
+      moduleStates: {
+        weapon: {
+          autoAimActive: true
+        },
+        patrol: {
+          active: true
+        },
+        faction: {
+          faction: enemyFaction
+        }
+      }
+    }),
+
+    new CombatHelicopter_1({
+      id: playerUnitId,
       debug: false,
-      id: 'combat-helicopter-1',
       position: new Vector3(0, 0, 0),
       moduleDebug: {
         attack: false,
         pathfinding: false,
-        patrol: false,
-        weapon: false
+        patrol: false
       },
       moduleOptions: {
         patrol: {

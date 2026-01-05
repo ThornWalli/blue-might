@@ -17,6 +17,7 @@ import Tower_1 from './building/tower_1/Tower_1';
 import Factory_1 from './building/factory_1/Factory_1';
 import FactoryChimney_1 from './building/factory_chimney_1/FactoryChimney_1';
 import CombatShip_1 from './vehicle/combat_ship_1/CombatShip_1';
+import SeaSupplyStation from './building/sea_supply_station/SeaSupplyStation';
 
 export { default as ControlTower_1 } from './building/control_tower_1/ControlTower_1';
 export { default as Tank_1 } from './vehicle/tank_1/Tank_1';
@@ -36,6 +37,7 @@ export { default as Tower_1 } from './building/tower_1/Tower_1';
 export { default as Factory_1 } from './building/factory_1/Factory_1';
 export { default as FactoryChimney_1 } from './building/factory_chimney_1/FactoryChimney_1';
 export { default as CombatShip_1 } from './vehicle/combat_ship_1/CombatShip_1';
+export { default as SeaSupplyStation } from './building/sea_supply_station/SeaSupplyStation';
 
 const units = {
   [ControlTower_1.KEY]: ControlTower_1,
@@ -56,7 +58,8 @@ const units = {
   [Tower_1.KEY]: Tower_1,
   [Factory_1.KEY]: Factory_1,
   [FactoryChimney_1.KEY]: FactoryChimney_1,
-  [CombatShip_1.KEY]: CombatShip_1
+  [CombatShip_1.KEY]: CombatShip_1,
+  [SeaSupplyStation.KEY]: SeaSupplyStation
 };
 
 export { units };

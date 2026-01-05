@@ -157,7 +157,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     ]);
 
     if (this.debug) {
-      this.groundNavigationSmall.setupDebugGridObjects();
+      this.airNavigation.setupDebugGridObjects();
     }
 
     // this.groundNavigationSmall.getGrid().update();

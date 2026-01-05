@@ -121,6 +121,7 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
             maxFuel: 100
           },
           weapon: {
+            ...options.moduleOptions?.weapon,
             autoAimFn: (options: AutoAimFnOptions) =>
               autoAimFunction(
                 this.getMap()!.modules.shoot,
@@ -336,7 +337,8 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     if (controls[ControlAction.RIGHT]) {
       this.state.weaponVelocity.x -= 0.005;
     }
-    // if (this.modules.weapon.state.autoAimActive) return;
+
+    if (this.modules.weapon.isAutoAimActive()) return;
     this.modules.weapon.setActive(
       controls[ControlAction.FIRE_PRIMARY] ?? false
     );

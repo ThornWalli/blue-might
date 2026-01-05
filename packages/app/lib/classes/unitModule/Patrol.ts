@@ -111,31 +111,58 @@ export default class PatrolUnitModule extends UnitModule<
 
   async pausePatrol() {
     if (this.state.active) {
+      console.log('Pausing patrol at index:', this.currentIndex);
       this.state.active = false;
-      await this.getUnit().modules.pathfinding.abortMovement();
-      this.observables.pause$.next();
       this.pausedIndex = this.currentIndex;
       this.pausedPosition = this.getUnit().getPosition().clone();
+      this.observables.pause$.next();
+    } else {
+      console.log('Patrol already paused');
     }
   }
 
   resuming = false;
   resumePatrol() {
-    if (this.resuming) return;
-    if (this.hasPath()) {
-      if (this.pausedPosition && this.pausedIndex !== null && this.hasPath()) {
-        this.resuming = true;
-        const pathfinding = this.getUnit().modules.pathfinding;
-
-        pathfinding.move(this.pausedPosition).then(() => {
-          this.state.active = true;
-          this.patrolLoopFromIndex(this.pausedIndex!);
-          this.pausedIndex = null;
-          this.pausedPosition = null;
-          this.resuming = false;
-        });
-      }
+    if (this.resuming) {
+      console.log('Already resuming, skipping');
+      return;
     }
+    this.resuming = true;
+
+    if (!this.hasPath()) {
+      console.warn('No path for patrol, cannot resume');
+      this.resuming = false;
+      return;
+    }
+
+    this.state.active = true;
+
+    const currentPos = this.getUnit().getPosition();
+    const distToPaused = this.pausedPosition
+      ? currentPos.distanceTo(this.pausedPosition)
+      : 0;
+
+    if (this.pausedPosition && distToPaused > 5) {
+      this.currentIndex = this.pausedIndex!;
+      this.patrolLoopFromIndex(this.currentIndex);
+    } else {
+      const pathfinding = this.getUnit().modules.pathfinding;
+
+      pathfinding
+        .move(this.pausedPosition!)
+        .then(() => {
+          this.currentIndex = this.pausedIndex!;
+          this.patrolLoopFromIndex(this.currentIndex);
+        })
+        .catch(error => {
+          console.error('Failed to move to paused position:', error);
+
+          this.currentIndex = this.pausedIndex!;
+          this.patrolLoopFromIndex(this.currentIndex);
+        });
+    }
+    // FIX: Setze resuming = false erst am Ende
+    this.resuming = false;
   }
 
   private async patrolLoopFromIndex(startIndex: number) {
@@ -227,23 +254,27 @@ export default class PatrolUnitModule extends UnitModule<
     }
 
     try {
-      if (!(await pathfinding.move(point))) {
-        if (this.patrolFaileds > 0) {
-          this.patrolFaileds--;
-          console.log(
-            `Patrol failed, retrying... (${this.patrolFaileds} attempts left)`
-          );
-          window.setTimeout(() => {
-            this.patrolRecursive(worldPath, index, pathfinding);
-          }, 2500);
-        } else {
-          this.patrolFaileds = 3;
+      const success = await pathfinding.move(worldPath[index]!);
+      if (success) {
+        this.patrolFaileds = 0; // Reset bei Erfolg
+        // ...existing code...
+      } else {
+        this.patrolFaileds++;
+        if (this.patrolFaileds >= 3) {
+          console.error('Patrol failed 3 times, stopping');
           this.stopPatrol();
+          return;
         }
-        return;
+        // Versuche nächsten Punkt
+        this.patrolRecursive(
+          worldPath,
+          (index + 1) % worldPath.length,
+          pathfinding
+        );
       }
     } catch (error) {
-      console.error('PatrolUnitModule: Move failed', error);
+      console.error('Patrol move error:', error);
+      this.patrolFaileds++;
       this.stopPatrol();
       return;
     }

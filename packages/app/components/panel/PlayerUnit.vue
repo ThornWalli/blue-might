@@ -396,7 +396,10 @@ async function setup() {
       )
       .subscribe(
         vehicleModule =>
-          (unitSpeed.value = vehicleModule.state.velocity.length().toFixed(2))
+          (unitSpeed.value = Math.min(
+            vehicleModule.state.velocity.length(),
+            1
+          ).toFixed(2))
       )
   );
   subscription.add(
@@ -444,7 +447,6 @@ async function setup() {
       .pipe(
         switchMap(module => {
           if (!module) {
-            debugger;
             unitGears.value = {
               has: false,
               active: false,

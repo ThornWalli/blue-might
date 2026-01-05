@@ -9,12 +9,12 @@
 
 <script setup lang="ts">
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import { neutralFaction } from '@blue-might/app/lib/classes/mapModule/Faction';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import {
   CombatHelicopter_1,
   CombatShip_1,
   SeaLandingPortSupplyStation,
+  SeaSupplyStation,
   Soldat_1
 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
@@ -214,7 +214,21 @@ const map: Partial<MapDescription> = {
       },
       moduleStates: {
         faction: {
-          faction: neutralFaction
+          faction: blueFaction
+        }
+      }
+    }),
+
+    new SeaSupplyStation({
+      id: 'sea-supply-station-1',
+      position: new Vector3(-2.5, 0, -3.5),
+      moduleDebug: {
+        collision: false,
+        supply: false
+      },
+      moduleStates: {
+        faction: {
+          faction: blueFaction
         }
       }
     }),

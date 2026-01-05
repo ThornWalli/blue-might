@@ -30,7 +30,7 @@ const config = ref<AppConfig>({
   mode: APP_MODE.PLAYGROUND,
   rendererOptions: {
     fog: true,
-    pixelated: true,
+    pixelated: false,
     controls: true
   },
   debug: {

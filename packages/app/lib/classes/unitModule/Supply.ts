@@ -14,13 +14,15 @@ import UnitModule, {
   type UnitModuleOptions,
   type UnitModuleState
 } from '../UnitModule';
-import type AirVehicleUnit from '../unit/AirVehicle';
+import AirVehicleUnit from '../unit/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
 import VehicleUnit from '../unit/Vehicle';
 import type Unit from '../Unit';
 import { disposeObject3D } from '../../utils/object';
+import SeaVehicleUnit from '../unit/SeaVehicle';
 
 import WeaponUnitModule from './Weapon';
+import GroundVehicleUnitModule from './movable/GroundVehicle';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -42,6 +44,11 @@ export interface SupplyUnitModuleOptions extends UnitModuleOptions {
   radius: number;
   sphereTarget: {
     name: string;
+  };
+  allowedType: {
+    sea?: boolean;
+    air?: boolean;
+    ground?: boolean;
   };
 }
 export interface SupplyUnitModuleState extends UnitModuleState {
@@ -77,7 +84,15 @@ export default class SupplyUnitModule extends UnitModule<
   ) {
     super(
       unit,
-      { ...options, radius: options.radius ?? 1 },
+      {
+        ...options,
+        radius: options.radius ?? 1,
+        allowedType: {
+          air: options.allowedType?.air ?? true,
+          sea: options.allowedType?.sea ?? true,
+          ground: options.allowedType?.ground ?? true
+        }
+      },
       {
         ...state,
 
@@ -110,14 +125,19 @@ export default class SupplyUnitModule extends UnitModule<
     await super.afterSetup();
     let sphereTargetObj: Object3D | undefined;
 
+    const unit = this.getUnit();
+
+    if (this.debug) {
+      this.setupDebug();
+    }
     if (this.options.sphereTarget) {
-      this.getUnit().root.updateMatrixWorld(true);
-      sphereTargetObj = this.getUnit().root.getObjectByName(
+      unit.root.updateMatrixWorld(true);
+      sphereTargetObj = unit.root.getObjectByName(
         this.options.sphereTarget.name
       );
     }
     this.subscription.add(
-      this.getUnit().observables.position$.subscribe(position => {
+      unit.observables.position$.subscribe(position => {
         sphereTargetObj?.updateMatrixWorld(true);
 
         const worldPos =
@@ -126,10 +146,6 @@ export default class SupplyUnitModule extends UnitModule<
         this.debugSphere?.position.copy(worldPos);
       })
     );
-
-    if (this.debug) {
-      this.setupDebug();
-    }
   }
 
   override update({ time }: AnimationLoopValue): void {
@@ -172,7 +188,7 @@ export default class SupplyUnitModule extends UnitModule<
           this.sphere.center,
           this.options.radius
         ) ?? []
-    ).filter(u => u !== unit && u instanceof VehicleUnit) as VehicleUnit[];
+    ).filter(u => u !== unit && this.isInstanceOf(u)) as VehicleUnit[];
 
     const intersectingUnits: VehicleUnit[] = [];
     for (const targetUnit of unitsInRadius) {
@@ -195,6 +211,17 @@ export default class SupplyUnitModule extends UnitModule<
       (this.debugSphere?.material as MeshLambertMaterial)?.color.set(0xff0000);
     }
     //#endregion
+  }
+
+  private isInstanceOf(unit: Unit): boolean {
+    if (unit instanceof AirVehicleUnit) {
+      return this.options.allowedType.air ?? false;
+    } else if (unit instanceof SeaVehicleUnit) {
+      return this.options.allowedType.sea ?? false;
+    } else if (unit instanceof GroundVehicleUnitModule) {
+      return this.options.allowedType.ground ?? false;
+    }
+    return unit instanceof VehicleUnit;
   }
 
   hasSupplyUnit(unit: AirVehicleUnit | null) {
