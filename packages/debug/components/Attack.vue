@@ -151,7 +151,6 @@ async function onSetup({ app, map }: { app: App; map: Map }) {
 
 function setupGUI({
   app: _app,
-  map,
   weapons
 }: {
   app: App;
@@ -166,22 +165,6 @@ function setupGUI({
 
   // gui.add(weapon, 'enableShootInterval').name('Enable Shoot Interval');
   // gui.add(unit.modules.weapon.options, 'shootInterval', 0, 2000, 1);
-
-  const dustConeOptions = map.modules.shoot.getDustConeOptions();
-  const dustConeDir = gui.addFolder('Dust Cone');
-  dustConeDir.add(dustConeOptions, 'scale', 0.01, 1, 0.005).name('Scale');
-  dustConeDir
-    .add(dustConeOptions, 'scaleSpeed', 0.01, 1, 0.005)
-    .name('Scale Speed');
-  dustConeDir
-    .add(dustConeOptions, 'ditherThreshold', 0.01, 10, 0.01)
-    .name('Dither Threshold');
-  dustConeDir.add(dustConeOptions.size, 'x', 0.01, 2, 0.01).name('Cone Width');
-  dustConeDir.add(dustConeOptions.size, 'y', 0.01, 6, 0.1).name('Cone Height');
-  dustConeDir
-    .add(dustConeOptions, 'circleOpacity', 0, 1, 0.1)
-    .name('Circle Opacity');
-
   const weaponDir = gui.addFolder('Weapon');
   weaponDir
     .add(weaponSlot.weapon, 'spreadAmount', 0, 0.5, 0.01)

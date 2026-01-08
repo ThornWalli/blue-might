@@ -1,0 +1,65 @@
+import { Vector2 } from 'three';
+
+import { createDustCone } from '../../utils/dustCone';
+import type { AnimationLoopValue } from '../Renderer';
+import Particle from '../Particle';
+import type { ParticleOptions } from '../Particle';
+
+export interface DustConeOptions extends ParticleOptions {
+  scale: number;
+  scaleSpeed: number;
+  size: Vector2;
+  ditherThreshold: number;
+  circleOpacity: number;
+  color: number;
+}
+
+export default class DustCone extends Particle {
+  private scaleSpeed: number;
+  private size: Vector2;
+  private ditherThreshold: number;
+  private circleOpacity: number;
+  private color: number;
+
+  // eslint-disable-next-line complexity
+  constructor(options?: Partial<DustConeOptions>) {
+    super({
+      position: options?.position,
+      fade: options?.fade,
+      life: options?.life ?? 0.5,
+      velocity: options?.velocity
+    });
+    this.ditherThreshold = options?.ditherThreshold ?? 0.1;
+    this.size = options?.size ?? new Vector2(0.2, 1);
+    this.circleOpacity = options?.circleOpacity ?? 0.4;
+    this.scaleSpeed = options?.scaleSpeed ?? 0.025;
+    this.color = options?.color ?? 0x333333;
+  }
+
+  override update(v: AnimationLoopValue) {
+    if (!this.getRoot()) return;
+    if (!this.getStartTime()) this.setStartTime(v.time);
+
+    if (this.getLife() <= 0) {
+      this.setComplete();
+    } else {
+      const life = this.getLife();
+      const root = this.getRoot();
+      root.scale.x = 0.6 + life * 0.4;
+      root.scale.z = 0.6 + life * 0.4;
+      root.scale.y = life;
+      this.setLife(life - this.scaleSpeed);
+    }
+  }
+
+  override async createMesh() {
+    return createDustCone({
+      ditherThreshold: this.ditherThreshold,
+      size: this.size,
+      circleOpacity: this.circleOpacity,
+      scale: this.getScale(),
+      scaleSpeed: this.scaleSpeed,
+      color: this.color
+    });
+  }
+}

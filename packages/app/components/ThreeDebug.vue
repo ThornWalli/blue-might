@@ -15,11 +15,14 @@ import {
   DirectionalLight,
   SRGBColorSpace,
   NeutralToneMapping,
-  BasicShadowMap
+  BasicShadowMap,
+  Clock
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 //#region Three.js setup
+
+const clock = new Clock();
 
 const root = ref<HTMLDivElement | null>(null);
 let scene: Scene;
@@ -32,7 +35,7 @@ const $props = defineProps<{
   pixelated?: boolean;
   background?: number;
   setupScene: (scene: Scene) => Promise<void> | void;
-  updateAnimation: (ctx: { scene: Scene }) => void;
+  updateAnimation: (ctx: { scene: Scene; time: number; delta: number }) => void;
   destroy?: (ctx: { scene: Scene }) => void;
 
   cameraZoom?: number;
@@ -121,12 +124,18 @@ onMounted(async () => {
 
   scene.add(...createLights());
 
-  renderer.setAnimationLoop(() => {
+  renderer.setAnimationLoop(time => {
     controls.update();
+
     renderer.render(scene, camera);
 
+    const rawDelta = clock.getDelta();
+    const delta = Math.min(rawDelta, 1 / 60);
+
     $props.updateAnimation({
-      scene
+      scene,
+      time,
+      delta
     });
   });
 

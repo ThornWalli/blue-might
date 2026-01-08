@@ -10,7 +10,12 @@ export default class Default extends Projectile {
       ...options,
       id: options.id ?? PROJECTILE_TYPE.DEFAULT,
       speed: options.speed ?? 10,
-      strength: options.strength ?? 0.1
+      strength: options.strength ?? 0.1,
+      radius: options.radius ?? 0.5,
+      features: options.features ?? {
+        ...(options.features ?? {}),
+        dust: true
+      }
     });
   }
 

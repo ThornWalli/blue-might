@@ -15,7 +15,13 @@ export interface ProjectileDescription {
   id: ProjectileIdentifier;
   speed: number;
   strength: number;
-  smoke?: boolean;
+  radius: number;
+  features?: {
+    smoke?: boolean;
+    fire?: boolean;
+    explosion?: boolean;
+    dust?: boolean;
+  };
 }
 
 export type WeaponId = Values<Weapon>;
@@ -26,4 +32,11 @@ export interface WeaponDescription<P = ProjectileIdentifier> {
   spreadAmount: number;
   speed: number;
   perSeconds: number;
+  shootType: WEAPON_SHOOT_TYPE;
+}
+
+export enum WEAPON_SHOOT_TYPE {
+  NONE = 'none',
+  SINGLE = 'single',
+  AUTO = 'auto'
 }

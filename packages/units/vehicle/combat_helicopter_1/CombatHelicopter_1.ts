@@ -145,8 +145,8 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
               {
                 slot: 0,
                 weapon: new weapons.air_surface_missile_1(),
-                maxAmmunition: 4,
-                ammunition: 4
+                maxAmmunition: 400,
+                ammunition: 400
               }
             ],
             ...options.moduleOptions?.weapon
@@ -339,9 +339,11 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     }
 
     if (this.modules.weapon.isAutoAimActive()) return;
-    this.modules.weapon.setActive(
-      controls[ControlAction.FIRE_PRIMARY] ?? false
-    );
+    if (controls[ControlAction.FIRE_PRIMARY]) {
+      this.modules.weapon.shoot();
+    } else {
+      this.modules.weapon.abortShoot();
+    }
   }
 
   private updateObjects() {

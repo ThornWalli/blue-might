@@ -11,6 +11,8 @@
       <div>Arrow Keys</div>
       <div>Primary Fire</div>
       <div>Space</div>
+      <div>Switch Weapon</div>
+      <div>X</div>
       <div>Gears</div>
       <div>G</div>
       <div>Up / Down</div>

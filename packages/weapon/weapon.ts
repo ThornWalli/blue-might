@@ -1,6 +1,10 @@
 import Weapon from '@blue-might/app/lib/classes/Weapon';
 
-import { PROJECTILE_TYPE, WEAPON } from './../app/lib/types/weapon';
+import {
+  PROJECTILE_TYPE,
+  WEAPON,
+  WEAPON_SHOOT_TYPE
+} from './../app/lib/types/weapon';
 
 declare module '@blue-might/app/lib/types/weapon' {
   interface Weapon {
@@ -23,7 +27,8 @@ export class Default extends Weapon {
       spreadAmount: 0.1,
       speed: 0.3,
       perSeconds: 10,
-      projectile: projectile
+      projectile: projectile,
+      shootType: WEAPON_SHOOT_TYPE.AUTO
     });
   }
 }
@@ -36,7 +41,8 @@ export class AirSurfaceMissile_1 extends Weapon {
       spreadAmount: 0,
       speed: 1,
       perSeconds: 0.5,
-      projectile: PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1
+      projectile: PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1,
+      shootType: WEAPON_SHOOT_TYPE.SINGLE
     });
   }
 }

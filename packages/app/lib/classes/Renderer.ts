@@ -49,7 +49,7 @@ export const DEFAULT_SHADOW_QUALITY = ShadowQuality.LOW;
 export type AnimationLoopValue = {
   time: number;
   delta: number;
-  scene: Scene;
+  scene?: Scene;
 };
 export type AnimationLoopSubject = ReplaySubject<AnimationLoopValue>;
 

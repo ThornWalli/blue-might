@@ -1,6 +1,7 @@
 import type { Line, Object3D } from 'three';
 import { Vector3 } from 'three';
 import { EMPTY, ReplaySubject, Subject, switchMap } from 'rxjs';
+import { WEAPON_SHOOT_TYPE } from '@blue-might/app/lib/types/weapon';
 
 import type Unit from '../Unit';
 import UnitModule, {
@@ -55,6 +56,7 @@ export interface WeaponUnitModuleOptions extends UnitModuleOptions {
   autoAimFn: AutoAimFn;
   slots: WeaponSlot[];
 }
+
 export interface WeaponUnitModuleState extends UnitModuleState {
   active: boolean;
   lastShootTime: number[];
@@ -85,7 +87,7 @@ export default class WeaponUnitModule<
       },
       {
         ...state,
-        active: state.active ?? false,
+        active: false,
         lastShootTime: state.lastShootTime ?? [],
         sourcePositions: state.sourcePositions ?? [],
         sourceDirections: state.sourceDirections ?? [],
@@ -200,15 +202,20 @@ export default class WeaponUnitModule<
     });
   }
 
-  public shoot(position: Vector3, direction: Vector3, weapon: Weapon) {
-    const shootModule = this.getUnit().getMap()?.modules.shoot;
-    if (!shootModule) return;
+  public shoot() {
+    this.setActive(true);
+  }
+  public abortShoot() {
+    this.setActive(false);
+  }
 
-    return shootModule.createShoot(position, direction, weapon, {
-      enableSpread: weapon.spreadAmount > 0,
-      spreadAmount: weapon.spreadAmount,
-      ignoredObjects: [this.getUnit().getRoot()]
-    });
+  private setActive(active: boolean) {
+    if (active === this.state.active) return;
+    if (active) {
+      this.ignoredSlots.clear();
+    }
+    this.state.active = active;
+    this.observables.active$.next(active);
   }
 
   override async update(_v: AnimationLoopValue) {
@@ -229,11 +236,12 @@ export default class WeaponUnitModule<
     return !!this.getUnit().getModuleByType(PlayerUnitModule).getPlayer();
   }
 
+  ignoredSlots = new Set<WeaponSlot>();
   private updateShoot({ time }: { time: number }) {
     const weapons = this.getSlots();
 
     weapons
-      .filter(slot => slot.active)
+      .filter(slot => slot.active && !this.ignoredSlots.has(slot))
       .forEach((weaponSlot, index) => {
         index = weaponSlot.slot ?? index;
 
@@ -244,22 +252,33 @@ export default class WeaponUnitModule<
         const currentTime = time / 1000;
         const shootCooldown = 1 / weapon.perSeconds;
 
-        if (this.state.active) {
-          if (weaponSlot.ammunition <= 0) {
-            return;
-          }
+        if (weaponSlot.ammunition <= 0) {
+          return;
+        }
 
-          if (
+        const shootModule = this.getUnit().getMap()?.modules.shoot;
+        if (!shootModule) return;
+
+        if (
+          this.state.active &&
+          (weaponSlot.weapon.shootType === WEAPON_SHOOT_TYPE.SINGLE ||
             currentTime - (this.state.lastShootTime[index] ?? 0) >
-            shootCooldown
-          ) {
-            this.updateSourcePosition(index);
+              shootCooldown)
+        ) {
+          this.updateSourcePosition(index);
 
-            this.shoot(
+          shootModule
+            .createShoot(
               this.state.sourcePositions[index]!,
               this.state.sourceDirections[index]!,
-              weapon
-            )?.then(shoot => {
+              weapon,
+              {
+                enableSpread: weapon.spreadAmount > 0,
+                spreadAmount: weapon.spreadAmount,
+                ignoredObjects: [this.getUnit().getRoot()]
+              }
+            )
+            .then(shoot => {
               if (this.hasConsumption()) {
                 weaponSlot.ammunition--;
               }
@@ -272,10 +291,13 @@ export default class WeaponUnitModule<
               }
             });
 
-            this.state.lastShootTime[index] = currentTime;
-          } else {
-            this.observables.cooldown$.next({ index });
+          this.state.lastShootTime[index] = currentTime;
+
+          if (weaponSlot.weapon.shootType === WEAPON_SHOOT_TYPE.SINGLE) {
+            this.ignoredSlots.add(weaponSlot);
           }
+        } else {
+          this.observables.cooldown$.next({ index });
         }
       });
   }
@@ -301,6 +323,7 @@ export default class WeaponUnitModule<
           .filter(({ active }) => active)
           .forEach((weaponSlot, index) => {
             index = weaponSlot.slot;
+
             this.updateSourcePosition(index);
             const sourcePosition = this.state.sourcePositions[index]!;
             const shoot = this.options.autoAimFn({
@@ -310,11 +333,15 @@ export default class WeaponUnitModule<
               index
             });
             if (this.state.autoAimAutoShoot) {
-              this.setActive(shoot);
+              if (shoot) {
+                this.shoot();
+              } else {
+                this.abortShoot();
+              }
             }
           });
       } else {
-        this.setActive(false);
+        this.abortShoot();
       }
     }
   }
@@ -333,12 +360,6 @@ export default class WeaponUnitModule<
   }
   public getSlots() {
     return Object.values(this.options.slots);
-  }
-
-  public setActive(active: boolean) {
-    if (this.state.active === active) return;
-    this.state.active = active;
-    this.observables.active$.next(active);
   }
 
   isAutoAimActive() {

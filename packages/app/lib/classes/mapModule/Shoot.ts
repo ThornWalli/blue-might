@@ -1,21 +1,13 @@
-import textureSmokeLight from '@blue-might/app/assets/fire/smoke/light.png?url';
-import type { Mesh, Texture } from 'three';
+import type { Mesh } from 'three';
 import {
   BufferGeometry,
   Line,
   LineBasicMaterial,
-  NearestFilter,
   Object3D,
   Raycaster,
   Sphere,
-  Vector2,
   Vector3
 } from 'three';
-import {
-  createDustCone,
-  type DustConeOptions
-} from '@blue-might/app/lib/utils/dustCone';
-import assetLoader from '@blue-might/app/services/assetLoader';
 
 import MapModule, {
   type MapModuleObservables,
@@ -23,16 +15,11 @@ import MapModule, {
 } from '../MapModule';
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
-import {
-  disableRaycaster,
-  disposeObject3D,
-  OBJECT_USER_DATA
-} from '../../utils/object';
+import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import { loadGltf } from '../../utils/gltf';
 import type Projectile from '../Projectile';
 import type Weapon from '../Weapon';
-import { Particle } from '../Particle';
-import { LOADER } from '../AssetLoader';
+import { SMOKE_TYPE } from '../unitModule/Damage';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -65,7 +52,6 @@ export default class ShootModule extends MapModule<State, Observables> {
   private raycastFrameCounter = 0;
   private raycaster = new Raycaster();
   override state: State = {};
-  private dustCones: Object3D[] = [];
   private shoots: ShootDescription[] = [];
   /**
    * Gravitation nach unten (m/s²), skaliere für dein Spiel
@@ -80,23 +66,13 @@ export default class ShootModule extends MapModule<State, Observables> {
     sphere: new Sphere(),
     vector: new Vector3(),
     gravity: new Vector3(),
-    drag: new Vector3()
-  };
-
-  private dustConeOptions: DustConeOptions = {
-    ditherThreshold: 0.1,
-    size: new Vector2(0.2, 1),
-    circleOpacity: 0.4,
-    scale: 0.5,
-    scaleSpeed: 0.025,
-    color: 0x333333
+    drag: new Vector3(),
+    hitSphere: new Sphere() // Neu für Area Hit
   };
 
   private shootByProjectile: {
     [key: string]: Object3D;
   } = {};
-  private smokeParticles: Particle[] = []; // Neue Liste für Rauch-Partikel
-  private smokeTexture: Texture | null = null; // Rauch-Textur
 
   override destroy(): void {
     Object.values(this.shootByProjectile).forEach(obj => {
@@ -108,28 +84,8 @@ export default class ShootModule extends MapModule<State, Observables> {
     super.destroy();
   }
 
-  getDustConeOptions() {
-    return this.dustConeOptions;
-  }
-  setDustConeOptions(options: Partial<typeof this.dustConeOptions>) {
-    this.dustConeOptions = {
-      ...this.dustConeOptions,
-      ...options
-    };
-  }
-
   override async setup(): Promise<void> {
     this.raycaster.camera = this.map.app.renderer.modules.camera.getCamera();
-
-    //#region smoke texture
-    this.smokeTexture = await assetLoader.add<Texture>({
-      value: textureSmokeLight,
-      loader: LOADER.TEXTURE
-    });
-    this.smokeTexture.magFilter = NearestFilter;
-    this.smokeTexture.minFilter = NearestFilter;
-
-    //#endregion
   }
 
   private async createShootObj(projectile: Projectile) {
@@ -219,7 +175,7 @@ export default class ShootModule extends MapModule<State, Observables> {
 
     // Aktiviere und konfiguriere das Projektil
     shootDesc.isActive = true;
-    shootDesc.enableSmoke = projectile.smoke;
+    shootDesc.enableSmoke = projectile.hasSmoke();
     shootDesc.ignoredObjects = ignoredObjects ?? [];
     shootDesc.startPosition.copy(position);
     shootDesc.velocity.copy(direction).multiplyScalar(projectile.speed);
@@ -267,9 +223,8 @@ export default class ShootModule extends MapModule<State, Observables> {
       );
 
       if (
-        shoot.projectile.smoke &&
+        shoot.projectile.hasSmoke() &&
         shoot.enableSmoke &&
-        this.smokeTexture &&
         Math.random() < 1 / 3
       ) {
         this.spawnSmoke(shoot.object.position.clone());
@@ -310,16 +265,59 @@ export default class ShootModule extends MapModule<State, Observables> {
           const distanceToIntersection = oldPosition.distanceTo(point);
           const moveDistance = moveVector.length();
           if (distanceToIntersection <= moveDistance) {
-            if (intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]) {
-              const unit = this.map.app
-                .getScene()
-                .getObjectById(
-                  intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
-                )?.userData.unit as Unit;
-              this.hitUnit(unit, shoot);
-            }
-            this.spawnDustAt(point, normal, intersection.object);
             hit = true;
+
+            // Haupt-Hit-Effekte
+            if (shoot.projectile.hasExplosion()) {
+              this.map.modules.effect.addExplosion(point, 1);
+            }
+            if (shoot.projectile.hasDust()) {
+              this.map.modules.effect.addDustCone(
+                point,
+                normal,
+                intersection.object
+              );
+            }
+            if (shoot.projectile.hasSmoke()) {
+              this.map.modules.effect.addSmoke(point);
+            }
+            if (shoot.projectile.hasFire()) {
+              this.map.modules.effect.addFire(point);
+            }
+
+            // Area Hit: Sphere um den Trefferpunkt mit Projektil-Radius
+            const projectileRadius = shoot.projectile.radius || 0; // Angenommen, Projectile hat radius
+            if (projectileRadius > 0) {
+              this.temp.hitSphere.set(point, projectileRadius);
+              const hitUnits: { unit: Unit; distance: number }[] = [];
+
+              // Sammle alle Units, deren Root in der Sphere ist
+              this.map.modules.units.getUnits().forEach(unit => {
+                const unitRoot = unit.getRoot();
+                if (this.temp.hitSphere.containsPoint(unitRoot.position)) {
+                  const distance = point.distanceTo(unitRoot.position);
+                  hitUnits.push({ unit, distance });
+                }
+              });
+
+              // Sortiere nach Distanz (optional, für Priorität)
+              hitUnits.sort((a, b) => a.distance - b.distance);
+
+              // Wende Schaden auf alle getroffenen Units an, mit Distanz-basiertem Schaden
+              hitUnits.forEach(({ unit, distance }) => {
+                this.hitUnit(unit, shoot, distance);
+              });
+            } else {
+              // Fallback: Nur der direkte Hit
+              if (intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]) {
+                const unit = this.map.app
+                  .getScene()
+                  .getObjectById(
+                    intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
+                  )?.userData.unit as Unit;
+                this.hitUnit(unit, shoot, 0); // Distanz 0 für direkten Hit
+              }
+            }
           }
         }
       }
@@ -334,77 +332,22 @@ export default class ShootModule extends MapModule<State, Observables> {
         this.raycastFrameCounter = 0;
       }
     }
-
-    //#region  Aktualisiere Rauch - Partikel
-    for (let i = this.smokeParticles.length - 1; i >= 0; i--) {
-      const p = this.smokeParticles[i]!;
-      p.update(delta);
-      p.sprite.scale.multiplyScalar(1.01);
-      if (p.life <= 0) {
-        this.removeFromScene(p.sprite);
-        disposeObject3D(p.sprite);
-        this.smokeParticles.splice(i, 1);
-      }
-    }
-
-    this.dustCones = this.dustCones.filter(cone => {
-      const scale = cone.userData.scale ?? 1;
-      cone.scale.x = 0.6 + scale * 0.4;
-      cone.scale.z = 0.6 + scale * 0.4;
-      cone.scale.y = scale;
-      cone.userData.scale = scale - this.dustConeOptions.scaleSpeed;
-
-      if (scale <= 0) {
-        this.removeFromScene(cone);
-        disposeObject3D(cone);
-        return false;
-      }
-      return true;
+  }
+  private spawnSmoke(position: Vector3, type: SMOKE_TYPE = SMOKE_TYPE.MEDIUM) {
+    this.map.modules.effect.addSmoke(position, {
+      type,
+      life: 0.8
     });
-    //#endregion
   }
 
-  private spawnSmoke(position: Vector3) {
-    if (!this.smokeTexture) return;
-    const p = new Particle(
-      this.smokeTexture,
-      position,
-      0.8, // Lebensdauer
-      { fade: false }
-    );
-
-    p.velocity.set(
-      (Math.random() - 0.5) * 0.1, // Leichte zufällige Bewegung
-      0.6, // Nach oben
-      (Math.random() - 0.5) * 0.1
-    );
-
-    disableRaycaster(p.sprite);
-    this.addToScene(p.sprite);
-    this.smokeParticles.push(p);
-  }
-
-  private hitUnit(unit: Unit, shoot: ShootDescription) {
+  private hitUnit(unit: Unit, shoot: ShootDescription, _distance: number = 0) {
+    // // Berechne Schaden basierend auf Distanz (z.B. linearer Falloff)
+    // const baseDamage = shoot.projectile.strength || 0;
+    // const maxRadius = shoot.projectile.radius || 1;
+    // const damageMultiplier = Math.max(0, 1 - distance / maxRadius); // Voller Schaden bei 0, 0 bei maxRadius
+    // const adjustedDamage = baseDamage * damageMultiplier;
+    // console.log(`Hit unit ${unit.id} with ${adjustedDamage} damage`);
     unit.modules.damage.hit(shoot.projectile);
-  }
-
-  private spawnDustAt(
-    position: Vector3,
-    normal?: Vector3,
-    hitObject?: Object3D
-  ) {
-    const dustCone = createDustCone(this.dustConeOptions);
-    dustCone.position.copy(position);
-    dustCone.position.add(
-      normal?.clone().multiplyScalar(0.001) ?? new Vector3(0, 0.001, 0)
-    );
-
-    if (normal && hitObject !== this.map.modules.ground.getRoot()) {
-      dustCone.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), normal);
-    }
-
-    this.addToScene(dustCone);
-    this.dustCones.push(dustCone);
   }
 
   createDebugVisualizePath(

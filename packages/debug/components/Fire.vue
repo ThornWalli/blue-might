@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <div>
     <client-only>
       <three-debug
@@ -13,7 +13,29 @@
 <script setup lang="ts">
 import ThreeDebug from '@blue-might/app/components/ThreeDebug.vue';
 import { disposeObject3D } from '@blue-might/app/lib/utils/object';
-import { NearestFilter, Vector3, type Scene, type Texture } from 'three';
+import {
+  AdditiveBlending,
+  BackSide,
+  BoxGeometry,
+  DoubleSide,
+  FrontSide,
+  Mesh,
+  MeshBasicMaterial,
+  MeshLambertMaterial,
+  MeshPhongMaterial,
+  MeshStandardMaterial,
+  MeshToonMaterial,
+  NearestFilter,
+  Object3D,
+  ShaderMaterial,
+  SphereGeometry,
+  Sprite,
+  SpriteMaterial,
+  TextureLoader,
+  Vector3,
+  type Scene,
+  type Texture
+} from 'three';
 import GUI from 'three/examples/jsm/libs/lil-gui.module.min.js';
 import { reactive } from 'vue';
 import textureFire from '@blue-might/app/assets/fire/fire.png?url';
@@ -21,6 +43,8 @@ import textureSmoke from '@blue-might/app/assets/fire/smoke.png?url';
 import assetLoader from '@blue-might/app/services/assetLoader';
 import { LOADER } from '@blue-might/app/lib/classes/AssetLoader';
 import { Particle } from '@blue-might/app/lib/classes/Particle';
+import { PhongLightingModel } from 'three/webgpu';
+import Explosion from '@blue-might/app/lib/classes/effect/Explosion';
 
 import { createGround } from '../utils';
 
@@ -41,7 +65,23 @@ async function onSetupScene(scene: Scene) {
   );
 
   await loadTextures();
-  setupGUI();
+  setupGUI(scene);
+
+  const explosion = new Explosion();
+  await explosion.setup();
+  addExplosion(scene, explosion);
+
+  const box = new Mesh(
+    new BoxGeometry(1, 1, 1),
+    new MeshBasicMaterial({ color: 0x00ff00 })
+  );
+  scene.add(box);
+}
+
+const explosions: Explosion[] = [];
+function addExplosion(scene: Scene, explosion: Explosion) {
+  explosions.push(explosion);
+  scene.add(explosion.getRoot());
 }
 
 async function loadTextures() {
@@ -88,33 +128,53 @@ function _spawnSmoke(scene: Scene) {
   particles.push(p);
 }
 
-function onUpdateAnimation({ scene }: { scene: Scene }) {
-  const dt = 0.016;
-
-  if (Math.random() < 0.4) spawnFire(scene);
-  // if (Math.random() < 0.12) spawnSmoke(scene);
-
-  for (let i = particles.length - 1; i >= 0; i--) {
-    const p = particles[i]!;
-    p.update(dt);
-
-    // Feuer schmaler, Rauch größer
-    if (p.sprite.material.map === fireTexture) {
-      p.sprite.scale.multiplyScalar(0.97);
-    } else {
-      p.sprite.scale.multiplyScalar(1.01);
+function onUpdateAnimation({ scene, time }: { time: number; scene: Scene }) {
+  explosions.forEach(exp => {
+    exp.update(time);
+    if (exp.isComplete()) {
+      console.log('WEG');
+      scene.remove(exp.getRoot());
+      explosions.splice(explosions.indexOf(exp), 1);
     }
-    if (p.life <= 0) {
-      scene.remove(p.sprite);
-      disposeObject3D(p.sprite);
-      particles.splice(i, 1);
-    }
-  }
+  });
+
+  // const dt = 0.016;
+  // if (Math.random() < 0.4) spawnFire(scene);
+  // // if (Math.random() < 0.12) spawnSmoke(scene);
+  // for (let i = particles.length - 1; i >= 0; i--) {
+  //   const p = particles[i]!;
+  //   p.update(dt);
+  //   // Feuer schmaler, Rauch größer
+  //   if (p.sprite.material.map === fireTexture) {
+  //     p.sprite.scale.multiplyScalar(0.97);
+  //   } else {
+  //     p.sprite.scale.multiplyScalar(1.01);
+  //   }
+  //   if (p.life <= 0) {
+  //     scene.remove(p.sprite);
+  //     disposeObject3D(p.sprite);
+  //     particles.splice(i, 1);
+  //   }
+  // }
 }
 
-function setupGUI() {
+function setupGUI(scene: Scene) {
   gui = new GUI();
   gui.add(params, 'cameraZoom', 0.01, 5, 0.01).name('Camera Zoom');
+  gui
+    .add(
+      {
+        addExplosion: async () => {
+          const explosion = new Explosion({
+            radius: 0.4 + Math.random() * 0.8
+          });
+          await explosion.setup();
+          addExplosion(scene, explosion);
+        }
+      },
+      'addExplosion'
+    )
+    .name('Add Explosion');
 }
 
 function onDestroy() {
@@ -126,4 +186,4 @@ function onDestroy() {
 
   particles.length = 0;
 }
-</script>
+</script> -->

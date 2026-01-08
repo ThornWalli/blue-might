@@ -2,13 +2,13 @@
   <select @input="onInput">
     <component
       :is="group ? 'optgroup' : 'option'"
-      v-for="{ group, label, value, options } in preparedOptions"
+      v-for="{ group, label, value, ...item } in preparedOptions"
       :key="`${label}-${value}`"
       :label="label"
       :value="value">
       {{ group ? undefined : label }}
       <option
-        v-for="option in options"
+        v-for="option in item.options"
         :key="String(option.value ?? option.label)"
         :value="option.value">
         {{ option.label }}

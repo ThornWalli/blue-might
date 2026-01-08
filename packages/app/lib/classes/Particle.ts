@@ -1,36 +1,105 @@
-import type { Texture } from 'three';
-import { Sprite, SpriteMaterial, Vector3 } from 'three';
+import type { Object3D } from 'three';
+import { Sprite, Texture, Vector3, SpriteMaterial } from 'three';
 
-export class Particle {
-  sprite: Sprite;
-  velocity = new Vector3();
-  life = 1;
-  options: { fade: boolean };
+import { disposeObject3D } from '../utils/object';
 
-  constructor(
-    texture: Texture,
-    position: Vector3,
-    scale = 1,
-    options?: { fade?: boolean }
-  ) {
-    this.options = { fade: true, ...options };
+import type { AnimationLoopValue } from './Renderer';
 
+export interface ParticleOptions {
+  texture: Texture<ImageBitmap>;
+  position: Vector3;
+  fade: boolean;
+  scale: number;
+  life: number;
+  velocity: Vector3;
+}
+
+export default class Particle {
+  setVelocity(x: number, y: number, z: number) {
+    this.velocity.set(x, y, z);
+  }
+  private root!: Object3D;
+  private startTime?: number;
+  private complete: boolean = false;
+
+  private texture: Texture<ImageBitmap>;
+  private fade: boolean;
+  private scale: number;
+  private life: number = 1;
+  private velocity: Vector3;
+
+  constructor(options: Partial<ParticleOptions>) {
+    this.texture = options.texture ?? new Texture();
+    this.fade = options.fade ?? false;
+    this.scale = options.scale ?? 1;
+    this.life = options.life ?? 1;
+    this.velocity = options.velocity ?? new Vector3();
+  }
+
+  destroy() {
+    if (!this.root) return;
+
+    this.root.removeFromParent();
+    disposeObject3D(this.root);
+  }
+
+  getStartTime() {
+    return this.startTime ?? 0;
+  }
+  setStartTime(time: number) {
+    this.startTime = time;
+  }
+  getLife() {
+    return this.life;
+  }
+
+  setLife(life: number) {
+    this.life = Math.max(0, life);
+  }
+
+  getScale() {
+    return this.scale;
+  }
+  setScale(scale: number) {
+    this.scale = scale;
+  }
+
+  async setup() {
+    this.root = await this.createMesh();
+  }
+
+  update({ delta }: AnimationLoopValue) {
+    if (this.life <= 0) {
+      this.complete = true;
+    } else {
+      this.root.position.addScaledVector(this.velocity, delta);
+      this.life -= delta;
+      if (this.fade) {
+        (this.root as Sprite).material.opacity = this.life;
+      }
+    }
+  }
+  getRoot() {
+    return this.root;
+  }
+
+  isComplete() {
+    return this.complete;
+  }
+
+  setComplete() {
+    this.complete = true;
+  }
+
+  async createMesh(): Promise<Object3D> {
     const material = new SpriteMaterial({
-      map: texture,
+      map: this.texture,
       transparent: true,
       depthWrite: false
     });
 
-    this.sprite = new Sprite(material);
-    this.sprite.position.copy(position);
-    this.sprite.scale.set(scale, scale, scale);
-  }
-
-  update(dt: number) {
-    this.sprite.position.addScaledVector(this.velocity, dt);
-    this.life -= dt;
-    if (this.options.fade) {
-      this.sprite.material.opacity = this.life;
-    }
+    const sprite = new Sprite(material);
+    sprite.scale.set(this.scale, this.scale, this.scale);
+    return sprite;
   }
 }

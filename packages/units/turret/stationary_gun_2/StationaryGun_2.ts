@@ -265,7 +265,11 @@ export default class StationaryGun_2 extends BuildingUnit<
     if (controls.moveRight) {
       this.state.velocity.x -= 0.005;
     }
-    this.modules.weapon.setActive(controls.space ?? false);
+    if (controls.space) {
+      this.modules.weapon.shoot();
+    } else {
+      this.modules.weapon.abortShoot();
+    }
   }
 
   private updateObjects() {

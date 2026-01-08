@@ -8,7 +8,11 @@ export default class AirSurfaceMissile_1 extends Projectile {
       id: PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1,
       speed: 30,
       strength: 0.75,
-      smoke: true
+      radius: 1,
+      features: {
+        smoke: true,
+        explosion: true
+      }
     });
   }
 

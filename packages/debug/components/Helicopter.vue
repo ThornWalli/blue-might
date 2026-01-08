@@ -97,11 +97,8 @@ const map: Partial<MapDescription> = {
         }
       },
       moduleStates: {
-        damage: {
-          damage: 0.4
-        },
         weapon: {
-          autoAimActive: true,
+          autoAimActive: false,
           autoAimAutoShoot: false
         },
         faction: {

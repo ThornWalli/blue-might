@@ -234,9 +234,7 @@ export default class CombatTank_1<
       this.state.weaponVelocity.x -= 0.005;
     }
     if (this.modules.weapon.isAutoAimActive()) return;
-    this.modules.weapon.setActive(
-      controls[ControlAction.FIRE_PRIMARY] ?? false
-    );
+    if (controls[ControlAction.FIRE_PRIMARY]) this.modules.weapon.shoot();
   }
 
   private updateObjects() {
