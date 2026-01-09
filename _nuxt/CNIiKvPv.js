@@ -1,0 +1,1 @@
+import{b7 as o}from"./D5b21KSY.js";const a=new o({id:"blue-faction",name:"Blue Faction",colors:[21930,13421772],mapColor:21930}),e=new o({id:"enemy-faction",name:"Enemy Faction",colors:[2117648,10530976],mapColor:16711680});export{a as b,e};
