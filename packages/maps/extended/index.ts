@@ -15,7 +15,6 @@ import {
   SupplyStation,
   CombatShip_1
 } from '@blue-might/units';
-import { weapons } from '@blue-might/weapon';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 
 import foregroundTexture from './texture_fg.png';
@@ -219,18 +218,6 @@ export default function (): MapDescription {
             moduleStates: {
               faction: {
                 faction: blueFaction
-              }
-            },
-            moduleOptions: {
-              weapon: {
-                slots: [
-                  {
-                    slot: 0,
-                    weapon: new weapons.default(),
-                    ammunition: 30,
-                    maxAmmunition: 30
-                  }
-                ]
               }
             }
           })

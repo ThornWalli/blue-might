@@ -20,6 +20,7 @@ export default class Human_1<
   ModuleList extends FigureUnitModuleList = FigureUnitModuleList
 > extends FigureUnit<FigureUnitOptions, Modules, ModuleList> {
   static override KEY = 'soldat_1';
+
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []
@@ -49,6 +50,16 @@ export default class Human_1<
         this.modules.animation.playAction('idle');
       })
     );
+    this.subscription.add(
+      this.modules.damage.observables.destroyed$.subscribe(() => {
+        console.log('XXXXXX');
+        this.setDead();
+      })
+    );
+  }
+
+  setDead() {
+    this.root.rotation.x += Math.PI / 2;
   }
 
   override async createMesh(_context: SetupContext) {

@@ -99,8 +99,12 @@ export default class Turret_1 extends BuildingUnit<
         name: 'Turret 1',
         options: {
           ...options.options,
-          minAngle: options.options?.minAngle ?? new Vector2(-Math.PI, -0.6),
-          maxAngle: options.options?.maxAngle ?? new Vector2(Math.PI, 0.2),
+          minAngle:
+            options.options?.minAngle ??
+            new Vector2((-Math.PI * 1) / 4, -Infinity),
+          maxAngle:
+            options.options?.maxAngle ??
+            new Vector2((Math.PI * 1) / 15, Infinity),
           rotationSpeed: options.options?.rotationSpeed ?? 0.05
         },
         moduleOptions: {
@@ -124,8 +128,8 @@ export default class Turret_1 extends BuildingUnit<
               {
                 slot: 0,
                 weapon: new weapons.default('light_projectile'),
-                maxAmmunition: 100,
-                ammunition: 100
+                maxAmmunition: Infinity,
+                ammunition: Infinity
               }
             ],
             ...options.moduleOptions?.weapon
@@ -275,6 +279,11 @@ export default class Turret_1 extends BuildingUnit<
         headObj.rotation.y += this.state.weaponVelocity.x;
         barrelObj.rotation.x += this.state.weaponVelocity.y;
       }
+
+      headObj.rotation.y = Math.max(
+        this.options.minAngle.y,
+        Math.min(this.options.maxAngle.y, headObj.rotation.y)
+      );
 
       barrelObj.rotation.x = Math.max(
         this.options.minAngle.x,

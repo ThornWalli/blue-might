@@ -34,7 +34,8 @@ interface Observables extends UnitModuleObservables {
   damage$: ReplaySubject<number>;
 }
 export interface DamageUnitModuleOptions extends UnitModuleOptions {
-  burnTime: number;
+  fire: boolean;
+  fireTime: number;
   enabled: boolean;
 }
 export interface DamageUnitModuleState extends UnitModuleState {
@@ -74,7 +75,8 @@ export default class DamageUnitModule extends UnitModule<
       unit,
       {
         ...options,
-        burnTime: options.burnTime ?? 5, // 60 Sekunden
+        fire: options.fire ?? true,
+        fireTime: options.fireTime ?? 5, // 60 Sekunden
         enabled: options.enabled ?? true // Standard: aktiviert
       },
       {
@@ -104,23 +106,25 @@ export default class DamageUnitModule extends UnitModule<
 
     if (!this.options.enabled) return; // Wenn deaktiviert, keine Updates
 
-    if (this.state.burnTimeLeft > 0) {
-      this.state.burnTimeLeft -= dt;
-      if (
-        this.getDamageLevel() >= DAMAGE_LEVEL.DESTROYED &&
-        Math.random() < 0.4
-      ) {
-        this.spawnFire();
-        this.spawnSmoke(SMOKE_TYPE.HEAVY);
-      } else if (
-        this.getDamageLevel() >= DAMAGE_LEVEL.DAMAGED &&
-        Math.random() < 0.12
-      ) {
-        this.spawnSmoke(SMOKE_TYPE.MEDIUM);
-      }
-    } else if (this.isDestroyed()) {
-      if (Math.random() < 0.05) {
-        this.spawnSmoke(SMOKE_TYPE.HEAVY);
+    if (this.options.fire) {
+      if (this.state.burnTimeLeft > 0) {
+        this.state.burnTimeLeft -= dt;
+        if (
+          this.getDamageLevel() >= DAMAGE_LEVEL.DESTROYED &&
+          Math.random() < 0.4
+        ) {
+          this.spawnFire();
+          this.spawnSmoke(SMOKE_TYPE.HEAVY);
+        } else if (
+          this.getDamageLevel() >= DAMAGE_LEVEL.DAMAGED &&
+          Math.random() < 0.12
+        ) {
+          this.spawnSmoke(SMOKE_TYPE.MEDIUM);
+        }
+      } else if (this.isDestroyed()) {
+        if (Math.random() < 0.05) {
+          this.spawnSmoke(SMOKE_TYPE.HEAVY);
+        }
       }
     }
   }
@@ -130,7 +134,9 @@ export default class DamageUnitModule extends UnitModule<
       return;
     }
     this.takeDamage(projectile.strength);
-    this.spawnSmoke(SMOKE_TYPE.MEDIUM);
+    if (this.options.fire) {
+      this.spawnSmoke(SMOKE_TYPE.MEDIUM);
+    }
   }
 
   takeDamage(amount: number) {
@@ -147,7 +153,7 @@ export default class DamageUnitModule extends UnitModule<
     this.state.damage = Math.max(0, value);
     this.observables.damage$.next(this.state.damage);
     if (this.isDestroyed()) {
-      this.state.burnTimeLeft = this.options.burnTime;
+      this.state.burnTimeLeft = this.options.fireTime;
       this.observables.destroyed$.next();
     }
   }

@@ -51,6 +51,16 @@ export default class FigureUnit<
             disabled: true,
             type: COLLISION_TYPE.SOFT,
             ...options.moduleOptions?.collision
+          },
+          damage: {
+            fire: false
+          }
+        },
+        moduleStates: {
+          ...options.moduleStates,
+          damage: {
+            ...options.moduleStates?.damage,
+            maxDamage: 0.1
           }
         }
       },

@@ -38,6 +38,7 @@ const map: Partial<MapDescription> = {
   },
   units: [
     new CombatShip_1({
+      id: playerUnitId,
       debug: false,
       moduleDebug: {
         pathfinding: false,
@@ -234,7 +235,6 @@ const map: Partial<MapDescription> = {
     }),
 
     new CombatHelicopter_1({
-      id: playerUnitId,
       moduleDebug: {
         collision: false
       },

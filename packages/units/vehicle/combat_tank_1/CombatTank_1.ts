@@ -78,14 +78,19 @@ export default class CombatTank_1<
     moduleList: unknown[] = []
   ) {
     moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
+    console.log(0.8 / Math.PI, 0.2 / Math.PI);
     super(
       {
         ...options,
         name: 'Combat Tank 1',
         options: {
           ...options.options,
-          minAngle: options.options?.minAngle ?? new Vector2(-Math.PI, -0.6),
-          maxAngle: options.options?.maxAngle ?? new Vector2(Math.PI, 0.2),
+          minAngle:
+            options.options?.minAngle ??
+            new Vector2((-Math.PI * 1) / 4, -Infinity),
+          maxAngle:
+            options.options?.maxAngle ??
+            new Vector2((Math.PI * 1) / 15, Infinity),
           rotationSpeed: options.options?.rotationSpeed ?? 0.05
         },
         moduleOptions: {
@@ -220,6 +225,8 @@ export default class CombatTank_1<
   }
 
   updateControls() {
+    if (this.modules.damage.isDestroyed()) return;
+
     const controls = this.getControls();
     if (controls[ControlAction.UP]) {
       this.state.weaponVelocity.y -= 0.005;
@@ -234,7 +241,11 @@ export default class CombatTank_1<
       this.state.weaponVelocity.x -= 0.005;
     }
     if (this.modules.weapon.isAutoAimActive()) return;
-    if (controls[ControlAction.FIRE_PRIMARY]) this.modules.weapon.shoot();
+    if (controls[ControlAction.FIRE_PRIMARY]) {
+      this.modules.weapon.shoot();
+    } else {
+      this.modules.weapon.abortShoot();
+    }
   }
 
   private updateObjects() {
@@ -249,6 +260,11 @@ export default class CombatTank_1<
         headObj.rotation.y += this.state.weaponVelocity.x;
         barrelObj.rotation.x += this.state.weaponVelocity.y;
       }
+
+      headObj.rotation.y = Math.max(
+        this.options.minAngle.y,
+        Math.min(this.options.maxAngle.y, headObj.rotation.y)
+      );
 
       barrelObj.rotation.x = Math.max(
         this.options.minAngle.x,

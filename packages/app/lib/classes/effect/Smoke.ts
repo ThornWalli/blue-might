@@ -1,9 +1,13 @@
 import type { Mesh, MeshStandardMaterial } from 'three';
 
 import type { AnimationLoopValue } from '../Renderer';
-import Particle from '../Particle';
+import Particle, { type ParticleOptions } from '../Particle';
 
 export default class Smoke extends Particle {
+  constructor(options: Partial<ParticleOptions>) {
+    super({ ...options, scale: 0.2, life: 2 });
+  }
+
   override update(v: AnimationLoopValue): void {
     super.update(v);
     const root = this.getRoot();

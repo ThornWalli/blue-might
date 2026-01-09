@@ -383,6 +383,9 @@ export default class Unit<
 
   setRotation(rotation: Euler) {
     this.setYaw(rotation.y); // Nur Heading
+
+    this.setPitch(rotation.x); // Pitch
+    this.setRoll(rotation.z); // Roll
   }
 
   private updateMeshTransform() {

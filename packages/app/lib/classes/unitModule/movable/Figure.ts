@@ -1,5 +1,5 @@
 /* eslint-disable complexity */
-import { Vector3 } from 'three';
+import { Euler, Vector3 } from 'three';
 
 import type { AnimationLoopValue } from '../../Renderer';
 import MovableUnitModule, {
@@ -89,6 +89,16 @@ export default class FigureUnitModule extends MovableUnitModule<
     const turnSpeed = this.options.turnSpeed;
 
     const eps = 1e-4;
+
+    if (unit.modules.damage.isDestroyed()) {
+      unit.setRotation(
+        new Euler(
+          unit.getRotation().x - Math.PI / 2,
+          unit.getRotation().y,
+          unit.getRotation().z
+        )
+      );
+    }
 
     // Frühzeitiger Abbruch bei keinen Inputs und niedriger Geschwindigkeit
     if (

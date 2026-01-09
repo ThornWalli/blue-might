@@ -86,10 +86,10 @@ export default class CombatShip_1<
           ...options.options,
           minWeaponAngle:
             options.options?.minWeaponAngle ??
-            new Vector2((-Math.PI * 3) / 5, -Math.PI / 2),
+            new Vector2((-Math.PI * 1) / 4, -Math.PI * (3 / 5)),
           maxWeaponAngle:
             options.options?.maxWeaponAngle ??
-            new Vector2((Math.PI * 3) / 5, 0),
+            new Vector2(0, Math.PI * (3 / 5)),
           rotationSpeed: options.options?.rotationSpeed ?? 0.25
         },
         moduleOptions: {
@@ -270,12 +270,12 @@ export default class CombatShip_1<
       // barrelObj.rotation.x += this.state.weaponVelocity.y;
 
       barrelObjX.rotation.x = Math.max(
-        this.options.minWeaponAngle.y,
-        Math.min(this.options.maxWeaponAngle.y, barrelObjX.rotation.x)
+        this.options.minWeaponAngle.x,
+        Math.min(this.options.maxWeaponAngle.x, barrelObjX.rotation.x)
       );
       barrelObjY.rotation.y = Math.max(
-        this.options.minWeaponAngle.x,
-        Math.min(this.options.maxWeaponAngle.x, barrelObjY.rotation.y)
+        this.options.minWeaponAngle.y,
+        Math.min(this.options.maxWeaponAngle.y, barrelObjY.rotation.y)
       );
 
       this.state.weaponVelocity.multiplyScalar(0.9);
