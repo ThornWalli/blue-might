@@ -9,7 +9,7 @@ import BuildingUnit, {
   type BuildingUnitModules,
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
-// import { replaceColors } from '@blue-might/app/lib/utils/object';
+// import { replaceColors } from '@blue-might/app/lib/utils/material';
 
 import baseGlb from './assets/factory_chimney_1.glb?url';
 
@@ -18,7 +18,7 @@ export type Options = BuildingUnitOptions;
 export default class FactoryChimney_1<
   Modules extends BuildingUnitModules = BuildingUnitModules,
   ModuleList extends BuildingUnitModuleList = BuildingUnitModuleList
-> extends BuildingUnit<BuildingUnitOptions, Modules, ModuleList> {
+> extends BuildingUnit<Modules, ModuleList, Options> {
   static override KEY = 'factory_chimney_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},

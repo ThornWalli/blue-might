@@ -4,8 +4,10 @@
       <div>Power</div>
       <div>P</div>
       <div>Move</div>
-      <div>W/A/S/D</div>
+      <div>W/S</div>
       <div>Rotate</div>
+      <div>A/D</div>
+      <div>Pitch Left/Right</div>
       <div>Q/E</div>
       <div>Move Turret</div>
       <div>Arrow Keys</div>

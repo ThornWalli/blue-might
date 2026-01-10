@@ -216,7 +216,12 @@ function renderUnits() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   units.forEach(unit => {
-    if (currentPlayer.value?.modules.vehicle.getVehicle() === unit) return;
+    if (
+      unit.modules.damage.isDestroyed() ||
+      currentPlayer.value?.modules.vehicle.getVehicle() === unit
+    ) {
+      return;
+    }
     const pos = unit.getPosition();
     const faction = unit.modules.faction.getFaction();
     drawIndicator(ctx, new Vector2(pos.x, pos.z), {

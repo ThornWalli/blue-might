@@ -10,7 +10,7 @@ import TankUnit, {
 } from '@blue-might/app/lib/classes/unit/vehicle/Tank';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Object3D, Vector2, Mesh, SkinnedMesh } from 'three';
-import { replaceColors } from '@blue-might/app/lib/utils/object';
+import { replaceColors } from '@blue-might/app/lib/utils/material';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
@@ -49,11 +49,11 @@ export interface CombatTankModules extends TankUnitModules {
 export type CombatTankModuleList = TankUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
-export default class CombatTank_1<
-  Options extends CombatTankOptions = CombatTankOptions,
-  Modules extends CombatTankModules = CombatTankModules,
-  ModuleList extends CombatTankModuleList = CombatTankModuleList
-> extends TankUnit<CombatTankOptions, Modules, ModuleList> {
+export default class CombatTank_1 extends TankUnit<
+  CombatTankModules,
+  CombatTankModuleList,
+  CombatTankOptions
+> {
   static override KEY = 'combat_tank_1';
 
   state: State = {
@@ -74,8 +74,8 @@ export default class CombatTank_1<
   };
 
   constructor(
-    options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    options: Omit<UnitConstructorOptions<CombatTankOptions>, 'name'> = {},
+    moduleList: Partial<CombatTankModuleList> = []
   ) {
     moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
     console.log(0.8 / Math.PI, 0.2 / Math.PI);
@@ -130,7 +130,7 @@ export default class CombatTank_1<
           }
         }
       },
-      moduleList as ModuleList
+      moduleList as CombatTankModuleList
     );
   }
 

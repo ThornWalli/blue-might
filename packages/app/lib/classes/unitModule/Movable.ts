@@ -16,8 +16,6 @@ import {
 } from '../playerModule/Controls';
 import { isUnitDestroyed } from '../../utils/unit';
 
-import PlayerUnitModule from './Player';
-
 declare module '../Unit' {
   interface ModuleStates {
     movable: Partial<MovableUnitModuleState>;
@@ -158,6 +156,14 @@ export default class MovableUnitModule<
           }
         })
     );
+
+    this.subscription.add(
+      unit.modules.player.observables.player$.subscribe(player => {
+        if (!player) {
+          this.turnOn();
+        }
+      })
+    );
   }
 
   /**
@@ -165,7 +171,7 @@ export default class MovableUnitModule<
    * Beispiel: Im Autopilot gibt es kein Verbrauch.
    */
   hasConsumption() {
-    return !!this.getUnit().getModuleByType(PlayerUnitModule).getPlayer();
+    return !!this.getUnit().modules.player.getPlayer();
   }
 
   override update({ delta: _delta }: AnimationLoopValue): void {

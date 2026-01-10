@@ -7,7 +7,8 @@ import VehicleUnit, {
   type VehicleUnitOptions
 } from '../Vehicle';
 
-export type TankUnitOptions = VehicleUnitOptions;
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface TankUnitOptions extends VehicleUnitOptions {}
 
 export type TankUnitModules = VehicleUnitModules & {
   movable: TankUnitModule;
@@ -16,10 +17,10 @@ export type TankUnitModules = VehicleUnitModules & {
 export type TankUnitModuleList = (typeof TankUnitModule)[] &
   VehicleUnitModuleList;
 export default class TankUnit<
-  Options extends TankUnitOptions = TankUnitOptions,
   Modules extends TankUnitModules = TankUnitModules,
-  ModuleList extends TankUnitModuleList = TankUnitModuleList
-> extends VehicleUnit<Options, Modules, ModuleList> {
+  ModuleList extends TankUnitModuleList = TankUnitModuleList,
+  Options extends TankUnitOptions = TankUnitOptions
+> extends VehicleUnit<Modules, ModuleList, Options> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: ModuleList = [] as unknown as ModuleList

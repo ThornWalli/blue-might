@@ -60,83 +60,83 @@ export function autoAimFunction(
 ): boolean {
   const { target, sourcePosition, index, weapon } = options;
 
-  if (shootModule && target && objects.barrels[index]) {
-    const targetPosition = target.getPosition();
-    const delta = targetPosition.clone().sub(sourcePosition);
-    const horizontalDistance = Math.sqrt(delta.x ** 2 + delta.z ** 2);
-    const verticalDistance = delta.y;
+  if (!shootModule || !target || !objects.barrels[index]) {
+    return false;
+  }
 
+  const targetPosition = target.getPosition();
+  const delta = targetPosition.clone().sub(sourcePosition);
+  const horizontalDistance = Math.sqrt(delta.x ** 2 + delta.z ** 2);
+  const verticalDistance = delta.y;
+  const rotation = getRotation();
+
+  // Yaw immer direkt berechnen (keine Ballistik nötig)
+  const targetYaw = normalizeAngle(Math.atan2(delta.x, delta.z) - rotation.y);
+  const isYawInRange = targetYaw >= minAngle.y && targetYaw <= maxAngle.y;
+
+  // Pitch: Direkte Linie für nahe Ziele, sonst vereinfachte Ballistik
+  let targetPitch: number;
+  if (horizontalDistance < 1.0) {
+    // Direkte Linie für Nahbereich
+    targetPitch = -Math.atan2(verticalDistance, horizontalDistance);
+  } else {
+    // Vereinfachte ballistische Elevation (niedriger Winkel)
     const g = Math.abs(shootModule.gravity.y);
     const v = weapon.projectile.speed * (1 - shootModule.airResistance);
-    const rotation = getRotation();
-
     const discriminant =
       v ** 4 -
       g * (g * horizontalDistance ** 2 + 2 * verticalDistance * v ** 2);
-
-    let targetYaw: number;
-    let targetPitch: number;
-
-    if (discriminant < 0) {
-      // Zielen mit direkter Linie
-      targetYaw = normalizeAngle(Math.atan2(delta.x, delta.z) - rotation.y);
-      targetPitch = -Math.atan2(delta.y, horizontalDistance);
-    } else {
-      // Elevation berechnen
+    if (discriminant >= 0) {
       const sqrtDisc = Math.sqrt(discriminant);
-      let elevation = Math.atan((v ** 2 - sqrtDisc) / (g * horizontalDistance));
-      elevation = -elevation;
-      elevation = Math.max(minAngle.y, Math.min(maxAngle.y, elevation));
-
-      const horizontalDirection = new Vector3(delta.x, 0, delta.z).normalize();
-      targetYaw = normalizeAngle(
-        Math.atan2(horizontalDirection.x, horizontalDirection.z) - rotation.y
-      );
-      targetPitch = elevation;
-    }
-
-    const isYawInRange = targetYaw >= minAngle.x && targetYaw <= maxAngle.x;
-    const isPitchInRange =
-      targetPitch >= minAngle.y && targetPitch <= maxAngle.y;
-
-    if (isYawInRange && isPitchInRange && horizontalDistance >= 0.96) {
-      state.weaponTargetRotation.set(targetYaw, targetPitch);
-
-      // Rotation anpassen (unterschiedlich je nach Unit)
-      if (objects.head) {
-        // Für Tank/Turret
-        if (objects.head) {
-          objects.head.rotation.y = lerp(
-            objects.head.rotation.y,
-            state.weaponTargetRotation.x,
-            rotationSpeed
-          );
-        }
-        objects.barrels[index]!.rotation.x = lerp(
-          objects.barrels[index]!.rotation.x,
-          state.weaponTargetRotation.y,
-          rotationSpeed
-        );
-      } else if (
-        objects.barrels[index] &&
-        Array.isArray(objects.barrels[index])
-      ) {
-        // Für Ship/Heli: barrels[index] = [barrelObjX, barrelObjY]
-        const [barrelObjX, barrelObjY] = objects.barrels[index];
-        barrelObjY.rotation.y = lerp(
-          barrelObjY.rotation.y,
-          state.weaponTargetRotation.x,
-          rotationSpeed
-        );
-        barrelObjX.rotation.x = lerp(
-          barrelObjX.rotation.x,
-          state.weaponTargetRotation.y,
-          rotationSpeed
-        );
-      }
-
-      return true;
+      targetPitch = -Math.atan((v ** 2 - sqrtDisc) / (g * horizontalDistance));
+    } else {
+      // Fallback auf direkte Linie, wenn kein Treffer möglich
+      targetPitch = -Math.atan2(verticalDistance, horizontalDistance);
     }
   }
+
+  // Immer begrenzen
+  targetPitch = Math.max(minAngle.x, Math.min(maxAngle.x, targetPitch));
+  const isPitchInRange = targetPitch >= minAngle.x && targetPitch <= maxAngle.x;
+
+  // Debug-Log (entfernen nach Test)
+  // console.log(
+  //   `Yaw: ${targetYaw.toFixed(3)}, Pitch: ${targetPitch.toFixed(3)}, Dist: ${horizontalDistance.toFixed(2)}, Vert: ${verticalDistance.toFixed(2)}`
+  // );
+
+  if (isYawInRange && isPitchInRange && horizontalDistance >= 0.96) {
+    state.weaponTargetRotation.set(targetYaw, targetPitch);
+
+    // Rotation setzen (vereinfacht)
+    if (objects.head) {
+      // Tank/Turret
+      objects.head.rotation.y = lerp(
+        objects.head.rotation.y,
+        targetYaw,
+        rotationSpeed
+      );
+      objects.barrels[index]!.rotation.x = lerp(
+        objects.barrels[index]!.rotation.x,
+        targetPitch,
+        rotationSpeed
+      );
+    } else if (Array.isArray(objects.barrels[index])) {
+      // Ship/Heli
+      const [barrelObjX, barrelObjY] = objects.barrels[index];
+      barrelObjY.rotation.y = lerp(
+        barrelObjY.rotation.y,
+        targetYaw,
+        rotationSpeed
+      );
+      barrelObjX.rotation.x = lerp(
+        barrelObjX.rotation.x,
+        targetPitch,
+        rotationSpeed
+      );
+    }
+
+    return true;
+  }
+
   return false;
 }

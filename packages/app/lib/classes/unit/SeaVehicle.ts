@@ -16,10 +16,10 @@ export type SeaVehicleUnitModules = VehicleUnitModules & {
 export type SeaVehicleUnitModuleList = (typeof SeaVehicleUnitModule)[] &
   VehicleUnitModuleList;
 export default class SeaVehicleUnit<
-  Options extends SeaVehicleUnitOptions = SeaVehicleUnitOptions,
   Modules extends SeaVehicleUnitModules = SeaVehicleUnitModules,
-  ModuleList extends SeaVehicleUnitModuleList = SeaVehicleUnitModuleList
-> extends VehicleUnit<Options, Modules, ModuleList> {
+  ModuleList extends SeaVehicleUnitModuleList = SeaVehicleUnitModuleList,
+  Options extends SeaVehicleUnitOptions = SeaVehicleUnitOptions
+> extends VehicleUnit<Modules, ModuleList, Options> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []

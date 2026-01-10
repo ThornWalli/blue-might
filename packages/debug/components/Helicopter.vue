@@ -51,7 +51,9 @@ const map: Partial<MapDescription> = {
     new CombatHelicopter_1({
       position: new Vector3(9.83, 0, 11.5),
       moduleDebug: {
-        attack: true
+        attack: true,
+        pathfinding: true,
+        patrol: true
       },
       moduleOptions: {
         attack: {

@@ -17,10 +17,11 @@ import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D } from '../../utils/object';
 import { isUnitDestroyed } from '../../utils/unit';
-import type { UnitModules, UnitOptions } from '../Unit';
+import type { UnitModules } from '../Unit';
 
 import type PatrolUnitModule from './Patrol';
 import type WeaponUnitModule from './Weapon';
+import type PlayerUnitModule from './Player';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -55,18 +56,33 @@ export interface AttackUnitModuleState extends UnitModuleState {
 export default class AttackUnitModule extends UnitModule<
   AttackUnitModuleOptions,
   AttackUnitModuleState,
-  AttackUnitModuleObservables
+  AttackUnitModuleObservables,
+  Unit<
+    {
+      weapon: WeaponUnitModule;
+      player: PlayerUnitModule;
+      patrol: PatrolUnitModule;
+    } & UnitModules
+  >
 > {
   static override TYPE = 'attack';
 
   private sphere: Sphere;
   private debugSphere: Mesh | null = null;
+  private resumeTimeout: NodeJS.Timeout | null = null; // Neuer Timeout für Patrol-Resume mit Delay
+
   setFollowTarget(enabled: boolean) {
     this.options.followTarget = enabled;
   }
 
   constructor(
-    unit: Unit,
+    unit: Unit<
+      {
+        weapon: WeaponUnitModule;
+        player: PlayerUnitModule;
+        patrol: PatrolUnitModule;
+      } & UnitModules
+    >,
     options: AttackUnitModuleOptions,
     state: AttackUnitModuleState,
     debug: boolean
@@ -99,6 +115,7 @@ export default class AttackUnitModule extends UnitModule<
         this.unitSubscription?.unsubscribe();
         this.subscription.remove(this.unitSubscription!);
         this.unitSubscription = null;
+        this.destroy();
       })
     );
     this.subscription.add(
@@ -108,12 +125,23 @@ export default class AttackUnitModule extends UnitModule<
       })
     );
 
+    this.subscription.add(
+      unit.modules.player.observables.player$.subscribe(player => {
+        this.setFollowTarget(!player);
+      })
+    );
+
     if (this.debug) {
       this.setupDebug();
     }
   }
 
   override destroy() {
+    if (this.resumeTimeout) {
+      clearTimeout(this.resumeTimeout);
+      this.resumeTimeout = null;
+    }
+
     if (this.debugSphere) {
       this.debugSphere.removeFromParent();
       disposeObject3D(this.debugSphere);
@@ -124,14 +152,9 @@ export default class AttackUnitModule extends UnitModule<
   }
 
   lastUpdateTime = 0;
+
   override update({ time }: AnimationLoopValue): void {
-    const unit = this.getUnit() as Unit<
-      UnitOptions,
-      UnitModules & {
-        weapon: WeaponUnitModule;
-        patrol: PatrolUnitModule;
-      }
-    >;
+    const unit = this.getUnit();
     if (isUnitDestroyed(unit) || !unit.modules.weapon?.isAutoAimActive()) {
       return;
     }
@@ -177,13 +200,9 @@ export default class AttackUnitModule extends UnitModule<
 
     if (this.options.followTarget && this.state.target) {
       const pathfinding = unit.modules.pathfinding;
-      const attackRadius = (this.options.radius * 3) / 4; // this.options.radius ?? 10; // Angriffsreichweite
+      const attackRadius = (this.options.radius * 2) / 4; // Angriffsreichweite
 
-      const patrolModule = unit.modules.patrol;
-      if (patrolModule) {
-        patrolModule.pausePatrol();
-        this.state.followStartPosition = null;
-      }
+      // Patrol-bezogene Logik entfernt
 
       this.state.followStartPosition =
         this.state.followStartPosition || unit.getPosition().clone();
@@ -193,28 +212,40 @@ export default class AttackUnitModule extends UnitModule<
         .getPosition()
         .distanceTo(this.state.target.getPosition());
 
-      if (
-        (!this.isTargetOuterRange() || distance > attackRadius * 1.25) &&
-        !pathfinding.isMoving()
-      ) {
-        // Zielposition: Auf der Linie zum Ziel, in attackRadius Entfernung
+      // Neue Prüfung: Stoppe Bewegung, wenn bereits in Reichweite (z.B. distance <= attackRadius)
+      if (distance <= attackRadius) {
+        // Unit ist nah genug – stoppe Bewegung und richte aus
+        if (pathfinding.isMoving()) {
+          pathfinding.abortMovement();
+        }
+        // Richte die Unit zum Ziel aus (angenommen, es gibt ein rotation-Modul; passe an)
+        // const direction = new Vector3()
+        //   .subVectors(this.state.target.getPosition(), unit.getPosition())
+        //   .normalize();
+        // Beispiel: Setze Rotation basierend auf Richtung (passe an dein Unit-System an)
+        // unit.modules.rotation?.setRotation(direction); // Oder ähnlich, falls verfügbar
+        // Falls kein separates Modul: unit.setRotation(Math.atan2(direction.x, direction.z)); // Beispiel für Yaw
+        // unit.setYaw(Math.atan2(direction.x, direction.z));
+        console.log('Unit in range, aiming at target');
+        return; // Keine weitere Bewegung
+      }
+
+      // Nur bewegen, wenn nicht in Reichweite und nicht bereits bewegend
+      if (!pathfinding.isMoving()) {
+        // Zielposition: Auf der Linie zum Ziel, in attackRadius Entfernung (erhöhe Abstand, um Schleifen zu vermeiden)
         const direction = new Vector3()
           .subVectors(this.state.target.getPosition(), unit.getPosition())
           .normalize();
         const targetPosition = this.state.target
           .getPosition()
           .clone()
-          .sub(direction.multiplyScalar(attackRadius * 0.25));
+          .sub(direction.multiplyScalar(attackRadius)); // Erhöht auf attackRadius statt *0.5, um weiter weg zu bleiben
 
-        // Für Boote: Stelle sicher, dass targetPosition auf Sea Level ist
-        // if (unit.hasModuleType(SeaVehicleUnitModule)) {
-        //   const seaLevel = unit.getMap()?.modules.ground.getSeaLevel() ?? 0;
-        //   targetPosition.y = seaLevel;
-        // }
-
-        // Starte Bewegung
-
-        console.log('Starting movement to:', this.state.followStartPosition);
+        console.log(
+          'Starting movement to:',
+          this.state.followStartPosition,
+          targetPosition
+        );
 
         pathfinding.move(targetPosition);
       }
@@ -250,14 +281,20 @@ export default class AttackUnitModule extends UnitModule<
 
   private unitSubscription: Subscription | null = null;
   private setTarget(target?: Unit | null) {
-    const unit = this.getUnit() as Unit<
-      UnitOptions,
-      UnitModules & {
-        patrol: PatrolUnitModule;
-      }
-    >;
+    const unit = this.getUnit();
     this.state.target = target ?? null;
     if (target) {
+      // Clear any existing resume timeout when setting a new target
+      if (this.resumeTimeout) {
+        clearTimeout(this.resumeTimeout);
+        this.resumeTimeout = null;
+      }
+      // Pause Patrol when target is found
+      const patrolModule = unit.modules.patrol;
+      if (patrolModule && patrolModule.state.active) {
+        patrolModule.pausePatrol();
+      }
+
       this.unitSubscription?.unsubscribe();
       this.unitSubscription = new Subscription();
       this.unitSubscription.add(
@@ -280,14 +317,14 @@ export default class AttackUnitModule extends UnitModule<
                   await pathfinding.move(this.state.followStartPosition!);
                   console.log('Move back successful, resuming patrol');
                   const patrolModule = unit.modules.patrol;
-                  if (patrolModule) {
+                  if (patrolModule && !patrolModule.state.active) {
                     patrolModule.resumePatrol();
                   }
                   this.state.followStartPosition = null;
                 } catch (error) {
                   console.error('Move back failed:', error);
                   const patrolModule = unit.modules.patrol;
-                  if (patrolModule) {
+                  if (patrolModule && !patrolModule.state.active) {
                     patrolModule.resumePatrol();
                   }
                   this.state.followStartPosition = null;
@@ -296,7 +333,7 @@ export default class AttackUnitModule extends UnitModule<
             } else {
               console.warn('No followStartPosition, resuming patrol directly');
               const patrolModule = unit.modules.patrol;
-              if (patrolModule) {
+              if (patrolModule && !patrolModule.state.active) {
                 patrolModule.resumePatrol();
               }
             }
@@ -313,11 +350,23 @@ export default class AttackUnitModule extends UnitModule<
 
       this.subscription.add(this.unitSubscription);
     } else {
+      // Target lost: Set timeout to resume Patrol after delay
+      if (this.resumeTimeout) {
+        clearTimeout(this.resumeTimeout);
+      }
+      this.resumeTimeout = setTimeout(() => {
+        const patrolModule = unit.modules.patrol;
+        if (patrolModule && !patrolModule.state.active) {
+          patrolModule.resumePatrol();
+        }
+        this.resumeTimeout = null;
+      }, 5000); // 5 Sekunden Delay
+
       console.log('Setting target to undefined, resuming patrol if paused');
       this.state.followStartPosition = null;
       // FIX: Immer resume versuchen, wenn Target verloren
       const patrolModule = unit.modules.patrol;
-      if (patrolModule) {
+      if (patrolModule && !patrolModule.state.active) {
         patrolModule.resumePatrol();
       }
     }

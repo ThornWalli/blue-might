@@ -79,9 +79,12 @@ export default class PatrolUnitModule extends UnitModule<
     await super.afterSetup();
 
     this.subscription.add(
-      this.getUnit().modules.damage.observables.destroyed$.subscribe(() => {
-        this.stopPatrol();
-      })
+      this.getUnit().modules.damage.observables.destroyed$.subscribe(
+        async () => {
+          await this.stopPatrol();
+          this.destroy();
+        }
+      )
     );
 
     if (import.meta.hot) {
@@ -112,6 +115,7 @@ export default class PatrolUnitModule extends UnitModule<
   async pausePatrol() {
     if (this.state.active) {
       console.log('Pausing patrol at index:', this.currentIndex);
+      await this.getUnit().modules.pathfinding.abortMovement();
       this.state.active = false;
       this.pausedIndex = this.currentIndex;
       this.pausedPosition = this.getUnit().getPosition().clone();

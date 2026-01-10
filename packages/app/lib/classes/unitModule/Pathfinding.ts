@@ -13,6 +13,7 @@ import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import type MovableUnit from '../unit/Movable';
 import type { NAVIGATOR_TYPE } from '../mapModule/Pathfinding';
+import type SeaVehicleUnit from '../unit/SeaVehicle';
 
 import FigureUnitModule from './movable/Figure';
 import HelicopterUnitModule from './movable/airVehicle/Helicopter';
@@ -55,6 +56,10 @@ export interface PathfindingUnitModuleOptions extends UnitModuleOptions {
 export interface PathfindingUnitModuleState extends UnitModuleState {
   complete: boolean;
   currentPath: Vector3[] | null;
+  pendingMove: {
+    target: Vector3;
+    resolve: (value: boolean) => void;
+  } | null;
 }
 
 export default class PathfindingUnitModule extends UnitModule<
@@ -80,7 +85,8 @@ export default class PathfindingUnitModule extends UnitModule<
     this.state = {
       ...this.state,
       complete: false,
-      currentPath: state.currentPath ?? null
+      currentPath: null,
+      pendingMove: null
     };
 
     //#region observables
@@ -93,8 +99,9 @@ export default class PathfindingUnitModule extends UnitModule<
     await super.setup();
     const unit = this.getUnit();
     this.subscription.add(
-      unit.modules.damage.observables.destroyed$.subscribe(() => {
-        this.abortMovement();
+      unit.modules.damage.observables.destroyed$.subscribe(async () => {
+        await this.abortMovement();
+        this.destroy();
       })
     );
   }
@@ -103,32 +110,27 @@ export default class PathfindingUnitModule extends UnitModule<
     return this.options.navigatorType;
   }
 
-  private pendingMove: {
-    target: Vector3;
-    resolve: (value: boolean) => void;
-  } | null = null;
-
-  async move(targetPosition: Vector3, force = false) {
-    if (this.isMoving() && !force) {
+  async move(targetPosition: Vector3) {
+    if (this.isMoving()) {
       // Queue den Move, wenn bereits einer läuft (für Patrol/Attack-Integration)
       return new Promise<boolean>(resolve => {
-        this.pendingMove = { target: targetPosition, resolve };
+        this.state.pendingMove = { target: targetPosition, resolve };
       });
     }
 
     // Abbrechen, wenn force=true (z.B. für Attack)
-    if (this.isMoving() && force) {
-      await this.abortMovement(true);
+    if (this.isMoving()) {
+      await this.abortMovement();
     }
 
     // Führe den Move aus (wie bisher)
     const result = (await this.executeMove(targetPosition)) ?? false;
 
     // Nach Move: Prüfe Pending
-    if (this.pendingMove) {
-      const { target, resolve } = this.pendingMove;
-      this.pendingMove = null;
-      resolve(await this.move(target, false)); // Rekursiv, aber ohne force
+    if (this.state.pendingMove) {
+      const { target, resolve } = this.state.pendingMove;
+      this.state.pendingMove = null;
+      resolve(await this.move(target)); // Rekursiv, aber ohne force
     }
 
     return result;
@@ -141,7 +143,10 @@ export default class PathfindingUnitModule extends UnitModule<
     } else if (this.isAirMovable()) {
       return this.moveAirVehicle(this.getUnit(), targetPosition);
     } else if (this.isSeaMovable()) {
-      return this.moveSeaVehicle(this.getUnit(), targetPosition);
+      return this.moveSeaVehicle(
+        this.getUnit() as SeaVehicleUnit,
+        targetPosition
+      );
     }
     return false;
   }
@@ -334,7 +339,7 @@ export default class PathfindingUnitModule extends UnitModule<
       let turnLeft = diff > yawDeadzone ? turnFactor : 0;
       let turnRight = diff < -yawDeadzone ? turnFactor : 0;
 
-      const largeTurnThreshold = Math.PI / 6; // Erhöht von /8 auf /6 (~30 Grad), um Kreisen zu reduzieren
+      const largeTurnThreshold = Math.PI / 8; // Erhöht von /8 auf /6 (~30 Grad), um Kreisen zu reduzieren
       const isTurning = turnLeft > 0 || turnRight > 0;
       let goForward = 0;
 
@@ -374,7 +379,8 @@ export default class PathfindingUnitModule extends UnitModule<
       }
 
       movableModule.setAutopilotControls({
-        moveForward: goForward > 0 || turnLeft || turnRight,
+        // moveForward: goForward > 0 || turnLeft || turnRight,
+        moveForward: goForward > 0,
         moveLeft: turnLeft,
         moveRight: turnRight
       });
@@ -386,7 +392,7 @@ export default class PathfindingUnitModule extends UnitModule<
         movableModule.getVelocity().addScaledVector(forward, 0.01);
       }
 
-      shiftThreshold = currentPath.length === 1 ? 0.2 : 0.8;
+      shiftThreshold = 0.8; //currentPath.length === 1 ? 0 : 0.4;
     } else {
       const step = 4 * delta;
       const position = unit.getPosition();
@@ -454,10 +460,10 @@ export default class PathfindingUnitModule extends UnitModule<
     if (currentPath.length === 0) {
       this.clearAutopilotAndComplete(movableModule);
       // Pending Move starten
-      if (this.pendingMove) {
-        const { target, resolve } = this.pendingMove;
-        this.pendingMove = null;
-        this.move(target, false).then(v => resolve(v));
+      if (this.state.pendingMove) {
+        const { target, resolve } = this.state.pendingMove;
+        this.state.pendingMove = null;
+        this.move(target).then(v => resolve(v));
       }
     }
   }
@@ -569,7 +575,7 @@ export default class PathfindingUnitModule extends UnitModule<
     });
   }
 
-  private async moveSeaVehicle(unit: Unit, target: Vector3) {
+  private async moveSeaVehicle(unit: SeaVehicleUnit, target: Vector3) {
     const seaNavigator = unit.getMap()?.modules.pathfinding.getSeaNavigator();
 
     if (!seaNavigator) throw new Error('SeaNavigator not initialized');
@@ -583,6 +589,8 @@ export default class PathfindingUnitModule extends UnitModule<
     }
 
     this.state.complete = false;
+
+    unit.modules.seaVehicle.options.allowRotationInPlace = true;
 
     const path = await seaNavigator.findPath(
       unit.getPosition().setY(0),
@@ -615,17 +623,11 @@ export default class PathfindingUnitModule extends UnitModule<
     });
   }
 
-  abortMovement(force?: boolean) {
-    this.pendingMove = null;
-    this.state.currentPath = force
-      ? null
-      : (this.state.currentPath?.slice(0, 1) ?? null);
-
-    this.state.currentPath = force
-      ? null
-      : (this.state.currentPath?.slice(0, 1) ?? null);
+  abortMovement() {
+    this.state.pendingMove = null;
+    this.state.currentPath = null;
     return new Promise(resolve => {
-      if (this.state.complete) {
+      if (this.state.complete || !this.state.currentPath) {
         resolve(true);
         return;
       }

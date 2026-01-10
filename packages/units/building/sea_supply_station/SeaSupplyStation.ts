@@ -4,7 +4,7 @@ import type {
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { replaceColors } from '@blue-might/app/lib/utils/object';
+import { replaceColors } from '@blue-might/app/lib/utils/material';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
 import BuildingUnit, {
@@ -22,9 +22,9 @@ export interface Modules extends BuildingUnitModules {
 export type ModuleList = BuildingUnitModuleList & [typeof SupplyUnitModule];
 
 export default class SeaSupplyStation extends BuildingUnit<
-  Options,
   Modules,
-  ModuleList
+  ModuleList,
+  Options
 > {
   static override KEY = 'landing_port_supply_station';
   constructor(

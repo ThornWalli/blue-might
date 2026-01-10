@@ -83,114 +83,48 @@ const map: Partial<MapDescription> = {
     //     }
     //   }
     // }),
-    new CombatShip_1({
-      debug: false,
-      id: 'combat-ship-1',
-      moduleDebug: {
-        pathfinding: false,
-        attack: false,
-        patrol: false,
-        collision: false
-      },
-      position: new Vector3(7.86, 0, -10.3),
-      moduleOptions: {
-        attack: {
-          followTarget: true
-        },
-        patrol: {
-          path: [
-            [7.86, -10.3],
-            [10.59, 9.39]
-          ]
-        }
-      },
-      moduleStates: {
-        weapon: {
-          autoAimActive: true
-        },
-        movable: {
-          active: true
-        },
-        faction: {
-          faction: enemyFaction
-        },
-        patrol: {
-          active: true
-        }
-      }
-    }),
-    new CombatShip_1({
-      debug: false,
-
-      moduleDebug: {
-        pathfinding: false,
-        attack: false,
-        patrol: false,
-        collision: false
-      },
-      position: new Vector3(13.67, 0, -2.9),
-      moduleOptions: {
-        attack: {
-          followTarget: true
-        },
-        patrol: {
-          path: [
-            [13.67, -2.9],
-            [3.88, -12.44]
-          ]
-        }
-      },
-      moduleStates: {
-        weapon: {
-          autoAimActive: true
-        },
-        movable: {
-          active: true
-        },
-        faction: {
-          faction: enemyFaction
-        },
-        patrol: {
-          active: true
-        }
-      }
-    }),
-    new CombatShip_1({
-      debug: false,
-
-      moduleDebug: {
-        pathfinding: false,
-        attack: false,
-        patrol: false,
-        collision: false
-      },
-      position: new Vector3(13.2, 0, 12.43),
-      moduleOptions: {
-        attack: {
-          followTarget: true
-        },
-        patrol: {
-          path: [
-            [13.2, 12.43],
-            [-2.35, 13.66]
-          ]
-        }
-      },
-      moduleStates: {
-        weapon: {
-          autoAimActive: true
-        },
-        movable: {
-          active: true
-        },
-        faction: {
-          faction: enemyFaction
-        },
-        patrol: {
-          active: true
-        }
-      }
-    }),
+    ...[
+      [
+        [7.86, -10.3],
+        [10.59, 9.39]
+      ],
+      [
+        [13.67, -2.9],
+        [3.88, -12.44]
+      ],
+      [
+        [13.2, 12.43],
+        [-2.35, 13.66]
+      ]
+    ].map(
+      (path, index) =>
+        new CombatShip_1({
+          debug: false,
+          id: 'combat-ship-' + index,
+          moduleDebug: {
+            attack: true,
+            pathfinding: true,
+            patrol: true
+          },
+          position: new Vector3(path[0]![0], 0, path[0]![1]),
+          moduleOptions: {
+            attack: {
+              followTarget: true
+            },
+            patrol: {
+              path: path as [number, number][]
+            }
+          },
+          moduleStates: {
+            faction: {
+              faction: enemyFaction
+            },
+            patrol: {
+              active: true
+            }
+          }
+        })
+    ),
 
     // new Tank_1({
     //   debug: true,

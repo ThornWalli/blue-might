@@ -87,10 +87,10 @@ const actionBindings: KeyBindings = {
     keyCode: ['KeyF']
   },
   [ControlAction.ROTATE_LEFT]: {
-    keyCode: ['KeyQ']
+    keyCode: ['KeyA']
   },
   [ControlAction.ROTATE_RIGHT]: {
-    keyCode: ['KeyE']
+    keyCode: ['KeyD']
   },
   [ControlAction.PITCH_UP]: {
     keyCode: ['KeyW']
@@ -99,10 +99,10 @@ const actionBindings: KeyBindings = {
     keyCode: ['KeyS']
   },
   [ControlAction.ROLL_LEFT]: {
-    keyCode: ['KeyA']
+    keyCode: ['KeyQ']
   },
   [ControlAction.ROLL_RIGHT]: {
-    keyCode: ['KeyD']
+    keyCode: ['KeyE']
   },
   [ControlAction.FIRE_PRIMARY]: {
     keyCode: ['Space']

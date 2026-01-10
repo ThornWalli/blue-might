@@ -21,10 +21,10 @@ export type CarUnitModuleList = (
 )[] &
   VehicleUnitModuleList;
 export default class CarUnit<
-  Options extends CarUnitOptions = CarUnitOptions,
   Modules extends CarUnitModules = CarUnitModules,
-  ModuleList extends CarUnitModuleList = CarUnitModuleList
-> extends VehicleUnit<Options, Modules, ModuleList> {
+  ModuleList extends CarUnitModuleList = CarUnitModuleList,
+  Options extends CarUnitOptions = CarUnitOptions
+> extends VehicleUnit<Modules, ModuleList, Options> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []

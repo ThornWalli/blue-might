@@ -9,7 +9,7 @@ import FigureUnit, {
   type FigureUnitModules,
   type FigureUnitOptions
 } from '@blue-might/app/lib/classes/unit/Figure';
-import { replaceColors } from '@blue-might/app/lib/utils/object';
+import { replaceColors } from '@blue-might/app/lib/utils/material';
 
 import baseGlb from './assets/soldat_1.glb?url';
 
@@ -18,7 +18,7 @@ export type Options = FigureUnitOptions;
 export default class Human_1<
   Modules extends FigureUnitModules = FigureUnitModules,
   ModuleList extends FigureUnitModuleList = FigureUnitModuleList
-> extends FigureUnit<FigureUnitOptions, Modules, ModuleList> {
+> extends FigureUnit<Modules, ModuleList, Options> {
   static override KEY = 'soldat_1';
 
   constructor(

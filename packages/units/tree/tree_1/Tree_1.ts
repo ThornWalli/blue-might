@@ -18,7 +18,7 @@ export type Options = BuildingUnitOptions;
 export default class Tree_1<
   Modules extends BuildingUnitModules = BuildingUnitModules,
   ModuleList extends BuildingUnitModuleList = BuildingUnitModuleList
-> extends BuildingUnit<BuildingUnitOptions, Modules, ModuleList> {
+> extends BuildingUnit<Modules, ModuleList, Options> {
   static override KEY = 'tree_1';
 
   constructor(

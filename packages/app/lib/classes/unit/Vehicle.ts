@@ -1,6 +1,11 @@
-import type { UnitConstructorOptions, UnitOptions } from '../Unit';
+import type {
+  SetupContext,
+  UnitConstructorOptions,
+  UnitOptions
+} from '../Unit';
 import PatrolUnitModule from '../unitModule/Patrol';
 import PlayerUnitModule from '../unitModule/Player';
+import { setDestroyedMaterials } from '../../utils/material';
 
 import MovableUnit, {
   type MovableUnitModuleList,
@@ -21,15 +26,23 @@ export type VehicleUnitModuleList = (
 )[] &
   MovableUnitModuleList;
 export default class VehicleUnit<
-  Options extends VehicleUnitOptions = VehicleUnitOptions,
   Modules extends VehicleUnitModules = VehicleUnitModules,
-  ModuleList extends VehicleUnitModuleList = VehicleUnitModuleList
-> extends MovableUnit<Options, Modules, ModuleList> {
+  ModuleList extends VehicleUnitModuleList = VehicleUnitModuleList,
+  Options extends VehicleUnitOptions = VehicleUnitOptions
+> extends MovableUnit<Modules, ModuleList, Options> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []
   ) {
     moduleList.push(PatrolUnitModule, PlayerUnitModule);
     super(options, moduleList);
+  }
+  override async setup(context: SetupContext) {
+    await super.setup(context);
+    this.subscription.add(
+      this.modules.damage.observables.destroyed$.subscribe(() => {
+        setDestroyedMaterials(this.root);
+      })
+    );
   }
 }

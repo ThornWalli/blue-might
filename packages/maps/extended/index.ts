@@ -137,9 +137,6 @@ export default function (): MapDescription {
           faction: {
             faction: blueFaction
           },
-          movable: {
-            active: true
-          },
           patrol: {
             active: false
           }
@@ -252,12 +249,6 @@ export default function (): MapDescription {
           }
         },
         moduleStates: {
-          weapon: {
-            autoAimActive: true
-          },
-          movable: {
-            active: true
-          },
           faction: {
             faction: enemyFaction
           },
@@ -291,12 +282,6 @@ export default function (): MapDescription {
           }
         },
         moduleStates: {
-          weapon: {
-            autoAimActive: true
-          },
-          movable: {
-            active: true
-          },
           faction: {
             faction: enemyFaction
           },
@@ -330,12 +315,6 @@ export default function (): MapDescription {
           }
         },
         moduleStates: {
-          weapon: {
-            autoAimActive: true
-          },
-          movable: {
-            active: true
-          },
           faction: {
             faction: enemyFaction
           },

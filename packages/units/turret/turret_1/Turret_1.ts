@@ -18,7 +18,7 @@ import WeaponUnitModule, {
   type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
-import { replaceColors } from '@blue-might/app/lib/utils/object';
+import { replaceColors } from '@blue-might/app/lib/utils/material';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import {
   ControlAction,
@@ -60,9 +60,9 @@ export type TurretModuleList = BuildingUnitModuleList &
   ];
 
 export default class Turret_1 extends BuildingUnit<
-  TurretOptions,
   TurretModules,
-  TurretModuleList
+  TurretModuleList,
+  TurretOptions
 > {
   static override KEY = 'turret_1';
 

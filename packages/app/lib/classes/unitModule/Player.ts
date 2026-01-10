@@ -51,6 +51,7 @@ export default class PlayerUnitModule extends UnitModule<
 
     //#region observables
     this.observables.player$ = new ReplaySubject<Player | null>(1);
+    this.observables.player$.next(this._player);
     //#endregion
 
     this.root = new Object3D();

@@ -19,7 +19,7 @@ import HelicopterUnit, {
   type HelicopterUnitModules,
   type HelicopterUnitOptions
 } from '@blue-might/app/lib/classes/unit/vehicle/Helicopter';
-import { replaceColors } from '@blue-might/app/lib/utils/object';
+import { replaceColors } from '@blue-might/app/lib/utils/material';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import WeaponUnitModule, {
   type AutoAimFnOptions
@@ -58,9 +58,9 @@ export type CombatHelicopterModuleList = HelicopterUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule];
 
 export default class CombatHelicopter_1 extends HelicopterUnit<
-  CombatHelicopterOptions,
   CombatHelicopterModules,
-  CombatHelicopterModuleList
+  CombatHelicopterModuleList,
+  CombatHelicopterOptions
 > {
   static override KEY = 'combat_helicopter_1';
 

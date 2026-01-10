@@ -5,7 +5,7 @@ import type {
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { AxesHelper, Mesh, Object3D, SkinnedMesh, Vector2 } from 'three';
-import { replaceColors } from '@blue-might/app/lib/utils/object';
+import { replaceColors } from '@blue-might/app/lib/utils/material';
 import SeaVehicleUnit, {
   type SeaVehicleUnitModuleList,
   type SeaVehicleUnitModules,
@@ -50,11 +50,11 @@ export interface CombatShipModules extends SeaVehicleUnitModules {
 export type CombatShipModuleList = SeaVehicleUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
-export default class CombatShip_1<
-  Options extends CombatShipOptions = CombatShipOptions,
-  Modules extends CombatShipModules = CombatShipModules,
-  ModuleList extends CombatShipModuleList = CombatShipModuleList
-> extends SeaVehicleUnit<CombatShipOptions, Modules, ModuleList> {
+export default class CombatShip_1 extends SeaVehicleUnit<
+  CombatShipModules,
+  CombatShipModuleList,
+  CombatShipOptions
+> {
   static override KEY = 'boat_1';
 
   state: State = {
@@ -74,8 +74,8 @@ export default class CombatShip_1<
   };
 
   constructor(
-    options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    options: Omit<UnitConstructorOptions<CombatShipOptions>, 'name'> = {},
+    moduleList: Partial<CombatShipModuleList> = []
   ) {
     moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
     super(
@@ -128,7 +128,7 @@ export default class CombatShip_1<
           }
         }
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
   private barrelTargetShootTimeouts: number[] = [];

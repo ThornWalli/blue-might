@@ -16,12 +16,12 @@ import UnitModule, {
 } from '../UnitModule';
 import AirVehicleUnit from '../unit/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
-import VehicleUnit from '../unit/Vehicle';
+import VehicleUnit, { type VehicleUnitModules } from '../unit/Vehicle';
 import type Unit from '../Unit';
 import { disposeObject3D } from '../../utils/object';
 import SeaVehicleUnit from '../unit/SeaVehicle';
 
-import WeaponUnitModule from './Weapon';
+import type WeaponUnitModule from './Weapon';
 import GroundVehicleUnitModule from './movable/GroundVehicle';
 
 declare module '../Unit' {
@@ -55,7 +55,11 @@ export interface SupplyUnitModuleState extends UnitModuleState {
   /**
    * The unit that is currently using the landing port.
    */
-  unit: VehicleUnit | null;
+  unit: VehicleUnit<
+    {
+      weapon: WeaponUnitModule;
+    } & VehicleUnitModules
+  > | null;
   target: Unit | null;
 }
 
@@ -63,7 +67,11 @@ export default class SupplyUnitModule extends UnitModule<
   SupplyUnitModuleOptions,
   SupplyUnitModuleState,
   SupplyUnitModuleObservables,
-  VehicleUnit
+  VehicleUnit<
+    {
+      weapon: WeaponUnitModule;
+    } & VehicleUnitModules
+  >
 > {
   static override TYPE = 'supply';
   private sphere: Sphere;
@@ -77,7 +85,11 @@ export default class SupplyUnitModule extends UnitModule<
   private lastUpdateTime = 0;
 
   constructor(
-    unit: VehicleUnit,
+    unit: VehicleUnit<
+      {
+        weapon: WeaponUnitModule;
+      } & VehicleUnitModules
+    >,
     options: SupplyUnitModuleOptions,
     state: SupplyUnitModuleState,
     debug: boolean
@@ -152,7 +164,7 @@ export default class SupplyUnitModule extends UnitModule<
     //#region  supply
     if (this.state.unit) {
       const unit = this.state.unit;
-      const weaponModule = unit.getModuleByType(WeaponUnitModule);
+      const weaponModule = unit.modules.weapon;
       const movableModule = unit.modules.movable;
       if (this.supply.progress >= 1) {
         weaponModule.getSlots().forEach(slot => {
@@ -234,7 +246,11 @@ export default class SupplyUnitModule extends UnitModule<
 
   setSupplyUnit(unit: VehicleUnit | null) {
     if (unit === this.state.unit) return;
-    this.state.unit = unit;
+    this.state.unit = unit as VehicleUnit<
+      {
+        weapon: WeaponUnitModule;
+      } & VehicleUnitModules
+    >;
     this.observables.unit$.next(unit);
   }
 

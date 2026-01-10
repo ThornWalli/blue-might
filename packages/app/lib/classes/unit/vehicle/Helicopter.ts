@@ -18,10 +18,10 @@ export type HelicopterUnitModules = AirVehicleUnitModules & {
 export type HelicopterUnitModuleList = (typeof HelicopterUnitModule)[] &
   AirVehicleUnitModuleList;
 export default class HelicopterUnit<
-  Options extends HelicopterUnitOptions = HelicopterUnitOptions,
   Modules extends HelicopterUnitModules = HelicopterUnitModules,
-  ModuleList extends HelicopterUnitModuleList = HelicopterUnitModuleList
-> extends AirVehicleUnit<Options, Modules, ModuleList> {
+  ModuleList extends HelicopterUnitModuleList = HelicopterUnitModuleList,
+  Options extends HelicopterUnitOptions = HelicopterUnitOptions
+> extends AirVehicleUnit<Modules, ModuleList, Options> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []

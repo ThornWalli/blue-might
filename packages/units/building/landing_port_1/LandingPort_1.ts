@@ -9,7 +9,7 @@ import LandingPortUnit, {
   type LandingPortUnitOptions
 } from '@blue-might/app/lib/classes/unit/LandingPort';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { replaceColors } from '@blue-might/app/lib/utils/object';
+import { replaceColors } from '@blue-might/app/lib/utils/material';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
 
 import baseGlb from './assets/landing_port_1.glb?url';
@@ -18,7 +18,11 @@ export type Options = LandingPortUnitOptions;
 export type Modules = LandingPortUnitModules;
 export type ModuleList = LandingPortUnitModuleList;
 
-export default class LandingPort_1 extends LandingPortUnit {
+export default class LandingPort_1 extends LandingPortUnit<
+  Modules,
+  ModuleList,
+  Options
+> {
   static override KEY = 'landing_port_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
@@ -37,6 +41,10 @@ export default class LandingPort_1 extends LandingPortUnit {
                 name: 'base'
               }
             ]
+          },
+          damage: {
+            ...options.moduleOptions?.damage,
+            enabled: false
           }
         }
       },

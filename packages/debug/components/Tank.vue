@@ -1,7 +1,7 @@
 <template>
   <div>
     <debug-app-component
-      :config="{ debug: { map: { pathfinding: true } } }"
+      :config="{ debug: { map: { pathfinding: false } } }"
       :on-setup="onSetup"
       :player-unit="playerUnitId"
       :map="map" />
@@ -16,8 +16,7 @@ import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import {
   CombatTank_1,
   LandingPortSupplyStation,
-  SupplyStation,
-  Tank_1
+  SupplyStation
 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Euler, Vector3 } from 'three';
@@ -31,27 +30,14 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
-const playerUnitId = 'tank-1';
+const playerUnitId = 'player-unit';
 
 const map: Partial<MapDescription> = {
   factions: [blueFaction, enemyFaction],
   units: [
-    new Tank_1({
+    new CombatTank_1({
       position: new Vector3(-1.83, 0, 0.17),
       rotation: new Euler(0, Math.PI / 4, 0),
-      moduleStates: {
-        faction: {
-          faction: enemyFaction
-        }
-      }
-    }),
-    new CombatTank_1({
-      id: 'tank-1',
-      position: new Vector3(0, 0, 0),
-      moduleDebug: {
-        pathfinding: false,
-        patrol: false
-      },
       moduleOptions: {
         patrol: {
           path: [
@@ -67,10 +53,26 @@ const map: Partial<MapDescription> = {
       },
       moduleStates: {
         faction: {
-          faction: blueFaction
+          faction: enemyFaction
         },
         patrol: {
-          active: false
+          active: true
+        }
+      }
+    }),
+    new CombatTank_1({
+      id: playerUnitId,
+      position: new Vector3(0, 0, 0),
+      moduleDebug: {
+        pathfinding: false,
+        patrol: false
+      },
+      moduleStates: {
+        damage: {
+          maxDamage: 1000
+        },
+        faction: {
+          faction: blueFaction
         },
         movable: {
           active: true

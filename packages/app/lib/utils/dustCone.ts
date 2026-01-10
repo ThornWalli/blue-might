@@ -3,7 +3,7 @@ import {
   ConeGeometry,
   DoubleSide,
   Mesh,
-  MeshLambertMaterial,
+  MeshBasicMaterial,
   Object3D,
   Vector2,
   type WebGLProgramParametersWithUniforms
@@ -13,31 +13,43 @@ export interface DustConeOptions {
   scale: number;
   scaleSpeed: number;
   size: Vector2;
+  circleSize: number;
   ditherThreshold: number;
   circleOpacity: number;
   color: number;
+  groundShader: boolean;
 }
 
 export function createDustCone(options: Partial<DustConeOptions> = {}) {
-  const { scale, size, ditherThreshold, circleOpacity, color } = {
+  const {
+    scale,
+    size,
+    circleSize,
+    ditherThreshold,
+    circleOpacity,
+    color,
+    groundShader
+  } = {
     scale: options.scale ?? 0.5,
     size: options.size ?? new Vector2(0.2, 1),
+    circleSize: options.circleSize ?? 0.2,
     ditherThreshold: options.ditherThreshold ?? 0.1,
     circleOpacity: options.circleOpacity ?? 0.4,
-    color: options.color ?? 0xffffff
+    color: options.color ?? 0xffffff,
+    groundShader: options.groundShader ?? false
   };
+  const circleWidth = circleSize * scale;
   const width = size.x * scale;
   const height = size.y * scale;
   const geo = new ConeGeometry(width, height, 5, 1, true);
-  const mat = new MeshLambertMaterial({
+  const mat = new MeshBasicMaterial({
     color,
     side: DoubleSide,
-    flatShading: true,
     transparent: true,
     alphaTest: 0.0001
   });
 
-  mat.onBeforeCompile = (shader: WebGLProgramParametersWithUniforms) => {
+  const ditherShader = (shader: WebGLProgramParametersWithUniforms) => {
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <premultiplied_alpha_fragment>',
       `
@@ -57,23 +69,28 @@ export function createDustCone(options: Partial<DustConeOptions> = {}) {
     `
     );
   };
+
+  mat.onBeforeCompile = ditherShader;
   mat.needsUpdate = true;
   const dustCone = new Mesh(geo, mat);
   dustCone.position.y += height / 2;
 
-  const circleGeometry = new CircleGeometry(width * 0.6, 5);
-  circleGeometry.rotateX(-Math.PI / 2);
-  const circleMaterial = new MeshLambertMaterial({
-    transparent: true,
+  const groundGeometry = new CircleGeometry(circleWidth, 5);
+  groundGeometry.rotateX(-Math.PI / 2);
+  const groundMaterial = new MeshBasicMaterial({
     color,
     side: DoubleSide,
-    flatShading: true,
-    opacity: circleOpacity
+    opacity: circleOpacity,
+    transparent: circleOpacity < 1,
+    alphaTest: 0.0001
   });
-  const circle = new Mesh(circleGeometry, circleMaterial);
+  if (groundShader) {
+    groundMaterial.onBeforeCompile = ditherShader;
+  }
+  const ground = new Mesh(groundGeometry, groundMaterial);
 
   const obj = new Object3D();
-  obj.add(circle);
+  obj.add(ground);
   obj.add(dustCone);
   obj.userData.scale = 1;
 

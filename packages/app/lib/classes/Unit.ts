@@ -95,9 +95,9 @@ export interface UnitObservables {
 }
 
 export default class Unit<
-  Options extends UnitOptions = UnitOptions,
   Modules extends UnitModules = UnitModules,
   ModuleList extends UnitModuleList = UnitModuleList,
+  Options extends UnitOptions = UnitOptions,
   Observables extends UnitObservables = UnitObservables
 > {
   static KEY = 'unit';

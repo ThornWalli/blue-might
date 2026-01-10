@@ -272,11 +272,20 @@ export default class ShootModule extends MapModule<State, Observables> {
               this.map.modules.effect.addExplosion(point, 1);
             }
             if (shoot.projectile.hasDust()) {
-              this.map.modules.effect.addDustCone(
-                point,
-                normal,
-                intersection.object
-              );
+              if (intersection.object.name === 'water') {
+                console.log('WATER HIT');
+                this.map.modules.effect.addWaterCone(
+                  point,
+                  normal,
+                  intersection.object
+                );
+              } else {
+                this.map.modules.effect.addDustCone(
+                  point,
+                  normal,
+                  intersection.object
+                );
+              }
             }
             if (shoot.projectile.hasSmoke()) {
               this.map.modules.effect.addSmoke(point);

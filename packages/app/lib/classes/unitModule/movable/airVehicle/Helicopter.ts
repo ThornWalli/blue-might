@@ -17,8 +17,9 @@ import type {
 } from '../AirVehicle';
 import AirUnitModule from '../AirVehicle';
 import { COLLISION_TYPE } from '../../Collision';
-import LandingPortUnitModule from '../../LandingPort';
 import type Unit from '../../../Unit';
+import type { UnitModules } from '../../../Unit';
+import type LandingPortUnitModule from '../../LandingPort';
 
 declare module '../../../Unit' {
   interface ModuleStates {
@@ -480,6 +481,7 @@ export default class HelicopterUnitModule<
         if (unitPosition.y <= groundHeight) {
           // Optional: Tiefer als 1 Einheit unter Wasser stoppen
           velocity.set(0, 0, 0);
+          this.getUnit().modules.damage.options.enabled = false;
         }
       }
     }
@@ -537,7 +539,11 @@ export default class HelicopterUnitModule<
         console.log('Helicopter landed at y=', position.toArray());
 
         if (targetUnit) {
-          const landingPort = targetUnit.getModuleByType(LandingPortUnitModule);
+          const landingPort = (
+            targetUnit as Unit<
+              { landingPort: LandingPortUnitModule } & UnitModules
+            >
+          ).modules.landingPort;
           if (landingPort) {
             landingPort.setLandedUnit(unit);
           }

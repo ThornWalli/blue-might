@@ -6,7 +6,6 @@ import { Texture, type Object3D } from 'three';
 import { Group, NearestFilter, Vector3 } from 'three';
 import assetLoader from '@blue-might/app/services/assetLoader';
 
-import Explosion from '../effect/Explosion';
 import MapModule, {
   type MapModuleObservables,
   type MapModuleState
@@ -19,8 +18,10 @@ import { LOADER } from '../AssetLoader';
 import type Particle from '../Particle';
 import type { ParticleOptions } from '../Particle';
 import { SMOKE_TYPE } from '../unitModule/Damage';
+import Explosion from '../effect/Explosion';
 import Fire from '../effect/Fire';
 import Smoke from '../effect/Smoke';
+import WaterCone from '../effect/WaterCone';
 declare module '../Map' {
   interface ModuleDebug {
     effect: boolean;
@@ -98,6 +99,27 @@ export default class EffectModule extends MapModule<State, Observables> {
     this.state.particles.push(explosion);
     disableRaycaster(explosion.getRoot());
     this.root.add(explosion.getRoot());
+  }
+
+  async addWaterCone(
+    position: Vector3,
+    normal?: Vector3,
+    hitObject?: Object3D
+  ) {
+    const waterCone = new WaterCone();
+    await waterCone.setup();
+    const root = waterCone.getRoot();
+    root.position.copy(position);
+    root.position.add(
+      normal?.clone().multiplyScalar(0.001) ?? new Vector3(0, 0.001, 0)
+    );
+
+    if (normal && hitObject !== this.map.modules.ground.getRoot()) {
+      root.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), normal);
+    }
+    disableRaycaster(root);
+    this.state.particles.push(waterCone);
+    this.root.add(root);
   }
 
   async addDustCone(

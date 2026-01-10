@@ -27,8 +27,8 @@ import { getAllMeshes, OBJECT_USER_DATA } from '../../utils/object';
 import BuildingUnit from '../unit/Building';
 import { generateNoiseTexture } from '../../utils/texture';
 import { resizeCanvas } from '../../utils/canvas';
-import AirVehicleUnitModule from '../unitModule/movable/AirVehicle';
 import { FLIGHT_STATUS } from '../unitModule/movable/airVehicle/Helicopter';
+import type AirVehicleUnit from '../unit/AirVehicle';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -237,8 +237,8 @@ export default class GroundModule extends MapModule<State, Observables> {
     const groundHeight = this.getHeightAt(x, z);
 
     if (unitIntersections.length > 0) {
-      const airModule =
-        unitIntersections[0]?.unit?.getModuleByType(AirVehicleUnitModule);
+      const airModule = (unitIntersections[0]?.unit as AirVehicleUnit)?.modules
+        .airVehicle;
 
       const isFlying =
         airModule &&
@@ -292,123 +292,6 @@ export default class GroundModule extends MapModule<State, Observables> {
       maxDistance
     );
   }
-
-  // getSurfaceHeightAt(
-  //   x: number | Vector2,
-  //   z?: number,
-  //   ignoredUnits: Unit[] = [],
-  //   maxDistance = 100
-  // ): number {
-  //   if (x instanceof Vector2) {
-  //     z = x.y;
-  //     x = x.x;
-  //   }
-
-  //   this.surfaceData.position.set(x, 50, z!);
-
-  //   const raycaster = this.surfaceData.raycaster;
-  //   raycaster.far = maxDistance; // Maximale Distanz
-  //   raycaster.set(this.surfaceData.position, this.surfaceData.direction);
-
-  //   const allMeshes: Object3D[] = [];
-  //   this.map.modules.units.getUnits().forEach(unit => {
-  //     if (!ignoredUnits.includes(unit)) {
-  //       allMeshes.push(...getAllMeshes(unit.root));
-  //     }
-  //   });
-
-  //   // this.root!.traverse(child => {
-  //   //   if (child instanceof Mesh) {
-  //   //     allMeshes.push(child);
-  //   //   }
-  //   // });
-  //   const intersections = raycaster.intersectObjects(allMeshes, true);
-  //   const unitIntersections = intersections.map(intersection => ({
-  //     intersection,
-  //     unit: this.map.app
-  //       .getScene()
-  //       .getObjectById(
-  //         intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
-  //       )?.userData.unit as Unit
-  //   }));
-  //   const groundHeight = this.getHeightAt(x, z);
-
-  //   if (unitIntersections.length > 0) {
-  //     const airModule =
-  //       unitIntersections[0]?.unit?.getModuleByType(AirVehicleUnitModule);
-
-  //     const isFlying =
-  //       airModule &&
-  //       airModule.getFlightStatus() === FLIGHT_STATUS.FLYING &&
-  //       unitIntersections[0]!.intersection.point.y - groundHeight > 1;
-
-  //     if (isFlying) {
-  //       return groundHeight;
-  //     }
-
-  //     return unitIntersections[0]!.intersection.point.y;
-  //   }
-
-  //   return groundHeight;
-  // }
-
-  // getTerrainHeightAt(
-  //   x: number | Vector2,
-  //   z?: number,
-  //   ignoredUnits: Unit[] = [],
-  //   maxDistance = 100
-  // ): number {
-  //   if (x instanceof Vector2) {
-  //     z = x.y;
-  //     x = x.x;
-  //   }
-
-  //   this.surfaceData.position.set(x, 50, z!);
-
-  //   const raycaster = this.surfaceData.raycaster;
-  //   raycaster.far = maxDistance; // Maximale Distanz
-  //   raycaster.set(this.surfaceData.position, this.surfaceData.direction);
-
-  //   const allMeshes: Object3D[] = [];
-  //   this.map.modules.units.getUnits().forEach(unit => {
-  //     if (!ignoredUnits.includes(unit) && unit instanceof BuildingUnit) {
-  //       allMeshes.push(...getAllMeshes(unit.root));
-  //     }
-  //   });
-
-  //   // this.root!.traverse(child => {
-  //   //   if (child instanceof Mesh) {
-  //   //     allMeshes.push(child);
-  //   //   }
-  //   // });
-  //   const intersections = raycaster.intersectObjects(allMeshes, false);
-  //   const unitIntersections = intersections.map(intersection => ({
-  //     intersection,
-  //     unit: this.map.app
-  //       .getScene()
-  //       .getObjectById(
-  //         intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
-  //       )?.userData.unit as Unit
-  //   }));
-  //   const groundHeight = this.getHeightAt(x, z);
-
-  //   if (unitIntersections.length > 0) {
-  //     const airModule =
-  //       unitIntersections[0]?.unit.getModuleByType(AirVehicleUnitModule);
-
-  //     const isFlying =
-  //       airModule &&
-  //       airModule.getFlightStatus() === FLIGHT_STATUS.FLYING &&
-  //       unitIntersections[0]!.intersection.point.y - groundHeight > 1;
-
-  //     if (isFlying) {
-  //       return groundHeight;
-  //     }
-
-  //     return unitIntersections[0]!.intersection.point.y;
-  //   }
-  //   return groundHeight;
-  // }
 
   getTerrainInfoAt(
     x: number | Vector2,
@@ -610,7 +493,7 @@ export default class GroundModule extends MapModule<State, Observables> {
       flatShading: true,
       wireframe: false,
       transparent: true,
-      opacity: 0.8
+      opacity: 0.9
     });
 
     const waterGeometry = new PlaneGeometry(width, height, 1, 1);
@@ -618,6 +501,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     waterGeometry.translate(0, -9, 0);
 
     const water = new Mesh(waterGeometry, waterMaterial);
+    water.name = 'water';
 
     const object = new Object3D();
     object.add(backgroundTerrain);
@@ -667,7 +551,7 @@ export default class GroundModule extends MapModule<State, Observables> {
       a: number
     ): TILE_TYPE | undefined {
       if (a > 128) {
-        if (r === 217 && g === 217 && b === 217) return TILE_TYPE.BETON_ROAD;
+        if (r === 166 && g === 166 && b === 166) return TILE_TYPE.BETON_ROAD; // D9D9D9
       }
 
       return undefined;

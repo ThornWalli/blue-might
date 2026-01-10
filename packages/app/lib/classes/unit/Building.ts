@@ -1,5 +1,7 @@
+import { setDestroyedMaterials } from '../../utils/material';
 import Unit, {
   GROUND_ADJUSTMENT_MODE,
+  type SetupContext,
   type UnitConstructorOptions,
   type UnitModuleList,
   type UnitModules,
@@ -17,10 +19,10 @@ export type BuildingUnitModules = UnitModules & {
 export type BuildingUnitModuleList = (typeof BuildingUnitModule)[] &
   UnitModuleList;
 export default class BuildingUnit<
-  Options extends BuildingUnitOptions = BuildingUnitOptions,
   Modules extends BuildingUnitModules = BuildingUnitModules,
-  ModuleList extends BuildingUnitModuleList = BuildingUnitModuleList
-> extends Unit<Options, Modules, ModuleList> {
+  ModuleList extends BuildingUnitModuleList = BuildingUnitModuleList,
+  Options extends BuildingUnitOptions = BuildingUnitOptions
+> extends Unit<Modules, ModuleList, Options> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []
@@ -34,5 +36,14 @@ export default class BuildingUnit<
     }
     super(options, moduleList);
     this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.MIN_HEIGHT);
+  }
+
+  override async setup(context: SetupContext) {
+    await super.setup(context);
+    this.subscription.add(
+      this.modules.damage.observables.destroyed$.subscribe(() => {
+        setDestroyedMaterials(this.root);
+      })
+    );
   }
 }

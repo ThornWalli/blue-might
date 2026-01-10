@@ -9,17 +9,21 @@ export interface DustConeOptions extends ParticleOptions {
   scale: number;
   scaleSpeed: number;
   size: Vector2;
+  circleSize: number;
   ditherThreshold: number;
   circleOpacity: number;
   color: number;
+  groundShader: boolean;
 }
 
 export default class DustCone extends Particle {
   private scaleSpeed: number;
   private size: Vector2;
+  private circleSize: number;
   private ditherThreshold: number;
   private circleOpacity: number;
   private color: number;
+  private groundShader: boolean;
 
   // eslint-disable-next-line complexity
   constructor(options?: Partial<DustConeOptions>) {
@@ -31,9 +35,11 @@ export default class DustCone extends Particle {
     });
     this.ditherThreshold = options?.ditherThreshold ?? 0.1;
     this.size = options?.size ?? new Vector2(0.2, 1);
+    this.circleSize = options?.circleSize ?? 0.2;
     this.circleOpacity = options?.circleOpacity ?? 0.4;
     this.scaleSpeed = options?.scaleSpeed ?? 0.025;
     this.color = options?.color ?? 0x333333;
+    this.groundShader = options?.groundShader ?? false;
   }
 
   override update(v: AnimationLoopValue) {
@@ -56,10 +62,12 @@ export default class DustCone extends Particle {
     return createDustCone({
       ditherThreshold: this.ditherThreshold,
       size: this.size,
+      circleSize: this.circleSize,
       circleOpacity: this.circleOpacity,
       scale: this.getScale(),
       scaleSpeed: this.scaleSpeed,
-      color: this.color
+      color: this.color,
+      groundShader: this.groundShader
     });
   }
 }

@@ -16,7 +16,7 @@ import WeaponUnitModule, {
   type WeaponUnitModuleOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
-import { replaceColors } from '@blue-might/app/lib/utils/object';
+import { replaceColors } from '@blue-might/app/lib/utils/material';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import type { ControlState } from '@blue-might/app/lib/classes/playerModule/Controls';
 import { playSound } from '@blue-might/weapon/utils';
@@ -55,9 +55,9 @@ export type ModuleList = BuildingUnitModuleList &
   ];
 
 export default class StationaryGun_2 extends BuildingUnit<
-  BuildingUnitOptions,
   Modules,
-  ModuleList
+  ModuleList,
+  Options
 > {
   static override KEY = 'stationary_gun_2';
 

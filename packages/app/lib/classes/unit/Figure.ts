@@ -26,10 +26,10 @@ export type FigureUnitModuleList = (
 )[] &
   MovableUnitModuleList;
 export default class FigureUnit<
-  Options extends FigureUnitOptions = FigureUnitOptions,
   Modules extends FigureUnitModules = FigureUnitModules,
-  ModuleList extends FigureUnitModuleList = FigureUnitModuleList
-> extends MovableUnit<Options, Modules, ModuleList> {
+  ModuleList extends FigureUnitModuleList = FigureUnitModuleList,
+  Options extends FigureUnitOptions = FigureUnitOptions
+> extends MovableUnit<Modules, ModuleList, Options> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []

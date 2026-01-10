@@ -22,10 +22,10 @@ export type MovableUnitModuleList = (
 )[] &
   UnitModuleList;
 export default class MovableUnit<
-  Options extends MovableUnitOptions = MovableUnitOptions,
   Modules extends MovableUnitModules = MovableUnitModules,
-  ModuleList extends MovableUnitModuleList = MovableUnitModuleList
-> extends Unit<Options, Modules, ModuleList> {
+  ModuleList extends MovableUnitModuleList = MovableUnitModuleList,
+  Options extends MovableUnitOptions = MovableUnitOptions
+> extends Unit<Modules, ModuleList, Options> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []

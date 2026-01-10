@@ -17,10 +17,10 @@ export type LandingPortUnitModules = BuildingUnitModules & {
 export type LandingPortUnitModuleList = (typeof LandingPortUnitModule)[] &
   BuildingUnitModuleList;
 export default class LandingPortUnit<
-  Options extends LandingPortUnitOptions = LandingPortUnitOptions,
   Modules extends LandingPortUnitModules = LandingPortUnitModules,
-  ModuleList extends LandingPortUnitModuleList = LandingPortUnitModuleList
-> extends BuildingUnit<Options, Modules, ModuleList> {
+  ModuleList extends LandingPortUnitModuleList = LandingPortUnitModuleList,
+  Options extends LandingPortUnitOptions = LandingPortUnitOptions
+> extends BuildingUnit<Modules, ModuleList, Options> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: ModuleList = [] as unknown as ModuleList

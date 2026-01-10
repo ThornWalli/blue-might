@@ -9,7 +9,7 @@ import TankUnit, {
 } from '@blue-might/app/lib/classes/unit/vehicle/Tank';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh } from 'three';
-import { replaceColors } from '@blue-might/app/lib/utils/object';
+import { replaceColors } from '@blue-might/app/lib/utils/material';
 
 import baseGlb from './assets/tank_1.glb?url';
 
@@ -20,7 +20,7 @@ export type ModuleList = TankUnitModuleList;
 export default class Tank_1<
   Modules extends TankUnitModules = TankUnitModules,
   ModuleList extends TankUnitModuleList = TankUnitModuleList
-> extends TankUnit<Options, Modules, ModuleList> {
+> extends TankUnit<Modules, ModuleList, Options> {
   static override KEY = 'tank_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},

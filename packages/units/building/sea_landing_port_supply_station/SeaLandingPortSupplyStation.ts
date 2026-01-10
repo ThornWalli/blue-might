@@ -9,7 +9,7 @@ import LandingPortUnit, {
   type LandingPortUnitOptions
 } from '@blue-might/app/lib/classes/unit/LandingPort';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { replaceColors } from '@blue-might/app/lib/utils/object';
+import { replaceColors } from '@blue-might/app/lib/utils/material';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
 
@@ -22,9 +22,9 @@ export interface Modules extends LandingPortUnitModules {
 export type ModuleList = LandingPortUnitModuleList & [typeof SupplyUnitModule];
 
 export default class SeaLandingPortSupplyStation extends LandingPortUnit<
-  Options,
   Modules,
-  ModuleList
+  ModuleList,
+  Options
 > {
   static override KEY = 'sea_landing_port_supply_station';
   constructor(

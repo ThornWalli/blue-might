@@ -102,60 +102,32 @@ export default class Explosion extends Particle {
       })
     ]);
 
-    // const map = new TextureLoader().load(test1);
-
-    let sprite = new Sprite(new SpriteMaterial({ map: tex1 }));
+    let sprite = new Sprite(
+      new SpriteMaterial({
+        map: tex1,
+        transparent: true
+      })
+    );
     sprite.scale.set(radius * 2, radius * 2, radius * 2);
     obj.add(sprite);
 
-    sprite = new Sprite(new SpriteMaterial({ map: tex2 }));
+    sprite = new Sprite(
+      new SpriteMaterial({
+        map: tex2,
+        transparent: true
+      })
+    );
     sprite.scale.set(radius * 2, radius * 2, radius * 2);
     obj.add(sprite);
 
-    sprite = new Sprite(new SpriteMaterial({ map: tex3 }));
+    sprite = new Sprite(
+      new SpriteMaterial({
+        map: tex3,
+        transparent: true
+      })
+    );
     sprite.scale.set(radius * 2, radius * 2, radius * 2);
     obj.add(sprite);
-
-    // let sphereGeometry = new SphereGeometry(radius, 32, 32, 0, phiLength);
-    // sphereGeometry.rotateX(-Math.PI / 2);
-    // obj.add(
-    //   new Mesh(
-    //     sphereGeometry,
-    //     new MeshBasicMaterial({
-    //       color: 0xff0000,
-    //       // depthWrite: false,
-    //       depthTest: false
-    //     })
-    //   )
-    // );
-
-    // sphereGeometry = new SphereGeometry(radius - 0.02, 32, 32, 0, phiLength);
-    // sphereGeometry.rotateX(-Math.PI / 2);
-    // obj.add(
-    //   new Mesh(
-    //     sphereGeometry,
-    //     new MeshBasicMaterial({
-    //       color: 0xffff00,
-    //       // depthWrite: false,
-    //       depthTest: false
-    //     })
-    //   )
-    // );
-
-    // sphereGeometry = new SphereGeometry(radius - 0.04, 32, 32, 0, phiLength);
-    // sphereGeometry.rotateX(-Math.PI / 2);
-    // obj.add(
-    //   new Mesh(
-    //     sphereGeometry,
-    //     new MeshBasicMaterial({
-    //       color: 0xffffff,
-    //       depthWrite: false,
-    //       depthTest: false
-    //     })
-    //   )
-    // );
-
-    // obj.scale.set(0, 0, 0);
 
     return obj;
   }

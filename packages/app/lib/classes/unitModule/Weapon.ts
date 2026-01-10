@@ -17,8 +17,9 @@ import type { ShootDescription } from '../mapModule/Shoot';
 import { ControlAction } from '../playerModule/Controls';
 import { isUnitDestroyed } from '../../utils/unit';
 
-import AttackUnitModule from './Attack';
-import PlayerUnitModule from './Player';
+import type { UnitModules } from './../Unit';
+import type AttackUnitModule from './Attack';
+import type PlayerUnitModule from './Player';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -75,10 +76,23 @@ const DEFAULT_DIRECTION: [number, number, number] = [0, 0, 1];
 export default class WeaponUnitModule<
   Options extends WeaponUnitModuleOptions = WeaponUnitModuleOptions,
   State extends WeaponUnitModuleState = WeaponUnitModuleState,
-  Obervables extends WeaponUnitModuleObservables = WeaponUnitModuleObservables
-> extends UnitModule<Options, State, Obervables> {
+  Obervables extends WeaponUnitModuleObservables = WeaponUnitModuleObservables,
+  U extends Unit<
+    {
+      weapon: WeaponUnitModule;
+      player: PlayerUnitModule;
+      attack: AttackUnitModule;
+    } & UnitModules
+  > = Unit<
+    {
+      weapon: WeaponUnitModule;
+      player: PlayerUnitModule;
+      attack: AttackUnitModule;
+    } & UnitModules
+  >
+> extends UnitModule<Options, State, Obervables, U> {
   static override TYPE = 'weapon';
-  constructor(unit: Unit, options: Options, state: State, debug?: boolean) {
+  constructor(unit: U, options: Options, state: State, debug?: boolean) {
     super(
       unit,
       {
@@ -131,7 +145,7 @@ export default class WeaponUnitModule<
 
     const unit = this.getUnit();
 
-    const attackModule = unit.getModuleByType(AttackUnitModule);
+    const attackModule = unit.modules.attack;
     if (attackModule) {
       this.subscription.add(
         attackModule.observables.target$.subscribe(target => {
@@ -148,7 +162,7 @@ export default class WeaponUnitModule<
       })
     );
 
-    const playerUnitModule = unit.getModuleByType(PlayerUnitModule);
+    const playerUnitModule = unit.modules.player;
     if (playerUnitModule) {
       this.subscription.add(
         playerUnitModule.observables.player$
@@ -162,6 +176,12 @@ export default class WeaponUnitModule<
               this.switchSlot();
             }
           })
+      );
+
+      this.subscription.add(
+        playerUnitModule.observables.player$.subscribe(player => {
+          this.getUnit().modules.weapon.setAutoAimActive(!player);
+        })
       );
     }
   }
@@ -233,7 +253,7 @@ export default class WeaponUnitModule<
    * Beispiel: Im Autopilot gibt es kein Verbrauch.
    */
   hasConsumption() {
-    return !!this.getUnit().getModuleByType(PlayerUnitModule).getPlayer();
+    return !!this.getUnit().modules.player.getPlayer();
   }
 
   ignoredSlots = new Set<WeaponSlot>();

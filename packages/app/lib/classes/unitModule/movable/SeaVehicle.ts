@@ -18,13 +18,13 @@ import {
 
 declare module '../../Unit' {
   interface ModuleStates {
-    groundVehicle: Partial<SeaVehicleUnitModuleState>;
+    seaVehicle: Partial<SeaVehicleUnitModuleState>;
   }
   interface ModuleOptions {
-    groundVehicle: Partial<SeaVehicleUnitModuleOptions>;
+    seaVehicle: Partial<SeaVehicleUnitModuleOptions>;
   }
   interface ModuleDebug {
-    groundVehicle: boolean;
+    seaVehicle: boolean;
   }
 }
 export type SeaVehicleUnitModuleObservables = MovableUnitModuleObservables;
@@ -35,6 +35,7 @@ export interface SeaVehicleUnitModuleOptions extends MovableUnitModuleOptions {
   turnSpeed: number;
   turnMovementSpeed: number;
   friction: number;
+  allowRotationInPlace?: boolean;
 }
 
 export interface SeaVehicleUnitModuleState extends MovableUnitModuleState {
@@ -61,7 +62,8 @@ export default class SeaVehicleUnitModule<
         acceleration: options.acceleration ?? 1 / 3,
         turnSpeed: options.turnSpeed ?? 1,
         turnMovementSpeed: options.turnMovementSpeed ?? 1 / 3,
-        friction: options.friction ?? 0.7
+        friction: options.friction ?? 0.7,
+        allowRotationInPlace: options.allowRotationInPlace ?? false
       },
       {
         ...state,
@@ -139,32 +141,21 @@ export default class SeaVehicleUnitModule<
         ?.modules.ground.getHeightAt(
           unit.getPosition().x,
           unit.getPosition().z
-        ) ?? 1.0; // Sinkgeschwindigkeit (Einheiten pro Sekunde)
+        ) ?? 1.0;
 
-    if (
-      unit.modules.damage.isDestroyed() &&
-      unit.getPosition().y >= sinkSpeed
-    ) {
-      // Passe an, wenn der Check anders heißt (z.B. unit.health <= 0)
-      const sinkSpeed =
-        unit
-          .getMap()
-          ?.modules.ground.getHeightAt(
-            unit.getPosition().x,
-            unit.getPosition().z
-          ) ?? 1.0; // Sinkgeschwindigkeit (Einheiten pro Sekunde)
-
+    if (unit.modules.damage.isDestroyed() && unit.getPosition().y > sinkSpeed) {
       const pos = unit.getPosition().clone();
-      pos.y += sinkSpeed * delta; // Sinke nach unten
+      pos.y += sinkSpeed * delta;
 
       unit.setPosition(pos);
 
-      // Stoppe horizontale Bewegung
       this.state.velocity.x = 0;
       this.state.velocity.z = 0;
 
       return; // Keine weitere Bewegung
     } else if (isUnitDestroyed(unit)) {
+      this.getUnit().modules.damage.options.enabled = false;
+      this.destroy();
       return;
     }
 
@@ -273,16 +264,20 @@ export default class SeaVehicleUnitModule<
     const turnMovementSpeed = this.options.turnMovementSpeed;
     const currentSpeed = velocity.length();
 
-    if (currentSpeed > 0.01) {
-      // Nur lenken, wenn das Boot fährt (Geschwindigkeit > Schwellwert)
+    const canRotateInPlace = aiActive && this.options.allowRotationInPlace;
+    if (currentSpeed > 0.01 || canRotateInPlace) {
       let turnAmount = 0;
       if (controls[ControlAction.MOVE_LEFT]) turnAmount += 1;
       if (controls[ControlAction.MOVE_RIGHT]) turnAmount -= 1;
 
       if (turnAmount !== 0) {
-        // Lenken basierend auf Geschwindigkeit (schneller fahren = schärferes Lenken)
+        // NEU: Bei Rotation auf der Stelle langsamer drehen (realistischer)
+        const rotationSpeedMultiplier =
+          canRotateInPlace && currentSpeed < 0.01 ? 0.5 : 1.0;
         const effectiveTurnSpeed =
-          turnSpeed * (1 + currentSpeed * turnMovementSpeed);
+          turnSpeed *
+          rotationSpeedMultiplier *
+          (1 + currentSpeed * turnMovementSpeed);
         const yawChange = turnAmount * effectiveTurnSpeed * delta;
         unit.setYaw(unit.getYaw() + yawChange);
       }
