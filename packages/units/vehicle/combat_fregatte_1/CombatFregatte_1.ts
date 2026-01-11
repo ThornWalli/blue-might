@@ -1,9 +1,17 @@
+/* eslint-disable complexity */
 import type {
   SetupContext,
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { Object3D, AxesHelper, Mesh, SkinnedMesh, Vector2 } from 'three';
+import {
+  Object3D,
+  AxesHelper,
+  Mesh,
+  SkinnedMesh,
+  Vector2,
+  LoopRepeat
+} from 'three';
 import { replaceColors } from '@blue-might/app/lib/utils/material';
 import SeaVehicleUnit, {
   type SeaVehicleUnitModuleList,
@@ -26,6 +34,7 @@ import {
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
 import { playSound } from '@blue-might/weapon/utils';
+import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 
 import baseGlb from './assets/combat_fregatte_1.glb?url';
 
@@ -91,6 +100,13 @@ export default class CombatFregatte_1 extends SeaVehicleUnit<
         },
         moduleOptions: {
           ...options.moduleOptions,
+          attack: {
+            radius: 10
+          },
+          seaVehicle: {
+            ...options.moduleOptions?.seaVehicle,
+            turnSpeed: 1 / 3
+          },
           weapon: {
             autoAimFn: (options: AutoAimFnOptions) =>
               autoAimFunction(
@@ -104,7 +120,7 @@ export default class CombatFregatte_1 extends SeaVehicleUnit<
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.default('light_projectile'),
+                weapon: new weapons.default(PROJECTILE_TYPE.HEAVY_PROJECTILE),
                 maxAmmunition: 100,
                 ammunition: 100
               }
@@ -141,6 +157,25 @@ export default class CombatFregatte_1 extends SeaVehicleUnit<
         }
       )
     );
+    //#endregion
+
+    //#region Animation
+
+    const action = this.modules.animation.getAction('radar');
+    if (action) {
+      action.clampWhenFinished = false;
+      action.setLoop(LoopRepeat, Infinity);
+      action.setDuration(4);
+    }
+
+    this.modules.animation.playAction('radar');
+
+    this.subscription.add(
+      this.modules.damage.observables.destroyed$.subscribe(() => {
+        this.modules.animation.stopAction('radar');
+      })
+    );
+
     //#endregion
     this.setMaterialReady();
   }
@@ -250,17 +285,24 @@ export default class CombatFregatte_1 extends SeaVehicleUnit<
     const velocity =
       this.state.weaponVelocity[this.modules.weapon.getSlotIndex()]!;
 
+    const precision = controls[ControlAction.MODIFIER];
+
+    let value = 0.005;
+    if (precision) {
+      value *= 1 / 5;
+    }
+
     if (controls[ControlAction.UP]) {
-      velocity.y -= 0.005;
+      velocity.y -= value;
     }
     if (controls[ControlAction.DOWN]) {
-      velocity.y += 0.005;
+      velocity.y += value;
     }
     if (controls[ControlAction.LEFT]) {
-      velocity.x += 0.005;
+      velocity.x += value;
     }
     if (controls[ControlAction.RIGHT]) {
-      velocity.x -= 0.005;
+      velocity.x -= value;
     }
     if (this.modules.weapon.isAutoAimActive()) return;
     if (controls[ControlAction.FIRE_PRIMARY]) {
@@ -291,7 +333,7 @@ export default class CombatFregatte_1 extends SeaVehicleUnit<
 
         velocity.multiplyScalar(0.9);
 
-        if (velocity.length() < 0.001) {
+        if (velocity.length() < 0.0001) {
           velocity.set(0, 0);
         } else {
           this.modules.weapon.updateSourcePosition(i);

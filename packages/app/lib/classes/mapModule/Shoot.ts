@@ -334,7 +334,7 @@ export default class ShootModule extends MapModule<State, Observables> {
       }
 
       const distanceFromStart = obj.position.distanceTo(shoot.startPosition);
-      if (hit || distanceFromStart > 20) {
+      if (hit || distanceFromStart > 100) {
         // Deaktiviere das Projektil und gib es an den Pool zurück
         shoot.isActive = false;
         shoot.object.visible = false;

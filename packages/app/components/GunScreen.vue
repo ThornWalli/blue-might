@@ -16,18 +16,19 @@ import {
   DEFAULT_SHADOW_QUALITY,
   setRendererShadow
 } from '@blue-might/app/lib/classes/Renderer';
-import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
+import type WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import type { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 
 import type App from '../lib/classes/App';
 import type Unit from '../lib/classes/Unit';
+import type { UnitModules } from '../lib/classes/Unit';
 
 const screenEl = ref<HTMLDivElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
 
 const $props = defineProps<{
   app: App;
-  unit: Unit;
+  unit: Unit<UnitModules & { weapon: WeaponUnitModule }>;
 }>();
 
 let renderer: WebGLRenderer;
@@ -62,7 +63,7 @@ function setup() {
   renderer.setAnimationLoop(() => {
     const unit = $props.unit;
     renderer.render($props.app.getScene(), camera);
-    const weaponModule = unit?.getModuleByType(WeaponUnitModule);
+    const weaponModule = unit?.modules.weapon;
     if (weaponModule) {
       const [sourceDirection] = weaponModule.getSourceDirections();
       const [sourcePosition] = weaponModule.getSourcePositions();

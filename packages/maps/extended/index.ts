@@ -15,7 +15,8 @@ import {
   SupplyStation,
   CombatShip_1,
   CombatSubmarine_1,
-  Lighthouse_1
+  Lighthouse_1,
+  CombatFregatte_1
 } from '@blue-might/units';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import { neutralFaction } from '@blue-might/app/lib/classes/mapModule/Faction';
@@ -47,6 +48,31 @@ export default function (): MapDescription {
               [-0.52, -12.95],
               [21.52, 9.29],
               [50.73, 4.61]
+            ]
+          }
+        },
+        moduleStates: {
+          patrol: {
+            active: true
+          },
+          faction: {
+            faction: enemyFaction
+          }
+        }
+      }),
+      new CombatFregatte_1({
+        position: new Vector3(47.6, 0, 3.14),
+        moduleDebug: {
+          attack: true
+        },
+        moduleOptions: {
+          patrol: {
+            path: [
+              [47.6, 3.14],
+              [16.28, 1.01],
+              [4.59, -17.27],
+              [20.08, -30.01],
+              [8.15, -50.87]
             ]
           }
         },

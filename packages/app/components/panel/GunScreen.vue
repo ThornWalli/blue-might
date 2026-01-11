@@ -8,7 +8,8 @@
 import { markRaw, onMounted, ref, type Raw } from 'vue';
 import { EMPTY, map, Subscription, switchMap } from 'rxjs';
 import type Unit from '@blue-might/app/lib/classes/Unit';
-import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
+import type WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
+import type { UnitModules } from '@blue-might/app/lib/classes/Unit';
 
 import BmGunScreen from '../GunScreen.vue';
 import BmPanel from '../Panel.vue';
@@ -20,7 +21,9 @@ const $props = defineProps<{
 
 const subscription = new Subscription();
 
-const unit = ref<Raw<Unit> | null>(null);
+const unit = ref<Raw<Unit<UnitModules & { weapon: WeaponUnitModule }>> | null>(
+  null
+);
 
 onMounted(() => {
   subscription.add(
@@ -29,10 +32,13 @@ onMounted(() => {
         switchMap(
           player => player?.modules.vehicle.observables.vehicle$ ?? EMPTY
         ),
-        map(({ current }) => current)
+        map(
+          ({ current }) =>
+            current as Unit<UnitModules & { weapon: WeaponUnitModule }> | null
+        )
       )
       .subscribe(u => {
-        unit.value = u?.hasModuleType(WeaponUnitModule) ? markRaw(u) : null;
+        unit.value = u?.modules.weapon ? markRaw(u) : null;
       })
   );
 });

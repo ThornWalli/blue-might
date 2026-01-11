@@ -260,7 +260,7 @@ export default class SeaVehicleUnitModule<
     //#endregion
 
     // 3) Lenken: Yaw setzen (nur beim Fahren, nicht auf der Stelle)
-    const turnSpeed = this.options.turnSpeed;
+    const turnSpeed = aiActive ? 1 : this.options.turnSpeed;
     const turnMovementSpeed = this.options.turnMovementSpeed;
     const currentSpeed = velocity.length();
 

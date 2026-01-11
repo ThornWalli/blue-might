@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 import type {
   SetupContext,
   UnitConstructorOptions
@@ -95,6 +96,10 @@ export default class CombatSubmarine_1 extends SeaVehicleUnit<
         },
         moduleOptions: {
           ...options.moduleOptions,
+          seaVehicle: {
+            ...options.moduleOptions?.seaVehicle,
+            turnSpeed: 1 / 3
+          },
           weapon: {
             autoAimFn: (options: AutoAimFnOptions) =>
               autoAimFunction(

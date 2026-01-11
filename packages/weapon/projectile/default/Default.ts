@@ -15,7 +15,7 @@ export default class Default extends Projectile {
       strength: options.strength ?? 0.1,
       radius: options.radius ?? 0.5,
       airResistance: options.airResistance ?? 0.1,
-      weight: options.weight ?? 0,
+      weight: options.weight ?? 1,
       features: options.features ?? {
         ...(options.features ?? {}),
         dust: true
@@ -44,7 +44,8 @@ export class LightProjectile extends Default {
     super({
       id: PROJECTILE_TYPE.LIGHT_PROJECTILE,
       speed: 15,
-      strength: 0.2
+      strength: 0.2,
+      weight: 0.01
     });
   }
 }
@@ -55,7 +56,8 @@ export class MediumProjectile extends Default {
     super({
       id: PROJECTILE_TYPE.MEDIUM_PROJECTILE,
       speed: 10,
-      strength: 0.3
+      strength: 0.3,
+      weight: 0.1
     });
   }
 }
@@ -65,8 +67,9 @@ export class HeavyProjectile extends Default {
   constructor() {
     super({
       id: PROJECTILE_TYPE.HEAVY_PROJECTILE,
-      speed: 5,
-      strength: 0.5
+      speed: 20,
+      strength: 1,
+      weight: 0.25
     });
   }
 }
