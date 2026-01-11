@@ -1,5 +1,13 @@
 # Project Changelog
 
+# [1.0.0-beta.24](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.23...v1.0.0-beta.24) (2026-01-11)
+
+
+### Bug Fixes
+
+* **app:** call abortShoot on unit destruction ([64cda6e](https://github.com/ThornWalli/blue-might/commit/64cda6e9b13584943f49a95024c37dab67e7e5cc))
+* **update:** many updates ([6e3547c](https://github.com/ThornWalli/blue-might/commit/6e3547cbdb7443a17bf2b1b3e68151a24bdcf413))
+
 # [1.0.0-beta.23](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.22...v1.0.0-beta.23) (2026-01-11)
 
 
