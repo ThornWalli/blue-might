@@ -46,29 +46,33 @@ export function normalizeAngle(angle: number): number {
 export function autoAimFunction(
   shootModule: ShootModule,
   options: AutoAimFnOptions,
-  minAngle: Vector2,
-  maxAngle: Vector2,
+  weaponAngles: { min: Vector2; max: Vector2 }[],
   rotationSpeed: number,
   objects: {
     head?: Object3D;
     barrels: Object3D[];
-  },
+  }[],
   state: {
-    weaponTargetRotation: Vector2;
+    weaponTargetRotation: Vector2[];
   },
-  getRotation: () => Euler
+  getRotation: (index: number) => Euler
 ): boolean {
   const { target, sourcePosition, index, weapon } = options;
 
-  if (!shootModule || !target || !objects.barrels[index]) {
+  const head = objects[index]?.head;
+  const barrels = objects[index]?.barrels;
+  if (!shootModule || !target || !barrels) {
     return false;
   }
+
+  const minAngle = weaponAngles[index]!.min;
+  const maxAngle = weaponAngles[index]!.max;
 
   const targetPosition = target.getPosition();
   const delta = targetPosition.clone().sub(sourcePosition);
   const horizontalDistance = Math.sqrt(delta.x ** 2 + delta.z ** 2);
   const verticalDistance = delta.y;
-  const rotation = getRotation();
+  const rotation = getRotation(index);
 
   // Yaw immer direkt berechnen (keine Ballistik nötig)
   const targetYaw = normalizeAngle(Math.atan2(delta.x, delta.z) - rotation.y);
@@ -105,34 +109,34 @@ export function autoAimFunction(
   // );
 
   if (isYawInRange && isPitchInRange && horizontalDistance >= 0.96) {
-    state.weaponTargetRotation.set(targetYaw, targetPitch);
+    state.weaponTargetRotation[index]!.set(targetYaw, targetPitch);
 
     // Rotation setzen (vereinfacht)
-    if (objects.head) {
+    if (head) {
       // Tank/Turret
-      objects.head.rotation.y = lerp(
-        objects.head.rotation.y,
-        targetYaw,
-        rotationSpeed
-      );
-      objects.barrels[index]!.rotation.x = lerp(
-        objects.barrels[index]!.rotation.x,
-        targetPitch,
-        rotationSpeed
-      );
-    } else if (Array.isArray(objects.barrels[index])) {
+      head.rotation.y = lerp(head.rotation.y, targetYaw, rotationSpeed);
+      barrels.forEach((barrel, i) => {
+        barrel!.rotation.x = lerp(
+          barrel!.rotation.x,
+          i === 0 ? targetPitch : targetPitch,
+          rotationSpeed
+        );
+      });
+    } else if (Array.isArray(barrels)) {
       // Ship/Heli
-      const [barrelObjX, barrelObjY] = objects.barrels[index];
-      barrelObjY.rotation.y = lerp(
-        barrelObjY.rotation.y,
-        targetYaw,
-        rotationSpeed
-      );
-      barrelObjX.rotation.x = lerp(
-        barrelObjX.rotation.x,
-        targetPitch,
-        rotationSpeed
-      );
+      const [barrelObjX, barrelObjY] = barrels;
+      if (barrelObjX && barrelObjY) {
+        barrelObjY.rotation.y = lerp(
+          barrelObjY.rotation.y,
+          targetYaw,
+          rotationSpeed
+        );
+        barrelObjX.rotation.x = lerp(
+          barrelObjX.rotation.x,
+          targetPitch,
+          rotationSpeed
+        );
+      }
     }
 
     return true;

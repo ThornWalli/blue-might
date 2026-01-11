@@ -17,7 +17,7 @@ export const playerFaction = blueFaction;
 export default function (): MapDescription {
   return {
     name: 'Default Map',
-    textures: {
+    ground: {
       heightMap,
       backgroundTexture,
       foregroundTexture

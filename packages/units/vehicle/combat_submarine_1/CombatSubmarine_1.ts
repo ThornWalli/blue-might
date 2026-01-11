@@ -1,10 +1,9 @@
-/* eslint-disable complexity */
 import type {
   SetupContext,
   UnitConstructorOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { AxesHelper, Mesh, Object3D, SkinnedMesh, Vector2 } from 'three';
+import { Object3D, AxesHelper, Mesh, SkinnedMesh, Vector2 } from 'three';
 import { replaceColors } from '@blue-might/app/lib/utils/material';
 import SeaVehicleUnit, {
   type SeaVehicleUnitModuleList,
@@ -28,7 +27,7 @@ import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
 import { playSound } from '@blue-might/weapon/utils';
 
-import baseGlb from './assets/combat_ship_1.glb?url';
+import baseGlb from './assets/combat_submarine_1.glb?url';
 
 interface State {
   weaponActive: boolean;
@@ -36,31 +35,33 @@ interface State {
   weaponTargetRotation: Vector2[];
 }
 
-export interface CombatShipOptions extends SeaVehicleUnitOptions {
-  minWeaponAngle: Vector2;
-  maxWeaponAngle: Vector2;
+export interface CombatSubmarineOptions extends SeaVehicleUnitOptions {
+  weaponAngles: {
+    min: Vector2;
+    max: Vector2;
+  }[];
   rotationSpeed: number;
 }
 
-export interface CombatShipModules extends SeaVehicleUnitModules {
+export interface CombatSubmarineModules extends SeaVehicleUnitModules {
   attack: AttackUnitModule;
   weapon: WeaponUnitModule;
   player: PlayerUnitModule;
 }
-export type CombatShipModuleList = SeaVehicleUnitModuleList &
+export type CombatSubmarineModuleList = SeaVehicleUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
-export default class CombatShip_1 extends SeaVehicleUnit<
-  CombatShipModules,
-  CombatShipModuleList,
-  CombatShipOptions
+export default class CombatSubmarine_1 extends SeaVehicleUnit<
+  CombatSubmarineModules,
+  CombatSubmarineModuleList,
+  CombatSubmarineOptions
 > {
-  static override KEY = 'boat_1';
+  static override KEY = 'combat_submarine_1';
 
   state: State = {
     weaponActive: false,
-    weaponVelocity: [new Vector2(0, 0)],
-    weaponTargetRotation: [new Vector2(0, 0)]
+    weaponVelocity: [new Vector2(0, 0), new Vector2(0, 0)],
+    weaponTargetRotation: [new Vector2(0, 0), new Vector2(0, 0)]
   };
 
   private objects: {
@@ -70,22 +71,26 @@ export default class CombatShip_1 extends SeaVehicleUnit<
   }[] = [];
 
   constructor(
-    options: Omit<UnitConstructorOptions<CombatShipOptions>, 'name'> = {},
-    moduleList: Partial<CombatShipModuleList> = []
+    options: Omit<UnitConstructorOptions<CombatSubmarineOptions>, 'name'> = {},
+    moduleList: Partial<CombatSubmarineModuleList> = []
   ) {
     moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
     super(
       {
         ...options,
-        name: 'Boat 1',
+        name: 'Submarine 1',
         options: {
           ...options.options,
-          minWeaponAngle:
-            options.options?.minWeaponAngle ??
-            new Vector2((-Math.PI * 1) / 4, -Math.PI * (3 / 5)),
-          maxWeaponAngle:
-            options.options?.maxWeaponAngle ??
-            new Vector2(0, Math.PI * (3 / 5)),
+          weaponAngles: options.options?.weaponAngles ?? [
+            {
+              min: new Vector2(-Math.PI / 4, -(Math.PI * 9) / 10),
+              max: new Vector2((Math.PI * 1) / 6, (Math.PI * 9) / 10)
+            },
+            {
+              min: new Vector2(-Math.PI / 4, -(Math.PI * 9) / 10),
+              max: new Vector2((Math.PI * 1) / 6, (Math.PI * 9) / 10)
+            }
+          ],
           rotationSpeed: options.options?.rotationSpeed ?? 0.25
         },
         moduleOptions: {
@@ -95,18 +100,18 @@ export default class CombatShip_1 extends SeaVehicleUnit<
               autoAimFunction(
                 this.getMap()!.modules.shoot,
                 options,
-                [
-                  {
-                    min: this.options.minWeaponAngle,
-                    max: this.options.maxWeaponAngle
-                  }
-                ],
+                this.options.weaponAngles,
                 this.options.rotationSpeed,
-                this.objects.map(obj => ({ barrels: obj.barrels })),
+                this.objects.map(({ barrels }) => ({ barrels })),
                 this.state,
                 () => this.getRotation()
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
+              {
+                weapon: new weapons.default('light_projectile'),
+                maxAmmunition: 100,
+                ammunition: 100
+              },
               {
                 weapon: new weapons.default('light_projectile'),
                 maxAmmunition: 100,
@@ -135,9 +140,9 @@ export default class CombatShip_1 extends SeaVehicleUnit<
     //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ index, shoot: { projectile, slot } }) => {
+        async ({ index, shoot: { slot, projectile } }) => {
           this.objects[index]!.barrelTargetShoots[0]!.visible = true;
-          window.clearTimeout(this.barrelTargetShootTimeouts[index]);
+          window.clearTimeout(this.barrelTargetShootTimeouts[0]);
           this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
             this.objects[index]!.barrelTargetShoots[0]!.visible = false;
           }, 1000 / slot.weapon.perSeconds);
@@ -155,43 +160,59 @@ export default class CombatShip_1 extends SeaVehicleUnit<
     this.modules.animation.setAnimations(animations);
     const mesh = object;
 
-    const headObj = object.getObjectByName('weapon_head')!;
-    const barrelObj = object.getObjectByName('weapon_barrel')!;
-    const barrelTargetObj = object.getObjectByName('weapon_barrel_target')!;
-
     if (!this.preview) {
-      const barrelWrapperY = new Object3D();
-      const barrelWrapperX = new Object3D();
+      [0, 0].forEach((rotation, index) => {
+        const headObj = object.getObjectByName(`turretbase_${index + 1}_base`)!;
+        const barrelObj = object.getObjectByName(
+          `turretbase_${index + 1}_turretgun`
+        )!;
+        const barrelTargetObj = object.getObjectByName(
+          `turretbase_${index + 1}_target`
+        )!;
 
-      const barrelTargetShoot = createBarrelTargetShoot({
-        object: barrelTargetObj
+        const barrelWrapperY = new Object3D();
+        const barrelWrapperX = new Object3D();
+
+        const barrelTargetShoot = createBarrelTargetShoot({
+          object: barrelTargetObj
+        });
+        barrelTargetObj.add(barrelTargetShoot);
+
+        let parent = headObj.parent!;
+        barrelWrapperY.add(headObj);
+
+        barrelWrapperY.rotation.y += rotation;
+
+        barrelWrapperY.position.copy(headObj.position);
+        headObj.position.set(0, 0, 0);
+
+        parent.add(barrelWrapperY);
+
+        parent = barrelObj.parent!;
+        barrelWrapperX.add(barrelObj);
+
+        barrelWrapperX.position.copy(barrelObj.position);
+        barrelObj.position.set(0, 0, 0);
+
+        parent.add(barrelWrapperX);
+
+        if (this.debug) {
+          let axesHelper = new AxesHelper(1);
+          barrelWrapperX.add(axesHelper);
+          axesHelper = new AxesHelper(1);
+          barrelWrapperY.add(axesHelper);
+          axesHelper = new AxesHelper(1);
+          parent.add(axesHelper);
+        }
+
+        this.objects.push({
+          barrels: [barrelWrapperX, barrelWrapperY],
+          barrelTargets: [barrelTargetObj],
+          barrelTargetShoots: [barrelTargetShoot]
+        });
+
+        this.modules.weapon.registerBarrelTarget(barrelTargetObj);
       });
-      barrelTargetObj.add(barrelTargetShoot);
-
-      let parent = headObj.parent!;
-      barrelWrapperY.add(headObj);
-      parent.add(barrelWrapperY);
-
-      parent = barrelObj.parent!;
-      barrelWrapperX.add(barrelObj);
-      parent.add(barrelWrapperX);
-
-      if (this.debug) {
-        let axesHelper = new AxesHelper(1);
-        barrelWrapperX.add(axesHelper);
-        axesHelper = new AxesHelper(1);
-        barrelWrapperY.add(axesHelper);
-        axesHelper = new AxesHelper(1);
-        parent.add(axesHelper);
-      }
-
-      this.objects.push({
-        barrels: [barrelWrapperX, barrelWrapperY],
-        barrelTargets: [barrelTargetObj],
-        barrelTargetShoots: [barrelTargetShoot]
-      });
-
-      this.modules.weapon.registerBarrelTarget(barrelTargetObj);
     }
 
     object.traverse(child => {
@@ -261,24 +282,22 @@ export default class CombatShip_1 extends SeaVehicleUnit<
   }
 
   private updateObjects() {
-    this.objects.forEach(({ barrels }, index) => {
+    this.objects.forEach(({ barrels }, i) => {
       const [barrelObjX, barrelObjY] = barrels as [Object3D, Object3D];
 
-      const velocity = this.state.weaponVelocity[index]!;
+      const velocity = this.state.weaponVelocity[i]!;
 
       if (barrelObjY) {
         barrelObjX.rotation.x += velocity.y;
         barrelObjY.rotation.y += velocity.x;
-        // weaponObj.rotation.y += this.state.weaponVelocity.x;
-        // barrelObj.rotation.x += this.state.weaponVelocity.y;
 
         barrelObjX.rotation.x = Math.max(
-          this.options.minWeaponAngle.x,
-          Math.min(this.options.maxWeaponAngle.x, barrelObjX.rotation.x)
+          this.options.weaponAngles[i]!.min.x,
+          Math.min(this.options.weaponAngles[i]!.max.x, barrelObjX.rotation.x)
         );
         barrelObjY.rotation.y = Math.max(
-          this.options.minWeaponAngle.y,
-          Math.min(this.options.maxWeaponAngle.y, barrelObjY.rotation.y)
+          this.options.weaponAngles[i]!.min.y,
+          Math.min(this.options.weaponAngles[i]!.max.y, barrelObjY.rotation.y)
         );
 
         velocity.multiplyScalar(0.9);
@@ -286,7 +305,7 @@ export default class CombatShip_1 extends SeaVehicleUnit<
         if (velocity.length() < 0.001) {
           velocity.set(0, 0);
         } else {
-          this.modules.weapon.updateSourcePosition(0);
+          this.modules.weapon.updateSourcePosition(i);
         }
       }
     });

@@ -127,15 +127,15 @@ export default class Map<
     const [heightMap, backgroundTexture, foregroundTexture] = await Promise.all(
       [
         assetLoader.add<Texture<ImageBitmap>>({
-          value: this.description.textures.heightMap,
+          value: this.description.ground.heightMap,
           loader: LOADER.TEXTURE
         }),
         assetLoader.add<Texture<ImageBitmap>>({
-          value: this.description.textures.backgroundTexture,
+          value: this.description.ground.backgroundTexture,
           loader: LOADER.TEXTURE
         }),
         assetLoader.add<Texture<ImageBitmap>>({
-          value: this.description.textures.foregroundTexture,
+          value: this.description.ground.foregroundTexture,
           loader: LOADER.TEXTURE
         })
       ]
@@ -174,10 +174,11 @@ export default class Map<
 export interface MapDescription {
   debug?: Partial<ModuleDebug>;
   name: string;
-  textures: {
+  ground: {
+    heightMap: string;
     backgroundTexture: string;
     foregroundTexture: string;
-    heightMap: string;
+    noiseMonochrome?: boolean;
   };
   units: Unit[];
   factions: Faction[];

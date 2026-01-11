@@ -1,4 +1,6 @@
-import Projectile from '@blue-might/app/lib/classes/Projectile';
+import Projectile, {
+  type ProjectileUpdateContext
+} from '@blue-might/app/lib/classes/Projectile';
 import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 
 PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1 = 'air_surface_missile_1';
@@ -9,11 +11,17 @@ export default class AirSurfaceMissile_1 extends Projectile {
       speed: 30,
       strength: 0.75,
       radius: 1,
+      airResistance: 0.001,
+      weight: 0,
       features: {
         smoke: true,
         explosion: true
       }
     });
+  }
+
+  override update(context: ProjectileUpdateContext): void {
+    this.applyPhysics(context);
   }
 
   override getGlb() {

@@ -25,8 +25,7 @@ export class Default extends Weapon {
     super({
       id: WEAPON.DEFAULT,
       spreadAmount: 0.1,
-      speed: 0.3,
-      perSeconds: 10,
+      perSeconds: 4,
       projectile: projectile,
       shootType: WEAPON_SHOOT_TYPE.AUTO
     });
@@ -39,7 +38,6 @@ export class AirSurfaceMissile_1 extends Weapon {
     super({
       id: WEAPON.AIR_SURFACE_MISSILE_1,
       spreadAmount: 0,
-      speed: 1,
       perSeconds: 0.5,
       projectile: PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1,
       shootType: WEAPON_SHOOT_TYPE.SINGLE

@@ -99,10 +99,6 @@ const map: Partial<MapDescription> = {
         }
       },
       moduleStates: {
-        weapon: {
-          autoAimActive: false,
-          autoAimAutoShoot: false
-        },
         faction: {
           faction: blueFaction
         },

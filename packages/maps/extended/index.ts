@@ -13,7 +13,8 @@ import {
   House_1,
   LandingPortSupplyStation,
   SupplyStation,
-  CombatShip_1
+  CombatShip_1,
+  CombatSubmarine_1
 } from '@blue-might/units';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 
@@ -25,7 +26,7 @@ export const playerFaction = blueFaction;
 export default function (): MapDescription {
   return {
     name: 'Extended Map',
-    textures: {
+    ground: {
       heightMap,
       backgroundTexture,
       foregroundTexture
@@ -34,6 +35,29 @@ export default function (): MapDescription {
     factions: [blueFaction, enemyFaction],
 
     units: [
+      new CombatSubmarine_1({
+        position: new Vector3(2.36, 0, -47.18),
+
+        moduleOptions: {
+          patrol: {
+            path: [
+              [2.36, -47.18],
+              [-0.52, -12.95],
+              [21.52, 9.29],
+              [50.73, 4.61]
+            ]
+          }
+        },
+        moduleStates: {
+          patrol: {
+            active: true
+          },
+          faction: {
+            faction: enemyFaction
+          }
+        }
+      }),
+
       new Tree_1({
         position: new Vector3(37, 0, -23)
       }),

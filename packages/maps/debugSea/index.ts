@@ -7,7 +7,7 @@ import foregroundTexture from './texture_fg.png';
 export default function (): MapDescription {
   return {
     name: 'Default Map',
-    textures: {
+    ground: {
       heightMap,
       backgroundTexture,
       foregroundTexture

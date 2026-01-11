@@ -16,6 +16,8 @@ export interface ProjectileDescription {
   speed: number;
   strength: number;
   radius: number;
+  airResistance: number;
+  weight: number;
   features?: {
     smoke?: boolean;
     fire?: boolean;
@@ -30,7 +32,6 @@ export interface WeaponDescription<P = ProjectileIdentifier> {
   id: WeaponIdentifier;
   projectile: P;
   spreadAmount: number;
-  speed: number;
   perSeconds: number;
   shootType: WEAPON_SHOOT_TYPE;
 }

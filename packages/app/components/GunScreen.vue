@@ -62,11 +62,11 @@ function setup() {
   renderer.setAnimationLoop(() => {
     const unit = $props.unit;
     renderer.render($props.app.getScene(), camera);
-    const gunModule = unit?.getModuleByType(WeaponUnitModule);
-    if (gunModule) {
-      const [sourceDirection] = gunModule.getSourceDirections();
-      const [sourcePosition] = gunModule.getSourcePositions();
-      const [barrelTarget] = gunModule.getBarrelTargets();
+    const weaponModule = unit?.getModuleByType(WeaponUnitModule);
+    if (weaponModule) {
+      const [sourceDirection] = weaponModule.getSourceDirections();
+      const [sourcePosition] = weaponModule.getSourcePositions();
+      const [barrelTarget] = weaponModule.getBarrelTargets();
       if (unit && sourceDirection && sourcePosition && barrelTarget) {
         barrelTarget.getWorldPosition(target);
         camera.position.copy(target);

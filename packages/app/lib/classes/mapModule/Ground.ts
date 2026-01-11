@@ -448,9 +448,9 @@ export default class GroundModule extends MapModule<State, Observables> {
         generateNoiseTexture({
           width: width * 2,
           height: height * 2,
-          intensity: 0.4,
+          intensity: 0.25,
           opacity: 1,
-          monochrome: false
+          monochrome: this.map.description.ground.noiseMonochrome ?? false
         }),
         foregroundTexture.image.width
       )

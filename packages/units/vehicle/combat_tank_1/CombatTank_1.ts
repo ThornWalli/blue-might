@@ -32,8 +32,8 @@ import baseGlb from './assets/combat_tank_1.glb?url';
 
 interface State {
   weaponActive: boolean;
-  weaponVelocity: Vector2;
-  weaponTargetRotation: Vector2;
+  weaponVelocity: Vector2[];
+  weaponTargetRotation: Vector2[];
 }
 
 export interface CombatTankOptions extends TankUnitOptions {
@@ -58,8 +58,8 @@ export default class CombatTank_1 extends TankUnit<
 
   state: State = {
     weaponActive: false,
-    weaponVelocity: new Vector2(0, 0),
-    weaponTargetRotation: new Vector2(0, -0.6)
+    weaponVelocity: [new Vector2(0, 0)],
+    weaponTargetRotation: [new Vector2(0, 0)]
   };
 
   objects: {
@@ -67,11 +67,7 @@ export default class CombatTank_1 extends TankUnit<
     barrels: Object3D[];
     barrelTargets: Object3D[];
     barrelTargetShoots: Object3D[];
-  } = {
-    barrels: [],
-    barrelTargets: [],
-    barrelTargetShoots: []
-  };
+  }[] = [];
 
   constructor(
     options: Omit<UnitConstructorOptions<CombatTankOptions>, 'name'> = {},
@@ -100,19 +96,22 @@ export default class CombatTank_1 extends TankUnit<
               autoAimFunction(
                 this.getMap()!.modules.shoot,
                 options,
-                this.options.minAngle,
-                this.options.maxAngle,
+                [
+                  {
+                    min: this.options.minAngle,
+                    max: this.options.maxAngle
+                  }
+                ],
                 this.options.rotationSpeed,
-                {
-                  head: this.objects.head,
-                  barrels: this.objects.barrels as unknown as Object3D[]
-                },
+                this.objects.map(obj => ({
+                  head: obj.head,
+                  barrels: obj.barrels
+                })),
                 this.state,
                 () => this.getRotation()
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                slot: 0,
                 weapon: new weapons.default('heavy_projectile'),
                 maxAmmunition: 100,
                 ammunition: 100
@@ -141,12 +140,12 @@ export default class CombatTank_1 extends TankUnit<
     //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ index, shoot: { projectile, weapon } }) => {
-          this.objects.barrelTargetShoots[index]!.visible = true;
+        async ({ index, shoot: { projectile, slot } }) => {
+          this.objects[index]!.barrelTargetShoots[0]!.visible = true;
           window.clearTimeout(this.barrelTargetShootTimeouts[index]);
           this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
-            this.objects.barrelTargetShoots[index]!.visible = false;
-          }, 1000 / weapon.perSeconds);
+            this.objects[index]!.barrelTargetShoots[0]!.visible = false;
+          }, 1000 / slot.weapon.perSeconds);
           playSound(await projectile.getSfx(), 0.3);
         }
       )
@@ -174,12 +173,12 @@ export default class CombatTank_1 extends TankUnit<
     const barrelTargetShoot = createBarrelTargetShoot();
     barrelTargetObj.add(barrelTargetShoot);
 
-    this.objects = {
+    this.objects.push({
       head: headObj,
       barrels: [barrelWrapper],
       barrelTargets: [barrelTargetObj],
       barrelTargetShoots: [barrelTargetShoot]
-    };
+    });
 
     this.modules.weapon.registerBarrelTarget(barrelTargetObj);
 
@@ -227,18 +226,21 @@ export default class CombatTank_1 extends TankUnit<
   updateControls() {
     if (this.modules.damage.isDestroyed()) return;
 
+    const velocity =
+      this.state.weaponVelocity[this.modules.weapon.getSlotIndex()]!;
+
     const controls = this.getControls();
     if (controls[ControlAction.UP]) {
-      this.state.weaponVelocity.y -= 0.005;
+      velocity.y -= 0.005;
     }
     if (controls[ControlAction.DOWN]) {
-      this.state.weaponVelocity.y += 0.005;
+      velocity.y += 0.005;
     }
     if (controls[ControlAction.LEFT]) {
-      this.state.weaponVelocity.x += 0.005;
+      velocity.x += 0.005;
     }
     if (controls[ControlAction.RIGHT]) {
-      this.state.weaponVelocity.x -= 0.005;
+      velocity.x -= 0.005;
     }
     if (this.modules.weapon.isAutoAimActive()) return;
     if (controls[ControlAction.FIRE_PRIMARY]) {
@@ -249,35 +251,33 @@ export default class CombatTank_1 extends TankUnit<
   }
 
   private updateObjects() {
-    const {
-      head: headObj,
-      barrels: [barrelObj]
-    } = this.objects;
+    this.objects.forEach(({ head: headObj, barrels: [barrelObj] }, index) => {
+      const velocity = this.state.weaponVelocity[index]!;
+      if (headObj && barrelObj) {
+        // NEU: Manuelle Bewegung nur, wenn Auto-Aim nicht aktiv ist
+        if (!this.modules.weapon.isAutoAimActive()) {
+          headObj.rotation.y += velocity.x;
+          barrelObj.rotation.x += velocity.y;
+        }
 
-    if (headObj && barrelObj) {
-      // NEU: Manuelle Bewegung nur, wenn Auto-Aim nicht aktiv ist
-      if (!this.modules.weapon.isAutoAimActive()) {
-        headObj.rotation.y += this.state.weaponVelocity.x;
-        barrelObj.rotation.x += this.state.weaponVelocity.y;
+        headObj.rotation.y = Math.max(
+          this.options.minAngle.y,
+          Math.min(this.options.maxAngle.y, headObj.rotation.y)
+        );
+
+        barrelObj.rotation.x = Math.max(
+          this.options.minAngle.x,
+          Math.min(this.options.maxAngle.x, barrelObj.rotation.x)
+        );
+
+        velocity.multiplyScalar(0.9);
+
+        if (velocity.length() < 0.001) {
+          velocity.set(0, 0);
+        } else {
+          this.modules.weapon.updateSourcePosition(0);
+        }
       }
-
-      headObj.rotation.y = Math.max(
-        this.options.minAngle.y,
-        Math.min(this.options.maxAngle.y, headObj.rotation.y)
-      );
-
-      barrelObj.rotation.x = Math.max(
-        this.options.minAngle.x,
-        Math.min(this.options.maxAngle.x, barrelObj.rotation.x)
-      );
-
-      this.state.weaponVelocity.multiplyScalar(0.9);
-
-      if (this.state.weaponVelocity.length() < 0.001) {
-        this.state.weaponVelocity.set(0, 0);
-      } else {
-        this.modules.weapon.updateSourcePosition(0);
-      }
-    }
+    });
   }
 }

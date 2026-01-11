@@ -10,7 +10,7 @@
 <script setup lang="ts">
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
-import { CombatShip_1 } from '@blue-might/units';
+import { CombatShip_1, CombatSubmarine_1 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
@@ -32,7 +32,6 @@ const map: Partial<MapDescription> = {
   },
   units: [
     new CombatShip_1({
-      id: playerUnitId,
       debug: false,
       moduleDebug: {
         pathfinding: false,
@@ -50,35 +49,18 @@ const map: Partial<MapDescription> = {
       }
     }),
 
-    new CombatShip_1({
-      debug: false,
-      id: 'combat-ship-1',
-      moduleDebug: {
-        attack: true,
-        pathfinding: true,
-        patrol: true
-      },
-      position: new Vector3(1, 0, 0),
-      moduleOptions: {
-        attack: {
-          followTarget: true
-        },
-        patrol: {
-          path: [
-            [7.86, -10.3],
-            [10.59, 9.39]
-          ]
-        }
-      },
+    new CombatSubmarine_1({
+      id: playerUnitId,
+      position: new Vector3(2, 0, 0),
       moduleStates: {
-        weapon: {
-          autoAimActive: true
+        damage: {
+          maxDamage: 1000
         },
         movable: {
           active: true
         },
         faction: {
-          faction: enemyFaction
+          faction: blueFaction
         }
         // patrol: {
         //   active: true

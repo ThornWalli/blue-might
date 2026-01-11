@@ -1,4 +1,6 @@
-import Projectile from '@blue-might/app/lib/classes/Projectile';
+import Projectile, {
+  type ProjectileUpdateContext
+} from '@blue-might/app/lib/classes/Projectile';
 import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 
 PROJECTILE_TYPE.DEFAULT = 'default';
@@ -12,11 +14,17 @@ export default class Default extends Projectile {
       speed: options.speed ?? 10,
       strength: options.strength ?? 0.1,
       radius: options.radius ?? 0.5,
+      airResistance: options.airResistance ?? 0.1,
+      weight: options.weight ?? 0,
       features: options.features ?? {
         ...(options.features ?? {}),
         dust: true
       }
     });
+  }
+
+  override update(context: ProjectileUpdateContext): void {
+    this.applyPhysics(context);
   }
 
   override getGlb() {

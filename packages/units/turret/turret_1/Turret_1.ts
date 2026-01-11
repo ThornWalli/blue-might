@@ -35,7 +35,7 @@ import baseGlb from './assets/turret_1.glb?url';
 interface State {
   weaponActive: boolean;
   weaponVelocity: Vector2;
-  weaponTargetRotation: Vector2;
+  weaponTargetRotation: Vector2[];
 }
 
 export interface TurretOptions extends BuildingUnitOptions {
@@ -69,7 +69,7 @@ export default class Turret_1 extends BuildingUnit<
   state: State = {
     weaponActive: false,
     weaponVelocity: new Vector2(0, 0),
-    weaponTargetRotation: new Vector2(0, -0.6)
+    weaponTargetRotation: [new Vector2(0, -0.6)]
   };
 
   objects: {
@@ -114,19 +114,24 @@ export default class Turret_1 extends BuildingUnit<
               autoAimFunction(
                 this.getMap()!.modules.shoot,
                 options,
-                this.options.minAngle,
-                this.options.maxAngle,
+                [
+                  {
+                    min: this.options.minAngle,
+                    max: this.options.maxAngle
+                  }
+                ],
                 this.options.rotationSpeed,
-                {
-                  head: this.objects.head,
-                  barrels: this.objects.barrels as unknown as Object3D[]
-                },
+                [
+                  {
+                    head: this.objects.head,
+                    barrels: this.objects.barrels as unknown as Object3D[]
+                  }
+                ],
                 this.state,
                 () => this.getRotation()
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                slot: 0,
                 weapon: new weapons.default('light_projectile'),
                 maxAmmunition: Infinity,
                 ammunition: Infinity
@@ -155,12 +160,13 @@ export default class Turret_1 extends BuildingUnit<
     //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ index, shoot: { projectile, weapon } }) => {
-          this.objects.barrelTargetShoots[index]!.visible = true;
+        async ({ index, shoot: { projectile, slot } }) => {
+          const shootObj = this.objects.barrelTargetShoots[index];
+          if (shootObj?.visible) shootObj.visible = true;
           window.clearTimeout(this.barrelTargetShootTimeouts[index]);
           this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
-            this.objects.barrelTargetShoots[index]!.visible = false;
-          }, 1000 / weapon.perSeconds);
+            if (shootObj?.visible) shootObj.visible = false;
+          }, 1000 / slot.weapon.perSeconds);
           playSound(await projectile.getSfx(), 0.3);
         }
       )

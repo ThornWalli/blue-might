@@ -64,13 +64,14 @@ onMounted(async () => {
     rootEl.value.offsetHeight
   );
 
-  const { pixelated } = $props.options || defaultRendererOptions;
+  const { pixelated, fog } = $props.options || defaultRendererOptions;
 
   renderer.value = markRaw(
     new Renderer(
       canvasEl.value,
       dimension.value,
       {
+        fog,
         debug: !!$props.debug,
         pixelated: pixelated
       },

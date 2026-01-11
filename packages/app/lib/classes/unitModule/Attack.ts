@@ -226,7 +226,8 @@ export default class AttackUnitModule extends UnitModule<
         // unit.modules.rotation?.setRotation(direction); // Oder ähnlich, falls verfügbar
         // Falls kein separates Modul: unit.setRotation(Math.atan2(direction.x, direction.z)); // Beispiel für Yaw
         // unit.setYaw(Math.atan2(direction.x, direction.z));
-        console.log('Unit in range, aiming at target');
+
+        // console.log('Unit in range, aiming at target');
         return; // Keine weitere Bewegung
       }
 

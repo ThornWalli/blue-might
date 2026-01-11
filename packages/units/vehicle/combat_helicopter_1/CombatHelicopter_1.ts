@@ -40,13 +40,15 @@ import baseGlb from './assets/combat_helicopter_1.glb?url';
 
 interface State {
   weaponActive: boolean;
-  weaponVelocity: Vector2;
-  weaponTargetRotation: Vector2;
+  weaponVelocity: Vector2[];
+  weaponTargetRotation: Vector2[];
 }
 
 export interface CombatHelicopterOptions extends HelicopterUnitOptions {
-  minWeaponAngle: Vector2;
-  maxWeaponAngle: Vector2;
+  weaponAngles: {
+    min: Vector2;
+    max: Vector2;
+  }[];
   rotationSpeed: number;
 }
 
@@ -66,8 +68,8 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
 
   state: State = {
     weaponActive: false,
-    weaponVelocity: new Vector2(0, 0),
-    weaponTargetRotation: new Vector2(0, 0)
+    weaponVelocity: [new Vector2(0, 0), new Vector2(0, 0)],
+    weaponTargetRotation: [new Vector2(0, 0), new Vector2(0, 0)]
   };
 
   animationSettings: Record<
@@ -85,14 +87,10 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
   };
 
   private objects: {
-    barrels: [Object3D, Object3D][];
+    barrels: Object3D[];
     barrelTargets: Object3D[];
     barrelTargetShoots: Object3D[];
-  } = {
-    barrels: [],
-    barrelTargets: [],
-    barrelTargetShoots: []
-  };
+  }[] = [];
 
   constructor(
     options: Omit<UnitConstructorOptions<CombatHelicopterOptions>, 'name'> = {},
@@ -106,11 +104,16 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
 
         options: {
           ...options.options,
-          minWeaponAngle:
-            options.options?.minWeaponAngle ?? new Vector2(-Math.PI / 2, -0.15),
-          maxWeaponAngle:
-            options.options?.maxWeaponAngle ??
-            new Vector2(Math.PI / 2, Math.PI / 2),
+          weaponAngles: options.options?.weaponAngles ?? [
+            {
+              min: new Vector2(-Math.PI / 2, -0.15),
+              max: new Vector2(Math.PI / 2, Math.PI / 2)
+            },
+            {
+              min: new Vector2(-Math.PI / 2, -0.15),
+              max: new Vector2(Math.PI / 2, Math.PI / 2)
+            }
+          ],
           rotationSpeed: options.options?.rotationSpeed ?? 0.25
         },
 
@@ -126,24 +129,21 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
               autoAimFunction(
                 this.getMap()!.modules.shoot,
                 options,
-                this.options.minWeaponAngle,
-                this.options.maxWeaponAngle,
+                this.options.weaponAngles,
                 this.options.rotationSpeed,
-                {
-                  barrels: this.objects.barrels as unknown as Object3D[]
-                },
+                this.objects.map(obj => ({
+                  barrels: obj.barrels
+                })),
                 this.state,
                 () => this.getRotation()
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                slot: 0,
                 weapon: new weapons.default(),
                 maxAmmunition: 100,
                 ammunition: 100
               },
               {
-                slot: 0,
                 weapon: new weapons.air_surface_missile_1(),
                 maxAmmunition: 400,
                 ammunition: 400
@@ -182,12 +182,12 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ index, shoot: { projectile, weapon } }) => {
-          this.objects.barrelTargetShoots[index]!.visible = true;
+        async ({ index, shoot: { projectile, slot } }) => {
+          this.objects[index]!.barrelTargetShoots[0]!.visible = true;
           window.clearTimeout(this.barrelTargetShootTimeouts[index]);
           this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
-            this.objects.barrelTargetShoots[index]!.visible = false;
-          }, 1000 / weapon.perSeconds);
+            this.objects[index]!.barrelTargetShoots[0]!.visible = false;
+          }, 1000 / slot.weapon.perSeconds);
           playSound(await projectile.getSfx(), 0.3);
         }
       )
@@ -244,10 +244,10 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     this.modules.animation.setAnimations(animations);
     const mesh = object;
 
-    const barrelObj = object.getObjectByName('weapon')!;
-    const barrelTargetObj = object.getObjectByName('weapon_barrel_target')!;
-
     if (!this.preview) {
+      const barrelObj = object.getObjectByName(`weapon`)!;
+      const barrelTargetObj = object.getObjectByName(`weapon_barrel_target`)!;
+
       const parent = barrelObj.parent!;
       const barrelWrapperY = new Object3D();
       const barrelWrapperX = new Object3D();
@@ -272,14 +272,20 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
 
       parent.add(barrelWrapperY);
 
-      // (window as any).barrelWrapper = barrelWrapper;
+      this.objects.push(
+        {
+          barrels: [barrelWrapperX, barrelWrapperY],
+          barrelTargets: [barrelTargetObj],
+          barrelTargetShoots: [barrelTargetShoot]
+        },
+        {
+          barrels: [barrelWrapperX, barrelWrapperY],
+          barrelTargets: [barrelTargetObj],
+          barrelTargetShoots: [barrelTargetShoot]
+        }
+      );
 
-      this.objects = {
-        barrels: [[barrelWrapperX, barrelWrapperY]],
-        barrelTargets: [barrelTargetObj],
-        barrelTargetShoots: [barrelTargetShoot]
-      };
-
+      this.modules.weapon.registerBarrelTarget(barrelTargetObj);
       this.modules.weapon.registerBarrelTarget(barrelTargetObj);
     }
 
@@ -325,17 +331,21 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
 
   updateControls() {
     const controls = this.getControls();
+
+    const velocity =
+      this.state.weaponVelocity[this.modules.weapon.getSlotIndex()]!;
+
     if (controls[ControlAction.UP]) {
-      this.state.weaponVelocity.y -= 0.005;
+      velocity.y -= 0.005;
     }
     if (controls[ControlAction.DOWN]) {
-      this.state.weaponVelocity.y += 0.005;
+      velocity.y += 0.005;
     }
     if (controls[ControlAction.LEFT]) {
-      this.state.weaponVelocity.x += 0.005;
+      velocity.x += 0.005;
     }
     if (controls[ControlAction.RIGHT]) {
-      this.state.weaponVelocity.x -= 0.005;
+      velocity.x -= 0.005;
     }
 
     if (this.modules.weapon.isAutoAimActive()) return;
@@ -347,31 +357,37 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
   }
 
   private updateObjects() {
-    const { barrels } = this.objects;
-    const [barrelObjX, barrelObjY] = barrels[0]!;
+    this.objects.forEach(({ barrels }, index) => {
+      const [barrelObjX, barrelObjY] = barrels as [Object3D, Object3D];
+      const velocity = this.state.weaponVelocity[index]!;
 
-    if (barrelObjY) {
-      barrelObjX.rotation.x += this.state.weaponVelocity.y;
-      barrelObjY.rotation.y += this.state.weaponVelocity.x;
-      // weaponObj.rotation.y += this.state.weaponVelocity.x;
-      // barrelObj.rotation.x += this.state.weaponVelocity.y;
+      if (barrelObjY) {
+        barrelObjX.rotation.x += velocity.y;
+        barrelObjY.rotation.y += velocity.x;
 
-      barrelObjX.rotation.x = Math.max(
-        this.options.minWeaponAngle.y,
-        Math.min(this.options.maxWeaponAngle.y, barrelObjX.rotation.x)
-      );
-      barrelObjY.rotation.y = Math.max(
-        this.options.minWeaponAngle.x,
-        Math.min(this.options.maxWeaponAngle.x, barrelObjY.rotation.y)
-      );
+        barrelObjX.rotation.x = Math.max(
+          this.options.weaponAngles[index]!.min.y,
+          Math.min(
+            this.options.weaponAngles[index]!.max.y,
+            barrelObjX.rotation.x
+          )
+        );
+        barrelObjY.rotation.y = Math.max(
+          this.options.weaponAngles[index]!.min.x,
+          Math.min(
+            this.options.weaponAngles[index]!.max.x,
+            barrelObjY.rotation.y
+          )
+        );
 
-      this.state.weaponVelocity.multiplyScalar(0.9);
+        velocity.multiplyScalar(0.9);
 
-      if (this.state.weaponVelocity.length() < 0.001) {
-        this.state.weaponVelocity.set(0, 0);
-      } else {
-        this.modules.weapon.updateSourcePosition(0);
+        if (velocity.length() < 0.001) {
+          velocity.set(0, 0);
+        } else {
+          this.modules.weapon.updateSourcePosition(index);
+        }
       }
-    }
+    });
   }
 }

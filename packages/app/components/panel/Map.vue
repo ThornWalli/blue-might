@@ -1,6 +1,6 @@
 <template>
   <bm-panel class="bm-panel-map" title="Map">
-    <bm-map :app="app" />
+    <bm-map :app="app" controls />
   </bm-panel>
 </template>
 

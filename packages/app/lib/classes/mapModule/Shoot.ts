@@ -18,8 +18,8 @@ import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import { loadGltf } from '../../utils/gltf';
 import type Projectile from '../Projectile';
-import type Weapon from '../Weapon';
 import { SMOKE_TYPE } from '../unitModule/Damage';
+import type { WeaponSlot } from '../WeaponSlot';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -34,17 +34,18 @@ interface Observables extends MapModuleObservables {}
 interface State extends MapModuleState {}
 
 export interface ShootDescription {
-  weapon: Weapon;
+  slot: WeaponSlot;
   projectile: Projectile;
   object: Object3D;
   ignoredObjects: Object3D[];
   startPosition: Vector3;
+  isActive: boolean;
+  enableSmoke?: boolean;
+  position: Vector3;
   /**
    * Geschwindigkeitsvektor anstatt nur Richtung und Speed
    */
   velocity: Vector3;
-  isActive: boolean;
-  enableSmoke?: boolean;
 }
 
 export default class ShootModule extends MapModule<State, Observables> {
@@ -112,7 +113,7 @@ export default class ShootModule extends MapModule<State, Observables> {
   async createShoot(
     position: Vector3,
     direction: Vector3 = new Vector3(0, 0, 1),
-    weapon: Weapon,
+    slot: WeaponSlot,
     {
       enableSpread,
       spreadAmount,
@@ -127,7 +128,7 @@ export default class ShootModule extends MapModule<State, Observables> {
     if (activeCount >= 50) {
       return;
     }
-    const projectile = weapon.projectile;
+    const projectile = slot.weapon.projectile;
 
     if (!this.shootByProjectile[projectile.id]) {
       this.shootByProjectile[projectile.id] =
@@ -149,12 +150,13 @@ export default class ShootModule extends MapModule<State, Observables> {
       object.add(newShootObject);
       this.addToScene(object);
       shootDesc = {
-        weapon,
+        slot,
         projectile,
         object,
         ignoredObjects: [],
         startPosition: new Vector3(),
         velocity: new Vector3(),
+        position: new Vector3(),
         isActive: false
       };
       this.shoots.push(shootDesc);
@@ -162,6 +164,9 @@ export default class ShootModule extends MapModule<State, Observables> {
 
     const obj = shootDesc.object;
     obj.position.copy(position);
+
+    shootDesc.position.copy(position);
+    shootDesc.velocity.copy(direction).multiplyScalar(projectile.speed);
 
     if (enableSpread) {
       setSpread(this.temp.vector, direction, spreadAmount);
@@ -178,7 +183,6 @@ export default class ShootModule extends MapModule<State, Observables> {
     shootDesc.enableSmoke = projectile.hasSmoke();
     shootDesc.ignoredObjects = ignoredObjects ?? [];
     shootDesc.startPosition.copy(position);
-    shootDesc.velocity.copy(direction).multiplyScalar(projectile.speed);
 
     return shootDesc;
   }
@@ -199,28 +203,25 @@ export default class ShootModule extends MapModule<State, Observables> {
         continue;
       }
 
-      // Physikberechnung mit wiederverwendeten Vektoren
-      this.temp.gravity.copy(this.gravity).multiplyScalar(delta);
-      shoot.velocity.add(this.temp.gravity);
+      shoot.projectile.update({
+        ...animationLoopValue,
+        gravity: this.gravity,
+        velocity: shoot.velocity,
+        position: shoot.position
+      });
 
-      this.temp.drag
-        .copy(shoot.velocity)
-        .multiplyScalar(this.airResistance * delta);
-      shoot.velocity.sub(this.temp.drag);
+      // Synchronisiere Position mit dem 3D-Objekt
+      shoot.object.position.copy(shoot.position);
+
+      // LookAt für Richtung (optional, basierend auf Velocity)
+      shoot.object.lookAt(
+        shoot.object.position.x + shoot.velocity.x,
+        shoot.object.position.y + shoot.velocity.y,
+        shoot.object.position.z + shoot.velocity.z
+      );
 
       const obj = shoot.object;
       const oldPosition = this.temp.vector.copy(obj.position);
-
-      const moveVector = this.temp.gravity
-        .copy(shoot.velocity)
-        .multiplyScalar(delta);
-      obj.position.add(moveVector);
-
-      obj.lookAt(
-        obj.position.x + shoot.velocity.x,
-        obj.position.y + shoot.velocity.y,
-        obj.position.z + shoot.velocity.z
-      );
 
       if (
         shoot.projectile.hasSmoke() &&
@@ -263,7 +264,8 @@ export default class ShootModule extends MapModule<State, Observables> {
           const normal = intersection.face?.normal;
 
           const distanceToIntersection = oldPosition.distanceTo(point);
-          const moveDistance = moveVector.length();
+
+          const moveDistance = shoot.velocity.length() * delta;
           if (distanceToIntersection <= moveDistance) {
             hit = true;
 

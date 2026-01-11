@@ -44,8 +44,8 @@ onUnmounted(() => {
 });
 
 const unitWeapons: WeaponSlot[] = [
-  new WeaponSlot({ slot: 0, weapon: new weapons.default() }),
-  new WeaponSlot({ slot: 1, weapon: new weapons.default() })
+  new WeaponSlot({ index: 0, weapon: new weapons.default() }),
+  new WeaponSlot({ index: 1, weapon: new weapons.default() })
 ];
 
 const unitA = new Turret_1({

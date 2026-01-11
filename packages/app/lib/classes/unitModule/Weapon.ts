@@ -12,10 +12,9 @@ import UnitModule, {
 import type { AnimationLoopValue } from '../Renderer';
 import type Weapon from '../Weapon';
 import { disposeObject3D } from '../../utils/object';
-import { WeaponSlot } from '../WeaponSlot';
+import { WeaponSlot, type WeaponSlotDescription } from '../WeaponSlot';
 import type { ShootDescription } from '../mapModule/Shoot';
 import { ControlAction } from '../playerModule/Controls';
-import { isUnitDestroyed } from '../../utils/unit';
 
 import type { UnitModules } from './../Unit';
 import type AttackUnitModule from './Attack';
@@ -55,7 +54,7 @@ export type AutoAimFn = (options: AutoAimFnOptions) => boolean;
 
 export interface WeaponUnitModuleOptions extends UnitModuleOptions {
   autoAimFn: AutoAimFn;
-  slots: WeaponSlot[];
+  slots: Exclude<WeaponSlotDescription, 'index'>[];
 }
 
 export interface WeaponUnitModuleState extends UnitModuleState {
@@ -71,7 +70,7 @@ export interface WeaponUnitModuleState extends UnitModuleState {
   currentSlot: number;
 }
 
-const DEFAULT_DIRECTION: [number, number, number] = [0, 0, 1];
+const DEFAULT_DIRECTION: [number, number, number] = [0, 0, -1];
 
 export default class WeaponUnitModule<
   Options extends WeaponUnitModuleOptions = WeaponUnitModuleOptions,
@@ -92,12 +91,14 @@ export default class WeaponUnitModule<
   >
 > extends UnitModule<Options, State, Obervables, U> {
   static override TYPE = 'weapon';
+
+  slots: WeaponSlot[];
   constructor(unit: U, options: Options, state: State, debug?: boolean) {
     super(
       unit,
       {
         ...options,
-        slots: (options.slots ?? []).map(slot => new WeaponSlot(slot))
+        slots: options.slots ?? []
       },
       {
         ...state,
@@ -115,15 +116,14 @@ export default class WeaponUnitModule<
       debug
     );
 
+    this.slots = this.options.slots.map(
+      (slot, index) => new WeaponSlot({ ...slot, index })
+    );
+
     // deaktivere alle slots die schon verwendet werden
-    this.getSlots().reduce<{ [key: number]: boolean }>((result, slot) => {
-      if (result[slot.slot]) {
-        slot.active = false;
-      } else {
-        result[slot.slot] = true;
-      }
-      return result;
-    }, {});
+    this.getSlots().forEach((slot, index) => {
+      slot.active = index === 0;
+    });
 
     //#region observables
     this.observables.active$ = new Subject<boolean>();
@@ -153,6 +153,12 @@ export default class WeaponUnitModule<
         })
       );
     }
+
+    this.subscription.add(
+      unit.modules.damage.observables.destroyed$.subscribe(() => {
+        this.destroy();
+      })
+    );
 
     this.subscription.add(
       unit.observables.rotation$.subscribe(() => {
@@ -240,7 +246,6 @@ export default class WeaponUnitModule<
 
   override async update(_v: AnimationLoopValue) {
     if (this.getUnit().preview) return;
-    if (isUnitDestroyed(this.getUnit())) return;
     this.updateShoot(_v);
     this.updateAutoAIM();
     if (this.debug) {
@@ -258,15 +263,16 @@ export default class WeaponUnitModule<
 
   ignoredSlots = new Set<WeaponSlot>();
   private updateShoot({ time }: { time: number }) {
-    const weapons = this.getSlots();
-
-    weapons
-      .filter(slot => slot.active && !this.ignoredSlots.has(slot))
-      .forEach((weaponSlot, index) => {
-        index = weaponSlot.slot ?? index;
-
-        if (!weaponSlot) return;
-
+    const slots = this.getSlots();
+    slots
+      .filter(
+        slot =>
+          slot &&
+          (this.state.autoAimActive || slot.active) &&
+          !this.ignoredSlots.has(slot)
+      )
+      .forEach(weaponSlot => {
+        const index = weaponSlot.index;
         const weapon = weaponSlot.weapon;
 
         const currentTime = time / 1000;
@@ -286,12 +292,12 @@ export default class WeaponUnitModule<
               shootCooldown)
         ) {
           this.updateSourcePosition(index);
-
+          // debugger;
           shootModule
             .createShoot(
               this.state.sourcePositions[index]!,
               this.state.sourceDirections[index]!,
-              weapon,
+              weaponSlot,
               {
                 enableSpread: weapon.spreadAmount > 0,
                 spreadAmount: weapon.spreadAmount,
@@ -339,27 +345,24 @@ export default class WeaponUnitModule<
     if (this.state.autoAimActive) {
       const target = this.state.autoAimTarget;
       if (target) {
-        this.getSlots()
-          .filter(({ active }) => active)
-          .forEach((weaponSlot, index) => {
-            index = weaponSlot.slot;
-
-            this.updateSourcePosition(index);
-            const sourcePosition = this.state.sourcePositions[index]!;
-            const shoot = this.options.autoAimFn({
-              target,
-              sourcePosition,
-              weapon: weaponSlot.weapon,
-              index
-            });
-            if (this.state.autoAimAutoShoot) {
-              if (shoot) {
-                this.shoot();
-              } else {
-                this.abortShoot();
-              }
-            }
+        this.getSlots().forEach(weaponSlot => {
+          const index = weaponSlot.index;
+          this.updateSourcePosition(index);
+          const sourcePosition = this.state.sourcePositions[index]!;
+          const shoot = this.options.autoAimFn({
+            target,
+            sourcePosition,
+            weapon: weaponSlot.weapon,
+            index
           });
+          if (this.state.autoAimAutoShoot) {
+            if (shoot) {
+              this.shoot();
+            } else {
+              this.abortShoot();
+            }
+          }
+        });
       } else {
         this.abortShoot();
       }
@@ -375,11 +378,16 @@ export default class WeaponUnitModule<
   private getBarrelTargetbyIndex(index: number) {
     return this.state.barrelTargets.at(index) ?? null;
   }
+
+  public getSlotIndex() {
+    return this.state.currentSlot;
+  }
+
   public getSlot(index: number) {
-    return this.options.slots.at(index) ?? null;
+    return this.slots.at(index) ?? null;
   }
   public getSlots() {
-    return Object.values(this.options.slots);
+    return this.slots;
   }
 
   isAutoAimActive() {
