@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import {
   GROUND_ADJUSTMENT_MODE,
   type SetupContext,
@@ -39,8 +38,10 @@ interface State {
 }
 
 export interface TurretOptions extends BuildingUnitOptions {
-  minAngle: Vector2;
-  maxAngle: Vector2;
+  weaponAngles: {
+    min: Vector2;
+    max: Vector2;
+  }[];
   rotationSpeed: number;
 }
 
@@ -69,7 +70,7 @@ export default class Turret_1 extends BuildingUnit<
   state: State = {
     weaponActive: false,
     weaponVelocity: new Vector2(0, 0),
-    weaponTargetRotation: [new Vector2(0, -0.6)]
+    weaponTargetRotation: [new Vector2(0, 0)]
   };
 
   objects: {
@@ -77,11 +78,7 @@ export default class Turret_1 extends BuildingUnit<
     barrels: Object3D[];
     barrelTargets: Object3D[];
     barrelTargetShoots: Object3D[];
-  } = {
-    barrels: [],
-    barrelTargets: [],
-    barrelTargetShoots: []
-  };
+  }[] = [];
 
   constructor(
     options: Omit<UnitConstructorOptions<TurretOptions>, 'name'> = {},
@@ -99,12 +96,12 @@ export default class Turret_1 extends BuildingUnit<
         name: 'Turret 1',
         options: {
           ...options.options,
-          minAngle:
-            options.options?.minAngle ??
-            new Vector2((-Math.PI * 1) / 4, -Infinity),
-          maxAngle:
-            options.options?.maxAngle ??
-            new Vector2((Math.PI * 1) / 15, Infinity),
+          weaponAngles: options.options?.weaponAngles ?? [
+            {
+              min: new Vector2((-Math.PI * 1) / 4, -Infinity),
+              max: new Vector2((Math.PI * 1) / 15, Infinity)
+            }
+          ],
           rotationSpeed: options.options?.rotationSpeed ?? 0.05
         },
         moduleOptions: {
@@ -114,19 +111,12 @@ export default class Turret_1 extends BuildingUnit<
               autoAimFunction(
                 this.getMap()!.modules.shoot,
                 options,
-                [
-                  {
-                    min: this.options.minAngle,
-                    max: this.options.maxAngle
-                  }
-                ],
+                this.options.weaponAngles,
                 this.options.rotationSpeed,
-                [
-                  {
-                    head: this.objects.head,
-                    barrels: this.objects.barrels as unknown as Object3D[]
-                  }
-                ],
+                this.objects.map(({ head, barrels }) => ({
+                  head,
+                  barrels
+                })),
                 this.state,
                 () => this.getRotation()
               ),
@@ -161,7 +151,7 @@ export default class Turret_1 extends BuildingUnit<
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
         async ({ index, shoot: { projectile, slot } }) => {
-          const shootObj = this.objects.barrelTargetShoots[index];
+          const shootObj = this.objects[index]?.barrelTargetShoots[0];
           if (shootObj?.visible) shootObj.visible = true;
           window.clearTimeout(this.barrelTargetShootTimeouts[index]);
           this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
@@ -201,12 +191,12 @@ export default class Turret_1 extends BuildingUnit<
     const barrelTargetShoot = createBarrelTargetShoot();
     barrelTargetObj.add(barrelTargetShoot);
 
-    this.objects = {
+    this.objects.push({
       head: headObj,
       barrels: [barrelWrapper],
       barrelTargets: [barrelTargetObj],
       barrelTargetShoots: [barrelTargetShoot]
-    };
+    });
 
     this.modules.weapon.registerBarrelTarget(barrelTargetObj);
 
@@ -274,35 +264,35 @@ export default class Turret_1 extends BuildingUnit<
   }
 
   private updateObjects() {
-    const {
-      head: headObj,
-      barrels: [barrelObj]
-    } = this.objects;
+    this.objects.forEach(({ head: headObj, barrels: [barrelObj] }, index) => {
+      if (headObj && barrelObj) {
+        // NEU: Manuelle Bewegung nur, wenn Auto-Aim nicht aktiv ist
+        if (!this.modules.weapon.isAutoAimActive()) {
+          headObj.rotation.y += this.state.weaponVelocity.x;
+          barrelObj.rotation.x += this.state.weaponVelocity.y;
+        }
 
-    if (headObj && barrelObj) {
-      // NEU: Manuelle Bewegung nur, wenn Auto-Aim nicht aktiv ist
-      if (!this.modules.weapon.isAutoAimActive()) {
-        headObj.rotation.y += this.state.weaponVelocity.x;
-        barrelObj.rotation.x += this.state.weaponVelocity.y;
+        headObj.rotation.y = Math.max(
+          this.options.weaponAngles[index]!.min.y,
+          Math.min(this.options.weaponAngles[index]!.max.y, headObj.rotation.y)
+        );
+
+        barrelObj.rotation.x = Math.max(
+          this.options.weaponAngles[index]!.min.x,
+          Math.min(
+            this.options.weaponAngles[index]!.max.x,
+            barrelObj.rotation.x
+          )
+        );
+
+        this.state.weaponVelocity.multiplyScalar(0.9);
+
+        if (this.state.weaponVelocity.length() < 0.001) {
+          this.state.weaponVelocity.set(0, 0);
+        } else {
+          this.modules.weapon.updateSourcePosition(0);
+        }
       }
-
-      headObj.rotation.y = Math.max(
-        this.options.minAngle.y,
-        Math.min(this.options.maxAngle.y, headObj.rotation.y)
-      );
-
-      barrelObj.rotation.x = Math.max(
-        this.options.minAngle.x,
-        Math.min(this.options.maxAngle.x, barrelObj.rotation.x)
-      );
-
-      this.state.weaponVelocity.multiplyScalar(0.9);
-
-      if (this.state.weaponVelocity.length() < 0.001) {
-        this.state.weaponVelocity.set(0, 0);
-      } else {
-        this.modules.weapon.updateSourcePosition(0);
-      }
-    }
+    });
   }
 }

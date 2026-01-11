@@ -12,6 +12,7 @@ import Turret_1 from './turret/turret_1/Turret_1';
 import StationaryGun_2 from './turret/stationary_gun_2/StationaryGun_2';
 import House_1 from './building/house_1/House_1';
 import Tower_1 from './building/tower_1/Tower_1';
+import Lighthouse_1 from './building/lighthouse_1/Lighthouse_1';
 import Factory_1 from './building/factory_1/Factory_1';
 import FactoryChimney_1 from './building/factory_chimney_1/FactoryChimney_1';
 import SeaSupplyStation from './building/sea_supply_station/SeaSupplyStation';
@@ -36,6 +37,7 @@ export { default as StationaryGun_2 } from './turret/stationary_gun_2/Stationary
 export { default as Soldat_1 } from './vehicle/soldat_1/Soldat_1';
 export { default as House_1 } from './building/house_1/House_1';
 export { default as Tower_1 } from './building/tower_1/Tower_1';
+export { default as Lighthouse_1 } from './building/lighthouse_1/Lighthouse_1';
 export { default as Factory_1 } from './building/factory_1/Factory_1';
 export { default as FactoryChimney_1 } from './building/factory_chimney_1/FactoryChimney_1';
 export { default as CombatShip_1 } from './vehicle/combat_ship_1/CombatShip_1';
@@ -59,6 +61,7 @@ const units = {
   [Soldat_1.KEY]: Soldat_1,
   [House_1.KEY]: House_1,
   [Tower_1.KEY]: Tower_1,
+  [Lighthouse_1.KEY]: Lighthouse_1,
   [Factory_1.KEY]: Factory_1,
   [FactoryChimney_1.KEY]: FactoryChimney_1,
   [CombatShip_1.KEY]: CombatShip_1,

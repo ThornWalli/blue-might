@@ -89,7 +89,7 @@ export default class PatrolUnitModule extends UnitModule<
 
     if (import.meta.hot) {
       import.meta.hot.dispose(() => {
-        this.observables.abort$.next();
+        this.observables.stop$.next();
         this.stopPatrol();
       });
     }

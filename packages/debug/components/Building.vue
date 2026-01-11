@@ -18,6 +18,7 @@ import {
   ControlTower_1,
   Factory_1,
   FactoryChimney_1,
+  Lighthouse_1,
   SeaLandingPortSupplyStation,
   Soldat_1,
   Tank_1,
@@ -69,6 +70,9 @@ const map: Partial<MapDescription> = {
     }),
     new FactoryChimney_1({
       position: new Vector3(8.83, 0, -0.17)
+    }),
+    new Lighthouse_1({
+      position: new Vector3(-8.83, 0, -0.17)
     })
   ]
 };

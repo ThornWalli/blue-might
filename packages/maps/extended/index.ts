@@ -14,9 +14,11 @@ import {
   LandingPortSupplyStation,
   SupplyStation,
   CombatShip_1,
-  CombatSubmarine_1
+  CombatSubmarine_1,
+  Lighthouse_1
 } from '@blue-might/units';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
+import { neutralFaction } from '@blue-might/app/lib/classes/mapModule/Faction';
 
 import foregroundTexture from './texture_fg.png';
 import backgroundTexture from './texture_bg.png';
@@ -108,6 +110,18 @@ export default function (): MapDescription {
           }
         }
       }),
+      new Lighthouse_1({
+        position: new Vector3(26.38, 0, -36.66),
+        moduleStates: {
+          faction: {
+            faction: neutralFaction
+          }
+        }
+      }),
+      ...[new Vector3(27.67, 0, -37.36), new Vector3(26.13, 0, -39.27)].map(
+        position => new Tree_1({ position })
+      ),
+
       new Barrack_1({
         position: new Vector3(44, 0, -31),
         moduleStates: {

@@ -10,7 +10,11 @@
 <script setup lang="ts">
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
-import { CombatShip_1, CombatSubmarine_1 } from '@blue-might/units';
+import {
+  CombatShip_1,
+  CombatSubmarine_1,
+  Lighthouse_1
+} from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
@@ -43,6 +47,15 @@ const map: Partial<MapDescription> = {
         damage: {
           maxDamage: 1000
         },
+        faction: {
+          faction: blueFaction
+        }
+      }
+    }),
+
+    new Lighthouse_1({
+      position: new Vector3(2.67, 0, 9.19),
+      moduleStates: {
         faction: {
           faction: blueFaction
         }

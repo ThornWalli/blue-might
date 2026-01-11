@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import type {
   SetupContext,
   UnitConstructorOptions
@@ -37,8 +36,10 @@ interface State {
 }
 
 export interface CombatTankOptions extends TankUnitOptions {
-  minAngle: Vector2;
-  maxAngle: Vector2;
+  weaponAngles: {
+    min: Vector2;
+    max: Vector2;
+  }[];
   rotationSpeed: number;
 }
 export interface CombatTankModules extends TankUnitModules {
@@ -81,12 +82,12 @@ export default class CombatTank_1 extends TankUnit<
         name: 'Combat Tank 1',
         options: {
           ...options.options,
-          minAngle:
-            options.options?.minAngle ??
-            new Vector2((-Math.PI * 1) / 4, -Infinity),
-          maxAngle:
-            options.options?.maxAngle ??
-            new Vector2((Math.PI * 1) / 15, Infinity),
+          weaponAngles: options.options?.weaponAngles ?? [
+            {
+              min: new Vector2((-Math.PI * 1) / 4, -Infinity),
+              max: new Vector2((Math.PI * 1) / 15, Infinity)
+            }
+          ],
           rotationSpeed: options.options?.rotationSpeed ?? 0.05
         },
         moduleOptions: {
@@ -96,12 +97,7 @@ export default class CombatTank_1 extends TankUnit<
               autoAimFunction(
                 this.getMap()!.modules.shoot,
                 options,
-                [
-                  {
-                    min: this.options.minAngle,
-                    max: this.options.maxAngle
-                  }
-                ],
+                this.options.weaponAngles,
                 this.options.rotationSpeed,
                 this.objects.map(obj => ({
                   head: obj.head,
@@ -261,13 +257,16 @@ export default class CombatTank_1 extends TankUnit<
         }
 
         headObj.rotation.y = Math.max(
-          this.options.minAngle.y,
-          Math.min(this.options.maxAngle.y, headObj.rotation.y)
+          this.options.weaponAngles[index]!.min.y,
+          Math.min(this.options.weaponAngles[index]!.max.y, headObj.rotation.y)
         );
 
         barrelObj.rotation.x = Math.max(
-          this.options.minAngle.x,
-          Math.min(this.options.maxAngle.x, barrelObj.rotation.x)
+          this.options.weaponAngles[index]!.min.x,
+          Math.min(
+            this.options.weaponAngles[index]!.max.x,
+            barrelObj.rotation.x
+          )
         );
 
         velocity.multiplyScalar(0.9);
