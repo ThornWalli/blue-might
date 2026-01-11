@@ -156,6 +156,7 @@ export default class WeaponUnitModule<
 
     this.subscription.add(
       unit.modules.damage.observables.destroyed$.subscribe(() => {
+        this.abortShoot();
         this.destroy();
       })
     );
