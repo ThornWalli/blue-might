@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.23](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.22...v1.0.0-beta.23) (2026-01-11)
+
+
+### Bug Fixes
+
+* **assets:** update house_1.blend and house_1.glb files ([c5033df](https://github.com/ThornWalli/blue-might/commit/c5033dfa052ae9be6c46e15bd3eef73025896360))
+
 # [1.0.0-beta.22](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.21...v1.0.0-beta.22) (2026-01-10)
 
 
