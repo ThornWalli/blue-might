@@ -11,6 +11,7 @@
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import {
+  CombatFregatte_1,
   CombatShip_1,
   CombatSubmarine_1,
   Lighthouse_1
@@ -63,7 +64,6 @@ const map: Partial<MapDescription> = {
     }),
 
     new CombatSubmarine_1({
-      id: playerUnitId,
       position: new Vector3(2, 0, 0),
       moduleStates: {
         damage: {
@@ -78,6 +78,16 @@ const map: Partial<MapDescription> = {
         // patrol: {
         //   active: true
         // }
+      }
+    }),
+
+    new CombatFregatte_1({
+      id: playerUnitId,
+      position: new Vector3(4, 0, 0),
+      moduleStates: {
+        faction: {
+          faction: blueFaction
+        }
       }
     })
   ]

@@ -27,7 +27,7 @@ import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
 import { playSound } from '@blue-might/weapon/utils';
 
-import baseGlb from './assets/combat_submarine_1.glb?url';
+import baseGlb from './assets/combat_fregatte_1.glb?url';
 
 interface State {
   weaponActive: boolean;
@@ -35,7 +35,7 @@ interface State {
   weaponTargetRotation: Vector2[];
 }
 
-export interface CombatSubmarineOptions extends SeaVehicleUnitOptions {
+export interface CombatFregatteOptions extends SeaVehicleUnitOptions {
   weaponAngles: {
     min: Vector2;
     max: Vector2;
@@ -43,20 +43,20 @@ export interface CombatSubmarineOptions extends SeaVehicleUnitOptions {
   rotationSpeed: number;
 }
 
-export interface CombatSubmarineModules extends SeaVehicleUnitModules {
+export interface CombatFregatteModules extends SeaVehicleUnitModules {
   attack: AttackUnitModule;
   weapon: WeaponUnitModule;
   player: PlayerUnitModule;
 }
-export type CombatSubmarineModuleList = SeaVehicleUnitModuleList &
+export type CombatFregatteModuleList = SeaVehicleUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
-export default class CombatSubmarine_1 extends SeaVehicleUnit<
-  CombatSubmarineModules,
-  CombatSubmarineModuleList,
-  CombatSubmarineOptions
+export default class CombatFregatte_1 extends SeaVehicleUnit<
+  CombatFregatteModules,
+  CombatFregatteModuleList,
+  CombatFregatteOptions
 > {
-  static override KEY = 'combat_submarine_1';
+  static override KEY = 'combat_fregatte_1';
 
   state: State = {
     weaponActive: false,
@@ -71,24 +71,20 @@ export default class CombatSubmarine_1 extends SeaVehicleUnit<
   }[] = [];
 
   constructor(
-    options: Omit<UnitConstructorOptions<CombatSubmarineOptions>, 'name'> = {},
-    moduleList: Partial<CombatSubmarineModuleList> = []
+    options: Omit<UnitConstructorOptions<CombatFregatteOptions>, 'name'> = {},
+    moduleList: Partial<CombatFregatteModuleList> = []
   ) {
     moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
     super(
       {
         ...options,
-        name: 'Submarine 1',
+        name: 'Fregatte 1',
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [
             {
               min: new Vector2(-Math.PI / 4, -(Math.PI * 9) / 10),
-              max: new Vector2((Math.PI * 1) / 6, (Math.PI * 9) / 10)
-            },
-            {
-              min: new Vector2(-Math.PI / 4, -(Math.PI * 9) / 10),
-              max: new Vector2((Math.PI * 1) / 6, (Math.PI * 9) / 10)
+              max: new Vector2((Math.PI * 1) / 20, (Math.PI * 9) / 10)
             }
           ],
           rotationSpeed: options.options?.rotationSpeed ?? 0.25
@@ -107,11 +103,6 @@ export default class CombatSubmarine_1 extends SeaVehicleUnit<
                 () => this.getRotation()
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
-              {
-                weapon: new weapons.default('light_projectile'),
-                maxAmmunition: 100,
-                ammunition: 100
-              },
               {
                 weapon: new weapons.default('light_projectile'),
                 maxAmmunition: 100,
@@ -161,7 +152,7 @@ export default class CombatSubmarine_1 extends SeaVehicleUnit<
     const mesh = object;
 
     if (!this.preview) {
-      [1, 2].forEach(index => {
+      [1].forEach(index => {
         const headObj = object.getObjectByName(`turretbase_${index}_base`)!;
         const barrelObj = object.getObjectByName(
           `turretbase_${index}_turretgun`

@@ -20,6 +20,7 @@ import CombatHelicopter_1 from './vehicle/combat_helicopter_1/CombatHelicopter_1
 import CombatTank_1 from './vehicle/combat_tank_1/CombatTank_1';
 import CombatShip_1 from './vehicle/combat_ship_1/CombatShip_1';
 import CombatSubmarine_1 from './vehicle/combat_submarine_1/CombatSubmarine_1';
+import CombatFregatte_1 from './vehicle/combat_fregatte_1/CombatFregatte_1';
 
 export { default as ControlTower_1 } from './building/control_tower_1/ControlTower_1';
 export { default as Tank_1 } from './vehicle/tank_1/Tank_1';
@@ -31,6 +32,7 @@ export { default as Tree_1 } from './tree/tree_1/Tree_1';
 export { default as CombatHelicopter_1 } from './vehicle/combat_helicopter_1/CombatHelicopter_1';
 export { default as CombatTank_1 } from './vehicle/combat_tank_1/CombatTank_1';
 export { default as CombatSubmarine_1 } from './vehicle/combat_submarine_1/CombatSubmarine_1';
+export { default as CombatFregatte_1 } from './vehicle/combat_fregatte_1/CombatFregatte_1';
 export { default as Barrack_1 } from './building/barrack_1/Barrack_1';
 export { default as Turret_1 } from './turret/turret_1/Turret_1';
 export { default as StationaryGun_2 } from './turret/stationary_gun_2/StationaryGun_2';
@@ -54,6 +56,7 @@ const units = {
   [CombatHelicopter_1.KEY]: CombatHelicopter_1,
   [CombatTank_1.KEY]: CombatTank_1,
   [CombatSubmarine_1.KEY]: CombatSubmarine_1,
+  [CombatFregatte_1.KEY]: CombatFregatte_1,
   [Barrack_1.KEY]: Barrack_1,
   [Soldat_1.KEY]: Soldat_1,
   [Turret_1.KEY]: Turret_1,
