@@ -1,4 +1,11 @@
-import { Subject, debounceTime, distinctUntilChanged, map, merge } from 'rxjs';
+import {
+  ReplaySubject,
+  Subject,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  merge
+} from 'rxjs';
 import type { Object3D } from 'three';
 import { Group, Mesh, SkinnedMesh } from 'three';
 
@@ -24,6 +31,7 @@ interface Observables extends MapModuleObservables {
   addUnit$: Subject<Unit>;
   removeUnit$: Subject<Unit>;
   select$: Subject<Unit>;
+  ready$: ReplaySubject<void>;
 }
 
 interface State extends MapModuleState {
@@ -50,6 +58,7 @@ export default class UnitsModule extends MapModule<State, Observables> {
     this.observables.addUnit$ = new Subject<Unit>();
     this.observables.removeUnit$ = new Subject<Unit>();
     this.observables.select$ = new Subject<Unit>();
+    this.observables.ready$ = new ReplaySubject<void>();
     //#endregion
 
     this.root = new Group();
@@ -127,7 +136,12 @@ export default class UnitsModule extends MapModule<State, Observables> {
     );
 
     await Promise.all(buildings.map(unit => this.add(unit)));
-    await Promise.all(others.map(unit => this.add(unit)));
+    window.setTimeout(async () => {
+      window.requestAnimationFrame(async () => {
+        await Promise.all(others.map(unit => this.add(unit)));
+        this.observables.ready$.next();
+      });
+    }, 0);
   }
 
   //#region methods

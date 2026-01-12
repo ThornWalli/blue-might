@@ -1,6 +1,9 @@
 /* eslint-disable complexity */
 import { Vector3 } from 'three';
-import { isUnitDestroyed } from '@blue-might/app/lib/utils/unit';
+import {
+  ignoreByUnitByType,
+  isUnitDestroyed
+} from '@blue-might/app/lib/utils/unit';
 
 import type { AnimationLoopValue } from '../../Renderer';
 import type {
@@ -293,9 +296,11 @@ export default class SeaVehicleUnitModule<
 
       const seaLevel = map.modules.ground.getSeaLevel() ?? 0;
 
-      const test = map.modules.ground.getSurfaceHeightAt(newPos.x, newPos.z, [
-        unit
-      ]);
+      const test = map.modules.ground.getSurfaceHeightAt(
+        newPos.x,
+        newPos.z,
+        u => !u.equals(unit) && ignoreByUnitByType({ seaVehicle: true })(u)
+      );
 
       const terrainHeight = Math.max(seaLevel, test ?? seaLevel);
       if (terrainHeight > newPos.y) {

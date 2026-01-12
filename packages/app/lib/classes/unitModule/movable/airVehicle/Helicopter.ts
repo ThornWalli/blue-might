@@ -466,9 +466,11 @@ export default class HelicopterUnitModule<
       const groundHeight =
         unit
           .getMap()
-          ?.modules.ground.getSurfaceHeightAt(unitPosition.x, unitPosition.z, [
-            unit
-          ]) ?? 0;
+          ?.modules.ground.getSurfaceHeightAt(
+            unitPosition.x,
+            unitPosition.z,
+            u => !u.equals(unit)
+          ) ?? 0;
 
       if (unitPosition.y <= groundHeight) {
         // Auf Wasser – sinken lassen
@@ -491,9 +493,11 @@ export default class HelicopterUnitModule<
 
       const groundModule = unit.getMap()!.modules.ground;
       let minY =
-        groundModule.getSurfaceHeightAt(unitPosition.x, unitPosition.z, [
-          unit
-        ]) ?? 0;
+        groundModule.getSurfaceHeightAt(
+          unitPosition.x,
+          unitPosition.z,
+          u => !u.equals(unit)
+        ) ?? 0;
 
       if (!isDestroyed && this.state.gearsOpened) {
         minY += this.options.gearsHeight;
@@ -526,8 +530,11 @@ export default class HelicopterUnitModule<
 
           // Nach Ausrichtung minY neu berechnen, falls Position geändert wurde
           minY =
-            groundModule.getSurfaceHeightAt(position.x, position.z, [unit]) ??
-            0;
+            groundModule.getSurfaceHeightAt(
+              position.x,
+              position.z,
+              u => !u.equals(unit)
+            ) ?? 0;
           if (!isDestroyed && this.state.gearsOpened) {
             minY += this.options.gearsHeight;
           }

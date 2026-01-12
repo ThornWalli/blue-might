@@ -30,7 +30,6 @@ import { resizeCanvas } from '../../utils/canvas';
 import { FLIGHT_STATUS } from '../unitModule/movable/airVehicle/Helicopter';
 import type AirVehicleUnit from '../unit/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
-
 declare module '../Map' {
   interface ModuleDebug {
     ground: boolean;
@@ -211,7 +210,6 @@ export default class GroundModule extends MapModule<State, Observables> {
   private getHeightFromRaycast(
     x: number,
     z: number,
-    ignoredUnits: Unit[] = [],
     unitFilter?: (unit: Unit) => boolean,
     maxDistance = 100
   ): number {
@@ -230,7 +228,7 @@ export default class GroundModule extends MapModule<State, Observables> {
 
     const allMeshes: Object3D[] = [];
     this.map.modules.units.getUnits().forEach(unit => {
-      if (!ignoredUnits.includes(unit) && (!unitFilter || unitFilter(unit))) {
+      if (!unitFilter || unitFilter(unit)) {
         allMeshes.push(...getAllMeshes(unit.root));
       }
     });
@@ -270,21 +268,15 @@ export default class GroundModule extends MapModule<State, Observables> {
 
   getSurfaceHeightAt(
     x: number | Vector2,
-    z?: number,
-    ignoredUnits: Unit[] = [],
+    z: number | undefined = undefined,
+    unitFilter: (unit: Unit) => boolean = () => true,
     maxDistance = 100
   ): number {
     if (x instanceof Vector2) {
       z = x.y;
       x = x.x;
     }
-    const height = this.getHeightFromRaycast(
-      x,
-      z!,
-      ignoredUnits,
-      undefined,
-      maxDistance
-    );
+    const height = this.getHeightFromRaycast(x, z!, unitFilter, maxDistance);
     return height;
   }
 
@@ -301,8 +293,9 @@ export default class GroundModule extends MapModule<State, Observables> {
     return this.getHeightFromRaycast(
       x,
       z!,
-      ignoredUnits,
-      unit => unit instanceof BuildingUnit,
+      unit =>
+        !ignoredUnits.includes(unit) &&
+        !!(unit as BuildingUnit).modules.building,
       maxDistance
     );
   }

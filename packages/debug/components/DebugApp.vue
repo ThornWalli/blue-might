@@ -13,7 +13,7 @@ import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 import type { UnitIdentifier } from '@blue-might/app/lib/types/unit';
 import { debugGroundMap, debugSeaMap } from '@blue-might/maps';
-import { filter, Subscription, map as rxjsMap } from 'rxjs';
+import { filter, Subscription, map as rxjsMap, switchMap, EMPTY } from 'rxjs';
 import { onUnmounted, defineAsyncComponent, markRaw } from 'vue';
 import { defu } from 'defu';
 import type Faction from '@blue-might/app/lib/classes/Faction';
@@ -76,8 +76,15 @@ async function setupPlayer(app: App, faction: Faction) {
     subscription.add(
       app.modules.map.observables.map$
         .pipe(
-          rxjsMap(map =>
-            map?.modules.units.getById<MovableUnit>($props.playerUnit!)
+          switchMap(
+            map =>
+              map?.modules.units.observables.ready$.pipe(
+                rxjsMap(() => {
+                  return map?.modules.units.getById<MovableUnit>(
+                    $props.playerUnit!
+                  );
+                })
+              ) ?? EMPTY
           ),
           filter(Boolean)
         )

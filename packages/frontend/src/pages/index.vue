@@ -14,7 +14,7 @@ import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/App';
 import { defineAsyncComponent, markRaw, onUnmounted, ref } from 'vue';
 import { extendedMap } from '@blue-might/maps';
 import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
-import { filter, map, Subscription } from 'rxjs';
+import { EMPTY, filter, map as rxjsMap, Subscription, switchMap } from 'rxjs';
 import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 import type App from '@blue-might/app/lib/classes/App';
 import { playerFaction } from '@blue-might/maps/default';
@@ -29,8 +29,8 @@ const AppComponent = defineAsyncComponent(
 const config = ref<AppConfig>({
   mode: APP_MODE.PLAYGROUND,
   rendererOptions: {
-    fog: true,
-    pixelated: true,
+    fog: false,
+    pixelated: false,
     controls: true
   },
   debug: {
@@ -60,8 +60,15 @@ async function setupPlayer(app: App) {
   subscription.add(
     app.modules.map.observables.map$
       .pipe(
-        map(map =>
-          map?.modules.units.getById<MovableUnit>('combat-helicopter-1')
+        switchMap(
+          map =>
+            map?.modules.units.observables.ready$.pipe(
+              rxjsMap(() => {
+                return map?.modules.units.getById<MovableUnit>(
+                  'combat-helicopter-1'
+                );
+              })
+            ) ?? EMPTY
         ),
         filter(Boolean)
       )
