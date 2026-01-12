@@ -265,6 +265,10 @@ export default class MovableUnitModule<
     return this._aiControls;
   }
 
+  hasAIControls() {
+    return !!this._aiControls;
+  }
+
   setAutopilotControls(controls?: Partial<ControlState>) {
     this._aiControls = controls
       ? { ...getDefaultControls(), ...controls }

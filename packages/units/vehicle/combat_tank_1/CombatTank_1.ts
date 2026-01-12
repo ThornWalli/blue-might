@@ -75,7 +75,7 @@ export default class CombatTank_1 extends TankUnit<
     moduleList: Partial<CombatTankModuleList> = []
   ) {
     moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
-    console.log(0.8 / Math.PI, 0.2 / Math.PI);
+
     super(
       {
         ...options,

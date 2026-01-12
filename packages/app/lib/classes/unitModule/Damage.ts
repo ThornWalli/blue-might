@@ -101,8 +101,14 @@ export default class DamageUnitModule extends UnitModule<
     return root;
   }
 
-  override update(_v: AnimationLoopValue): void {
+  lastUpdateTime = 0;
+  override update({ time }: AnimationLoopValue): void {
     const dt = 0.016;
+
+    if ((time - this.lastUpdateTime) / 1000 < 1 / 4) {
+      return;
+    }
+    this.lastUpdateTime = time;
 
     if (!this.options.enabled) return; // Wenn deaktiviert, keine Updates
 

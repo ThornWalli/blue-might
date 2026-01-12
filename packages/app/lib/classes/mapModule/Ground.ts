@@ -29,6 +29,7 @@ import { generateNoiseTexture } from '../../utils/texture';
 import { resizeCanvas } from '../../utils/canvas';
 import { FLIGHT_STATUS } from '../unitModule/movable/airVehicle/Helicopter';
 import type AirVehicleUnit from '../unit/AirVehicle';
+import type { AnimationLoopValue } from '../Renderer';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -188,22 +189,11 @@ export default class GroundModule extends MapModule<State, Observables> {
     }, -Infinity);
   }
 
-  // getMinHeightAt(
-  //   x: number,
-  //   z: number,
-  //   sampleDistance = 1,
-  //   func = this.map.modules.ground.getHeightAt.bind(this.map.modules.ground)
-  // ): number {
-  //   const directions = [
-  //     [0, 0],
-  //     [0, sampleDistance],
-  //     [sampleDistance, sampleDistance],
-  //     [sampleDistance, 0]
-  //   ];
-  //   return directions.reduce((acc, [dx, dz]) => {
-  //     return Math.min(acc, func(Math.round(x + dx!), Math.round(z + dz!)));
-  //   }, Infinity);
-  // }
+  private cachePrecision = 5;
+  private heightCache: { [key: string]: { [key: string]: number } } = {};
+  private resetHeightCache() {
+    this.heightCache = {};
+  }
 
   private getHeightFromRaycast(
     x: number,
@@ -212,6 +202,13 @@ export default class GroundModule extends MapModule<State, Observables> {
     unitFilter?: (unit: Unit) => boolean,
     maxDistance = 100
   ): number {
+    const x_ = x.toPrecision(this.cachePrecision);
+    const z_ = z.toPrecision(this.cachePrecision);
+
+    if (this.heightCache[x_] && this.heightCache[x_][z_]) {
+      return this.heightCache[x_][z_];
+    }
+
     this.surfaceData.position.set(x, 50, z);
 
     const raycaster = this.surfaceData.raycaster;
@@ -252,6 +249,9 @@ export default class GroundModule extends MapModule<State, Observables> {
       return unitIntersections[0]!.intersection.point.y;
     }
 
+    this.heightCache[x_] = this.heightCache[x_] || {};
+    this.heightCache[x_][z_] = groundHeight;
+
     return groundHeight;
   }
 
@@ -265,13 +265,14 @@ export default class GroundModule extends MapModule<State, Observables> {
       z = x.y;
       x = x.x;
     }
-    return this.getHeightFromRaycast(
+    const height = this.getHeightFromRaycast(
       x,
       z!,
       ignoredUnits,
       undefined,
       maxDistance
     );
+    return height;
   }
 
   getTerrainHeightAt(
@@ -511,6 +512,15 @@ export default class GroundModule extends MapModule<State, Observables> {
     // origin speichern, damit Abfragen korrekt transformieren
     this.state.origin.copy(object.position);
     return object;
+  }
+
+  private lastUpdateTime = 0;
+  override update({ time }: AnimationLoopValue): void {
+    if ((time - this.lastUpdateTime) / 1000 < 1 / 2) {
+      return;
+    }
+    this.lastUpdateTime = time;
+    this.resetHeightCache();
   }
 
   override async setup() {

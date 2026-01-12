@@ -65,6 +65,9 @@ const map: Partial<MapDescription> = {
 
     new CombatSubmarine_1({
       position: new Vector3(2, 0, 0),
+      moduleDebug: {
+        collision: true
+      },
       moduleStates: {
         damage: {
           maxDamage: 1000
@@ -84,6 +87,9 @@ const map: Partial<MapDescription> = {
     new CombatFregatte_1({
       id: playerUnitId,
       position: new Vector3(4, 0, 0),
+      moduleDebug: {
+        collision: true
+      },
       moduleStates: {
         faction: {
           faction: blueFaction

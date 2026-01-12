@@ -15,6 +15,7 @@ import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import {
   CombatTank_1,
+  ControlTower_1,
   LandingPortSupplyStation,
   SupplyStation
 } from '@blue-might/units';
@@ -35,35 +36,43 @@ const playerUnitId = 'player-unit';
 const map: Partial<MapDescription> = {
   factions: [blueFaction, enemyFaction],
   units: [
-    new CombatTank_1({
-      position: new Vector3(-1.83, 0, 0.17),
-      rotation: new Euler(0, Math.PI / 4, 0),
-      moduleOptions: {
-        patrol: {
-          path: [
-            // [2.83, 4.5],
-            // [-2.83, 4.5]
-
-            [4.83, 5.17],
-            [-4.5, 5.17],
-            [-4.17, -1.5],
-            [3.5, -1.83]
-          ]
-        }
+    new ControlTower_1({
+      moduleDebug: {
+        collision: true
       },
-      moduleStates: {
-        faction: {
-          faction: enemyFaction
-        },
-        patrol: {
-          active: true
-        }
-      }
+      position: new Vector3(0.0, 0, 1.25)
     }),
+
+    // new CombatTank_1({
+    //   position: new Vector3(-1.83, 0, 0.17),
+    //   rotation: new Euler(0, Math.PI / 4, 0),
+    //   moduleOptions: {
+    //     patrol: {
+    //       path: [
+    //         // [2.83, 4.5],
+    //         // [-2.83, 4.5]
+
+    //         [4.83, 5.17],
+    //         [-4.5, 5.17],
+    //         [-4.17, -1.5],
+    //         [3.5, -1.83]
+    //       ]
+    //     }
+    //   },
+    //   moduleStates: {
+    //     faction: {
+    //       faction: blueFaction
+    //     },
+    //     patrol: {
+    //       active: true
+    //     }
+    //   }
+    // }),
     new CombatTank_1({
       id: playerUnitId,
       position: new Vector3(0, 0, 0),
       moduleDebug: {
+        collision: true,
         pathfinding: false,
         patrol: false
       },

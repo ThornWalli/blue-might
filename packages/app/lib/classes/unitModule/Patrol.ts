@@ -172,7 +172,6 @@ export default class PatrolUnitModule extends UnitModule<
   private async patrolLoopFromIndex(startIndex: number) {
     const pathfinding = this.getUnit().modules.pathfinding;
     const worldPath = this.getWorldPath();
-
     // Abbruch-Subscription
     const abortSubscription = this.observables.abort$.subscribe(() => {
       this.stopPatrol();

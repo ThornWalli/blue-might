@@ -264,6 +264,9 @@ export default class WeaponUnitModule<
 
   ignoredSlots = new Set<WeaponSlot>();
   private updateShoot({ time }: { time: number }) {
+    if (!this.state.active) {
+      return;
+    }
     const slots = this.getSlots();
     slots
       .filter(
@@ -287,10 +290,8 @@ export default class WeaponUnitModule<
         if (!shootModule) return;
 
         if (
-          this.state.active &&
-          (weaponSlot.weapon.shootType === WEAPON_SHOOT_TYPE.SINGLE ||
-            currentTime - (this.state.lastShootTime[index] ?? 0) >
-              shootCooldown)
+          weaponSlot.weapon.shootType === WEAPON_SHOOT_TYPE.SINGLE ||
+          currentTime - (this.state.lastShootTime[index] ?? 0) > shootCooldown
         ) {
           this.updateSourcePosition(index);
           // debugger;
@@ -343,7 +344,7 @@ export default class WeaponUnitModule<
   }
 
   private updateAutoAIM() {
-    if (this.state.autoAimActive) {
+    if (this.state.active && this.state.autoAimActive) {
       const target = this.state.autoAimTarget;
       if (target) {
         this.getSlots().forEach(weaponSlot => {

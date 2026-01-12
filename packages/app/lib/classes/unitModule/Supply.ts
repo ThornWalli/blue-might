@@ -183,7 +183,7 @@ export default class SupplyUnitModule extends UnitModule<
     }
     //#endregion
 
-    if ((time - this.lastUpdateTime) / 1000 < 2 / 3) {
+    if ((time - this.lastUpdateTime) / 1000 < 1) {
       return;
     }
     this.lastUpdateTime = time;

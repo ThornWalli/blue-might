@@ -17,6 +17,7 @@ import PathfindingUnitModule from './unitModule/Pathfinding';
 import DamageUnitModule from './unitModule/Damage';
 import CollisionUnitModule, { COLLISION_TYPE } from './unitModule/Collision';
 import FactionUnitModule from './unitModule/Faction';
+import type MovableUnitModule from './unitModule/Movable';
 
 export enum GROUND_ADJUSTMENT_MODE {
   MIN_HEIGHT = 'min-height',
@@ -419,13 +420,23 @@ export default class Unit<
     let desired = position.clone();
     const from = this.lastPosition.clone();
 
+    const isAutopilot =
+      (
+        this as unknown as Unit<
+          UnitModules & {
+            movable: MovableUnitModule;
+          }
+        >
+      ).modules.movable?.hasAIControls() ?? false;
+
     // Schritt 1: Führe Bodenausrichtung für die gewünschte Position durch (wenn nötig)
     if (
       this._map &&
       this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.NONE &&
       this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT
     ) {
-      desired = this.updateGroundAlignment(desired, [this]).position ?? desired;
+      desired =
+        this.updateGroundAlignment(desired, [this], false).position ?? desired;
     }
 
     // Schritt 2: Prüfe, ob die neue Position eine Kollision verursacht
@@ -433,13 +444,24 @@ export default class Unit<
     const collisionType = this.modules.collision.checkCollision();
 
     // Fall A: Keine blockierende Kollision
-    if (collisionType < COLLISION_TYPE.BLOCKED) {
+    if (isAutopilot || collisionType < COLLISION_TYPE.BLOCKED) {
       this._position.copy(desired);
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       this.updateMeshTransform();
 
       return true;
+    }
+
+    if (
+      this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.GROUND &&
+      desired.y - from.y < 1 / 3
+    ) {
+      this._position.copy(this.lastPosition);
+      this.root.position.copy(this.lastPosition);
+      this.observables.position$.next(this.lastPosition.clone());
+      this.updateMeshTransform();
+      return false;
     }
 
     // Fall B: Blockierende Kollision!
@@ -577,7 +599,11 @@ export default class Unit<
     this._tilt.set(pitch, 0, roll);
   }
 
-  updateGroundAlignment(position?: Vector3, ignoredUnits: Unit[] = []) {
+  updateGroundAlignment(
+    position?: Vector3,
+    ignoredUnits: Unit[] = [],
+    groundNormals = true
+  ) {
     const groundModule = this._map?.modules.ground;
 
     if (position) {
@@ -611,7 +637,10 @@ export default class Unit<
             ignoredUnits
           );
           this._position.setY(info.position.y);
-          this.calculateGroundNormal();
+
+          if (groundNormals) {
+            this.calculateGroundNormal();
+          }
         }
         break;
 
