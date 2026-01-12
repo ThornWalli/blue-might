@@ -105,7 +105,7 @@ export default class DamageUnitModule extends UnitModule<
   override update({ time }: AnimationLoopValue): void {
     const dt = 0.016;
 
-    if ((time - this.lastUpdateTime) / 1000 < 1 / 4) {
+    if ((time - this.lastUpdateTime) / 1000 < 1 / 8) {
       return;
     }
     this.lastUpdateTime = time;

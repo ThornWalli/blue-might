@@ -179,14 +179,27 @@ export default class GroundModule extends MapModule<State, Observables> {
       [0, 0],
       [0, sampleDistance],
       [sampleDistance, sampleDistance],
-      [sampleDistance, 0],
-      [0, -sampleDistance],
-      [-sampleDistance, -sampleDistance],
-      [-sampleDistance, 0]
+      [sampleDistance, 0]
     ];
     return directions.reduce((acc, [dx, dz]) => {
       return Math.max(acc, func(Math.round(x + dx!), Math.round(z + dz!)));
     }, -Infinity);
+  }
+  getMinHeightAt(
+    x: number,
+    z: number,
+    sampleDistance = 1,
+    func = this.map.modules.ground.getHeightAt.bind(this.map.modules.ground)
+  ): number {
+    const directions = [
+      [0, 0],
+      [0, sampleDistance],
+      [sampleDistance, sampleDistance],
+      [sampleDistance, 0]
+    ];
+    return directions.reduce((acc, [dx, dz]) => {
+      return Math.min(acc, func(Math.round(x + dx!), Math.round(z + dz!)));
+    }, Infinity);
   }
 
   private cachePrecision = 5;

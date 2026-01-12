@@ -59,6 +59,11 @@ export interface CombatHelicopterModules extends HelicopterUnitModules {
 export type CombatHelicopterModuleList = HelicopterUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule];
 
+function getVectors() {
+  const vector = new Vector2(0, 0);
+  return [vector, vector];
+}
+
 export default class CombatHelicopter_1 extends HelicopterUnit<
   CombatHelicopterModules,
   CombatHelicopterModuleList,
@@ -68,8 +73,8 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
 
   state: State = {
     weaponActive: false,
-    weaponVelocity: [new Vector2(0, 0), new Vector2(0, 0)],
-    weaponTargetRotation: [new Vector2(0, 0), new Vector2(0, 0)]
+    weaponVelocity: getVectors(),
+    weaponTargetRotation: getVectors()
   };
 
   animationSettings: Record<

@@ -293,8 +293,9 @@ export default class SeaVehicleUnitModule<
 
       const seaLevel = map.modules.ground.getSeaLevel() ?? 0;
 
-      const test = 0;
-      map.modules.ground.getSurfaceHeightAt(newPos.x, newPos.z, [unit]);
+      const test = map.modules.ground.getSurfaceHeightAt(newPos.x, newPos.z, [
+        unit
+      ]);
 
       const terrainHeight = Math.max(seaLevel, test ?? seaLevel);
       if (terrainHeight > newPos.y) {

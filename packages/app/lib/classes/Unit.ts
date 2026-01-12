@@ -18,6 +18,7 @@ import DamageUnitModule from './unitModule/Damage';
 import CollisionUnitModule, { COLLISION_TYPE } from './unitModule/Collision';
 import FactionUnitModule from './unitModule/Faction';
 import type MovableUnitModule from './unitModule/Movable';
+import type PatrolUnitModule from './unitModule/Patrol';
 
 export enum GROUND_ADJUSTMENT_MODE {
   MIN_HEIGHT = 'min-height',
@@ -420,14 +421,12 @@ export default class Unit<
     let desired = position.clone();
     const from = this.lastPosition.clone();
 
-    const isAutopilot =
-      (
-        this as unknown as Unit<
-          UnitModules & {
-            movable: MovableUnitModule;
-          }
-        >
-      ).modules.movable?.hasAIControls() ?? false;
+    const unit = this as unknown as Unit<
+      UnitModules & {
+        movable: MovableUnitModule;
+        patrol: PatrolUnitModule;
+      }
+    >;
 
     // Schritt 1: Führe Bodenausrichtung für die gewünschte Position durch (wenn nötig)
     if (
@@ -436,7 +435,18 @@ export default class Unit<
       this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT
     ) {
       desired =
-        this.updateGroundAlignment(desired, [this], false).position ?? desired;
+        this.updateGroundAlignment(desired, [unit], false).position ?? desired;
+    }
+
+    const isAutopilot = unit.modules.movable?.hasAIControls() ?? false;
+    const isPatrol = unit.modules.patrol?.state.active ?? false;
+
+    if (isPatrol || isAutopilot) {
+      this._position.copy(desired);
+      this.lastPosition.copy(desired);
+      this.observables.position$.next(desired);
+      this.updateMeshTransform();
+      return true;
     }
 
     // Schritt 2: Prüfe, ob die neue Position eine Kollision verursacht
@@ -444,12 +454,11 @@ export default class Unit<
     const collisionType = this.modules.collision.checkCollision();
 
     // Fall A: Keine blockierende Kollision
-    if (isAutopilot || collisionType < COLLISION_TYPE.BLOCKED) {
+    if (collisionType < COLLISION_TYPE.BLOCKED) {
       this._position.copy(desired);
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       this.updateMeshTransform();
-
       return true;
     }
 
@@ -485,9 +494,6 @@ export default class Unit<
     this.observables.position$.next(this.lastPosition.clone());
     this.updateMeshTransform();
     return false;
-    // Optional: Hier könnte man die "Sweep & Slide"-Logik (Binärsuche etc.)
-    // einfügen, um das Fahrzeug an der Wand entlang gleiten zu lassen, anstatt es nur zu stoppen.
-    // Fürs Erste stellen wir aber das simple "Stoppen" wieder her.
   }
 
   //#region visibility
