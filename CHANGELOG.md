@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.28](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.27...v1.0.0-beta.28) (2026-01-12)
+
+
+### Bug Fixes
+
+* **app:** fix missing slot index ([448c9de](https://github.com/ThornWalli/blue-might/commit/448c9dec7aae5941304abbdc8f631d62eaeedeec))
+
 # [1.0.0-beta.27](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.26...v1.0.0-beta.27) (2026-01-11)
 
 
