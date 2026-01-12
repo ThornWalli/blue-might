@@ -65,13 +65,13 @@ function setup() {
     renderer.render($props.app.getScene(), camera);
     const weaponModule = unit?.modules.weapon;
     if (weaponModule) {
-      const [sourceDirection] = weaponModule.getSourceDirections();
-      const [sourcePosition] = weaponModule.getSourcePositions();
-      const [barrelTarget] = weaponModule.getBarrelTargets();
+      const index = weaponModule.getSlotIndex();
+      const sourceDirection = weaponModule.getSourceDirections()[index];
+      const sourcePosition = weaponModule.getSourcePositions()[index];
+      const barrelTarget = weaponModule.getBarrelTargets()[index];
       if (unit && sourceDirection && sourcePosition && barrelTarget) {
         barrelTarget.getWorldPosition(target);
         camera.position.copy(target);
-
         camera.lookAt(
           camera.position.x + sourceDirection.x,
           camera.position.y + sourceDirection.y,

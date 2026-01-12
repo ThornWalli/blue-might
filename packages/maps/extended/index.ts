@@ -63,7 +63,7 @@ export default function (): MapDescription {
       new CombatFregatte_1({
         position: new Vector3(47.6, 0, 3.14),
         moduleDebug: {
-          attack: true
+          attack: false
         },
         moduleOptions: {
           patrol: {
