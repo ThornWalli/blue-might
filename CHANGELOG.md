@@ -1,5 +1,13 @@
 # Project Changelog
 
+# [1.0.0-beta.30](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.29...v1.0.0-beta.30) (2026-01-12)
+
+
+### Bug Fixes
+
+* **config:** enable fog and pixelated rendering options ([2edd50b](https://github.com/ThornWalli/blue-might/commit/2edd50b292c6d28fd427ed4c6cf1293fdceb572c))
+* **update:** many updates ([428ada1](https://github.com/ThornWalli/blue-might/commit/428ada16e624881d4afe28736025680d81b1b554))
+
 # [1.0.0-beta.29](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.28...v1.0.0-beta.29) (2026-01-12)
 
 
