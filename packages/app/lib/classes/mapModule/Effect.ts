@@ -35,9 +35,6 @@ interface State extends MapModuleState {
   particles: Particle[];
 }
 
-/**
- *@deprecated Brauch ich das?
- */
 export default class EffectModule extends MapModule<State, Observables> {
   static override TYPE = 'effect';
   override state: State = {
@@ -148,6 +145,7 @@ export default class EffectModule extends MapModule<State, Observables> {
     position: Vector3,
     options?: Partial<Exclude<ParticleOptions, 'texture'>> & {
       type: SMOKE_TYPE;
+      static?: boolean;
     }
   ) {
     if (!this.textures) return;
@@ -157,7 +155,7 @@ export default class EffectModule extends MapModule<State, Observables> {
       life: options?.life ?? 0.8,
       velocity: new Vector3(
         (Math.random() - 0.5) * 0.1,
-        0.6,
+        options?.static ? 0.05 : 0.6,
         (Math.random() - 0.5) * 0.1
       )
     });

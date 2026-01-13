@@ -26,7 +26,7 @@ export default class SeaSupplyStation extends BuildingUnit<
   ModuleList,
   Options
 > {
-  static override KEY = 'landing_port_supply_station';
+  static override KEY = 'sea_supply_station';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []
@@ -35,7 +35,7 @@ export default class SeaSupplyStation extends BuildingUnit<
     super(
       {
         ...options,
-        name: 'Landing Port Supply Station',
+        name: 'Sea Supply Station',
         moduleOptions: {
           ...options.moduleOptions,
           supply: {

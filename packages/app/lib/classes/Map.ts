@@ -15,6 +15,7 @@ import ShootModule from './mapModule/Shoot';
 import EffectModule from './mapModule/Effect';
 import FactionModule from './mapModule/Faction';
 import type Faction from './Faction';
+import AirFlowModule from './mapModule/AirFlow';
 
 type MapModuleList = (
   | typeof UnitsModule
@@ -23,6 +24,7 @@ type MapModuleList = (
   | typeof PathfindingModule
   | typeof ShootModule
   | typeof FactionModule
+  | typeof AirFlowModule
   | typeof EffectModule
 )[];
 
@@ -33,6 +35,7 @@ interface MapModules {
   pathfinding: PathfindingModule;
   shoot: ShootModule;
   faction: FactionModule;
+  airFlow: AirFlowModule;
   effect: EffectModule;
 }
 
@@ -101,6 +104,7 @@ export default class Map<
       ShootModule,
       FactionModule,
       PathfindingModule,
+      AirFlowModule,
       EffectModule
     );
 

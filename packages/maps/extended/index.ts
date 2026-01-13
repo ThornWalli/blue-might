@@ -16,7 +16,10 @@ import {
   CombatShip_1,
   CombatSubmarine_1,
   Lighthouse_1,
-  CombatFregatte_1
+  CombatFregatte_1,
+  Flag_1,
+  Church_1,
+  Tree_2
 } from '@blue-might/units';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import { neutralFaction } from '@blue-might/app/lib/classes/mapModule/Faction';
@@ -38,6 +41,12 @@ export default function (): MapDescription {
     factions: [blueFaction, enemyFaction],
 
     units: [
+      ...[new Vector3(42.5, 0, -27.5), new Vector3(40.5, 0, -27.5)].map(
+        position =>
+          new Flag_1({
+            position
+          })
+      ),
       new CombatSubmarine_1({
         position: new Vector3(2.36, 0, -47.18),
 
@@ -89,7 +98,7 @@ export default function (): MapDescription {
       new Tree_1({
         position: new Vector3(37, 0, -23)
       }),
-      new Tree_1({
+      new Tree_2({
         position: new Vector3(36.5, 0, -22)
       }),
       new LandingPort_1({
@@ -283,10 +292,28 @@ export default function (): MapDescription {
             }
           })
       ),
-      new House_1({
-        position: new Vector3(38.5, 0, -20.17),
-        rotation: new Euler(0, Math.PI / 2, 0)
+
+      new Church_1({
+        position: new Vector3(39.17, 0, -17.5),
+        rotation: new Euler(0, 0, 0)
       }),
+
+      ...[
+        {
+          position: new Vector3(38.17, 0, -20.17),
+          rotation: new Euler(0, -Math.PI / 2, 0)
+        },
+        {
+          position: new Vector3(40.83, 0, -20.5),
+          rotation: new Euler(0, Math.PI, 0)
+        }
+      ].map(
+        ({ position, rotation }) =>
+          new House_1({
+            position,
+            rotation
+          })
+      ),
 
       new CombatShip_1({
         debug: false,

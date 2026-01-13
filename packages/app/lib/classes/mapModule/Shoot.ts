@@ -18,8 +18,9 @@ import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import { loadGltf } from '../../utils/gltf';
 import type Projectile from '../Projectile';
-import { SMOKE_TYPE } from '../unitModule/Damage';
 import type { WeaponSlot } from '../WeaponSlot';
+
+import { SMOKE_TYPE } from './../unitModule/Damage';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -223,12 +224,12 @@ export default class ShootModule extends MapModule<State, Observables> {
       const obj = shoot.object;
       const oldPosition = this.temp.vector.copy(obj.position);
 
-      if (
-        shoot.projectile.hasSmoke() &&
-        shoot.enableSmoke &&
-        Math.random() < 1 / 3
-      ) {
-        this.spawnSmoke(shoot.object.position.clone());
+      if (shoot.projectile.hasSmoke() && shoot.enableSmoke) {
+        this.map.modules.effect.addSmoke(shoot.object.position.clone(), {
+          type: SMOKE_TYPE.MEDIUM,
+          life: 0.8,
+          static: true
+        });
       }
 
       let hit = false;
@@ -334,7 +335,7 @@ export default class ShootModule extends MapModule<State, Observables> {
       }
 
       const distanceFromStart = obj.position.distanceTo(shoot.startPosition);
-      if (hit || distanceFromStart > 100) {
+      if (hit || distanceFromStart > 50) {
         // Deaktiviere das Projektil und gib es an den Pool zurück
         shoot.isActive = false;
         shoot.object.visible = false;
@@ -343,12 +344,6 @@ export default class ShootModule extends MapModule<State, Observables> {
         this.raycastFrameCounter = 0;
       }
     }
-  }
-  private spawnSmoke(position: Vector3, type: SMOKE_TYPE = SMOKE_TYPE.MEDIUM) {
-    this.map.modules.effect.addSmoke(position, {
-      type,
-      life: 0.8
-    });
   }
 
   private hitUnit(unit: Unit, shoot: ShootDescription, _distance: number = 0) {

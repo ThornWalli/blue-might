@@ -7,10 +7,13 @@ import SeaLandingPortSupplyStation from './building/sea_landing_port_supply_stat
 import SupplyStation from './building/supply_station/SupplyStation';
 import Tank_1 from './vehicle/tank_1/Tank_1';
 import Tree_1 from './tree/tree_1/Tree_1';
+import Tree_2 from './tree/tree_2/Tree_2';
 import Barrack_1 from './building/barrack_1/Barrack_1';
 import Turret_1 from './turret/turret_1/Turret_1';
 import StationaryGun_2 from './turret/stationary_gun_2/StationaryGun_2';
 import House_1 from './building/house_1/House_1';
+import Church_1 from './building/church_1/Church_1';
+import Flag_1 from './building/flag_1/Flag_1';
 import Tower_1 from './building/tower_1/Tower_1';
 import Lighthouse_1 from './building/lighthouse_1/Lighthouse_1';
 import Factory_1 from './building/factory_1/Factory_1';
@@ -29,6 +32,7 @@ export { default as LandingPortSupplyStation } from './building/landing_port_sup
 export { default as SeaLandingPortSupplyStation } from './building/sea_landing_port_supply_station/SeaLandingPortSupplyStation';
 export { default as SupplyStation } from './building/supply_station/SupplyStation';
 export { default as Tree_1 } from './tree/tree_1/Tree_1';
+export { default as Tree_2 } from './tree/tree_2/Tree_2';
 export { default as CombatHelicopter_1 } from './vehicle/combat_helicopter_1/CombatHelicopter_1';
 export { default as CombatTank_1 } from './vehicle/combat_tank_1/CombatTank_1';
 export { default as CombatSubmarine_1 } from './vehicle/combat_submarine_1/CombatSubmarine_1';
@@ -38,6 +42,8 @@ export { default as Turret_1 } from './turret/turret_1/Turret_1';
 export { default as StationaryGun_2 } from './turret/stationary_gun_2/StationaryGun_2';
 export { default as Soldat_1 } from './vehicle/soldat_1/Soldat_1';
 export { default as House_1 } from './building/house_1/House_1';
+export { default as Church_1 } from './building/church_1/Church_1';
+export { default as Flag_1 } from './building/flag_1/Flag_1';
 export { default as Tower_1 } from './building/tower_1/Tower_1';
 export { default as Lighthouse_1 } from './building/lighthouse_1/Lighthouse_1';
 export { default as Factory_1 } from './building/factory_1/Factory_1';
@@ -53,6 +59,7 @@ const units = {
   [SeaLandingPortSupplyStation.KEY]: SeaLandingPortSupplyStation,
   [SupplyStation.KEY]: SupplyStation,
   [Tree_1.KEY]: Tree_1,
+  [Tree_2.KEY]: Tree_2,
   [CombatHelicopter_1.KEY]: CombatHelicopter_1,
   [CombatTank_1.KEY]: CombatTank_1,
   [CombatSubmarine_1.KEY]: CombatSubmarine_1,
@@ -63,6 +70,8 @@ const units = {
   [StationaryGun_2.KEY]: StationaryGun_2,
   [Soldat_1.KEY]: Soldat_1,
   [House_1.KEY]: House_1,
+  [Church_1.KEY]: Church_1,
+  [Flag_1.KEY]: Flag_1,
   [Tower_1.KEY]: Tower_1,
   [Lighthouse_1.KEY]: Lighthouse_1,
   [Factory_1.KEY]: Factory_1,

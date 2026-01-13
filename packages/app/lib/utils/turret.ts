@@ -76,6 +76,7 @@ export function autoAimFunction(
 
   // Yaw immer direkt berechnen (keine Ballistik nötig)
   const targetYaw = normalizeAngle(Math.atan2(delta.x, delta.z) - rotation.y);
+
   const isYawInRange = targetYaw >= minAngle.y && targetYaw <= maxAngle.y;
 
   // Pitch: Direkte Linie für nahe Ziele, sonst vereinfachte Ballistik
@@ -104,9 +105,9 @@ export function autoAimFunction(
   const isPitchInRange = targetPitch >= minAngle.x && targetPitch <= maxAngle.x;
 
   // Debug-Log (entfernen nach Test)
-  // console.log(
-  //   `Yaw: ${targetYaw.toFixed(3)}, Pitch: ${targetPitch.toFixed(3)}, Dist: ${horizontalDistance.toFixed(2)}, Vert: ${verticalDistance.toFixed(2)}`
-  // );
+  console.log(
+    `Yaw: ${targetYaw.toFixed(3)}, Pitch: ${targetPitch.toFixed(3)}, Rotation.y: ${rotation.y.toFixed(3)}, Dist: ${horizontalDistance.toFixed(2)}`
+  );
 
   if (isYawInRange && isPitchInRange && horizontalDistance >= 0.96) {
     state.weaponTargetRotation[index]!.set(targetYaw, targetPitch);
