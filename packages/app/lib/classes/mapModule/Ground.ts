@@ -30,6 +30,7 @@ import { resizeCanvas } from '../../utils/canvas';
 import { FLIGHT_STATUS } from '../unitModule/movable/airVehicle/Helicopter';
 import type AirVehicleUnit from '../unit/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
+
 declare module '../Map' {
   interface ModuleDebug {
     ground: boolean;
@@ -51,12 +52,7 @@ interface State extends MapModuleState {
 
 export default class GroundModule extends MapModule<State, Observables> {
   static override TYPE = 'ground';
-
   private root?: Object3D;
-  getRoot() {
-    return this.root!;
-  }
-
   override state: State = {
     segments: 64,
     terrainHeight: 0,
@@ -64,17 +60,12 @@ export default class GroundModule extends MapModule<State, Observables> {
     heights: [],
     origin: new Vector3(0, 9, 0)
   };
-
   private surfaceData = {
     raycaster: new Raycaster(),
     position: new Vector3(0, 0, 0),
     direction: new Vector3(0, -1, 0)
   };
-
   private pathfinderTileTypes: (TILE_TYPE | undefined)[][] = [];
-  getPathfinderTileTypes() {
-    return this.pathfinderTileTypes;
-  }
 
   constructor(map: Map, debug: boolean) {
     super(map, debug);
@@ -86,6 +77,14 @@ export default class GroundModule extends MapModule<State, Observables> {
 
   getSeaLevel() {
     return 0;
+  }
+
+  getRoot() {
+    return this.root!;
+  }
+
+  getPathfinderTileTypes() {
+    return this.pathfinderTileTypes;
   }
 
   /**
@@ -332,7 +331,6 @@ export default class GroundModule extends MapModule<State, Observables> {
 
     if (intersections.length > 0) {
       const height_ = intersections[0]!.point.y;
-      // Optional: Zusätzliche Logik, wenn nötig (z. B. Flying-Check)
       return {
         unit: this.map.app
           .getScene()
@@ -345,60 +343,6 @@ export default class GroundModule extends MapModule<State, Observables> {
     return {
       position: new Vector3(x, height, z)
     };
-  }
-
-  // getTerrainInfoAt(
-  //   x: number | Vector2,
-  //   z?: number,
-  //   ignoredUnits: Unit[] = [],
-  //   maxDistance = 100
-  // ): {
-  //   position: Vector3;
-  //   unit?: Unit;
-  // } {
-  //   if (x instanceof Vector2) {
-  //     z = x.y;
-  //     x = x.x;
-  //   }
-
-  //   this.surfaceData.position.set(x, 50, z!);
-
-  //   const raycaster = this.surfaceData.raycaster;
-  //   raycaster.far = maxDistance; // Maximale Distanz
-  //   raycaster.set(this.surfaceData.position, this.surfaceData.direction);
-
-  //   const allMeshes: Object3D[] = [];
-  //   this.map.modules.units.getUnits().forEach(unit => {
-  //     if (!ignoredUnits.includes(unit) && unit instanceof BuildingUnit) {
-  //       allMeshes.push(...getAllMeshes(unit.root));
-  //     }
-  //   });
-
-  //   const intersections = raycaster.intersectObjects(allMeshes, false);
-  //   const height = this.getSurfaceHeightAt(x, z, ignoredUnits);
-
-  //   if (intersections.length > 0) {
-  //     let height_ = intersections[0]!.point.y;
-  //     if (intersections[0]!.point.y - height > 1) {
-  //       height_ = height;
-  //     }
-  //     return {
-  //       unit: this.map.app
-  //         .getScene()
-  //         .getObjectById(
-  //           intersections[0]!.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
-  //         )?.userData.unit as Unit,
-  //       position: new Vector3(x, height_, z)
-  //     };
-  //   }
-  //   return {
-  //     position: new Vector3(x, height, z)
-  //   };
-  // }
-
-  private createRaycaster() {
-    const raycaster = new Raycaster();
-    this.surfaceData.raycaster = raycaster;
   }
 
   private getGroundHeights(segments = 64) {

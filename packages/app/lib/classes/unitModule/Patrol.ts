@@ -33,6 +33,7 @@ interface Observables extends UnitModuleObservables {
 }
 
 export interface PatrolUnitModuleOptions extends UnitModuleOptions {
+  active: boolean;
   path: [number, number][];
 }
 
@@ -61,7 +62,7 @@ export default class PatrolUnitModule extends UnitModule<
     super(
       unit,
       { ...options, path: options.path ?? [] },
-      { ...state, active: state.active },
+      { ...state, active: options.active ?? false },
       debug
     );
 
@@ -126,7 +127,11 @@ export default class PatrolUnitModule extends UnitModule<
   }
 
   resuming = false;
-  resumePatrol() {
+  async resumePatrol() {
+    console.log('Resuming patrol from index:', this.pausedIndex);
+
+    if (this.state.active) return;
+
     if (this.resuming) {
       console.log('Already resuming, skipping');
       return;
@@ -148,41 +153,22 @@ export default class PatrolUnitModule extends UnitModule<
 
     if (this.pausedPosition && distToPaused > 5) {
       this.currentIndex = this.pausedIndex!;
-      this.patrolLoopFromIndex(this.currentIndex);
+      this.patrolLoop(this.currentIndex);
     } else {
       const pathfinding = this.getUnit().modules.pathfinding;
+      try {
+        await pathfinding.move(this.pausedPosition!);
+        this.currentIndex = this.pausedIndex!;
+        this.patrolLoop(this.currentIndex);
+      } catch (error) {
+        console.error('Failed to move to paused position:', error);
 
-      pathfinding
-        .move(this.pausedPosition!)
-        .then(() => {
-          this.currentIndex = this.pausedIndex!;
-          this.patrolLoopFromIndex(this.currentIndex);
-        })
-        .catch(error => {
-          console.error('Failed to move to paused position:', error);
-
-          this.currentIndex = this.pausedIndex!;
-          this.patrolLoopFromIndex(this.currentIndex);
-        });
+        this.currentIndex = this.pausedIndex!;
+        this.patrolLoop(this.currentIndex);
+      }
     }
     // FIX: Setze resuming = false erst am Ende
     this.resuming = false;
-  }
-
-  private async patrolLoopFromIndex(startIndex: number) {
-    const pathfinding = this.getUnit().modules.pathfinding;
-    const worldPath = this.getWorldPath();
-    // Abbruch-Subscription
-    const abortSubscription = this.observables.abort$.subscribe(() => {
-      this.stopPatrol();
-    });
-
-    try {
-      await this.patrolRecursive(worldPath, startIndex, pathfinding);
-      this.observables.end$.next();
-    } finally {
-      abortSubscription.unsubscribe();
-    }
   }
 
   private getWorldPath() {
@@ -217,17 +203,16 @@ export default class PatrolUnitModule extends UnitModule<
     }
   }
 
-  private async patrolLoop() {
+  private async patrolLoop(startIndex: number = 0) {
     const pathfinding = this.getUnit().modules.pathfinding;
     const worldPath = this.getWorldPath();
 
-    // Abbruch-Subscription
     const abortSubscription = this.observables.abort$.subscribe(() => {
       this.stopPatrol();
     });
 
     try {
-      await this.patrolRecursive(worldPath, 0, pathfinding);
+      await this.patrolRecursive(worldPath, startIndex, pathfinding);
       this.observables.end$.next();
     } finally {
       abortSubscription.unsubscribe();

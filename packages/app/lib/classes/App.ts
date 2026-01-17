@@ -145,7 +145,7 @@ export class BaseApp<
     const map = await this.loadMap(desc);
     map.setModuleDebug(this.config.debug?.map ?? {});
     await this.modules.map.setMap(map);
-    console.log('Map loaded', map);
+    console.log('Map loaded', map, map.toDescription());
   }
 
   private async loadMap(description: MapDescription) {

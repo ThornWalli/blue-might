@@ -1,25 +1,27 @@
 import {
   ReplaySubject,
   Subject,
-  debounceTime,
   distinctUntilChanged,
   map,
-  merge
+  merge,
+  throttleTime
 } from 'rxjs';
-import type { Object3D } from 'three';
-import { Group, Mesh, SkinnedMesh } from 'three';
+import type { Object3D, Vector3Tuple } from 'three';
+import { Euler, Group, Mesh, SkinnedMesh, Vector3 } from 'three';
+import * as units from '@blue-might/units';
 
 import MapModule, {
   type MapModuleObservables,
   type MapModuleState
 } from '../MapModule';
-import type Unit from '../Unit';
+import Unit from '../Unit';
 import UnitChunkManager from '../UnitChunkManager';
 import type { AnimationLoopValue } from '../Renderer';
 import type Map from '../Map';
 import type { IntersectionListener } from '../rendererModule/Intersection';
 import { OBJECT_USER_DATA } from '../../utils/object';
 import BuildingUnit from '../unit/Building';
+import type { UnitDescription } from '../Unit';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -82,14 +84,8 @@ export default class UnitsModule extends MapModule<State, Observables> {
       merge(
         this.observables.addUnit$.pipe(map(() => null)),
         this.map.app.renderer.modules.controls.observables.change$
-        // this.map.app.modules.player.observables.currentPlayer$.pipe(
-        //   switchMap(
-        //     player => player?.modules.vehicle.observables.vehicle$ || EMPTY
-        //   ),
-        //   switchMap(({ current }) => current?.observables.visible$ || EMPTY)
-        // )
       )
-        .pipe(debounceTime(200))
+        .pipe(throttleTime(1000))
         .subscribe(() => {
           this.state.visibleUnits = Array.from(
             this.chunkManager.updateVisibility(
@@ -111,7 +107,7 @@ export default class UnitsModule extends MapModule<State, Observables> {
   override async afterSetup() {
     await super.afterSetup();
 
-    await this.setupUnits(this.map.description.units || []);
+    await this.setupUnits(resolveUnits(this.map.description.units) || []);
 
     this.listener.addMeshes(this.getUnits().map(unit => unit.root));
   }
@@ -171,13 +167,6 @@ export default class UnitsModule extends MapModule<State, Observables> {
     await unit.setup(context);
     await unit.afterSetup(context);
 
-    // const position = unit.getPosition().clone();
-    // // position.setY(
-    // //   this.map.modules.ground.getSurfaceHeightAt(position.x, position.z, [unit])
-    // // );
-    // unit.setPosition(position);
-    // console.log(unit, 'Position:', position);
-
     unit.subscription.add(
       unit.observables.position$
         .pipe(
@@ -223,4 +212,24 @@ function getMeshes(obj: Object3D): Mesh[] {
     }
   });
   return meshes;
+}
+const unitMap = new globalThis.Map(
+  Object.values(units).map(
+    unit => [unit.KEY, unit as unknown as typeof Unit] as [string, typeof Unit]
+  )
+);
+
+function resolveUnits(units: UnitDescription[]): Unit[] {
+  return units.map(unit => {
+    const { key, ...rest } = unit;
+    const Class = unitMap.get(unit.key)!;
+    if (unit instanceof Unit) {
+      return unit;
+    }
+    return new Class({
+      ...rest,
+      position: new Vector3().fromArray(rest.position as Vector3Tuple),
+      rotation: new Euler().fromArray(rest.rotation as Vector3Tuple)
+    });
+  });
 }

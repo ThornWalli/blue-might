@@ -43,6 +43,11 @@ export interface ShootDescription {
   isActive: boolean;
   enableSmoke?: boolean;
   position: Vector3;
+  targetPosition: Vector3 | null;
+  /**
+   * Lebensdauer in Sekunden
+   */
+  lifetime: number;
   /**
    * Geschwindigkeitsvektor anstatt nur Richtung und Speed
    */
@@ -112,8 +117,9 @@ export default class ShootModule extends MapModule<State, Observables> {
   }
 
   async createShoot(
-    position: Vector3,
-    direction: Vector3 = new Vector3(0, 0, 1),
+    sourcePosition: Vector3,
+    sourceDirection: Vector3 = new Vector3(0, 0, 1),
+    targetPosition: Vector3 | null,
     slot: WeaponSlot,
     {
       enableSpread,
@@ -123,7 +129,7 @@ export default class ShootModule extends MapModule<State, Observables> {
       enableSpread?: boolean;
       spreadAmount?: number;
       ignoredObjects?: Object3D[];
-    } = { enableSpread: false, spreadAmount: 0, ignoredObjects: [] }
+    } = { enableSpread: true, spreadAmount: 0, ignoredObjects: [] }
   ) {
     const activeCount = this.shoots.filter(s => s.isActive).length;
     if (activeCount >= 50) {
@@ -142,7 +148,7 @@ export default class ShootModule extends MapModule<State, Observables> {
     );
 
     if (shootDesc) {
-      // Wiederverwenden eines vorhandenen Objekts
+      shootDesc.lifetime = projectile.maxLifetime;
       shootDesc.object.visible = true;
     } else {
       // Erstelle ein neues Objekt, wenn der Pool leer ist
@@ -158,35 +164,37 @@ export default class ShootModule extends MapModule<State, Observables> {
         startPosition: new Vector3(),
         velocity: new Vector3(),
         position: new Vector3(),
+        targetPosition: targetPosition ?? null,
+        lifetime: projectile.maxLifetime,
         isActive: false
       };
       this.shoots.push(shootDesc);
     }
-
-    const obj = shootDesc.object;
-    obj.position.copy(position);
-
-    shootDesc.position.copy(position);
-    shootDesc.velocity.copy(direction).multiplyScalar(projectile.speed);
-
     if (enableSpread) {
-      setSpread(this.temp.vector, direction, spreadAmount);
+      setSpread(this.temp.vector, sourceDirection, spreadAmount);
     }
 
+    const obj = shootDesc.object;
+    obj.position.copy(sourcePosition);
+
+    shootDesc.position.copy(sourcePosition);
+    shootDesc.velocity.copy(sourceDirection).multiplyScalar(projectile.speed);
+
     obj.lookAt(
-      obj.position.x + direction.x,
-      obj.position.y + direction.y,
-      obj.position.z + direction.z
+      obj.position.x + sourceDirection.x,
+      obj.position.y + sourceDirection.y,
+      obj.position.z + sourceDirection.z
     );
 
     // Aktiviere und konfiguriere das Projektil
     shootDesc.isActive = true;
     shootDesc.enableSmoke = projectile.hasSmoke();
     shootDesc.ignoredObjects = ignoredObjects ?? [];
-    shootDesc.startPosition.copy(position);
+    shootDesc.startPosition.copy(sourcePosition);
 
     return shootDesc;
   }
+
   // eslint-disable-next-line complexity
   override update(animationLoopValue: AnimationLoopValue): void {
     const { delta } = animationLoopValue;
@@ -203,18 +211,24 @@ export default class ShootModule extends MapModule<State, Observables> {
       if (!shoot.isActive) {
         continue;
       }
+      shoot.lifetime -= delta;
+
+      if (shoot.lifetime < 0) {
+        shoot.isActive = false;
+        shoot.object.visible = false;
+        continue;
+      }
 
       shoot.projectile.update({
         ...animationLoopValue,
         gravity: this.gravity,
         velocity: shoot.velocity,
-        position: shoot.position
+        position: shoot.position,
+        targetPosition: shoot.targetPosition ?? null
       });
 
-      // Synchronisiere Position mit dem 3D-Objekt
       shoot.object.position.copy(shoot.position);
 
-      // LookAt für Richtung (optional, basierend auf Velocity)
       shoot.object.lookAt(
         shoot.object.position.x + shoot.velocity.x,
         shoot.object.position.y + shoot.velocity.y,
@@ -234,16 +248,12 @@ export default class ShootModule extends MapModule<State, Observables> {
 
       let hit = false;
 
-      // Bounding-Sphere-Prüfung (Radius z. B. 1.0 anpassen)
       this.temp.sphere.set(obj.position, 1.0);
       let needsRaycast = false;
       for (const target of allPossibleTargets) {
         if (
           target !== obj &&
-          this.temp.sphere.intersectsSphere(
-            //target.boundingSphere ||
-            new Sphere(target.position, 2.0)
-          )
+          this.temp.sphere.intersectsSphere(new Sphere(target.position, 2.0))
         ) {
           needsRaycast = true;
           break;
@@ -254,7 +264,6 @@ export default class ShootModule extends MapModule<State, Observables> {
         const direction = this.temp.drag.copy(shoot.velocity).normalize();
         raycaster.set(oldPosition, direction);
 
-        // Raycast gegen eine gefilterte Liste von Zielen
         const intersections = raycaster.intersectObjects(
           this.getTargetObjects(allPossibleTargets, shoot.ignoredObjects)
         );
@@ -270,7 +279,6 @@ export default class ShootModule extends MapModule<State, Observables> {
           if (distanceToIntersection <= moveDistance) {
             hit = true;
 
-            // Haupt-Hit-Effekte
             if (shoot.projectile.hasExplosion()) {
               this.map.modules.effect.addExplosion(point, 1);
             }
@@ -297,13 +305,11 @@ export default class ShootModule extends MapModule<State, Observables> {
               this.map.modules.effect.addFire(point);
             }
 
-            // Area Hit: Sphere um den Trefferpunkt mit Projektil-Radius
-            const projectileRadius = shoot.projectile.radius || 0; // Angenommen, Projectile hat radius
+            const projectileRadius = shoot.projectile.radius || 0;
             if (projectileRadius > 0) {
               this.temp.hitSphere.set(point, projectileRadius);
               const hitUnits: { unit: Unit; distance: number }[] = [];
 
-              // Sammle alle Units, deren Root in der Sphere ist
               this.map.modules.units.getUnits().forEach(unit => {
                 const unitRoot = unit.getRoot();
                 if (this.temp.hitSphere.containsPoint(unitRoot.position)) {
@@ -312,22 +318,18 @@ export default class ShootModule extends MapModule<State, Observables> {
                 }
               });
 
-              // Sortiere nach Distanz (optional, für Priorität)
               hitUnits.sort((a, b) => a.distance - b.distance);
-
-              // Wende Schaden auf alle getroffenen Units an, mit Distanz-basiertem Schaden
               hitUnits.forEach(({ unit, distance }) => {
                 this.hitUnit(unit, shoot, distance);
               });
             } else {
-              // Fallback: Nur der direkte Hit
               if (intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]) {
                 const unit = this.map.app
                   .getScene()
                   .getObjectById(
                     intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
                   )?.userData.unit as Unit;
-                this.hitUnit(unit, shoot, 0); // Distanz 0 für direkten Hit
+                this.hitUnit(unit, shoot, 0);
               }
             }
           }
@@ -336,7 +338,6 @@ export default class ShootModule extends MapModule<State, Observables> {
 
       const distanceFromStart = obj.position.distanceTo(shoot.startPosition);
       if (hit || distanceFromStart > 50) {
-        // Deaktiviere das Projektil und gib es an den Pool zurück
         shoot.isActive = false;
         shoot.object.visible = false;
       }

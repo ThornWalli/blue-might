@@ -53,14 +53,14 @@ export default class FigureUnit<
             ...options.moduleOptions?.collision
           },
           damage: {
-            fire: false
+            fire: false,
+            maxDamage: 0.1
           }
         },
         moduleStates: {
           ...options.moduleStates,
           damage: {
-            ...options.moduleStates?.damage,
-            maxDamage: 0.1
+            ...options.moduleStates?.damage
           }
         }
       },

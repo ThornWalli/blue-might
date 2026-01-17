@@ -1,5 +1,10 @@
-import { AnimationClip, type AnimationAction } from 'three';
-import { AnimationMixer, Object3D } from 'three';
+import {
+  AnimationClip,
+  AnimationMixer,
+  Object3D,
+  type AnimationAction,
+  type AnimationActionLoopStyles
+} from 'three';
 import type { Subject } from 'rxjs';
 import { ReplaySubject } from 'rxjs';
 
@@ -12,6 +17,12 @@ import UnitModule, {
 import { OBJECT_NAME } from '../../utils/object';
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
+
+export interface AnimationSetting {
+  clampWhenFinished?: boolean;
+  loop: AnimationActionLoopStyles;
+  duration: number;
+}
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -36,7 +47,6 @@ interface Observables extends UnitModuleObservables {
 }
 
 export type AnimationUnitModuleOptions = UnitModuleOptions;
-
 export type AnimationUnitModuleState = UnitModuleState;
 
 export class AnimationUnitModule extends UnitModule<
@@ -45,21 +55,12 @@ export class AnimationUnitModule extends UnitModule<
   Observables
 > {
   static override TYPE = 'animation';
-
   private mixer!: AnimationMixer;
   private actions: Actions = {};
   private animations: AnimationClip[] = [];
   private action: string | null;
   private activeActionsCount = 0;
   public isAnimating = false;
-
-  override isForceUpdate() {
-    return this.isAnimating;
-  }
-
-  getCurrentAction() {
-    return this.action;
-  }
 
   constructor(
     unit: Unit,
@@ -113,6 +114,27 @@ export class AnimationUnitModule extends UnitModule<
 
   getMixer() {
     return this.mixer;
+  }
+
+  getCurrentAction() {
+    return this.action;
+  }
+
+  override isForceUpdate() {
+    return this.isAnimating;
+  }
+
+  applySettings(settings: Record<string, AnimationSetting>) {
+    Object.entries(settings).forEach(
+      ([name, { clampWhenFinished, loop, duration }]) => {
+        const action = this.getAction(name);
+        if (action) {
+          action.clampWhenFinished = clampWhenFinished ?? false;
+          action.setLoop(loop, Infinity);
+          action.setDuration(duration);
+        }
+      }
+    );
   }
 
   getAction(name: string) {

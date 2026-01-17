@@ -67,6 +67,7 @@ export default class PlayerUnitModule extends UnitModule<
     return this._player;
   }
   setPlayer(player: Player | null) {
+    if (this._player === player) return;
     this._player = player;
     this.observables.player$.next(this._player);
   }

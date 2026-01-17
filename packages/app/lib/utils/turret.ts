@@ -46,7 +46,7 @@ export function normalizeAngle(angle: number): number {
 export function autoAimFunction(
   shootModule: ShootModule,
   options: AutoAimFnOptions,
-  weaponAngles: { min: Vector2; max: Vector2 }[],
+  weaponAngles: { revert?: boolean; min: Vector2; max: Vector2 }[],
   rotationSpeed: number,
   objects: {
     head?: Object3D;
@@ -72,8 +72,11 @@ export function autoAimFunction(
   const delta = targetPosition.clone().sub(sourcePosition);
   const horizontalDistance = Math.sqrt(delta.x ** 2 + delta.z ** 2);
   const verticalDistance = delta.y;
-  const rotation = getRotation(index);
+  const rotation = getRotation(index).clone();
 
+  if (weaponAngles[index]?.revert) {
+    rotation.y += Math.PI;
+  }
   // Yaw immer direkt berechnen (keine Ballistik nötig)
   const targetYaw = normalizeAngle(Math.atan2(delta.x, delta.z) - rotation.y);
 
@@ -81,11 +84,13 @@ export function autoAimFunction(
 
   // Pitch: Direkte Linie für nahe Ziele, sonst vereinfachte Ballistik
   let targetPitch: number;
-  if (horizontalDistance < 1.0) {
-    // Direkte Linie für Nahbereich
+  const isBallistic =
+    weapon.projectile.airResistance > 0 || weapon.projectile.weight > 0;
+  if (horizontalDistance < 1.0 || !isBallistic) {
+    // Direkte Linie für Nahbereich oder gerade fliegende Projektille (z.B. Raketen)
     targetPitch = -Math.atan2(verticalDistance, horizontalDistance);
   } else {
-    // Vereinfachte ballistische Elevation (niedriger Winkel)
+    // Ballistische Elevation für Projektille mit Gravitation/Luftwiderstand
     const g = Math.abs(shootModule.gravity.y);
     const v = weapon.projectile.speed * (1 - shootModule.airResistance);
     const discriminant =
@@ -93,28 +98,26 @@ export function autoAimFunction(
       g * (g * horizontalDistance ** 2 + 2 * verticalDistance * v ** 2);
     if (discriminant >= 0) {
       const sqrtDisc = Math.sqrt(discriminant);
+      // Verwende den niedrigeren Winkel für flachere Flugbahn (low-angle)
       targetPitch = -Math.atan((v ** 2 - sqrtDisc) / (g * horizontalDistance));
     } else {
-      // Fallback auf direkte Linie, wenn kein Treffer möglich
       targetPitch = -Math.atan2(verticalDistance, horizontalDistance);
     }
   }
 
-  // Immer begrenzen
   targetPitch = Math.max(minAngle.x, Math.min(maxAngle.x, targetPitch));
   const isPitchInRange = targetPitch >= minAngle.x && targetPitch <= maxAngle.x;
+  // console.log(
+  //   `Yaw: ${targetYaw.toFixed(3)}, Pitch: ${targetPitch.toFixed(3)}, Rotation.y: ${rotation.y.toFixed(3)}, Dist: ${horizontalDistance.toFixed(2)}`
+  // );
 
-  // Debug-Log (entfernen nach Test)
-  console.log(
-    `Yaw: ${targetYaw.toFixed(3)}, Pitch: ${targetPitch.toFixed(3)}, Rotation.y: ${rotation.y.toFixed(3)}, Dist: ${horizontalDistance.toFixed(2)}`
-  );
-
-  if (isYawInRange && isPitchInRange && horizontalDistance >= 0.96) {
+  if (isYawInRange && isPitchInRange && horizontalDistance >= 0.9) {
     state.weaponTargetRotation[index]!.set(targetYaw, targetPitch);
 
-    // Rotation setzen (vereinfacht)
+    const rotationThreshold = 0.01;
+    let isRotationComplete = false;
+
     if (head) {
-      // Tank/Turret
       head.rotation.y = lerp(head.rotation.y, targetYaw, rotationSpeed);
       barrels.forEach((barrel, i) => {
         barrel!.rotation.x = lerp(
@@ -123,6 +126,10 @@ export function autoAimFunction(
           rotationSpeed
         );
       });
+      const yawDiff = Math.abs(head.rotation.y - targetYaw);
+      const pitchDiff = Math.abs(barrels[0]!.rotation.x - targetPitch);
+      isRotationComplete =
+        yawDiff < rotationThreshold && pitchDiff < rotationThreshold;
     } else if (Array.isArray(barrels)) {
       // Ship/Heli
       const [barrelObjX, barrelObjY] = barrels;
@@ -137,10 +144,14 @@ export function autoAimFunction(
           targetPitch,
           rotationSpeed
         );
+        const yawDiff = Math.abs(barrelObjY.rotation.y - targetYaw);
+        const pitchDiff = Math.abs(barrelObjX.rotation.x - targetPitch);
+        isRotationComplete =
+          yawDiff < rotationThreshold && pitchDiff < rotationThreshold;
       }
     }
 
-    return true;
+    return isRotationComplete;
   }
 
   return false;

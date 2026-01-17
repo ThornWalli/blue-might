@@ -45,6 +45,7 @@ export default class VehicleModule extends PlayerModule<State, Observables> {
   }
 
   setVehicle(vehicle: MovableUnit | null) {
+    if (this.state.vehicle === vehicle) return;
     const last = this.state.vehicle;
     last?.modules.player.setPlayer(null);
 

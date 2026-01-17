@@ -33,7 +33,7 @@ const map: Partial<MapDescription> = {
       id: 'tank-1',
       position: new Vector3(0, 0, 0),
       rotation: new Euler(0, 0, 0),
-      moduleStates: {
+      moduleOptions: {
         movable: {
           active: true
         }
@@ -45,7 +45,7 @@ const map: Partial<MapDescription> = {
     new CombatHelicopter_1({
       id: 'combat-helicopter-1',
       position: new Vector3(2, 0, 0),
-      moduleStates: {
+      moduleOptions: {
         movable: {
           active: true
         }

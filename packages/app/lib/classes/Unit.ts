@@ -1,7 +1,7 @@
 /* eslint-disable complexity */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ReplaySubject, Subscription } from 'rxjs';
-import type { Scene, Object3D } from 'three';
+import type { Object3D, Scene, Vector3Tuple, EulerTuple } from 'three';
 import { Euler, Quaternion, Vector3, Group } from 'three';
 
 import { OBJECT_USER_DATA, setMainObjectRecursive } from '../utils/object';
@@ -19,6 +19,19 @@ import CollisionUnitModule, { COLLISION_TYPE } from './unitModule/Collision';
 import FactionUnitModule from './unitModule/Faction';
 import type MovableUnitModule from './unitModule/Movable';
 import type PatrolUnitModule from './unitModule/Patrol';
+
+export interface UnitDescription {
+  key: string;
+  debug: boolean;
+  id: string;
+  name: string;
+  position: Vector3Tuple | Vector3;
+  rotation: EulerTuple | Euler;
+  options: UnitOptions;
+  moduleOptions: Partial<ModuleOptions>;
+  moduleDebug: Partial<ModuleDebug>;
+  visible: boolean;
+}
 
 export enum GROUND_ADJUSTMENT_MODE {
   MIN_HEIGHT = 'min-height',
@@ -59,21 +72,17 @@ export interface ModuleStates extends Record<any, UnitModuleState> {}
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ModuleDebug extends Record<any, boolean> {}
 
-export interface UnitConstructorOptions<
-  Options extends UnitOptions = UnitOptions
-> {
-  debug?: boolean;
-  preview?: boolean;
-  id?: string;
-  name: string;
-  position?: Vector3;
-  rotation?: Euler;
-  options?: Options;
-  moduleOptions?: Partial<ModuleOptions>;
-  moduleStates?: Partial<ModuleStates>;
-  moduleDebug?: Partial<ModuleDebug>;
-  visible?: boolean;
-}
+export type UnitConstructorOptions<Options extends UnitOptions = UnitOptions> =
+  Partial<
+    Exclude<UnitDescription, 'options' | 'position' | 'rotation'> & {
+      preview?: boolean;
+      id?: UnitIdentifier;
+      position: Vector3;
+      rotation: Euler;
+      options: Options;
+      moduleStates: Partial<ModuleStates>;
+    }
+  >;
 
 export interface UnitModules {
   animation: AnimationUnitModule;
@@ -101,7 +110,7 @@ export default class Unit<
   ModuleList extends UnitModuleList = UnitModuleList,
   Options extends UnitOptions = UnitOptions,
   Observables extends UnitObservables = UnitObservables
-> {
+> implements UnitDescription {
   static KEY = 'unit';
   static NAME = 'Unit';
 
@@ -115,21 +124,22 @@ export default class Unit<
   subscription = new Subscription();
   options: Options = {} as Options;
   root: Group;
-
-  private moduleDebug: Partial<ModuleDebug> = {};
+  visible: boolean = true;
+  moduleDebug: Partial<ModuleDebug> = {};
 
   getRoot() {
     return this.root;
   }
-  private _updateModules: UnitModule[] = [];
-  private _map: Map | null = null;
-  private groundAdjustmentMode: GROUND_ADJUSTMENT_MODE =
-    GROUND_ADJUSTMENT_MODE.GROUND;
-  private _position: Vector3 = new Vector3(0, 0, 0);
-  private _rotation: Euler = new Euler(0, 0, 0);
+  updateModules: UnitModule[] = [];
+  map: Map | null = null;
+  groundAdjustmentMode: GROUND_ADJUSTMENT_MODE = GROUND_ADJUSTMENT_MODE.GROUND;
+  position: Vector3 = new Vector3(0, 0, 0);
+  rotation: Euler = new Euler(0, 0, 0);
+  playerPitch = 0;
+  playerRoll = 0;
 
-  private _playerPitch = 0;
-  private _playerRoll = 0;
+  moduleOptions: Partial<ModuleOptions>;
+  moduleStates: Partial<ModuleStates>;
 
   /**
    * Gelände-Neigung (Pitch/Roll)
@@ -152,24 +162,22 @@ export default class Unit<
       moduleStates,
       moduleDebug,
       visible
-    }: UnitConstructorOptions = {
-      name: 'Unit'
-    },
+    }: UnitConstructorOptions<Options> = {},
     moduleList: unknown[] = []
   ) {
-    this._position = position ?? new Vector3(0, 0, 0);
-    this._rotation = rotation ?? new Euler(0, 0, 0);
-    this._visible = visible ?? true;
+    this.position = position ?? new Vector3(0, 0, 0);
+    this.rotation = rotation ?? new Euler(0, 0, 0);
+    this.visible = visible ?? true;
 
     //#region observables
     this.observables.ready$ = new ReplaySubject<void>(1);
     this.observables.materialReady$ = new ReplaySubject<void>(1);
     this.observables.position$ = new ReplaySubject<Vector3>(1);
-    this.observables.position$.next(this._position.clone());
+    this.observables.position$.next(this.position.clone());
     this.observables.rotation$ = new ReplaySubject<Euler>(1);
-    this.observables.rotation$.next(this._rotation.clone());
+    this.observables.rotation$.next(this.rotation.clone());
     this.observables.visible$ = new ReplaySubject<boolean>(1);
-    this.observables.visible$.next(this._visible);
+    this.observables.visible$.next(this.visible);
     //#endregion
 
     this.debug = debug ?? false;
@@ -178,9 +186,9 @@ export default class Unit<
     this.moduleDebug = { ...this.moduleDebug, ...moduleDebug };
 
     this.id = id || crypto.randomUUID();
-    this.name = name;
+    this.name = name ?? 'Unit';
 
-    this.lastPosition = this._position.clone();
+    this.lastPosition = this.position.clone();
 
     this.options = {
       ...this.options,
@@ -198,6 +206,8 @@ export default class Unit<
       PathfindingUnitModule
     );
 
+    this.moduleOptions = moduleOptions || {};
+    this.moduleStates = moduleStates || {};
     this.moduleList = moduleList as ModuleList;
 
     const preparedModules = (moduleList as ModuleList)
@@ -238,7 +248,7 @@ export default class Unit<
 
     //#endregion
 
-    this.root = this.setupRoot(name);
+    this.root = this.setupRoot(this.name);
   }
 
   setModuleDebug(debug: { [key: string]: boolean }) {
@@ -258,7 +268,7 @@ export default class Unit<
   }
 
   async setup(context: SetupContext) {
-    this._map = context.map ?? null;
+    this.map = context.map ?? null;
 
     const modules: UnitModule[] = Array.from(
       new Set(Object.values(this.modules))
@@ -277,7 +287,7 @@ export default class Unit<
     const updateModules = modules.filter(
       module => typeof module.update === 'function'
     );
-    this._updateModules = updateModules;
+    this.updateModules = updateModules;
 
     this.addToRoot(mesh);
 
@@ -312,12 +322,12 @@ export default class Unit<
   async afterSetup(_context: SetupContext) {
     this.setPosition(
       new Vector3(
-        this._position!.x,
-        this._map?.modules.ground.getSurfaceHeightAt(
-          this._position.x,
-          this._position.z
+        this.position!.x,
+        this.map?.modules.ground.getSurfaceHeightAt(
+          this.position.x,
+          this.position.z
         ),
-        this._position!.z
+        this.position!.z
       )
     );
     for (const module of new Set(Object.values(this.modules))) {
@@ -347,15 +357,15 @@ export default class Unit<
   }
 
   getMap() {
-    return this._map;
+    return this.map;
   }
 
   update(v: AnimationLoopValue) {
-    this._updateModules.forEach(module => module.update(v));
+    this.updateModules.forEach(module => module.update(v));
   }
 
   renderUpdate(v: AnimationLoopValue) {
-    this._updateModules.forEach(module => module.renderUpdate(v));
+    this.updateModules.forEach(module => module.renderUpdate(v));
   }
 
   equals(unit: Unit): boolean {
@@ -368,7 +378,7 @@ export default class Unit<
   }
 
   getPosition() {
-    return this._position;
+    return this.position;
   }
 
   getGroundAdjustmentMode() {
@@ -380,7 +390,7 @@ export default class Unit<
   }
 
   getRotation() {
-    return this._rotation;
+    return this.rotation;
   }
 
   setRotation(rotation: Euler) {
@@ -392,10 +402,10 @@ export default class Unit<
 
   private updateMeshTransform() {
     // 1. Position setzen
-    this.root.position.copy(this._position);
+    this.root.position.copy(this.position);
 
     // 2. Root = nur Yaw
-    this.root.rotation.set(0, this._rotation.y, 0);
+    this.root.rotation.set(0, this.rotation.y, 0);
 
     // 3. Terrain-Tilt als Quaternion
     const terrainQuat = new Quaternion().setFromEuler(
@@ -404,8 +414,8 @@ export default class Unit<
     this.tiltWrapper.setRotationFromQuaternion(terrainQuat);
 
     // 4. Spieler Pitch/Roll
-    this.pitchWrapper.rotation.x = this._playerPitch; // wir speichern sie gleich!
-    this.rollWrapper.rotation.z = this._playerRoll;
+    this.pitchWrapper.rotation.x = this.playerPitch; // wir speichern sie gleich!
+    this.rollWrapper.rotation.z = this.playerRoll;
   }
 
   getForwardXZFromYaw(target = new Vector3()): Vector3 {
@@ -430,7 +440,7 @@ export default class Unit<
 
     // Schritt 1: Führe Bodenausrichtung für die gewünschte Position durch (wenn nötig)
     if (
-      this._map &&
+      this.map &&
       this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.NONE &&
       this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT
     ) {
@@ -442,7 +452,7 @@ export default class Unit<
     const isPatrol = unit.modules.patrol?.state.active ?? false;
 
     if (isPatrol || isAutopilot) {
-      this._position.copy(desired);
+      this.position.copy(desired);
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       this.updateMeshTransform();
@@ -450,12 +460,12 @@ export default class Unit<
     }
 
     // Schritt 2: Prüfe, ob die neue Position eine Kollision verursacht
-    this._position.copy(desired);
+    this.position.copy(desired);
     const collisionType = this.modules.collision.checkCollision();
 
     // Fall A: Keine blockierende Kollision
     if (collisionType < COLLISION_TYPE.BLOCKED) {
-      this._position.copy(desired);
+      this.position.copy(desired);
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       this.updateMeshTransform();
@@ -466,7 +476,7 @@ export default class Unit<
       this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.GROUND &&
       desired.y - from.y < 1 / 3
     ) {
-      this._position.copy(this.lastPosition);
+      this.position.copy(this.lastPosition);
       this.root.position.copy(this.lastPosition);
       this.observables.position$.next(this.lastPosition.clone());
       this.updateMeshTransform();
@@ -480,7 +490,7 @@ export default class Unit<
     // Fall B.1: Es ist eine vertikale Landung/Platzierung (z.B. auf Gebäude). Kollision ist erwartet. Akzeptieren.
     // Nur akzeptieren, wenn es tatsächlich eine vertikale Bewegung gibt (delta.y != 0) und keine horizontale.
     if (Math.abs(delta.y) >= 0.0 && !isHorizontalMove) {
-      this._position.copy(desired);
+      this.position.copy(desired);
       this.lastPosition.copy(desired);
       this.observables.position$.next(desired);
       this.updateMeshTransform();
@@ -489,7 +499,7 @@ export default class Unit<
     }
 
     // Fall B.2: Blockierende Kollision bei horizontaler Bewegung oder ohne vertikale Komponente – zurücksetzen
-    this._position.copy(this.lastPosition);
+    this.position.copy(this.lastPosition);
     this.root.position.copy(this.lastPosition);
     this.observables.position$.next(this.lastPosition.clone());
     this.updateMeshTransform();
@@ -497,13 +507,14 @@ export default class Unit<
   }
 
   //#region visibility
-  private _visible: boolean = true;
   getVisible() {
-    return this._visible;
+    return this.visible;
   }
-  setVisible(visible = this._visible && this.chunkVisible) {
-    if (this._visible === visible) return;
-    this.root.visible = visible;
+  setVisible(visible = this.visible && this.chunkVisible) {
+    if (this.visible === visible) return;
+    this.root.traverse(obj => {
+      obj.visible = visible;
+    });
     this.observables.visible$.next(visible);
   }
   //#endregion
@@ -535,29 +546,29 @@ export default class Unit<
 
   getMinGroundInfo() {
     const sampleDistance = 0;
-    const rotation = this._rotation.y;
-    const groundModule = this._map!.modules.ground!;
+    const rotation = this.rotation.y;
+    const groundModule = this.map!.modules.ground!;
 
     const info = groundModule.getTerrainInfoAt(
-      this._position.x,
-      this._position.z
+      this.position.x,
+      this.position.z
     );
 
     const front = groundModule.getTerrainHeightAt(
-      this._position.x + Math.sin(rotation) * sampleDistance,
-      this._position.z + Math.cos(rotation) * sampleDistance
+      this.position.x + Math.sin(rotation) * sampleDistance,
+      this.position.z + Math.cos(rotation) * sampleDistance
     );
     const back = groundModule.getTerrainHeightAt(
-      this._position.x - Math.sin(rotation) * sampleDistance,
-      this._position.z - Math.cos(rotation) * sampleDistance
+      this.position.x - Math.sin(rotation) * sampleDistance,
+      this.position.z - Math.cos(rotation) * sampleDistance
     );
     const left = groundModule.getTerrainHeightAt(
-      this._position.x + Math.cos(rotation) * sampleDistance,
-      this._position.z - Math.sin(rotation) * sampleDistance
+      this.position.x + Math.cos(rotation) * sampleDistance,
+      this.position.z - Math.sin(rotation) * sampleDistance
     );
     const right = groundModule.getTerrainHeightAt(
-      this._position.x - Math.cos(rotation) * sampleDistance,
-      this._position.z + Math.sin(rotation) * sampleDistance
+      this.position.x - Math.cos(rotation) * sampleDistance,
+      this.position.z + Math.sin(rotation) * sampleDistance
     );
 
     return {
@@ -572,28 +583,28 @@ export default class Unit<
 
   calculateGroundNormal() {
     const sampleDistance = 1;
-    const rotation = this._rotation.y;
-    const groundModule = this._map?.modules.ground;
+    const rotation = this.rotation.y;
+    const groundModule = this.map?.modules.ground;
     if (!groundModule) return;
     // 4 Punkte um das Fahrzeug herum samplen
     const front = groundModule.getHeightAt(
-      this._position.x + Math.sin(rotation) * sampleDistance,
-      this._position.z + Math.cos(rotation) * sampleDistance
+      this.position.x + Math.sin(rotation) * sampleDistance,
+      this.position.z + Math.cos(rotation) * sampleDistance
     );
 
     const back = groundModule.getHeightAt(
-      this._position.x - Math.sin(rotation) * sampleDistance,
-      this._position.z - Math.cos(rotation) * sampleDistance
+      this.position.x - Math.sin(rotation) * sampleDistance,
+      this.position.z - Math.cos(rotation) * sampleDistance
     );
 
     const left = groundModule.getHeightAt(
-      this._position.x + Math.cos(rotation) * sampleDistance,
-      this._position.z - Math.sin(rotation) * sampleDistance
+      this.position.x + Math.cos(rotation) * sampleDistance,
+      this.position.z - Math.sin(rotation) * sampleDistance
     );
 
     const right = groundModule.getHeightAt(
-      this._position.x - Math.cos(rotation) * sampleDistance,
-      this._position.z + Math.sin(rotation) * sampleDistance
+      this.position.x - Math.cos(rotation) * sampleDistance,
+      this.position.z + Math.sin(rotation) * sampleDistance
     );
 
     // Pitch (Neigung vorne/hinten)
@@ -610,12 +621,12 @@ export default class Unit<
     ignoredUnits: Unit[] = [],
     groundNormals = true
   ) {
-    const groundModule = this._map?.modules.ground;
+    const groundModule = this.map?.modules.ground;
 
     if (position) {
-      this._position.copy(position);
+      this.position.copy(position);
     }
-    position = this._position;
+    position = this.position;
 
     let info: {
       position: Vector3;
@@ -632,7 +643,7 @@ export default class Unit<
     switch (this.groundAdjustmentMode) {
       case GROUND_ADJUSTMENT_MODE.MIN_HEIGHT:
         info = this.getMinGroundInfo();
-        this._position.setY(info.position.y);
+        this.position.setY(info.position.y);
         break;
 
       case GROUND_ADJUSTMENT_MODE.GROUND:
@@ -642,7 +653,7 @@ export default class Unit<
             position.z,
             ignoredUnits
           );
-          this._position.setY(info.position.y);
+          this.position.setY(info.position.y);
 
           if (groundNormals) {
             this.calculateGroundNormal();
@@ -653,21 +664,21 @@ export default class Unit<
       case GROUND_ADJUSTMENT_MODE.FLIGHT:
         info = this.getMinGroundInfo();
 
-        this._position.y = Math.max(
-          this._position.y,
+        this.position.y = Math.max(
+          this.position.y,
           Math.max(info.position.y, 0)
         );
-        info.position.setY(this._position.y);
+        info.position.setY(this.position.y);
         break;
 
       case GROUND_ADJUSTMENT_MODE.SEA: // NEU: Für Boote
         if (this.modules.damage.isDestroyed()) {
           info = this.getMinGroundInfo();
-          this._position.y = Math.max(info.position.y, this._position.y);
-          info.position.setY(this._position.y);
+          this.position.y = Math.max(info.position.y, this.position.y);
+          info.position.setY(this.position.y);
         } else {
-          const seaLevel = this._map?.modules.ground.getSeaLevel() ?? 0;
-          this._position.y = seaLevel; // Höhe auf Sea Level setzen
+          const seaLevel = this.map?.modules.ground.getSeaLevel() ?? 0;
+          this.position.y = seaLevel; // Höhe auf Sea Level setzen
           info.position.setY(seaLevel);
         }
         break;
@@ -691,22 +702,22 @@ export default class Unit<
   getYawQuaternion(): Quaternion {
     return new Quaternion().setFromAxisAngle(
       new Vector3(0, 1, 0),
-      this._rotation.y
+      this.rotation.y
     );
   }
 
   getYaw() {
-    return this._rotation.y;
+    return this.rotation.y;
   }
 
   setYaw(yaw: number) {
-    const lastYaw = this._rotation.y;
+    const lastYaw = this.rotation.y;
     if (lastYaw === yaw) return;
 
-    this._rotation.y = yaw;
+    this.rotation.y = yaw;
 
     if (this.modules.collision.checkCollision() >= COLLISION_TYPE.BLOCKED) {
-      this._rotation.y = lastYaw;
+      this.rotation.y = lastYaw;
     }
 
     if (this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.GROUND) {
@@ -715,7 +726,7 @@ export default class Unit<
 
     this.updateMeshTransform();
 
-    this.observables.rotation$.next(this._rotation.clone());
+    this.observables.rotation$.next(this.rotation.clone());
   }
 
   //#endregion
@@ -735,7 +746,7 @@ export default class Unit<
   }
 
   setPitch(p: number) {
-    this._playerPitch = p;
+    this.playerPitch = p;
     this.updateMeshTransform();
   }
 
@@ -748,9 +759,28 @@ export default class Unit<
   }
 
   setRoll(r: number) {
-    this._playerRoll = r;
+    this.playerRoll = r;
     this.updateMeshTransform();
   }
 
   //#endregion
+
+  toDescription(): UnitDescription {
+    return {
+      key: (this.constructor as typeof Unit).KEY,
+      debug: this.debug,
+      id: this.id,
+      name: this.name,
+      position: this.getPosition().toArray(),
+      rotation: this.getRotation().toArray(),
+      options: this.options,
+      moduleOptions: Object.fromEntries(
+        Object.entries(this.modules).map(([key, module]) => {
+          return [key, module.getOptions()];
+        })
+      ),
+      moduleDebug: this.moduleDebug,
+      visible: this.getVisible()
+    };
+  }
 }

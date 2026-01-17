@@ -56,16 +56,12 @@ const unitA = new Turret_1({
     weapon: false
   },
   moduleOptions: {
-    weapon: {
-      slots: unitWeapons.slice(0, 1)
-    }
-  },
-  moduleStates: {
     faction: {
       faction: blueFaction
     },
     weapon: {
-      autoAimActive: true
+      autoAimActive: true,
+      slots: unitWeapons.slice(0, 1)
     }
   }
 });
@@ -103,7 +99,7 @@ const map: Partial<MapDescription> = {
       id: 'tank-1',
       position: new Vector3(-2, 0, 0),
       rotation: new Euler(0, Math.PI / 4, 0),
-      moduleStates: {
+      moduleOptions: {
         faction: {
           faction: blueFaction
         }
@@ -114,29 +110,25 @@ const map: Partial<MapDescription> = {
       // position: new Vector3(2, 0, 0),
       position: new Vector3(5.5, 0, 5.5),
       moduleOptions: {
+        damage: {
+          maxDamage: 500
+        },
+        faction: {
+          faction: enemyFaction
+        },
         patrol: {
+          active: true,
           path: [
             [1.6, 2.4],
             [-1.6, 2.4]
           ]
-        }
-      },
-      moduleStates: {
-        damage: {
-          maxDamage: 500
-        },
-        patrol: {
-          active: true
-        },
-        faction: {
-          faction: enemyFaction
         }
       }
     }),
     new CombatTank_1({
       id: 'combat-tank-1',
       position: new Vector3(2, 0, 0),
-      moduleStates: {
+      moduleOptions: {
         faction: {
           faction: blueFaction
         }

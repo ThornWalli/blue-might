@@ -26,7 +26,7 @@ export default class AirFlowModule extends MapModule<State, Observables> {
   static override TYPE = 'airFlow';
   override state: State = {
     rotation: new Euler(0, randFloat(0, Math.PI * 2), 0),
-    speed: randFloat(0.0, 0.5)
+    speed: randFloat(0.1, 0.5)
   };
   constructor(map: Map, debug: boolean) {
     super(map, debug);

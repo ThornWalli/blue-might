@@ -47,20 +47,6 @@ export default class Church_1<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-
-        // replaceColors(
-        //   [
-        //     [
-        //       'primary',
-        //       this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-        //     ],
-        //     [
-        //       'secondary',
-        //       this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-        //     ]
-        //   ],
-        //   child
-        // );
       }
     });
 

@@ -6,7 +6,6 @@ import { Subscription } from 'rxjs';
 import type App from './App';
 import type { AnimationLoopValue } from './Renderer';
 import { LOADER } from './AssetLoader';
-import type Unit from './Unit';
 import UnitsModule from './mapModule/Units';
 import GroundModule from './mapModule/Ground';
 import LightModule from './mapModule/Light';
@@ -14,8 +13,9 @@ import PathfindingModule from './mapModule/Pathfinding';
 import ShootModule from './mapModule/Shoot';
 import EffectModule from './mapModule/Effect';
 import FactionModule from './mapModule/Faction';
-import type Faction from './Faction';
 import AirFlowModule from './mapModule/AirFlow';
+import type { FactionDescription } from './Faction';
+import type { UnitDescription } from './Unit';
 
 type MapModuleList = (
   | typeof UnitsModule
@@ -173,6 +173,25 @@ export default class Map<
   get name() {
     return this.description.name;
   }
+
+  toDescription(): MapDescription {
+    return {
+      debug: this.moduleDebug,
+      name: this.name,
+      ground: {
+        heightMap: this.description.ground.heightMap,
+        backgroundTexture: this.description.ground.backgroundTexture,
+        foregroundTexture: this.description.ground.foregroundTexture,
+        noiseMonochrome: this.description.ground.noiseMonochrome
+      },
+      units: Object.values(this.modules.units.getUnits()).map(unit =>
+        unit.toDescription()
+      ),
+      factions: Object.values(this.modules.faction.getFactions()).map(faction =>
+        faction.toDescription()
+      )
+    };
+  }
 }
 
 export interface MapDescription {
@@ -184,6 +203,6 @@ export interface MapDescription {
     foregroundTexture: string;
     noiseMonochrome?: boolean;
   };
-  units: Unit[];
-  factions: Faction[];
+  units: UnitDescription[];
+  factions: FactionDescription[];
 }

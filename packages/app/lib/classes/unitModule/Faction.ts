@@ -25,11 +25,12 @@ declare module '../Unit' {
 interface Observables extends UnitModuleObservables {
   faction$: Subject<Faction>;
 }
-export type FactionUnitModuleOptions = UnitModuleOptions;
-export interface FactionUnitModuleState extends UnitModuleState {
+export interface FactionUnitModuleOptions extends UnitModuleOptions {
   faction: Faction;
   friendlyFactions: Faction[];
 }
+
+export type FactionUnitModuleState = UnitModuleState;
 
 export default class FactionUnitModule extends UnitModule<
   FactionUnitModuleOptions,
@@ -45,12 +46,12 @@ export default class FactionUnitModule extends UnitModule<
   ) {
     super(
       unit,
-      options,
       {
-        ...state,
-        faction: state.faction ?? neutralFaction,
-        friendlyFactions: state.friendlyFactions ?? []
+        ...options,
+        faction: options.faction ?? neutralFaction,
+        friendlyFactions: options.friendlyFactions ?? []
       },
+      state,
       debug
     );
     //#region observables
@@ -59,11 +60,11 @@ export default class FactionUnitModule extends UnitModule<
   }
 
   getFaction() {
-    return this.state.faction;
+    return this.options.faction;
   }
 
   setFaction(faction: Faction) {
-    this.state.faction = faction;
+    this.options.faction = faction;
     this.observables.faction$.next(faction);
   }
 
@@ -72,8 +73,8 @@ export default class FactionUnitModule extends UnitModule<
       this.getUnit().getMap()?.modules.faction.getNeutralFactions() ?? [];
     return (
       neutralFactions.includes(faction) ||
-      this.state.faction === faction ||
-      this.state.friendlyFactions.includes(faction)
+      this.options.faction === faction ||
+      this.options.friendlyFactions.includes(faction)
     );
   }
 }

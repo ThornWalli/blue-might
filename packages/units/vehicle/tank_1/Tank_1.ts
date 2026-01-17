@@ -31,9 +31,9 @@ export default class Tank_1<
         ...options,
         name: 'Tank 1',
         moduleOptions: {
-          ...options.moduleOptions,
+          ...options?.moduleOptions,
           collision: {
-            ...options.moduleOptions?.collision,
+            ...options?.moduleOptions?.collision,
             targets: [
               {
                 name: 'base'

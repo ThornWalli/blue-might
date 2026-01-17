@@ -76,7 +76,7 @@ const map: Partial<MapDescription> = {
         pathfinding: false,
         patrol: false
       },
-      moduleStates: {
+      moduleOptions: {
         damage: {
           maxDamage: 1000
         },
@@ -95,7 +95,7 @@ const map: Partial<MapDescription> = {
         collision: false,
         supply: false
       },
-      moduleStates: {
+      moduleOptions: {
         faction: {
           faction: blueFaction
         }
@@ -108,7 +108,7 @@ const map: Partial<MapDescription> = {
         collision: false,
         supply: false
       },
-      moduleStates: {
+      moduleOptions: {
         faction: {
           faction: blueFaction
         }

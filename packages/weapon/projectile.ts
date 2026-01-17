@@ -10,6 +10,7 @@ import Default, {
   MediumProjectile
 } from './projectile/default/Default';
 import AirSurfaceMissile_1 from './projectile/air_surface_missile_1/AirSurfaceMissile_1';
+import AirHomingMissile_1 from './projectile/air_homing_missle_1/AirHomingMissle_1';
 
 declare module '@blue-might/app/lib/types/weapon' {
   interface ProjectileTypes {
@@ -17,16 +18,18 @@ declare module '@blue-might/app/lib/types/weapon' {
     LIGHT_PROJECTILE: 'light_projectile';
     MEDIUM_PROJECTILE: 'medium_projectile';
     HEAVY_PROJECTILE: 'heavy_projectile';
-    AIR_SURFACE_MISSILE_1: 'air_surface_missile_1';
   }
 }
 
-const projectiles: Record<ProjectileIdentifier, typeof Projectile> =
-  Object.freeze({
-    [PROJECTILE_TYPE.DEFAULT]: Default,
-    [PROJECTILE_TYPE.LIGHT_PROJECTILE]: LightProjectile,
-    [PROJECTILE_TYPE.MEDIUM_PROJECTILE]: MediumProjectile,
-    [PROJECTILE_TYPE.HEAVY_PROJECTILE]: HeavyProjectile,
-    [PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1]: AirSurfaceMissile_1
-  });
+const projectiles: Record<
+  ProjectileIdentifier,
+  typeof Projectile | typeof HeavyProjectile
+> = Object.freeze({
+  [PROJECTILE_TYPE.DEFAULT]: Default,
+  [PROJECTILE_TYPE.LIGHT_PROJECTILE]: LightProjectile,
+  [PROJECTILE_TYPE.MEDIUM_PROJECTILE]: MediumProjectile,
+  [PROJECTILE_TYPE.HEAVY_PROJECTILE]: HeavyProjectile,
+  [PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1]: AirSurfaceMissile_1,
+  [PROJECTILE_TYPE.AIR_HOMING_MISSILE_1]: AirHomingMissile_1
+});
 export { projectiles };

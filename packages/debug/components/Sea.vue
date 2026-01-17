@@ -46,7 +46,7 @@ const map: Partial<MapDescription> = {
       },
       position: new Vector3(-2, 0, -2),
 
-      moduleStates: {
+      moduleOptions: {
         damage: {
           maxDamage: 1000
         },
@@ -108,19 +108,12 @@ const map: Partial<MapDescription> = {
           },
           position: new Vector3(path[0]![0], 0, path[0]![1]),
           moduleOptions: {
-            attack: {
-              followTarget: true
-            },
-            patrol: {
-              path: path as [number, number][]
-            }
-          },
-          moduleStates: {
             faction: {
               faction: enemyFaction
             },
             patrol: {
-              active: true
+              active: true,
+              path: path as [number, number][]
             }
           }
         })
@@ -147,7 +140,7 @@ const map: Partial<MapDescription> = {
         collision: false,
         supply: false
       },
-      moduleStates: {
+      moduleOptions: {
         faction: {
           faction: blueFaction
         }
@@ -161,7 +154,7 @@ const map: Partial<MapDescription> = {
         collision: false,
         supply: false
       },
-      moduleStates: {
+      moduleOptions: {
         faction: {
           faction: blueFaction
         }
@@ -176,7 +169,7 @@ const map: Partial<MapDescription> = {
       // position: new Vector3(0, 1.05, 0),
       // position: new Vector3(-7.51, 0, 1.48),
       position: new Vector3(0, 0, 0),
-      moduleStates: {
+      moduleOptions: {
         damage: {
           maxDamage: Infinity
         },
@@ -196,21 +189,17 @@ const map: Partial<MapDescription> = {
         patrol: false
       },
       moduleOptions: {
+        faction: {
+          faction: blueFaction
+        },
         patrol: {
+          active: true,
           path: [
             [0.5, 0.5],
             [-0.5, 0.5],
             [-0.5, -0.5],
             [0.5, -0.5]
           ]
-        }
-      },
-      moduleStates: {
-        faction: {
-          faction: blueFaction
-        },
-        patrol: {
-          active: true
         }
       }
     })

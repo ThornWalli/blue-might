@@ -19,10 +19,12 @@ import {
   CombatFregatte_1,
   Flag_1,
   Church_1,
-  Tree_2
+  Tree_2,
+  Windsock_1
 } from '@blue-might/units';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import { neutralFaction } from '@blue-might/app/lib/classes/mapModule/Faction';
+import MissleLauncher_1 from '@blue-might/units/turret/missle_launcher_1/MissleLauncher_1';
 
 import foregroundTexture from './texture_fg.png';
 import backgroundTexture from './texture_bg.png';
@@ -41,10 +43,26 @@ export default function (): MapDescription {
     factions: [blueFaction, enemyFaction],
 
     units: [
-      ...[new Vector3(42.5, 0, -27.5), new Vector3(40.5, 0, -27.5)].map(
+      new CombatHelicopter_1({
+        id: 'combat-helicopter-1',
+        position: new Vector3(43.5, 0, -26.5), // 34+9.5, -32+5.5
+        rotation: new Euler(0, Math.PI, 0),
+        moduleOptions: {
+          faction: {
+            faction: blueFaction
+          }
+        }
+      }),
+      ...[[40.5, -27.5]].map(
         position =>
           new Flag_1({
-            position
+            position: new Vector3(position[0], 0, position[1])
+          })
+      ),
+      ...[[42.5, -27.5]].map(
+        position =>
+          new Windsock_1({
+            position: new Vector3(position[0], 0, position[1])
           })
       ),
       new CombatSubmarine_1({
@@ -52,17 +70,13 @@ export default function (): MapDescription {
 
         moduleOptions: {
           patrol: {
+            active: true,
             path: [
               [2.36, -47.18],
               [-0.52, -12.95],
               [21.52, 9.29],
               [50.73, 4.61]
             ]
-          }
-        },
-        moduleStates: {
-          patrol: {
-            active: true
           },
           faction: {
             faction: enemyFaction
@@ -76,6 +90,7 @@ export default function (): MapDescription {
         },
         moduleOptions: {
           patrol: {
+            active: true,
             path: [
               [47.6, 3.14],
               [16.28, 1.01],
@@ -83,11 +98,6 @@ export default function (): MapDescription {
               [20.08, -30.01],
               [8.15, -50.87]
             ]
-          }
-        },
-        moduleStates: {
-          patrol: {
-            active: true
           },
           faction: {
             faction: enemyFaction
@@ -95,12 +105,22 @@ export default function (): MapDescription {
         }
       }),
 
-      new Tree_1({
-        position: new Vector3(37, 0, -23)
-      }),
-      new Tree_2({
-        position: new Vector3(36.5, 0, -22)
-      }),
+      ...[
+        [27.67, -37.36],
+        [26.13, -39.27],
+        [37, -23]
+      ].map(
+        position =>
+          new Tree_1({
+            position: new Vector3(position[0], 0, position[1])
+          })
+      ),
+      ...[[36.5, -22]].map(
+        position =>
+          new Tree_2({
+            position: new Vector3(position[0], 0, position[1])
+          })
+      ),
       new LandingPort_1({
         position: new Vector3(43.5, 0, -26.5),
         moduleDebug: {
@@ -119,7 +139,7 @@ export default function (): MapDescription {
         moduleDebug: {
           collision: false
         },
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: blueFaction
           }
@@ -131,7 +151,7 @@ export default function (): MapDescription {
         moduleDebug: {
           collision: false
         },
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: blueFaction
           }
@@ -139,7 +159,7 @@ export default function (): MapDescription {
       }),
       new ControlTower_1({
         position: new Vector3(37, 0, -27),
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: blueFaction
           }
@@ -147,19 +167,16 @@ export default function (): MapDescription {
       }),
       new Lighthouse_1({
         position: new Vector3(26.38, 0, -36.66),
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: neutralFaction
           }
         }
       }),
-      ...[new Vector3(27.67, 0, -37.36), new Vector3(26.13, 0, -39.27)].map(
-        position => new Tree_1({ position })
-      ),
 
       new Barrack_1({
         position: new Vector3(44, 0, -31),
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: blueFaction
           }
@@ -167,30 +184,17 @@ export default function (): MapDescription {
       }),
       new Barrack_1({
         position: new Vector3(42.83, 0, -31),
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: blueFaction
           }
         }
       }),
 
-      new CombatHelicopter_1({
-        id: 'combat-helicopter-1',
-        position: new Vector3(43.5, 0, -26.5), // 34+9.5, -32+5.5
-        rotation: new Euler(0, Math.PI, 0),
-        moduleStates: {
-          helicopter: {
-            active: true
-          },
-          faction: {
-            faction: blueFaction
-          }
-        }
-      }),
       new CombatTank_1({
         id: 'combat-tank-1',
         position: new Vector3(38.83, 0, -30.17),
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: blueFaction
           }
@@ -198,7 +202,7 @@ export default function (): MapDescription {
       }),
       new Tank_1({
         position: new Vector3(38.17, 0, -30.17),
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: blueFaction
           }
@@ -206,16 +210,12 @@ export default function (): MapDescription {
       }),
       new Tank_1({
         position: new Vector3(37.5, 0, -30.17),
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: blueFaction
           },
           patrol: {
-            active: false
-          }
-        },
-        moduleOptions: {
-          patrol: {
+            active: false,
             path: [
               [36.17, -28.83], // 2.17+34, 3.17-32
               [36.17, -40.5], // 2.17+34, -8.5-32
@@ -232,16 +232,12 @@ export default function (): MapDescription {
       new Soldat_1({
         id: 'soldat-1',
         position: new Vector3(44.83, 0, -28.17),
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: blueFaction
           },
           patrol: {
-            active: true
-          }
-        },
-        moduleOptions: {
-          patrol: {
+            active: true,
             path: [
               [44.83, -28.5],
               [45.5, -28.5],
@@ -256,16 +252,12 @@ export default function (): MapDescription {
       new Soldat_1({
         id: 'soldat-2',
         position: new Vector3(37.5, 0, -27.83),
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: blueFaction
           },
           patrol: {
-            active: false
-          }
-        },
-        moduleOptions: {
-          patrol: {
+            active: false,
             path: [
               [37.5, -27.5],
               [37.5, -26.5],
@@ -276,16 +268,16 @@ export default function (): MapDescription {
         }
       }),
       ...[
-        new Vector3(45.17, 1, -25.83),
-        new Vector3(37.83, 0, -25.83),
-        new Vector3(45.17, 1, -32.5),
-        new Vector3(34.83, 0, -32.5),
-        new Vector3(35.0, 0, -25.24)
+        [45.17, -25.83],
+        [37.83, -25.83],
+        [45.17, -32.5],
+        [34.83, -32.5],
+        [35.0, -25.24]
       ].map(
         position =>
           new Turret_1({
-            position,
-            moduleStates: {
+            position: new Vector3(position[0], 0, position[1]),
+            moduleOptions: {
               faction: {
                 faction: blueFaction
               }
@@ -319,10 +311,11 @@ export default function (): MapDescription {
         debug: false,
         position: new Vector3(15.61, 0, -29.73),
         moduleOptions: {
-          attack: {
-            followTarget: true
+          faction: {
+            faction: enemyFaction
           },
           patrol: {
+            active: true,
             path: [
               [15.61, -29.73],
               [24.82, -30.45],
@@ -338,24 +331,17 @@ export default function (): MapDescription {
               [12.87, -19.34]
             ]
           }
-        },
-        moduleStates: {
-          faction: {
-            faction: enemyFaction
-          },
-          patrol: {
-            active: true
-          }
         }
       }),
       new CombatShip_1({
         debug: false,
         position: new Vector3(30.33, 0, -51.45),
         moduleOptions: {
-          attack: {
-            followTarget: true
+          faction: {
+            faction: enemyFaction
           },
           patrol: {
+            active: true,
             path: reversePath([
               [46.35, -50.18],
               [54.55, -35.34],
@@ -371,24 +357,18 @@ export default function (): MapDescription {
               [30.33, -51.45]
             ]) as [number, number][]
           }
-        },
-        moduleStates: {
-          faction: {
-            faction: enemyFaction
-          },
-          patrol: {
-            active: true
-          }
         }
       }),
+
       new CombatShip_1({
         debug: false,
         position: new Vector3(55.83, 0, -20.47),
         moduleOptions: {
-          attack: {
-            followTarget: true
+          faction: {
+            faction: enemyFaction
           },
           patrol: {
+            active: true,
             path: [
               [55.83, -20.47],
               [48.81, -10.18],
@@ -404,41 +384,38 @@ export default function (): MapDescription {
               [54.55, -35.34]
             ]
           }
-        },
-        moduleStates: {
-          faction: {
-            faction: enemyFaction
-          },
-          patrol: {
-            active: true
-          }
         }
-      })
+      }),
 
-      // new CombatShip_1({
-      //   debug: false,
-      //   id: 'combat-ship-1',
-      //   position: new Vector3(55.83, 0, -20.47),
-      //   moduleDebug: {
-      //     pathfinding: true
-      //   },
-      //   moduleOptions: {
-      //     attack: {
-      //       followTarget: true
-      //     }
-      //   },
-      //   moduleStates: {
-      //     weapon: {
-      //       autoAimActive: false
-      //     },
-      //     movable: {
-      //       active: true
-      //     },
-      //     faction: {
-      //       faction: blueFaction
-      //     }
-      //   }
-      // })
+      ...[[0.5, 4.5]].map(
+        position =>
+          new MissleLauncher_1({
+            position: new Vector3(position[0], 0, position[1]),
+            moduleDebug: {
+              attack: true
+            },
+            moduleOptions: {
+              faction: {
+                faction: enemyFaction
+              }
+            }
+          })
+      ),
+
+      ...[
+        [0.75, 9.96],
+        [-2.98, 4.63]
+      ].map(
+        position =>
+          new Turret_1({
+            position: new Vector3(position[0], 0, position[1]),
+            moduleOptions: {
+              faction: {
+                faction: enemyFaction
+              }
+            }
+          })
+      )
     ]
   };
 }

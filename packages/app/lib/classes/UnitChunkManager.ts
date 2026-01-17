@@ -1,5 +1,5 @@
 import type { Camera } from 'three';
-import { Box3, Frustum, Matrix4, Mesh, Vector3 } from 'three';
+import { Box3, Frustum, Matrix4, Vector3 } from 'three';
 
 import type Unit from './Unit';
 
@@ -52,14 +52,14 @@ export default class UnitChunkManager {
       this.chunks.set(key, new Chunk(position));
     }
 
-    const mesh = unit.root;
-    mesh.traverse(child => {
-      if (child instanceof Mesh) {
-        child.updateMatrixWorld(true);
-        child.geometry.computeBoundingBox();
-        child.geometry.computeBoundingSphere();
-      }
-    });
+    // const mesh = unit.root;
+    // mesh.traverse(child => {
+    //   if (child instanceof Mesh) {
+    //     child.updateMatrixWorld(true);
+    //     child.geometry.computeBoundingBox();
+    //     child.geometry.computeBoundingSphere();
+    //   }
+    // });
 
     this.chunks.get(key)!.units.add(unit);
 
@@ -79,6 +79,7 @@ export default class UnitChunkManager {
   }
 
   updateVisibility(camera: Camera) {
+    // console.log('Updating chunk visibility...');
     const visibleChunks = this.findVisibleChunks(camera);
     const visibleUnits: Unit[] = [];
     const hideUnits: Unit[] = [];
@@ -139,6 +140,35 @@ export default class UnitChunkManager {
 
     return visibleChunkKeys;
   }
+
+  // findVisibleChunks(camera: Camera) {
+  //   this.projScreenMatrix.multiplyMatrices(
+  //     camera.projectionMatrix,
+  //     camera.matrixWorldInverse
+  //   );
+  //   this.frustum.setFromProjectionMatrix(this.projScreenMatrix);
+
+  //   const visibleChunkKeys = new Set<string>();
+  //   const allChunkPositions = this.getChunkPositions();
+
+  //   // Puffer-Faktor, um Ungenauigkeiten auszugleichen (z. B. 10% Erweiterung)
+  //   const buffer = 1.1; // Anpassen, falls nötig
+
+  //   for (const pos of allChunkPositions) {
+  //     // WICHTIG: Box muss am Chunk-Zentrum sein, mit Puffer erweitert
+  //     const chunkBox = new Box3().setFromCenterAndSize(
+  //       pos.clone().addScalar(this.size / 2), // Zentrum des Chunks
+  //       new Vector3(this.size * buffer, this.size * buffer, this.size * buffer)
+  //     );
+
+  //     if (this.frustum.intersectsBox(chunkBox)) {
+  //       const chunkKey = this.getChunkKey(pos);
+  //       visibleChunkKeys.add(chunkKey);
+  //     }
+  //   }
+
+  //   return visibleChunkKeys;
+  // }
 
   getUnitsInRadius(position: Vector3, radius: number): Unit[] {
     const unitsInRadius: Unit[] = [];

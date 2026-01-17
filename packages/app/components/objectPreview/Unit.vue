@@ -17,7 +17,7 @@ import type { Vector3 } from 'three';
 import { Object3D } from 'three';
 import { markRaw, onUnmounted, ref, type Raw } from 'vue';
 import { Subscription, Subject } from 'rxjs';
-import { units } from '@blue-might/units';
+import * as units from '@blue-might/units';
 import type Unit from '@blue-might/app/lib/classes/Unit';
 import type { UnitConstructorOptions } from '@blue-might/app/lib/classes/Unit';
 import type Faction from '@blue-might/app/lib/classes/Faction';
@@ -26,6 +26,11 @@ import FactionUnitModule from '@blue-might/app/lib/classes/unitModule/Faction';
 import BmObjectPreview from '../ObjectPreview.vue';
 import type { AnimationLoopValue } from '../../lib/classes/Renderer';
 import type App from '../../lib/classes/App';
+
+const unitMap = new Map(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Object.values(units).map(unit => [unit.KEY, unit] as [string, any])
+);
 
 const $props = defineProps<{
   app: App;
@@ -54,14 +59,14 @@ let unitSubscriptions: Subscription;
 const unitInstance = ref<Raw<Unit> | null>(null);
 
 async function setup(data: UnitPreview) {
-  const UnitClass = (await units[
+  const UnitClass = (await unitMap.get(
     data.type as keyof typeof units
-  ]) as unknown as { new (options: Partial<UnitConstructorOptions>): Unit };
+  )) as unknown as { new (options: Partial<UnitConstructorOptions>): Unit };
 
   unitInstance.value = markRaw(
     new UnitClass({
       preview: true,
-      moduleStates: {
+      moduleOptions: {
         [FactionUnitModule.TYPE]: {
           faction: $props.modelValue.faction
         }

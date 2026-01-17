@@ -1,6 +1,13 @@
 export type FactionIdentifier = string;
 
-export default class Faction {
+export interface FactionDescription {
+  id: FactionIdentifier;
+  name: string;
+  colors: number[];
+  mapColor: number;
+}
+
+export default class Faction implements FactionDescription {
   id: FactionIdentifier;
   name: string;
   colors: number[];
@@ -11,11 +18,8 @@ export default class Faction {
     name,
     colors,
     mapColor
-  }: {
+  }: Exclude<FactionDescription, 'id'> & {
     id?: FactionIdentifier;
-    name: string;
-    colors: number[];
-    mapColor: number;
   }) {
     this.id = id || crypto.randomUUID();
     this.name = name;
@@ -25,5 +29,14 @@ export default class Faction {
 
   equal(faction: Faction): boolean {
     return this.id === faction.id;
+  }
+
+  toDescription(): FactionDescription {
+    return {
+      id: this.id,
+      name: this.name,
+      colors: this.colors,
+      mapColor: this.mapColor
+    };
   }
 }

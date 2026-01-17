@@ -11,6 +11,7 @@ export default class Default extends Projectile {
     super({
       ...options,
       id: options.id ?? PROJECTILE_TYPE.DEFAULT,
+      maxLifetime: options.maxLifetime ?? 5,
       speed: options.speed ?? 10,
       strength: options.strength ?? 0.1,
       radius: options.radius ?? 0.5,
@@ -23,7 +24,7 @@ export default class Default extends Projectile {
     });
   }
 
-  override update(context: ProjectileUpdateContext): void {
+  override update(context: ProjectileUpdateContext) {
     this.applyPhysics(context);
   }
 

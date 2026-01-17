@@ -15,7 +15,7 @@ import baseGlb from './assets/soldat_1.glb?url';
 
 export type Options = FigureUnitOptions;
 
-export default class Human_1<
+export default class Soldat_1<
   Modules extends FigureUnitModules = FigureUnitModules,
   ModuleList extends FigureUnitModuleList = FigureUnitModuleList
 > extends FigureUnit<Modules, ModuleList, Options> {

@@ -5,12 +5,14 @@ import Unit, {
   type UnitConstructorOptions,
   type UnitModuleList,
   type UnitModules,
+  type UnitObservables,
   type UnitOptions
 } from '../Unit';
 import BuildingUnitModule from '../unitModule/Building';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface BuildingUnitOptions extends UnitOptions {}
+export type BuildingUnitObservables = UnitObservables;
+
+export type BuildingUnitOptions = UnitOptions;
 
 export type BuildingUnitModules = UnitModules & {
   building: BuildingUnitModule;
@@ -21,8 +23,9 @@ export type BuildingUnitModuleList = (typeof BuildingUnitModule)[] &
 export default class BuildingUnit<
   Modules extends BuildingUnitModules = BuildingUnitModules,
   ModuleList extends BuildingUnitModuleList = BuildingUnitModuleList,
-  Options extends BuildingUnitOptions = BuildingUnitOptions
-> extends Unit<Modules, ModuleList, Options> {
+  Options extends BuildingUnitOptions = BuildingUnitOptions,
+  Observables extends BuildingUnitObservables = BuildingUnitObservables
+> extends Unit<Modules, ModuleList, Options, Observables> {
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []

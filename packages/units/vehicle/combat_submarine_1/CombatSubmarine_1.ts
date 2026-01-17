@@ -38,6 +38,7 @@ interface State {
 
 export interface CombatSubmarineOptions extends SeaVehicleUnitOptions {
   weaponAngles: {
+    revert?: boolean;
     min: Vector2;
     max: Vector2;
   }[];
@@ -88,6 +89,7 @@ export default class CombatSubmarine_1 extends SeaVehicleUnit<
               max: new Vector2((Math.PI * 1) / 6, (Math.PI * 9) / 10)
             },
             {
+              revert: true,
               min: new Vector2(-Math.PI / 4, -(Math.PI * 9) / 10),
               max: new Vector2((Math.PI * 1) / 6, (Math.PI * 9) / 10)
             }

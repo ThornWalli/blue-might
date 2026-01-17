@@ -44,7 +44,7 @@ const map: Partial<MapDescription> = {
       },
       position: new Vector3(0, 0, 0),
 
-      moduleStates: {
+      moduleOptions: {
         damage: {
           maxDamage: 1000
         },
@@ -56,7 +56,7 @@ const map: Partial<MapDescription> = {
 
     new Lighthouse_1({
       position: new Vector3(2.67, 0, 9.19),
-      moduleStates: {
+      moduleOptions: {
         faction: {
           faction: blueFaction
         }
@@ -68,7 +68,7 @@ const map: Partial<MapDescription> = {
       moduleDebug: {
         collision: true
       },
-      moduleStates: {
+      moduleOptions: {
         damage: {
           maxDamage: 1000
         },
@@ -90,7 +90,7 @@ const map: Partial<MapDescription> = {
       moduleDebug: {
         collision: true
       },
-      moduleStates: {
+      moduleOptions: {
         faction: {
           faction: blueFaction
         }

@@ -100,16 +100,6 @@ const map: Partial<MapDescription> = {
       },
       position: new Vector3(2, 0, 0),
       moduleOptions: {
-        patrol: {
-          path: [
-            [4.17, -4.17],
-            [4.17, 4.17],
-            [-4.17, 4.17],
-            [-4.17, -4.17]
-          ]
-        }
-      },
-      moduleStates: {
         faction: {
           faction: blueFaction
         },
@@ -117,7 +107,13 @@ const map: Partial<MapDescription> = {
           active: true
         },
         patrol: {
-          active: true
+          active: true,
+          path: [
+            [4.17, -4.17],
+            [4.17, 4.17],
+            [-4.17, 4.17],
+            [-4.17, -4.17]
+          ]
         }
       }
     }),
@@ -131,16 +127,6 @@ const map: Partial<MapDescription> = {
         patrol: true
       },
       moduleOptions: {
-        patrol: {
-          path: [
-            [3.83, 1.17],
-            [3.83, 3.83],
-            [-3.83, 3.83],
-            [-3.83, 1.17]
-          ]
-        }
-      },
-      moduleStates: {
         faction: {
           faction: blueFaction
         },
@@ -148,7 +134,13 @@ const map: Partial<MapDescription> = {
           active: false
         },
         patrol: {
-          active: true
+          active: true,
+          path: [
+            [3.83, 1.17],
+            [3.83, 3.83],
+            [-3.83, 3.83],
+            [-3.83, 1.17]
+          ]
         }
       }
     }),
@@ -161,16 +153,6 @@ const map: Partial<MapDescription> = {
         patrol: true
       },
       moduleOptions: {
-        patrol: {
-          path: [
-            [-3.83, -1.17],
-            [-3.83, -3.83],
-            [3.83, -3.83],
-            [3.83, -1.17]
-          ]
-        }
-      },
-      moduleStates: {
         faction: {
           faction: blueFaction
         },
@@ -178,7 +160,13 @@ const map: Partial<MapDescription> = {
           active: false
         },
         patrol: {
-          active: true
+          active: true,
+          path: [
+            [-3.83, -1.17],
+            [-3.83, -3.83],
+            [3.83, -3.83],
+            [3.83, -1.17]
+          ]
         }
       }
     }),
@@ -194,21 +182,17 @@ const map: Partial<MapDescription> = {
             pathfinding: true
           },
           moduleOptions: {
+            faction: {
+              faction: blueFaction
+            },
             patrol: {
+              active: true,
               path: [
                 [3.17, 1.17],
                 [3.17, -1.17],
                 [-3.17, -1.17],
                 [-3.17, 1.17]
               ]
-            }
-          },
-          moduleStates: {
-            faction: {
-              faction: blueFaction
-            },
-            patrol: {
-              active: true
             }
           }
         });
@@ -222,21 +206,17 @@ const map: Partial<MapDescription> = {
           rotation: new Euler(0, 0, 0),
 
           moduleOptions: {
+            faction: {
+              faction: blueFaction
+            },
             patrol: {
+              active: true,
               path: [
                 [-3.17, 1.17],
                 [-3.17, -1.17],
                 [3.17, -1.17],
                 [3.17, 1.17]
               ]
-            }
-          },
-          moduleStates: {
-            faction: {
-              faction: blueFaction
-            },
-            patrol: {
-              active: true
             }
           }
         });

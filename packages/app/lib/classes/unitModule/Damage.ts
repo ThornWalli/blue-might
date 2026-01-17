@@ -34,6 +34,7 @@ interface Observables extends UnitModuleObservables {
   damage$: ReplaySubject<number>;
 }
 export interface DamageUnitModuleOptions extends UnitModuleOptions {
+  maxDamage: number;
   fire: boolean;
   fireTime: number;
   enabled: boolean;
@@ -43,7 +44,6 @@ export interface DamageUnitModuleState extends UnitModuleState {
    * Aktueller Schaden normalisiert.
    */
   damage: number;
-  maxDamage: number;
   /**
    * Brenndauer in Sekunden
    */
@@ -75,6 +75,7 @@ export default class DamageUnitModule extends UnitModule<
       unit,
       {
         ...options,
+        maxDamage: options.maxDamage ?? 1,
         fire: options.fire ?? true,
         fireTime: options.fireTime ?? 5, // 60 Sekunden
         enabled: options.enabled ?? true // Standard: aktiviert
@@ -82,7 +83,6 @@ export default class DamageUnitModule extends UnitModule<
       {
         ...state,
         damage: state.damage ?? 0,
-        maxDamage: state.maxDamage ?? 1,
         burnTimeLeft: state.burnTimeLeft ?? 0
       },
       debug
@@ -153,7 +153,7 @@ export default class DamageUnitModule extends UnitModule<
   }
 
   takeMaxDamage() {
-    this.setValue(this.state.maxDamage);
+    this.setValue(this.options.maxDamage);
   }
 
   setValue(value: number) {
@@ -167,7 +167,7 @@ export default class DamageUnitModule extends UnitModule<
   }
 
   getDamageValue() {
-    return this.state.damage / this.state.maxDamage;
+    return this.state.damage / this.options.maxDamage;
   }
 
   public getDamageLevel() {
@@ -179,7 +179,7 @@ export default class DamageUnitModule extends UnitModule<
     } else {
       value = DAMAGE_LEVEL.INTACT;
     }
-    return value * this.state.maxDamage;
+    return value * this.options.maxDamage;
   }
 
   public canDamage() {
@@ -187,7 +187,7 @@ export default class DamageUnitModule extends UnitModule<
   }
 
   public isDestroyed() {
-    return this.state.damage >= this.state.maxDamage;
+    return this.state.damage >= this.options.maxDamage;
   }
 
   private spawnSmoke(type: SMOKE_TYPE = SMOKE_TYPE.MEDIUM) {

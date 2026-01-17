@@ -3,15 +3,22 @@ import Projectile, {
 } from '@blue-might/app/lib/classes/Projectile';
 import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 
+declare module '@blue-might/app/lib/types/weapon' {
+  interface ProjectileTypes {
+    AIR_SURFACE_MISSILE_1: 'air_surface_missile_1';
+  }
+}
+
 PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1 = 'air_surface_missile_1';
 export default class AirSurfaceMissile_1 extends Projectile {
   constructor() {
     super({
       id: PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1,
+      maxLifetime: 5,
       speed: 30,
       strength: 0.75,
       radius: 1,
-      airResistance: 0.001,
+      airResistance: 0,
       weight: 0,
       features: {
         smoke: true,
@@ -20,7 +27,7 @@ export default class AirSurfaceMissile_1 extends Projectile {
     });
   }
 
-  override update(context: ProjectileUpdateContext): void {
+  override update(context: ProjectileUpdateContext) {
     this.applyPhysics(context);
   }
 

@@ -16,12 +16,15 @@ import UnitModule, {
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D } from '../../utils/object';
-import { isUnitDestroyed } from '../../utils/unit';
+import { isUnitDestroyed, isVehicle } from '../../utils/unit';
 import type { UnitModules } from '../Unit';
 
 import type PatrolUnitModule from './Patrol';
 import type WeaponUnitModule from './Weapon';
 import type PlayerUnitModule from './Player';
+import type GroundVehicleUnitModule from './movable/GroundVehicle';
+import type AirVehicleUnitModule from './movable/AirVehicle';
+import type SeaVehicleUnitModule from './movable/SeaVehicle';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -35,6 +38,12 @@ declare module '../Unit' {
   }
 }
 
+export enum ATTACK_TYPE {
+  SEA = 'sea',
+  AIR = 'air',
+  GROUND = 'ground'
+}
+
 export interface AttackUnitModuleObservables extends UnitModuleObservables {
   target$: ReplaySubject<Unit | null>;
 }
@@ -46,6 +55,7 @@ export interface AttackUnitModuleOptions extends UnitModuleOptions {
   radius: number;
   changeByDistance: boolean;
   followTarget: boolean;
+  attackTypes: ATTACK_TYPE[];
 }
 
 export interface AttackUnitModuleState extends UnitModuleState {
@@ -92,7 +102,8 @@ export default class AttackUnitModule extends UnitModule<
       {
         ...options,
         radius: options.radius ?? 6,
-        followTarget: options.followTarget ?? false
+        followTarget: options.followTarget ?? false,
+        attackTypes: options.attackTypes ?? []
       },
       { ...state, followStartPosition: null },
       debug
@@ -100,7 +111,6 @@ export default class AttackUnitModule extends UnitModule<
 
     //#region observables
     this.observables.target$ = new ReplaySubject<Unit | null>(1);
-    this.observables.target$.next(null);
     //#endregion
 
     this.sphere = new Sphere(new Vector3(), this.options.radius);
@@ -127,7 +137,11 @@ export default class AttackUnitModule extends UnitModule<
 
     this.subscription.add(
       unit.modules.player.observables.player$.subscribe(player => {
-        this.setFollowTarget(!player);
+        if (isVehicle(this.getUnit())) {
+          this.setFollowTarget(!player);
+        } else {
+          this.setFollowTarget(false);
+        }
       })
     );
 
@@ -152,7 +166,6 @@ export default class AttackUnitModule extends UnitModule<
   }
 
   private lastUpdateTime = 0;
-
   override update({ time }: AnimationLoopValue): void {
     const unit = this.getUnit();
     if (isUnitDestroyed(unit) || !unit.modules.weapon?.isAutoAimActive()) {
@@ -172,7 +185,7 @@ export default class AttackUnitModule extends UnitModule<
             unit.getPosition(),
             this.options.radius
           ) ?? []
-      ).filter(u => !isUnitDestroyed(u));
+      ).filter(u => this.isAttackAllowed(u));
 
       const intersectingUnits: Unit[] = [];
 
@@ -200,7 +213,7 @@ export default class AttackUnitModule extends UnitModule<
 
     if (this.options.followTarget && this.state.target) {
       const pathfinding = unit.modules.pathfinding;
-      const attackRadius = (this.options.radius * 2) / 4; // Angriffsreichweite
+      const attackRadius = this.options.radius / 2;
 
       // Patrol-bezogene Logik entfernt
 
@@ -242,11 +255,11 @@ export default class AttackUnitModule extends UnitModule<
           .clone()
           .sub(direction.multiplyScalar(attackRadius)); // Erhöht auf attackRadius statt *0.5, um weiter weg zu bleiben
 
-        console.log(
-          'Starting movement to:',
-          this.state.followStartPosition,
-          targetPosition
-        );
+        // console.log(
+        //   'Starting movement to:',
+        //   this.state.followStartPosition,
+        //   targetPosition
+        // );
 
         pathfinding.move(targetPosition);
       }
@@ -277,13 +290,25 @@ export default class AttackUnitModule extends UnitModule<
     const distance = this.state.followStartPosition.distanceTo(
       this.state.target.getPosition()
     );
-    return distance > 6;
+    return distance > this.options.radius;
+  }
+
+  hasTarget() {
+    return !!this.state.target;
+  }
+
+  getTarget() {
+    return this.state.target;
   }
 
   private unitSubscription: Subscription | null = null;
   private setTarget(target?: Unit | null) {
+    if (this.state.target === target) return;
+
     const unit = this.getUnit();
+    const patrolModule = unit.modules.patrol as PatrolUnitModule | undefined;
     this.state.target = target ?? null;
+
     if (target) {
       // Clear any existing resume timeout when setting a new target
       if (this.resumeTimeout) {
@@ -291,8 +316,7 @@ export default class AttackUnitModule extends UnitModule<
         this.resumeTimeout = null;
       }
       // Pause Patrol when target is found
-      const patrolModule = unit.modules.patrol;
-      if (patrolModule && patrolModule.state.active) {
+      if (patrolModule?.state.active) {
         patrolModule.pausePatrol();
       }
 
@@ -303,39 +327,37 @@ export default class AttackUnitModule extends UnitModule<
           const stillInRange = this.intersect(target);
           const outerDistance = this.isTargetOuterRange();
           if (outerDistance || !stillInRange) {
-            console.log('Target out of range or lost');
+            // console.log('Target out of range or lost');
             this.setTarget(undefined);
             this.unitSubscription?.unsubscribe();
             this.subscription.remove(this.unitSubscription!);
             if (this.state.followStartPosition) {
               const pathfinding = this.getUnit().modules.pathfinding;
               pathfinding.abortMovement().then(async () => {
-                console.log(
-                  'Moving back to followStartPosition:',
-                  this.state.followStartPosition
-                );
+                // console.log(
+                //   'Moving back to followStartPosition:',
+                //   this.state.followStartPosition
+                // );
                 try {
                   await pathfinding.move(this.state.followStartPosition!);
-                  console.log('Move back successful, resuming patrol');
-                  const patrolModule = unit.modules.patrol;
-                  if (patrolModule && !patrolModule.state.active) {
-                    patrolModule.resumePatrol();
+                  // console.log('Move back successful, resuming patrol');
+
+                  if (!patrolModule?.state.active) {
+                    patrolModule?.resumePatrol();
                   }
                   this.state.followStartPosition = null;
                 } catch (error) {
                   console.error('Move back failed:', error);
-                  const patrolModule = unit.modules.patrol;
-                  if (patrolModule && !patrolModule.state.active) {
-                    patrolModule.resumePatrol();
+                  if (!patrolModule?.state.active) {
+                    patrolModule?.resumePatrol();
                   }
                   this.state.followStartPosition = null;
                 }
               });
             } else {
               console.warn('No followStartPosition, resuming patrol directly');
-              const patrolModule = unit.modules.patrol;
-              if (patrolModule && !patrolModule.state.active) {
-                patrolModule.resumePatrol();
+              if (!patrolModule?.state.active) {
+                patrolModule?.resumePatrol();
               }
             }
           }
@@ -356,21 +378,19 @@ export default class AttackUnitModule extends UnitModule<
         clearTimeout(this.resumeTimeout);
       }
       this.resumeTimeout = setTimeout(() => {
-        const patrolModule = unit.modules.patrol;
-        if (patrolModule && !patrolModule.state.active) {
-          patrolModule.resumePatrol();
+        if (!patrolModule?.state.active) {
+          patrolModule?.resumePatrol();
         }
         this.resumeTimeout = null;
       }, 5000); // 5 Sekunden Delay
 
       console.log('Setting target to undefined, resuming patrol if paused');
       this.state.followStartPosition = null;
-      // FIX: Immer resume versuchen, wenn Target verloren
-      const patrolModule = unit.modules.patrol;
-      if (patrolModule && !patrolModule.state.active) {
-        patrolModule.resumePatrol();
+      if (!patrolModule?.state.active) {
+        patrolModule?.resumePatrol();
       }
     }
+
     this.observables.target$.next(this.state.target);
     console.log('New attack target:', target);
   }
@@ -381,7 +401,35 @@ export default class AttackUnitModule extends UnitModule<
     const isFriend = unit.modules.faction.isFriendlyFaction(
       target.modules.faction.getFaction()
     );
-    return !isDestroyed && !isFriend;
+
+    const modules = (
+      target as unknown as Unit<
+        UnitModules & {
+          airVehicle: AirVehicleUnitModule;
+          groundVehicle: GroundVehicleUnitModule;
+          seaVehicle: SeaVehicleUnitModule;
+        }
+      >
+    ).modules;
+
+    let result = true;
+    if (
+      this.options.attackTypes.includes(ATTACK_TYPE.AIR) &&
+      !modules.airVehicle
+    ) {
+      result = false;
+    } else if (
+      this.options.attackTypes.includes(ATTACK_TYPE.GROUND) &&
+      !modules.groundVehicle
+    ) {
+      result = false;
+    } else if (
+      this.options.attackTypes.includes(ATTACK_TYPE.SEA) &&
+      !modules.seaVehicle
+    ) {
+      result = false;
+    }
+    return result && !isDestroyed && !isFriend;
   }
 
   private setupDebug() {

@@ -35,6 +35,7 @@ import {
   autoAimFunction,
   createBarrelTargetShoot
 } from '@blue-might/app/lib/utils/turret';
+import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/Animation';
 
 import baseGlb from './assets/combat_helicopter_1.glb?url';
 
@@ -77,14 +78,7 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     weaponTargetRotation: getVectors()
   };
 
-  animationSettings: Record<
-    string,
-    {
-      clampWhenFinished: boolean;
-      loop: typeof LoopRepeat | typeof LoopOnce;
-      duration: number;
-    }
-  > = {
+  animationSettings: Record<string, AnimationSetting> = {
     land_gears: { clampWhenFinished: true, loop: LoopOnce, duration: 2 },
     rotor_idle: { clampWhenFinished: false, loop: LoopRepeat, duration: 8 },
     rotor_run: { clampWhenFinished: false, loop: LoopRepeat, duration: 0.25 },
@@ -149,7 +143,9 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
                 ammunition: 100
               },
               {
-                weapon: new weapons.air_surface_missile_1(),
+                weapon: new weapons.air_surface_missile_1({
+                  perSeconds: 1
+                }),
                 maxAmmunition: 400,
                 ammunition: 400
               }
@@ -202,16 +198,8 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
 
   override async afterSetup(_context: SetupContext) {
     await super.afterSetup(_context);
-    Object.entries(this.animationSettings).forEach(
-      ([name, { clampWhenFinished, loop, duration }]) => {
-        const action = this.modules.animation.getAction(name);
-        if (action) {
-          action.clampWhenFinished = clampWhenFinished;
-          action.setLoop(loop, Infinity);
-          action.setDuration(duration);
-        }
-      }
-    );
+
+    this.modules.animation.applySettings(this.animationSettings);
 
     this.setMaterialReady();
 

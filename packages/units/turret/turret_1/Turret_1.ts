@@ -12,11 +12,9 @@ import BuildingUnit, {
 } from '@blue-might/app/lib/classes/unit/Building';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
-import { weapons } from '@blue-might/weapon';
 import WeaponUnitModule, {
   type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
-import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import { replaceColors } from '@blue-might/app/lib/utils/material';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import {
@@ -28,6 +26,11 @@ import {
   autoAimFunction,
   createBarrelTargetShoot
 } from '@blue-might/app/lib/utils/turret';
+import Weapon from '@blue-might/app/lib/classes/Weapon';
+import {
+  PROJECTILE_TYPE,
+  WEAPON_SHOOT_TYPE
+} from '@blue-might/app/lib/types/weapon';
 
 import baseGlb from './assets/turret_1.glb?url';
 
@@ -49,16 +52,10 @@ export interface TurretModules extends BuildingUnitModules {
   attack: AttackUnitModule;
   weapon: WeaponUnitModule;
   player: PlayerUnitModule;
-  movable: MovableUnitModule;
 }
 
 export type TurretModuleList = BuildingUnitModuleList &
-  [
-    | typeof AttackUnitModule
-    | typeof WeaponUnitModule
-    | typeof PlayerUnitModule
-    | typeof MovableUnitModule
-  ];
+  [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
 export default class Turret_1 extends BuildingUnit<
   TurretModules,
@@ -84,12 +81,7 @@ export default class Turret_1 extends BuildingUnit<
     options: Omit<UnitConstructorOptions<TurretOptions>, 'name'> = {},
     moduleList: unknown[] = []
   ) {
-    moduleList.push(
-      AttackUnitModule,
-      WeaponUnitModule,
-      PlayerUnitModule,
-      MovableUnitModule
-    );
+    moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
     super(
       {
         ...options,
@@ -121,8 +113,19 @@ export default class Turret_1 extends BuildingUnit<
                 () => this.getRotation()
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
+              // {
+              //   weapon: new weapons.default('light_projectile'),
+              //   maxAmmunition: Infinity,
+              //   ammunition: Infinity
+              // },
               {
-                weapon: new weapons.default('light_projectile'),
+                weapon: new Weapon({
+                  id: 'gatling_gun',
+                  spreadAmount: 0.125,
+                  perSeconds: 15,
+                  projectile: PROJECTILE_TYPE.LIGHT_PROJECTILE,
+                  shootType: WEAPON_SHOOT_TYPE.AUTO
+                }),
                 maxAmmunition: Infinity,
                 ammunition: Infinity
               }

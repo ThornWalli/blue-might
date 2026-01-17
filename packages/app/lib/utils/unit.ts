@@ -9,6 +9,10 @@ export function isUnitDestroyed(unit: Unit): boolean {
   return unit.modules.damage.isDestroyed();
 }
 
+export function isVehicle(unit: Unit): boolean {
+  return 'movable' in unit.modules;
+}
+
 export function isSeaVehicle(unit: Unit): boolean {
   return 'seaVehicle' in unit.modules;
 }

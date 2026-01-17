@@ -13,15 +13,21 @@ export type ProjectileUpdateContext = {
   gravity: Vector3;
   velocity: Vector3;
   position: Vector3;
+  targetPosition: Vector3 | null;
 } & AnimationLoopValue;
 
 export default abstract class Projectile implements ProjectileDescription {
   id: ProjectileIdentifier;
+  /**
+   * Aktuelle Lebensdauer in Sekunden
+   */
+  maxLifetime: number;
   speed: number;
   strength: number;
   radius: number;
   airResistance: number;
   weight: number;
+  protected isAlive = true;
   features: {
     smoke: boolean;
     fire: boolean;
@@ -30,6 +36,7 @@ export default abstract class Projectile implements ProjectileDescription {
   };
   constructor(options?: ProjectileDescription) {
     this.id = options?.id ?? '';
+    this.maxLifetime = options?.maxLifetime ?? 5; // Standardwert, z. B. 5 Sekunden
     this.speed = options?.speed ?? 1;
     this.strength = options?.strength ?? 0.1;
     this.radius = options?.radius ?? 1;
@@ -41,6 +48,7 @@ export default abstract class Projectile implements ProjectileDescription {
       explosion: options?.features?.explosion ?? false,
       dust: options?.features?.dust ?? false
     };
+    this.maxLifetime = options?.maxLifetime ?? 5; // Standard 5 Sekunden, anpassbar
   }
 
   async setup() {
@@ -86,6 +94,7 @@ export default abstract class Projectile implements ProjectileDescription {
   toDescription(): ProjectileDescription {
     return {
       id: this.id,
+      maxLifetime: this.maxLifetime,
       speed: this.speed,
       strength: this.strength,
       radius: this.radius,

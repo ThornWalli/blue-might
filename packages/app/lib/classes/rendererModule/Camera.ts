@@ -110,6 +110,9 @@ export default class CameraRendererModule extends RendererModule<
 
       controls.target.set(0, 0, 0); // Target der Controls setzen
     }
+
+    camera.updateMatrix();
+    camera.updateMatrixWorld();
     controls.update();
   }
 

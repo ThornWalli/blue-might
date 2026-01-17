@@ -45,16 +45,12 @@ export default function (): MapDescription {
       }),
       new Tank_1({
         position: new Vector3(6.5, 0, 2),
-        moduleStates: {
+        moduleOptions: {
           movable: {
             active: true
           },
           patrol: {
-            active: false
-          }
-        },
-        moduleOptions: {
-          patrol: {
+            active: false,
             path: [
               [2.17, 3.17],
               [2.17, -8.5],
@@ -74,7 +70,7 @@ export default function (): MapDescription {
       new CombatHelicopter_1({
         id: 'combat-helicopter-1',
         position: new Vector3(9.5, 0, 5.5),
-        moduleStates: {
+        moduleOptions: {
           faction: {
             faction: blueFaction
           }
@@ -86,13 +82,9 @@ export default function (): MapDescription {
       new Soldat_1({
         id: 'soldat-1',
         position: new Vector3(12.83, 0, 3.83),
-        moduleStates: {
-          patrol: {
-            active: false
-          }
-        },
         moduleOptions: {
           patrol: {
+            active: false,
             path: [
               [12.83, 3.5],
               [13.5, 3.5],
@@ -107,13 +99,9 @@ export default function (): MapDescription {
       new Soldat_1({
         id: 'soldat-2',
         position: new Vector3(5.5, 0, 4.17),
-        moduleStates: {
-          patrol: {
-            active: false
-          }
-        },
         moduleOptions: {
           patrol: {
+            active: false,
             path: [
               [5.5, 4.5],
               [5.5, 5.5],

@@ -46,6 +46,7 @@ export interface MovableUnitModuleObservables extends UnitModuleObservables {
 }
 
 export interface MovableUnitModuleOptions extends UnitModuleOptions {
+  active: boolean;
   fuelConsumption: number;
   idleFuelConsumption: number;
   maxPower: number;
@@ -95,7 +96,7 @@ export default class MovableUnitModule<
       {
         ...state,
         velocity: state.velocity ?? new Vector3(0, 0, 0),
-        active: state.active ?? false,
+        active: options.active ?? state.active ?? false,
 
         //#region power
         rawPower: state.rawPower ?? 0,

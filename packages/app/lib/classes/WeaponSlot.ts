@@ -5,6 +5,8 @@ export interface WeaponSlotDescription {
   weapon: Weapon;
   ammunition?: number;
   maxAmmunition?: number;
+  parallel?: boolean;
+  revert?: boolean;
 }
 
 export class WeaponSlot implements WeaponSlotDescription {
@@ -13,17 +15,23 @@ export class WeaponSlot implements WeaponSlotDescription {
   weapon: Weapon;
   ammunition: number;
   maxAmmunition: number;
+  parallel?: boolean;
+  revert?: boolean;
   constructor({
     active,
     index,
     weapon,
     ammunition,
-    maxAmmunition
+    maxAmmunition,
+    parallel,
+    revert
   }: WeaponSlotDescription & { index: number }) {
     this.active = active ?? true;
     this.index = index;
     this.weapon = weapon;
     this.ammunition = ammunition ?? 100;
     this.maxAmmunition = maxAmmunition ?? 100;
+    this.parallel = parallel ?? false;
+    this.revert = revert ?? false;
   }
 }

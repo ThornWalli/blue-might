@@ -47,7 +47,6 @@ import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import { EMPTY, map, Subscription, switchMap } from 'rxjs';
 import type { Vector3 } from 'three';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 
@@ -147,7 +146,7 @@ const canFocusUnit = ref(true);
 function onClickUseVehicle() {
   const u = unit.value;
   if (!u) return;
-  if (u.hasModuleType(MovableUnitModule)) {
+  if (canUseVehicle.value) {
     const app = $props.app;
     const player = app.modules.player.getCurrentPlayer();
 

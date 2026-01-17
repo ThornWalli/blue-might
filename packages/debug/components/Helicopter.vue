@@ -16,6 +16,7 @@ import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import {
   CombatHelicopter_1,
   LandingPortSupplyStation,
+  RocketLauncher_1,
   Tank_1
 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
@@ -41,7 +42,7 @@ const map: Partial<MapDescription> = {
         supply: false
       },
       position: new Vector3(0, 0, 0),
-      moduleStates: {
+      moduleOptions: {
         faction: {
           faction: blueFaction
         }
@@ -51,30 +52,23 @@ const map: Partial<MapDescription> = {
     new CombatHelicopter_1({
       position: new Vector3(9.83, 0, 11.5),
       moduleDebug: {
-        attack: true,
-        pathfinding: true,
-        patrol: true
+        attack: false,
+        pathfinding: false,
+        patrol: false
       },
       moduleOptions: {
-        attack: {
-          followTarget: true
+        faction: {
+          faction: enemyFaction
         },
-        patrol: {
-          path: [
-            [10.83, 11.5],
-            [-9.83, 10.17]
-          ]
-        }
-      },
-      moduleStates: {
         weapon: {
           autoAimActive: true
         },
         patrol: {
-          active: true
-        },
-        faction: {
-          faction: enemyFaction
+          active: true,
+          path: [
+            [10.83, 11.5],
+            [-9.83, 10.17]
+          ]
         }
       }
     }),
@@ -89,6 +83,12 @@ const map: Partial<MapDescription> = {
         patrol: false
       },
       moduleOptions: {
+        faction: {
+          faction: blueFaction
+        },
+        movable: {
+          active: true
+        },
         patrol: {
           path: [
             [4.83, 5.17],
@@ -97,17 +97,6 @@ const map: Partial<MapDescription> = {
             [3.5, -1.83]
           ]
         }
-      },
-      moduleStates: {
-        faction: {
-          faction: blueFaction
-        },
-        patrol: {
-          active: false
-        },
-        movable: {
-          active: true
-        }
       }
     }),
 
@@ -115,12 +104,29 @@ const map: Partial<MapDescription> = {
       id: 'tank-1',
       position: new Vector3(1, 0, 2),
       rotation: undefined,
-      moduleStates: {
+      moduleOptions: {
         faction: {
           faction: enemyFaction
         }
       }
+    }),
+
+    new RocketLauncher_1({
+      position: new Vector3(-2.83, 0, 2.5),
+      moduleOptions: {
+        faction: {
+          faction: blueFaction
+        }
+      }
     })
+    // new Turret_1({
+    //   position: new Vector3(-0.17, 0, 9.17),
+    //   moduleOptions: {
+    //     faction: {
+    //       faction: blueFaction
+    //     }
+    //   }
+    // })
   ]
 };
 

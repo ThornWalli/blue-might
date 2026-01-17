@@ -49,13 +49,13 @@ function getSecondsByType(type: Values<ProjectileTypes>): number {
 
 WEAPON.AIR_SURFACE_MISSILE_1 = 'air_surface_missile_1';
 export class AirSurfaceMissile_1 extends Weapon {
-  constructor() {
+  constructor(options?: Partial<ConstructorParameters<typeof Weapon>[0]>) {
     super({
-      id: WEAPON.AIR_SURFACE_MISSILE_1,
-      spreadAmount: 0,
-      perSeconds: 0.5,
-      projectile: PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1,
-      shootType: WEAPON_SHOOT_TYPE.SINGLE
+      id: options?.id ?? WEAPON.AIR_SURFACE_MISSILE_1,
+      spreadAmount: options?.spreadAmount ?? 0,
+      perSeconds: options?.perSeconds ?? 0.25,
+      projectile: options?.projectile ?? PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1,
+      shootType: options?.shootType ?? WEAPON_SHOOT_TYPE.SINGLE
     });
   }
 }
