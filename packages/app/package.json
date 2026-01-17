@@ -18,7 +18,7 @@
     "file-saver": "2.0.5",
     "rxjs": "catalog:",
     "three": "catalog:",
-    "three-mesh-bvh": "0.9.5"
+    "three-mesh-bvh": "0.9.7"
   },
   "devDependencies": {
     "@types/concaveman": "1.1.6",
