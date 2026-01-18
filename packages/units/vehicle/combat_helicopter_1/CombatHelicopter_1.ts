@@ -26,30 +26,31 @@ import WeaponUnitModule, {
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { weapons } from '@blue-might/weapon';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
-import {
-  ControlAction,
-  type ControlState
-} from '@blue-might/app/lib/classes/playerModule/Controls';
 import { playSound } from '@blue-might/weapon/utils';
 import {
   autoAimFunction,
   createBarrelTargetShoot
 } from '@blue-might/app/lib/utils/turret';
 import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/Animation';
+import type {
+  WeaponSupportOptions,
+  WeaponSupportState
+} from '@blue-might/app/lib/types/unit';
+import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
+import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/combat_helicopter_1.glb?url';
 
-interface State {
-  weaponActive: boolean;
-  weaponVelocity: Vector2[];
-  weaponTargetRotation: Vector2[];
+function getVectors() {
+  const vector = new Vector2(0, 0);
+  return [vector, vector] as Vector2[];
 }
 
-export interface CombatHelicopterOptions extends HelicopterUnitOptions {
-  weaponAngles: {
-    min: Vector2;
-    max: Vector2;
-  }[];
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface State extends WeaponSupportState {}
+
+export interface CombatHelicopterOptions
+  extends HelicopterUnitOptions, WeaponSupportOptions {
   rotationSpeed: number;
 }
 
@@ -60,16 +61,14 @@ export interface CombatHelicopterModules extends HelicopterUnitModules {
 export type CombatHelicopterModuleList = HelicopterUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule];
 
-function getVectors() {
-  const vector = new Vector2(0, 0);
-  return [vector, vector];
-}
-
-export default class CombatHelicopter_1 extends HelicopterUnit<
-  CombatHelicopterModules,
-  CombatHelicopterModuleList,
-  CombatHelicopterOptions
-> {
+export default class CombatHelicopter_1
+  extends HelicopterUnit<
+    CombatHelicopterModules,
+    CombatHelicopterModuleList,
+    CombatHelicopterOptions
+  >
+  implements WeaponUnitInterface<State>
+{
   static override KEY = 'combat_helicopter_1';
 
   state: State = {
@@ -307,46 +306,11 @@ export default class CombatHelicopter_1 extends HelicopterUnit<
     return mesh;
   }
 
-  private getControls(): Partial<ControlState> {
-    if (!this.modules.player) return {};
-
-    return (
-      this.modules.player?.getPlayer()?.modules.controls.getControls() ?? {}
-    );
-  }
-
   override update(_v: AnimationLoopValue): void {
     if (this.preview) return;
     super.update(_v);
-    this.updateControls();
+    updateControls(this);
     this.updateObjects();
-  }
-
-  updateControls() {
-    const controls = this.getControls();
-
-    const velocity =
-      this.state.weaponVelocity[this.modules.weapon.getSlotIndex()]!;
-
-    if (controls[ControlAction.UP]) {
-      velocity.y -= 0.005;
-    }
-    if (controls[ControlAction.DOWN]) {
-      velocity.y += 0.005;
-    }
-    if (controls[ControlAction.LEFT]) {
-      velocity.x += 0.005;
-    }
-    if (controls[ControlAction.RIGHT]) {
-      velocity.x -= 0.005;
-    }
-
-    if (this.modules.weapon.isAutoAimActive()) return;
-    if (controls[ControlAction.FIRE_PRIMARY]) {
-      this.modules.weapon.shoot();
-    } else {
-      this.modules.weapon.abortShoot();
-    }
   }
 
   private updateObjects() {

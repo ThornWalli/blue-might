@@ -16,11 +16,13 @@ import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { weapons } from '@blue-might/weapon';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
-import {
-  ControlAction,
-  type ControlState
-} from '@blue-might/app/lib/classes/playerModule/Controls';
 import { playSound } from '@blue-might/weapon/utils';
+import type {
+  WeaponSupportOptions,
+  WeaponSupportState
+} from '@blue-might/app/lib/types/unit';
+import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
+import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
 
 import {
   autoAimFunction,
@@ -29,17 +31,11 @@ import {
 
 import baseGlb from './assets/combat_tank_1.glb?url';
 
-interface State {
-  weaponActive: boolean;
-  weaponVelocity: Vector2[];
-  weaponTargetRotation: Vector2[];
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface State extends WeaponSupportState {}
 
-export interface CombatTankOptions extends TankUnitOptions {
-  weaponAngles: {
-    min: Vector2;
-    max: Vector2;
-  }[];
+export interface CombatTankOptions
+  extends TankUnitOptions, WeaponSupportOptions {
   rotationSpeed: number;
 }
 export interface CombatTankModules extends TankUnitModules {
@@ -50,11 +46,10 @@ export interface CombatTankModules extends TankUnitModules {
 export type CombatTankModuleList = TankUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
-export default class CombatTank_1 extends TankUnit<
-  CombatTankModules,
-  CombatTankModuleList,
-  CombatTankOptions
-> {
+export default class CombatTank_1
+  extends TankUnit<CombatTankModules, CombatTankModuleList, CombatTankOptions>
+  implements WeaponUnitInterface<State>
+{
   static override KEY = 'combat_tank_1';
 
   state: State = {
@@ -204,46 +199,11 @@ export default class CombatTank_1 extends TankUnit<
     return object;
   }
 
-  private getControls(): Partial<ControlState> {
-    if (!this.modules.player) return {};
-
-    return (
-      this.modules.player?.getPlayer()?.modules.controls.getControls() ?? {}
-    );
-  }
-
   override update(_v: AnimationLoopValue): void {
     if (this.preview) return;
     super.update(_v);
-    this.updateControls();
+    updateControls(this);
     this.updateObjects();
-  }
-
-  updateControls() {
-    if (this.modules.damage.isDestroyed()) return;
-
-    const velocity =
-      this.state.weaponVelocity[this.modules.weapon.getSlotIndex()]!;
-
-    const controls = this.getControls();
-    if (controls[ControlAction.UP]) {
-      velocity.y -= 0.005;
-    }
-    if (controls[ControlAction.DOWN]) {
-      velocity.y += 0.005;
-    }
-    if (controls[ControlAction.LEFT]) {
-      velocity.x += 0.005;
-    }
-    if (controls[ControlAction.RIGHT]) {
-      velocity.x -= 0.005;
-    }
-    if (this.modules.weapon.isAutoAimActive()) return;
-    if (controls[ControlAction.FIRE_PRIMARY]) {
-      this.modules.weapon.shoot();
-    } else {
-      this.modules.weapon.abortShoot();
-    }
   }
 
   private updateObjects() {

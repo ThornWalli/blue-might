@@ -175,6 +175,7 @@ export default class UnitsModule extends MapModule<State, Observables> {
         )
         .subscribe(() => {
           this.chunkManager.assignToChunk(unit);
+          this.updateVisibility();
         })
     );
     this.state.units.set(unit.id, unit);
@@ -187,6 +188,14 @@ export default class UnitsModule extends MapModule<State, Observables> {
     this.listener!.addMeshes(getMeshes(unit.root));
 
     this.observables.addUnit$.next(unit);
+  }
+
+  updateVisibility() {
+    this.state.visibleUnits = Array.from(
+      this.chunkManager.updateVisibility(
+        this.map.app.renderer.modules.camera.getCamera()
+      )
+    );
   }
 
   remove(unit: Unit) {

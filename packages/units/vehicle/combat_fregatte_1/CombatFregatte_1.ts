@@ -27,28 +27,24 @@ import WeaponUnitModule, {
   type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import {
-  ControlAction,
-  type ControlState
-} from '@blue-might/app/lib/classes/playerModule/Controls';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
 import { playSound } from '@blue-might/weapon/utils';
 import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
+import type {
+  WeaponSupportOptions,
+  WeaponSupportState
+} from '@blue-might/app/lib/types/unit';
+import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
+import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/combat_fregatte_1.glb?url';
 
-interface State {
-  weaponActive: boolean;
-  weaponVelocity: Vector2[];
-  weaponTargetRotation: Vector2[];
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface State extends WeaponSupportState {}
 
-export interface CombatFregatteOptions extends SeaVehicleUnitOptions {
-  weaponAngles: {
-    min: Vector2;
-    max: Vector2;
-  }[];
+export interface CombatFregatteOptions
+  extends SeaVehicleUnitOptions, WeaponSupportOptions {
   rotationSpeed: number;
 }
 
@@ -60,11 +56,14 @@ export interface CombatFregatteModules extends SeaVehicleUnitModules {
 export type CombatFregatteModuleList = SeaVehicleUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
-export default class CombatFregatte_1 extends SeaVehicleUnit<
-  CombatFregatteModules,
-  CombatFregatteModuleList,
-  CombatFregatteOptions
-> {
+export default class CombatFregatte_1
+  extends SeaVehicleUnit<
+    CombatFregatteModules,
+    CombatFregatteModuleList,
+    CombatFregatteOptions
+  >
+  implements WeaponUnitInterface<State>
+{
   static override KEY = 'combat_fregatte_1';
 
   state: State = {
@@ -264,52 +263,11 @@ export default class CombatFregatte_1 extends SeaVehicleUnit<
     return mesh;
   }
 
-  private getControls(): Partial<ControlState> {
-    if (!this.modules.player) return {};
-
-    return (
-      this.modules.player?.getPlayer()?.modules.controls.getControls() ?? {}
-    );
-  }
-
   override update(_v: AnimationLoopValue): void {
     if (this.preview) return;
     super.update(_v);
-    this.updateControls();
+    updateControls(this);
     this.updateObjects();
-  }
-
-  updateControls() {
-    const controls = this.getControls();
-
-    const velocity =
-      this.state.weaponVelocity[this.modules.weapon.getSlotIndex()]!;
-
-    const precision = controls[ControlAction.MODIFIER];
-
-    let value = 0.005;
-    if (precision) {
-      value *= 1 / 5;
-    }
-
-    if (controls[ControlAction.UP]) {
-      velocity.y -= value;
-    }
-    if (controls[ControlAction.DOWN]) {
-      velocity.y += value;
-    }
-    if (controls[ControlAction.LEFT]) {
-      velocity.x += value;
-    }
-    if (controls[ControlAction.RIGHT]) {
-      velocity.x -= value;
-    }
-    if (this.modules.weapon.isAutoAimActive()) return;
-    if (controls[ControlAction.FIRE_PRIMARY]) {
-      this.modules.weapon.shoot();
-    } else {
-      this.modules.weapon.abortShoot();
-    }
   }
 
   private updateObjects() {

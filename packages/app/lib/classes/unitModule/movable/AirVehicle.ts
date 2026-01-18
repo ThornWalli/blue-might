@@ -1,4 +1,5 @@
 import { ReplaySubject } from 'rxjs';
+import { Vector3 } from 'three';
 
 import MovableUnitModule, {
   type MovableUnitModuleObservables,
@@ -33,6 +34,8 @@ export interface AirVehicleUnitModuleOptions extends MovableUnitModuleOptions {
   gearsHeight: number;
 }
 export interface AirVehicleUnitModuleState extends MovableUnitModuleState {
+  tilt: Vector3; // x=pitch, y=unused, z=roll (right-handed; adjust as needed)
+  yawVelocity?: number;
   gearsOpened: boolean;
   gearsActive: boolean;
   isAirborne?: boolean;
@@ -63,6 +66,8 @@ export default class AirVehicleUnitModule<
       } as Options,
       {
         ...state,
+        tilt: state.tilt ?? new Vector3(0, 0, 0),
+        yawVelocity: state.yawVelocity ?? 0,
         flightStatus: FLIGHT_STATUS.LANDED,
         isAirborne: state.isAirborne ?? false,
         gearsActive: false,
@@ -86,10 +91,13 @@ export default class AirVehicleUnitModule<
   }
 
   toggleGears() {
-    if (!this.state.gearsActive) {
+    if (
+      !this.state.gearsActive &&
+      this.state.flightStatus !== FLIGHT_STATUS.LANDED &&
+      this.state.flightStatus !== FLIGHT_STATUS.LANDING
+    ) {
       this.state.gearsActive = true;
       this.observables.gearsActive$.next(this.state.gearsActive);
-      console.log('Toggling gears to', this.state.gearsActive);
     }
   }
   getGearsOpened() {
@@ -109,7 +117,7 @@ export default class AirVehicleUnitModule<
 
   setFlightStatus(flightStatus: FLIGHT_STATUS) {
     if (this.state.flightStatus === flightStatus) return;
-    this.lastFlightStatus = flightStatus;
+    this.lastFlightStatus = this.state.flightStatus;
     this.state.flightStatus = flightStatus;
     this.observables.flightStatus$.next(flightStatus);
   }
@@ -133,5 +141,17 @@ export default class AirVehicleUnitModule<
     }
 
     this.observables.landingPort$.next(landingPort);
+  }
+
+  getMaxPitch() {
+    return Math.PI / 2;
+  }
+
+  getMaxRoll() {
+    return Math.PI / 2;
+  }
+
+  getTilt() {
+    return this.state.tilt;
   }
 }

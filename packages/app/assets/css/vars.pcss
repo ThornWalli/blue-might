@@ -1,6 +1,8 @@
 :root {
   --font-base: 'Open Sans', sans-serif;
-  --font-bit-font: 'BitFont', sans-serif;
+  --font-bit-font-family: 'BitFont', sans-serif;
+  --font-bit-font-size: 10px;
+  --font-bit-line-height: 10px;
 
   --color-white: #FFFFFF;
   --rgb-white: 255 255 255;
@@ -119,11 +121,12 @@
 --bm-easing-out: cubic-bezier(0.4, 0, 0.5, 1);
 
 
-/* overlay */
---bm-overlay-background: #000;
---bm-overlay-backdrop-blur: var(--bm-blur-default);
---bm-overlay-border-radius: 0;
---bm-overlay-box-shadow: 0 0 2px 1px  rgb(0 0 0 / 80%);
+/* panel */
+--bm-panel-background: #000;
+--bm-panel-foreground: #fff;
+--bm-panel-border-color: #2F3330;
+--bm-panel-border-radius: 0;
+--bm-panel-box-shadow: none;
 
 
 --bm-panel-offset: var(--bm-spacing-medium);
@@ -198,10 +201,8 @@
 --color-wall-white-highlight: #FFFFFFFF;
 --color-wall-white-shadow: #D6D3C8FF;
 --color-wall-white-dark: #B8B5A8FF;
+
+
+
+
 }
-
-
-
-
-
-

@@ -24,27 +24,25 @@ import AttackUnitModule, {
   ATTACK_TYPE
 } from '@blue-might/app/lib/classes/unitModule/Attack';
 import {
-  ControlAction,
-  type ControlState
-} from '@blue-might/app/lib/classes/playerModule/Controls';
-import {
   autoAimFunction,
   createBarrelTargetShoot
 } from '@blue-might/app/lib/utils/turret';
-import { fromEvent } from 'rxjs/internal/observable/fromEvent';
-import { ReplaySubject, Subject, filter } from 'rxjs';
+import { ReplaySubject, Subject } from 'rxjs';
 import { playSound } from '@blue-might/weapon/utils';
 import { lerp } from 'three/src/math/MathUtils.js';
 import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
+import type {
+  WeaponSupportOptions,
+  WeaponSupportState
+} from '@blue-might/app/lib/types/unit';
+import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
+import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/missle_launcher_1.glb?url';
 
-interface State {
+interface State extends WeaponSupportState {
   opened: boolean;
   opening: boolean;
-  weaponActive: boolean;
-  weaponVelocity: Vector2;
-  weaponTargetRotation: Vector2[];
 }
 
 interface MissleLauncherObservables extends UnitObservables {
@@ -52,11 +50,8 @@ interface MissleLauncherObservables extends UnitObservables {
   opening$: Subject<boolean>;
 }
 
-export interface MissleLauncherOptions extends BuildingUnitOptions {
-  weaponAngles: {
-    min: Vector2;
-    max: Vector2;
-  }[];
+export interface MissleLauncherOptions
+  extends BuildingUnitOptions, WeaponSupportOptions {
   rotationSpeed: number;
 }
 
@@ -71,12 +66,15 @@ export type MissleLauncherModuleList = BuildingUnitModuleList &
 
 const CLOSE_DELAY = 1000;
 
-export default class MissleLauncher_1 extends BuildingUnit<
-  MissleLauncherModules,
-  MissleLauncherModuleList,
-  MissleLauncherOptions,
-  MissleLauncherObservables
-> {
+export default class MissleLauncher_1
+  extends BuildingUnit<
+    MissleLauncherModules,
+    MissleLauncherModuleList,
+    MissleLauncherOptions,
+    MissleLauncherObservables
+  >
+  implements WeaponUnitInterface<State>
+{
   static override KEY = 'missle_launcher_1';
   closeTimeout: number = 0;
   reopen = false;
@@ -85,7 +83,7 @@ export default class MissleLauncher_1 extends BuildingUnit<
     opened: false,
     opening: false,
     weaponActive: false,
-    weaponVelocity: new Vector2(0, 0),
+    weaponVelocity: [new Vector2(0, 0)],
     weaponTargetRotation: [new Vector2(0, 0)]
   };
 
@@ -144,13 +142,6 @@ export default class MissleLauncher_1 extends BuildingUnit<
                   projectile: PROJECTILE_TYPE.AIR_HOMING_MISSILE_1
                 })
               }
-              // {
-              //   weapon: new weapons.air_surface_missile_1({
-              //     perSeconds: 0.5
-              //   }),
-              //   maxAmmunition: Infinity,
-              //   ammunition: Infinity
-              // }
             ],
             ...options.moduleOptions?.weapon
           },
@@ -158,7 +149,7 @@ export default class MissleLauncher_1 extends BuildingUnit<
             ...options.moduleOptions?.collision,
             targets: [
               {
-                name: 'head',
+                name: 'base',
                 childIndex: 1
               }
             ]
@@ -230,7 +221,6 @@ export default class MissleLauncher_1 extends BuildingUnit<
 
     this.subscription.add(
       this.modules.attack.observables.target$.subscribe(target => {
-        debugger;
         if (target) {
           this.openWeapon(true);
         } else {
@@ -250,22 +240,9 @@ export default class MissleLauncher_1 extends BuildingUnit<
         this.root.getObjectByName('weapon')!.visible = opened;
       })
     );
-
-    this.subscription.add(
-      fromEvent(this.modules.animation.getMixer(), 'finished')
-        .pipe(filter(({ action }) => action.getClip().name === 'open'))
-        .subscribe(() => {
-          this.setOpening(false);
-          this.setOpened(!this.state.opened);
-          if (this.reopen && !this.state.opened) {
-            this.reopen = false;
-            this.openWeapon();
-          }
-        })
-    );
   }
 
-  private openWeapon(force = false) {
+  private async openWeapon(force = false) {
     window.clearTimeout(this.closeTimeout);
     if (this.state.opening || this.state.opened) {
       if (this.state.opening && force) {
@@ -274,18 +251,30 @@ export default class MissleLauncher_1 extends BuildingUnit<
       return;
     }
     this.setOpening(true);
-    this.modules.animation.playAction('open', {
+
+    await this.modules.animation.playAction('open', {
       reverse: false
     });
+
+    this.setOpening(false);
+    this.setOpened(true);
   }
 
-  closeWeapon() {
+  async closeWeapon() {
     window.clearTimeout(this.closeTimeout);
     if (this.state.opening || !this.state.opened) return;
     this.setOpening(true);
-    this.modules.animation.playAction('open', {
+
+    await this.modules.animation.playAction('open', {
       reverse: true
     });
+
+    this.setOpening(false);
+    this.setOpened(false);
+    if (this.reopen) {
+      this.reopen = false;
+      this.openWeapon();
+    }
   }
 
   private setOpened(opened: boolean) {
@@ -353,14 +342,6 @@ export default class MissleLauncher_1 extends BuildingUnit<
     return object;
   }
 
-  private getControls(): Partial<ControlState> {
-    if (!this.modules.player) return {};
-
-    return (
-      this.modules.player?.getPlayer()?.modules.controls.getControls() ?? {}
-    );
-  }
-
   isReadyToClose = false;
 
   override update(_v: AnimationLoopValue): void {
@@ -371,41 +352,20 @@ export default class MissleLauncher_1 extends BuildingUnit<
     if (this.modules.damage.isDestroyed()) return;
 
     if (this.state.opened) {
-      this.updateControls();
+      updateControls(this);
     }
     this.updateObjects();
-  }
-
-  updateControls() {
-    const controls = this.getControls();
-    if (controls[ControlAction.UP]) {
-      this.state.weaponVelocity.y -= 0.005;
-    }
-    if (controls[ControlAction.DOWN]) {
-      this.state.weaponVelocity.y += 0.005;
-    }
-    if (controls[ControlAction.LEFT]) {
-      this.state.weaponVelocity.x += 0.005;
-    }
-    if (controls[ControlAction.RIGHT]) {
-      this.state.weaponVelocity.x -= 0.005;
-    }
-    if (this.modules.weapon.isAutoAimActive()) return;
-    if (controls[ControlAction.FIRE_PRIMARY]) {
-      this.modules.weapon.shoot();
-    } else {
-      this.modules.weapon.abortShoot();
-    }
   }
 
   resetPosition = false;
   private updateObjects() {
     this.objects.forEach(({ head: headObj, barrels: [barrelObj] }, index) => {
+      const weaponVelocity = this.state.weaponVelocity[index]!;
       if (headObj && barrelObj) {
         // NEU: Manuelle Bewegung nur, wenn Auto-Aim nicht aktiv ist
         if (!this.modules.weapon.isAutoAimActive()) {
-          headObj.rotation.y += this.state.weaponVelocity.x;
-          barrelObj.rotation.x += this.state.weaponVelocity.y;
+          headObj.rotation.y += weaponVelocity.x;
+          barrelObj.rotation.x += weaponVelocity.y;
         }
 
         if (this.resetPosition) {
@@ -447,10 +407,10 @@ export default class MissleLauncher_1 extends BuildingUnit<
           )
         );
 
-        this.state.weaponVelocity.multiplyScalar(0.9);
+        weaponVelocity.multiplyScalar(0.9);
 
-        if (this.state.weaponVelocity.length() < 0.001) {
-          this.state.weaponVelocity.set(0, 0);
+        if (weaponVelocity.length() < 0.001) {
+          weaponVelocity.set(0, 0);
         } else {
           this.modules.weapon.updateSourcePosition(0);
         }

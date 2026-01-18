@@ -1,8 +1,14 @@
 <template>
-  <div ref="screenEl" class="bm-gun-screen">
-    <canvas ref="canvasEl"></canvas>
-    <div class="effect"></div>
-    <div class="target"></div>
+  <div class="bm-gun-screen">
+    <div ref="screenEl" class="screen">
+      <canvas ref="canvasEl"></canvas>
+      <div class="effect"></div>
+      <div class="target"></div>
+    </div>
+    <div class="controls">
+      <bm-button @click="zoom *= zoomFactor">Z (+)</bm-button>
+      <bm-button @click="zoom /= zoomFactor">Z (-)</bm-button>
+    </div>
   </div>
 </template>
 
@@ -23,6 +29,8 @@ import type App from '../lib/classes/App';
 import type Unit from '../lib/classes/Unit';
 import type { UnitModules } from '../lib/classes/Unit';
 
+import BmButton from './Button.vue';
+
 const screenEl = ref<HTMLDivElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
 
@@ -30,6 +38,9 @@ const $props = defineProps<{
   app: App;
   unit: Unit<UnitModules & { weapon: WeaponUnitModule }>;
 }>();
+
+const zoom = ref(1);
+const zoomFactor = ref(1.25);
 
 let renderer: WebGLRenderer;
 let composer: EffectComposer;
@@ -77,6 +88,9 @@ function setup() {
           camera.position.y + sourceDirection.y,
           camera.position.z + sourceDirection.z
         );
+
+        camera.fov = 60 / zoom.value; // Basis-FOV geteilt durch Zoom-Faktor
+        camera.updateProjectionMatrix(); // NEU: Projektionsmatrix aktualisieren
       }
     }
   });
@@ -98,64 +112,77 @@ onUnmounted(() => {
 .bm-gun-screen {
   position: relative;
 
-  &::before {
-    display: block;
-    padding-top: 100%;
-    content: '';
-  }
+  & .screen {
+    position: relative;
 
-  & canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
+    &::before {
+      display: block;
+      padding-top: 100%;
+      content: '';
+    }
 
-  & .effect {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    background: lime;
+    & canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
 
-    /*
+    & .effect {
+      position: absolute;
+      top: 0;
+      left: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: lime;
+
+      /*
     box-shadow:
       inset 0 12px 18px rgb(255 255 255 / 25%),
       inset 0 -18px 30px rgb(0 0 0 / 55%),
       0 25px 50px rgb(0 0 0 / 60%);
       */
-    mix-blend-mode: multiply;
-  }
+      mix-blend-mode: multiply;
+    }
 
-  & .target {
-    --color: lime;
+    & .target {
+      --color: lime;
 
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 8px;
-    height: 8px;
-    content: '';
-    border: solid var(--color) 1px;
-    border-radius: 50%;
-    opacity: 0.4;
-    transform: translate(-50%, -50%);
-
-    &::before {
-      display: block;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: flex;
       align-items: center;
       justify-content: center;
-      width: 2px;
-      height: 2px;
+      width: 8px;
+      height: 8px;
       content: '';
-      background: var(--color);
+      border: solid var(--color) 1px;
+      border-radius: 50%;
+      opacity: 0.4;
+      transform: translate(-50%, -50%);
+
+      &::before {
+        display: block;
+        align-items: center;
+        justify-content: center;
+        width: 2px;
+        height: 2px;
+        content: '';
+        background: var(--color);
+      }
+    }
+  }
+
+  & .controls {
+    display: flex;
+    width: 100%;
+
+    & > * {
+      flex: 1;
     }
   }
 }

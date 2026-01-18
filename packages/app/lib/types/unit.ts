@@ -1,4 +1,4 @@
-import type { Vector3 } from 'three';
+import type { Vector2, Vector3 } from 'three';
 
 import type { UnitModuleState } from '../classes/UnitModule';
 import type { ROTATION } from '../utils/rotation';
@@ -27,3 +27,18 @@ export type UnitDescription<
   Rotation = ROTATION,
   Position = Vector3
 > = RawUnitDescription<Rotation, Position>;
+
+export interface WeaponSupportState {
+  weaponActive: boolean;
+  weaponControlPrecision?: number;
+  weaponVelocity: Vector2[];
+  weaponTargetRotation: Vector2[];
+}
+
+export interface WeaponSupportOptions {
+  weaponAngles: {
+    revert?: boolean;
+    min: Vector2;
+    max: Vector2;
+  }[];
+}

@@ -1,7 +1,14 @@
 /* eslint-disable complexity */
 
 import { Vector3 } from 'three';
-import { EMPTY, filter, fromEvent, switchMap } from 'rxjs';
+import {
+  distinctUntilChanged,
+  EMPTY,
+  filter,
+  fromEvent,
+  map,
+  switchMap
+} from 'rxjs';
 import { isUnitDestroyed } from '@blue-might/app/lib/utils/unit';
 
 import type { AnimationLoopValue } from '../../../Renderer';
@@ -59,9 +66,7 @@ export interface HelicopterUnitModuleOptions extends AirVehicleUnitModuleOptions
 }
 
 export interface HelicopterUnitModuleState extends AirVehicleUnitModuleState {
-  tilt: Vector3; // x=pitch, y=unused, z=roll (right-handed; adjust as needed)
   groundNormal: Vector3;
-  yawVelocity?: number;
   //#region altitude
   targetAltitude?: number;
   //#endregion
@@ -119,9 +124,7 @@ export default class HelicopterUnitModule<
       } as Options,
       {
         ...state,
-        tilt: state.tilt ?? new Vector3(0, 0, 0),
-        groundNormal: state.groundNormal ?? new Vector3(0, 1, 0),
-        yawVelocity: state.yawVelocity ?? 0
+        groundNormal: state.groundNormal ?? new Vector3(0, 1, 0)
       } as State,
       debug
     );
@@ -170,6 +173,26 @@ export default class HelicopterUnitModule<
         }
       })
     );
+
+    // auto gears by height
+    this.subscription.add(
+      unit.observables.position$
+        .pipe(
+          map(position => {
+            const groundHeight =
+              unit
+                .getMap()
+                ?.modules.ground.getSurfaceHeightAt(
+                  position.x,
+                  position.z,
+                  u => !u.equals(unit)
+                ) ?? 0;
+            return position.y - groundHeight < 1;
+          }),
+          distinctUntilChanged()
+        )
+        .subscribe(() => this.toggleGears())
+    );
   }
 
   override getMaxPower(): number {
@@ -186,12 +209,12 @@ export default class HelicopterUnitModule<
     return 0;
   }
 
-  getMaxPitch() {
+  override getMaxPitch() {
     // Wenn die Gears gerade animiert werden ODER ausgefahren sind, begrenze die Neigung stark.
     return this.state.gearsActive || this.state.gearsOpened ? 0.2 : 0.6;
   }
 
-  getMaxRoll() {
+  override getMaxRoll() {
     // Wenn die Gears gerade animiert werden ODER ausgefahren sind, begrenze die Neigung stark.
     return this.state.gearsActive || this.state.gearsOpened ? 0.2 : 0.6;
   }
@@ -555,7 +578,8 @@ export default class HelicopterUnitModule<
             landingPort.setLandedUnit(unit);
           }
         }
-        status = FLIGHT_STATUS.LANDED;
+
+        this.setFlightStatus(FLIGHT_STATUS.LANDED);
         return;
       }
     }
@@ -594,10 +618,6 @@ export default class HelicopterUnitModule<
   }
 
   lastUpdateTime = 0;
-
-  getTilt() {
-    return this.state.tilt;
-  }
 
   getTmpRight() {
     return this._right;

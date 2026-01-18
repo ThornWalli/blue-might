@@ -1,5 +1,6 @@
 import type { UnitModules } from '../classes/Unit';
 import type Unit from '../classes/Unit';
+import type AirVehicleUnit from '../classes/unit/AirVehicle';
 import type BuildingUnitModule from '../classes/unitModule/Building';
 import type AirVehicleUnitModule from '../classes/unitModule/movable/AirVehicle';
 import type GroundVehicleUnitModule from '../classes/unitModule/movable/GroundVehicle';
@@ -9,20 +10,27 @@ export function isUnitDestroyed(unit: Unit): boolean {
   return unit.modules.damage.isDestroyed();
 }
 
-export function isVehicle(unit: Unit): boolean {
-  return 'movable' in unit.modules;
+export function isVehicle(unit?: Unit | null): boolean {
+  return (unit && 'movable' in unit.modules) ?? false;
 }
 
-export function isSeaVehicle(unit: Unit): boolean {
-  return 'seaVehicle' in unit.modules;
+export function isSeaVehicle(unit?: Unit | null): boolean {
+  return (unit && 'seaVehicle' in unit.modules) ?? false;
 }
 
-export function isAirVehicle(unit: Unit): boolean {
-  return 'airVehicle' in unit.modules;
+export function isAirVehicle(unit?: Unit | null): boolean {
+  return (unit && 'airVehicle' in unit.modules) ?? false;
 }
 
-export function isGroundVehicle(unit: Unit): boolean {
-  return 'groundVehicle' in unit.modules;
+export function getAirVehicle(unit: Unit | null): AirVehicleUnit | null {
+  if (unit && 'airVehicle' in unit.modules) {
+    return unit as AirVehicleUnit;
+  }
+  return null;
+}
+
+export function isGroundVehicle(unit?: Unit | null): boolean {
+  return (unit && 'groundVehicle' in unit.modules) ?? false;
 }
 
 export function ignoreByUnitByType(filter: {

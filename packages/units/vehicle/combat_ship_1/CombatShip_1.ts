@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import type {
   SetupContext,
   UnitConstructorOptions
@@ -20,25 +19,23 @@ import WeaponUnitModule, {
   type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import {
-  ControlAction,
-  type ControlState
-} from '@blue-might/app/lib/classes/playerModule/Controls';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
 import { playSound } from '@blue-might/weapon/utils';
+import type {
+  WeaponSupportOptions,
+  WeaponSupportState
+} from '@blue-might/app/lib/types/unit';
+import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
+import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/combat_ship_1.glb?url';
 
-interface State {
-  weaponActive: boolean;
-  weaponVelocity: Vector2[];
-  weaponTargetRotation: Vector2[];
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface State extends WeaponSupportState {}
 
-export interface CombatShipOptions extends SeaVehicleUnitOptions {
-  minWeaponAngle: Vector2;
-  maxWeaponAngle: Vector2;
+export interface CombatShipOptions
+  extends SeaVehicleUnitOptions, WeaponSupportOptions {
   rotationSpeed: number;
 }
 
@@ -50,11 +47,14 @@ export interface CombatShipModules extends SeaVehicleUnitModules {
 export type CombatShipModuleList = SeaVehicleUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
-export default class CombatShip_1 extends SeaVehicleUnit<
-  CombatShipModules,
-  CombatShipModuleList,
-  CombatShipOptions
-> {
+export default class CombatShip_1
+  extends SeaVehicleUnit<
+    CombatShipModules,
+    CombatShipModuleList,
+    CombatShipOptions
+  >
+  implements WeaponUnitInterface<State>
+{
   static override KEY = 'boat_1';
 
   state: State = {
@@ -80,12 +80,12 @@ export default class CombatShip_1 extends SeaVehicleUnit<
         name: 'Boat 1',
         options: {
           ...options.options,
-          minWeaponAngle:
-            options.options?.minWeaponAngle ??
-            new Vector2((-Math.PI * 1) / 4, -Math.PI * (3 / 5)),
-          maxWeaponAngle:
-            options.options?.maxWeaponAngle ??
-            new Vector2(0, Math.PI * (3 / 5)),
+          weaponAngles: options.options?.weaponAngles ?? [
+            {
+              min: new Vector2((-Math.PI * 1) / 4, -Math.PI * (3 / 5)),
+              max: new Vector2(0, Math.PI * (3 / 5))
+            }
+          ],
           rotationSpeed: options.options?.rotationSpeed ?? 0.25
         },
         moduleOptions: {
@@ -95,12 +95,7 @@ export default class CombatShip_1 extends SeaVehicleUnit<
               autoAimFunction(
                 this.getMap()!.modules.shoot,
                 options,
-                [
-                  {
-                    min: this.options.minWeaponAngle,
-                    max: this.options.maxWeaponAngle
-                  }
-                ],
+                this.options.weaponAngles,
                 this.options.rotationSpeed,
                 this.objects.map(obj => ({ barrels: obj.barrels })),
                 this.state,
@@ -219,45 +214,11 @@ export default class CombatShip_1 extends SeaVehicleUnit<
     return mesh;
   }
 
-  private getControls(): Partial<ControlState> {
-    if (!this.modules.player) return {};
-
-    return (
-      this.modules.player?.getPlayer()?.modules.controls.getControls() ?? {}
-    );
-  }
-
   override update(_v: AnimationLoopValue): void {
     if (this.preview) return;
     super.update(_v);
-    this.updateControls();
+    updateControls(this);
     this.updateObjects();
-  }
-
-  updateControls() {
-    const controls = this.getControls();
-
-    const velocity =
-      this.state.weaponVelocity[this.modules.weapon.getSlotIndex()]!;
-
-    if (controls[ControlAction.UP]) {
-      velocity.y -= 0.005;
-    }
-    if (controls[ControlAction.DOWN]) {
-      velocity.y += 0.005;
-    }
-    if (controls[ControlAction.LEFT]) {
-      velocity.x += 0.005;
-    }
-    if (controls[ControlAction.RIGHT]) {
-      velocity.x -= 0.005;
-    }
-    if (this.modules.weapon.isAutoAimActive()) return;
-    if (controls[ControlAction.FIRE_PRIMARY]) {
-      this.modules.weapon.shoot();
-    } else {
-      this.modules.weapon.abortShoot();
-    }
   }
 
   private updateObjects() {
@@ -273,12 +234,12 @@ export default class CombatShip_1 extends SeaVehicleUnit<
         // barrelObj.rotation.x += this.state.weaponVelocity.y;
 
         barrelObjX.rotation.x = Math.max(
-          this.options.minWeaponAngle.x,
-          Math.min(this.options.maxWeaponAngle.x, barrelObjX.rotation.x)
+          this.options.weaponAngles[0]!.min.x,
+          Math.min(this.options.weaponAngles[0]!.max.x, barrelObjX.rotation.x)
         );
         barrelObjY.rotation.y = Math.max(
-          this.options.minWeaponAngle.y,
-          Math.min(this.options.maxWeaponAngle.y, barrelObjY.rotation.y)
+          this.options.weaponAngles[0]!.min.y,
+          Math.min(this.options.weaponAngles[0]!.max.y, barrelObjY.rotation.y)
         );
 
         velocity.multiplyScalar(0.9);

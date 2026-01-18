@@ -20,7 +20,7 @@ export default class Lighthouse_1<
   Modules extends BuildingUnitModules = BuildingUnitModules,
   ModuleList extends BuildingUnitModuleList = BuildingUnitModuleList
 > extends BuildingUnit<Modules, ModuleList, Options> {
-  static override KEY = 'tower_1';
+  static override KEY = 'lighthouse_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []

@@ -1,7 +1,7 @@
 import {
-  AnimationClip,
   AnimationMixer,
-  Object3D,
+  type Object3D,
+  AnimationClip,
   type AnimationAction,
   type AnimationActionLoopStyles
 } from 'three';
@@ -14,7 +14,6 @@ import UnitModule, {
   type UnitModuleSetupContext,
   type UnitModuleState
 } from '../UnitModule';
-import { OBJECT_NAME } from '../../utils/object';
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 
@@ -94,10 +93,43 @@ export class AnimationUnitModule extends UnitModule<
     this.mixer?.update(delta);
   }
 
+  runningAnimations = new Map<
+    string,
+    {
+      action: AnimationAction;
+      resolve: (value: AnimationAction) => void;
+    }
+  >();
+
+  private setupMixer(object: Object3D) {
+    this.mixer = new AnimationMixer(object);
+
+    // Setze isAnimating zurück, wenn Action endet
+    this.mixer.addEventListener('finished', event => {
+      const runningAnimation = this.runningAnimations.get(
+        event.action.getClip().name
+      );
+      if (!runningAnimation) {
+        console.warn(
+          'Animation finished but not tracked:',
+          event.action.getClip().name
+        );
+        return;
+      }
+      const { action, resolve } = runningAnimation;
+      if (event.action === action) {
+        this.activeActionsCount--;
+
+        if (this.activeActionsCount === 0) {
+          this.isAnimating = false;
+        }
+        resolve(event.action);
+      }
+    });
+  }
+
   override async setupMesh(context: UnitModuleSetupContext) {
-    const animationWrapper = new Object3D();
-    animationWrapper.name = OBJECT_NAME.MESH_ANIMATION;
-    this.mixer = new AnimationMixer(context.mesh);
+    this.setupMixer(context.mesh);
 
     this.animations.forEach(clip => {
       const tracks = clip.tracks;
@@ -162,6 +194,7 @@ export class AnimationUnitModule extends UnitModule<
       duration?: number;
     } = {}
   ) {
+    const { promise, resolve } = Promise.withResolvers<AnimationAction>();
     // console.log('Play action:', name, from, duration, reverse);
     const next = this.actions[name];
     if (!next) return;
@@ -190,26 +223,20 @@ export class AnimationUnitModule extends UnitModule<
       next.crossFadeFrom(current, duration, true);
     }
 
-    next.play();
-
     // Tracking starten
     this.activeActionsCount++;
     this.isAnimating = true;
-
-    // Setze isAnimating zurück, wenn Action endet
-    this.mixer.addEventListener('finished', event => {
-      if (event.action === next) {
-        this.activeActionsCount--;
-        if (this.activeActionsCount === 0) {
-          this.isAnimating = false;
-        }
-      }
-    });
 
     this.observables.action$.next({
       current: name,
       previous: from ?? null
     });
+
+    this.runningAnimations.set(name, { action: next, resolve });
+
+    next.play();
+
+    return promise;
   }
   stopAction(name: string) {
     const action = this.actions[name];

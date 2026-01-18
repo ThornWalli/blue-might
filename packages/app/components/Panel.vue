@@ -24,7 +24,7 @@ const $props = defineProps<{
   title?: string;
   hideTitle?: boolean;
   position?: PANEL_POSITION | `${PANEL_POSITION}`;
-  styleType?: 'none' | 'default' | 'outlined';
+  styleType?: 'none' | 'default' | 'outlined' | 'transparent';
 }>();
 
 const hasTitle = computed(() => $props.title || $slots.title);
@@ -54,24 +54,23 @@ export enum PANEL_POSITION {
   padding: var(--bm-spacing-medium);
   pointer-events: auto;
 
+  &.style-type-transparent {
+    background: transparent;
+  }
+
   &.style-type-default {
     align-items: center;
     color: white;
-    background: var(--bm-overlay-background);
-
-    /* box-shadow: var(--bm-overlay-box-shadow); */
-
-    /* backdrop-filter: blur(5px); */
+    color: var(--bm-panel-foreground);
+    background: var(--bm-panel-background);
   }
 
   &.style-type-outlined {
     color: white;
-    background: var(--bm-overlay-background);
-    border: solid 2px rgb(255 255 255 / 80%);
-    border-radius: var(--bm-overlay-border-radius);
-    box-shadow: var(--bm-overlay-box-shadow);
-
-    /* backdrop-filter: blur(5px); */
+    background: var(--bm-panel-background);
+    border: solid 2px var(--bm-panel-border-color);
+    border-radius: var(--bm-panel-border-radius);
+    box-shadow: var(--bm-panel-box-shadow);
   }
 
   &.has-title {
@@ -140,6 +139,38 @@ export enum PANEL_POSITION {
   &.position-bottom-right {
     right: var(--panel-offset);
     bottom: var(--panel-offset);
+  }
+}
+
+:deep(fieldset) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bm-spacing-small);
+  padding: 0;
+  margin: 0;
+  border: none;
+
+  & legend {
+    display: flex;
+    gap: var(--bm-spacing-medium);
+    align-items: center;
+    width: 100%;
+    margin-bottom: var(--bm-spacing-medium);
+    font-family: var(--font-bit-font-family);
+    font-size: var(--font-bit-font-size);
+    line-height: var(--font-bit-line-height);
+    opacity: 0.6;
+
+    &::after {
+      flex: 1;
+      content: '';
+      border-top: solid white 2px;
+    }
+  }
+
+  & > div {
+    display: flex;
+    flex-direction: column;
   }
 }
 </style>

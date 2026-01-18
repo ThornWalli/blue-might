@@ -1,5 +1,9 @@
 <template>
-  <bm-panel v-if="unit" class="bm-panel-gun-screen" title="Gun Screen">
+  <bm-panel
+    v-if="unit"
+    hide-title
+    class="bm-panel-gun-screen"
+    title="Gun Screen">
     <bm-gun-screen :app="$props.app" :unit="unit" />
   </bm-panel>
 </template>

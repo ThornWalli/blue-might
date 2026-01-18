@@ -47,7 +47,8 @@ export default defineNuxtConfig({
     '@/assets/css/base.pcss',
     '@blue-might/app/assets/css/vars.pcss',
     '@blue-might/app/assets/css/transitions.pcss',
-    '@blue-might/app/assets/css/base.pcss'
+    '@blue-might/app/assets/css/base.pcss',
+    '@blue-might/app/assets/css/mixins.pcss'
   ],
 
   imports: {

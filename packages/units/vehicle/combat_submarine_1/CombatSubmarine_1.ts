@@ -20,28 +20,23 @@ import WeaponUnitModule, {
   type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import {
-  ControlAction,
-  type ControlState
-} from '@blue-might/app/lib/classes/playerModule/Controls';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
 import { playSound } from '@blue-might/weapon/utils';
+import type {
+  WeaponSupportOptions,
+  WeaponSupportState
+} from '@blue-might/app/lib/types/unit';
+import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
+import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/combat_submarine_1.glb?url';
 
-interface State {
-  weaponActive: boolean;
-  weaponVelocity: Vector2[];
-  weaponTargetRotation: Vector2[];
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface State extends WeaponSupportState {}
 
-export interface CombatSubmarineOptions extends SeaVehicleUnitOptions {
-  weaponAngles: {
-    revert?: boolean;
-    min: Vector2;
-    max: Vector2;
-  }[];
+export interface CombatSubmarineOptions
+  extends SeaVehicleUnitOptions, WeaponSupportOptions {
   rotationSpeed: number;
 }
 
@@ -53,11 +48,14 @@ export interface CombatSubmarineModules extends SeaVehicleUnitModules {
 export type CombatSubmarineModuleList = SeaVehicleUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
-export default class CombatSubmarine_1 extends SeaVehicleUnit<
-  CombatSubmarineModules,
-  CombatSubmarineModuleList,
-  CombatSubmarineOptions
-> {
+export default class CombatSubmarine_1
+  extends SeaVehicleUnit<
+    CombatSubmarineModules,
+    CombatSubmarineModuleList,
+    CombatSubmarineOptions
+  >
+  implements WeaponUnitInterface<State>
+{
   static override KEY = 'combat_submarine_1';
 
   state: State = {
@@ -245,45 +243,11 @@ export default class CombatSubmarine_1 extends SeaVehicleUnit<
     return mesh;
   }
 
-  private getControls(): Partial<ControlState> {
-    if (!this.modules.player) return {};
-
-    return (
-      this.modules.player?.getPlayer()?.modules.controls.getControls() ?? {}
-    );
-  }
-
   override update(_v: AnimationLoopValue): void {
     if (this.preview) return;
     super.update(_v);
-    this.updateControls();
+    updateControls(this);
     this.updateObjects();
-  }
-
-  updateControls() {
-    const controls = this.getControls();
-
-    const velocity =
-      this.state.weaponVelocity[this.modules.weapon.getSlotIndex()]!;
-
-    if (controls[ControlAction.UP]) {
-      velocity.y -= 0.005;
-    }
-    if (controls[ControlAction.DOWN]) {
-      velocity.y += 0.005;
-    }
-    if (controls[ControlAction.LEFT]) {
-      velocity.x += 0.005;
-    }
-    if (controls[ControlAction.RIGHT]) {
-      velocity.x -= 0.005;
-    }
-    if (this.modules.weapon.isAutoAimActive()) return;
-    if (controls[ControlAction.FIRE_PRIMARY]) {
-      this.modules.weapon.shoot();
-    } else {
-      this.modules.weapon.abortShoot();
-    }
   }
 
   private updateObjects() {

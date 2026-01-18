@@ -17,10 +17,6 @@ import WeaponUnitModule, {
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { replaceColors } from '@blue-might/app/lib/utils/material';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
-import {
-  ControlAction,
-  type ControlState
-} from '@blue-might/app/lib/classes/playerModule/Controls';
 import { playSound } from '@blue-might/weapon/utils';
 import {
   autoAimFunction,
@@ -31,20 +27,20 @@ import {
   PROJECTILE_TYPE,
   WEAPON_SHOOT_TYPE
 } from '@blue-might/app/lib/types/weapon';
+import type {
+  WeaponSupportOptions,
+  WeaponSupportState
+} from '@blue-might/app/lib/types/unit';
+import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
+import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/turret_1.glb?url';
 
-interface State {
-  weaponActive: boolean;
-  weaponVelocity: Vector2;
-  weaponTargetRotation: Vector2[];
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface State extends WeaponSupportState {}
 
-export interface TurretOptions extends BuildingUnitOptions {
-  weaponAngles: {
-    min: Vector2;
-    max: Vector2;
-  }[];
+export interface TurretOptions
+  extends BuildingUnitOptions, WeaponSupportOptions {
   rotationSpeed: number;
 }
 
@@ -57,16 +53,15 @@ export interface TurretModules extends BuildingUnitModules {
 export type TurretModuleList = BuildingUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
-export default class Turret_1 extends BuildingUnit<
-  TurretModules,
-  TurretModuleList,
-  TurretOptions
-> {
+export default class Turret_1
+  extends BuildingUnit<TurretModules, TurretModuleList, TurretOptions>
+  implements WeaponUnitInterface<State>
+{
   static override KEY = 'turret_1';
 
   state: State = {
     weaponActive: false,
-    weaponVelocity: new Vector2(0, 0),
+    weaponVelocity: [new Vector2(0, 0)],
     weaponTargetRotation: [new Vector2(0, 0)]
   };
 
@@ -229,50 +224,21 @@ export default class Turret_1 extends BuildingUnit<
     return object;
   }
 
-  private getControls(): Partial<ControlState> {
-    if (!this.modules.player) return {};
-
-    return (
-      this.modules.player?.getPlayer()?.modules.controls.getControls() ?? {}
-    );
-  }
-
   override update(_v: AnimationLoopValue): void {
     if (this.preview) return;
     super.update(_v);
-    this.updateControls();
+    updateControls(this);
     this.updateObjects();
-  }
-
-  updateControls() {
-    const controls = this.getControls();
-    if (controls[ControlAction.UP]) {
-      this.state.weaponVelocity.y -= 0.005;
-    }
-    if (controls[ControlAction.DOWN]) {
-      this.state.weaponVelocity.y += 0.005;
-    }
-    if (controls[ControlAction.LEFT]) {
-      this.state.weaponVelocity.x += 0.005;
-    }
-    if (controls[ControlAction.RIGHT]) {
-      this.state.weaponVelocity.x -= 0.005;
-    }
-    if (this.modules.weapon.isAutoAimActive()) return;
-    if (controls[ControlAction.FIRE_PRIMARY]) {
-      this.modules.weapon.shoot();
-    } else {
-      this.modules.weapon.abortShoot();
-    }
   }
 
   private updateObjects() {
     this.objects.forEach(({ head: headObj, barrels: [barrelObj] }, index) => {
+      const weaponVelocity = this.state.weaponVelocity[index]!;
       if (headObj && barrelObj) {
         // NEU: Manuelle Bewegung nur, wenn Auto-Aim nicht aktiv ist
         if (!this.modules.weapon.isAutoAimActive()) {
-          headObj.rotation.y += this.state.weaponVelocity.x;
-          barrelObj.rotation.x += this.state.weaponVelocity.y;
+          headObj.rotation.y += weaponVelocity.x;
+          barrelObj.rotation.x += weaponVelocity.y;
         }
 
         headObj.rotation.y = Math.max(
@@ -288,10 +254,10 @@ export default class Turret_1 extends BuildingUnit<
           )
         );
 
-        this.state.weaponVelocity.multiplyScalar(0.9);
+        weaponVelocity.multiplyScalar(0.9);
 
-        if (this.state.weaponVelocity.length() < 0.001) {
-          this.state.weaponVelocity.set(0, 0);
+        if (weaponVelocity.length() < 0.001) {
+          weaponVelocity.set(0, 0);
         } else {
           this.modules.weapon.updateSourcePosition(0);
         }
