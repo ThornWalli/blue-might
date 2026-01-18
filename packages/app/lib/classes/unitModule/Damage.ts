@@ -157,8 +157,8 @@ export default class DamageUnitModule extends UnitModule<
   }
 
   setValue(value: number) {
-    if (!this.canDamage() && this.isDestroyed()) return;
-    this.state.damage = Math.max(0, value);
+    if (!this.canDamage()) return;
+    this.state.damage = Math.min(this.options.maxDamage, Math.max(0, value));
     this.observables.damage$.next(this.state.damage);
     if (this.isDestroyed()) {
       this.state.burnTimeLeft = this.options.fireTime;
@@ -168,6 +168,10 @@ export default class DamageUnitModule extends UnitModule<
 
   getDamageValue() {
     return this.state.damage / this.options.maxDamage;
+  }
+
+  getMaxDamage() {
+    return this.options.maxDamage;
   }
 
   public getDamageLevel() {

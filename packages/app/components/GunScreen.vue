@@ -6,8 +6,26 @@
       <div class="target"></div>
     </div>
     <div class="controls">
-      <bm-button @click="onClickZoomIn">Z (+)</bm-button>
-      <bm-button @click="onClickZoomOut">Z (-)</bm-button>
+      <button @click="onClickZoomIn">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          class="size-4">
+          <path
+            d="M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5v-3.5Z" />
+        </svg>
+      </button>
+      <button @click="onClickZoomOut">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 16 16"
+          fill="currentColor"
+          class="size-4">
+          <path
+            d="M3.75 7.25a.75.75 0 0 0 0 1.5h8.5a.75.75 0 0 0 0-1.5h-8.5Z" />
+        </svg>
+      </button>
     </div>
   </div>
 </template>
@@ -28,8 +46,6 @@ import type { EffectComposer } from 'three/examples/jsm/postprocessing/EffectCom
 import type App from '../lib/classes/App';
 import type Unit from '../lib/classes/Unit';
 import type { UnitModules } from '../lib/classes/Unit';
-
-import BmButton from './Button.vue';
 
 const screenEl = ref<HTMLDivElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
@@ -186,12 +202,33 @@ function onClickZoomOut() {
   }
 
   & .controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
     display: flex;
+    justify-content: space-between;
     width: 100%;
 
-    & > * {
-      flex: 1;
+    & button {
+      display: block;
+      padding: var(--bm-spacing-small);
+      color: black;
+      appearance: none;
+      cursor: pointer;
+      background: transparent;
+      background-color: rgb(0 255 0 / 50%);
+      border: none;
+
+      &:hover {
+        background-color: rgb(0 255 0 / 75%);
+      }
     }
+  }
+
+  & svg {
+    display: block;
+    width: 16px;
+    fill: currentColor;
   }
 }
 </style>

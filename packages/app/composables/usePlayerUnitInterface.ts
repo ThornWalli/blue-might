@@ -13,7 +13,8 @@ import {
 } from 'rxjs';
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import type App from '@blue-might/app/lib/classes/App';
-import { Euler, MathUtils, type Vector3 } from 'three';
+import type { Vector3 } from 'three';
+import { Euler, MathUtils } from 'three';
 
 import type VehicleUnit from '../lib/classes/unit/Vehicle';
 import WeaponUnitModule from '../lib/classes/unitModule/Weapon';
@@ -43,9 +44,11 @@ export default function usePlayerUnitInterface(app: App) {
   > | null>(null);
 
   const unitDamage = ref<{
+    max: number;
     value: number;
     level: number;
   }>({
+    max: 0,
     value: 0,
     level: 0
   });
@@ -57,10 +60,12 @@ export default function usePlayerUnitInterface(app: App) {
     has: boolean;
     active: boolean;
     opened: boolean;
+    canUse: boolean;
   }>({
     has: false,
     active: false,
-    opened: false
+    opened: false,
+    canUse: false
   });
   const unitSpeed = ref<string>('0');
   const unitRotation = ref<Euler>(new Euler(0, 0, 0));
@@ -85,11 +90,19 @@ export default function usePlayerUnitInterface(app: App) {
     fuelMax: 0
   });
 
-  const seaLevel = computed(() =>
+  const seaHeight = computed(() =>
     app.modules.map.getMap().modules.ground.getSeaLevel()
   );
-  const heightValue = computed(() => {
-    return seaLevel.value + ((position.value?.y ?? 0) - seaLevel.value);
+  const currentHeight = computed(() => {
+    return seaHeight.value + ((position.value?.y ?? 0) - seaHeight.value);
+  });
+
+  const groundHeight = computed(() => {
+    return position.value
+      ? app.modules.map
+          .getMap()
+          .modules.ground.getSurfaceHeightAt(position.value.x, position.value.z)
+      : 0;
   });
 
   const hasFuelWarning = computed(() => {
@@ -249,6 +262,7 @@ export default function usePlayerUnitInterface(app: App) {
             vehicle =>
               vehicle?.modules.damage.observables.damage$.pipe(
                 map(() => ({
+                  max: vehicle?.modules.damage.getMaxDamage(),
                   value: vehicle?.modules.damage.getDamageValue(),
                   level: vehicle?.modules.damage.getDamageLevel()
                 }))
@@ -278,22 +292,25 @@ export default function usePlayerUnitInterface(app: App) {
               unitGears.value = {
                 has: false,
                 active: false,
-                opened: false
+                opened: false,
+                canUse: false
               };
               return EMPTY;
             }
             return combineLatest([
+              of(module),
               module.observables.gearsActive$,
               module.observables.gearsOpened$
             ]);
           })
         )
         .subscribe(
-          ([active, opened]) =>
+          ([module, active, opened]) =>
             (unitGears.value = {
               has: true,
               active,
-              opened
+              opened,
+              canUse: module.canToggleGears()
             })
         )
     );
@@ -317,10 +334,11 @@ export default function usePlayerUnitInterface(app: App) {
     unitActive,
     weaponSlots,
     fuelInfo,
-    seaLevel,
-    heightValue,
+    seaHeight,
     hasFuelWarning,
     compassValue,
+    groundHeight,
+    currentHeight,
     isVehicle: computed(() => isVehicle(unit.value)),
     isAirVehicle: computed(() => isAirVehicle(unit.value)),
     isSeaVehicle: computed(() => isSeaVehicle(unit.value)),

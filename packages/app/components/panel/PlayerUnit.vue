@@ -5,7 +5,7 @@
     style-type="transparent"
     class="bm-panel-player-unit"
     :title="panelTitle">
-    <div class="row row-start">
+    <div class="grid-r grid-r-start">
       <div class="info weapon">
         <div>
           <!-- weapons -->
@@ -39,11 +39,11 @@
           </fieldset>
         </div>
       </div>
-      <div class="col col-end col-full">
+      <div class="grid-c grid-c-end grid-c-full">
         <div class="info general">
           <div>
-            <div class="row">
-              <div class="col">
+            <div class="grid-r">
+              <div class="grid-c">
                 <fieldset>
                   <legend>General</legend>
                   <bm-control-item
@@ -57,7 +57,7 @@
                           : CONTROL_ITEM_STATUS.NORMAL
                     "
                     :value="
-                      unitDamage.value
+                      Math.round((unitDamage.value / unitDamage.max) * 100)
                         .toString()
                         .padStart(padLength - 1, '\u00A0') + '%'
                     " />
@@ -100,9 +100,8 @@
                         .toString()
                         .padStart(padLength, '\u00A0')
                     " />
-
                   <bm-control-item
-                    button
+                    :button="unitGears.canUse"
                     indicator
                     label="Gears"
                     :status="
@@ -158,34 +157,59 @@
                   <div v-else-if="hasFuelWarning" class="warning fuel">
                     <span>WARNING: Low Fuel!</span>
                   </div>
+                  <div
+                    v-else-if="
+                      powerInfo.currentPower >= powerInfo.idlePower &&
+                      powerInfo.currentPower <= powerInfo.minPower
+                    "
+                    class="warning ready">
+                    <span>READY!</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-        <div class="col col-full col-end">
+        <div class="grid-c grid-c-full grid-c-end">
           <div v-if="isAirVehicle" class="info air">
             <fieldset>
               <legend>Air Control</legend>
-              <div class="col">
-                <div class="col col-full col-v">
-                  <bm-attitude-indicator :app="app" />
+              <div class="grid-r">
+                <div class="grid-c grid-c-full grid-c-v">
+                  <div class="attitude-indicator">
+                    <bm-attitude-indicator :app="app" />
+                  </div>
                 </div>
-                <div class="col col-v">
+                <div class="grid-c grid-c-vertical">
                   <bm-control-item
                     indicator
                     label="Altitude"
                     :status="
-                      heightValue > seaLevel
+                      currentHeight > seaHeight
                         ? CONTROL_ITEM_STATUS.NORMAL
-                        : heightValue < seaLevel
+                        : currentHeight < seaHeight
                           ? CONTROL_ITEM_STATUS.DANGER
                           : CONTROL_ITEM_STATUS.WARNING
                     "
                     :value="
-                      `${heightValue.toPrecision(2)}/${MAX_AIR_VEHICLE_ALTITUDE}`
-                        .toString()
-                        .padStart(padLength, '\u00A0')
+                      currentHeight.toFixed(2).padStart(padLength, '\u00A0')
+                    " />
+                  <bm-control-item
+                    indicator
+                    label="Min.Alti."
+                    :status="CONTROL_ITEM_STATUS.NORMAL"
+                    :value="
+                      groundHeight.toFixed(2).padStart(padLength, '\u00A0')
+                    " />
+                  <bm-control-item
+                    indicator
+                    label="Max.Alti."
+                    :status="CONTROL_ITEM_STATUS.NORMAL"
+                    :value="
+                      MAX_AIR_VEHICLE_ALTITUDE.toFixed(2).padStart(
+                        padLength,
+                        '\u00A0'
+                      )
                     " />
                 </div>
               </div>
@@ -235,8 +259,9 @@ const {
   isVehicle,
   isAirVehicle,
   hasFuelWarning,
-  heightValue,
-  seaLevel
+  currentHeight,
+  seaHeight,
+  groundHeight
 } = usePlayerUnitInterface($props.app);
 
 const previewOptions = computed(() => {
@@ -297,40 +322,12 @@ function onClickGears() {
 <style lang="postcss" scoped>
 .bm-panel-player-unit {
   color: white;
-
-  & .row {
-    display: flex;
-    flex-direction: row;
-    gap: var(--bm-spacing-small);
-    width: 100%;
-
-    &.row-start {
-      align-items: flex-start;
-    }
-  }
-
-  & .col {
-    display: flex;
-    flex-direction: column;
-    gap: var(--bm-spacing-small);
-    align-items: center;
-
-    &.col-v {
-      justify-content: center;
-    }
-
-    &.col-full {
-      flex: 1;
-    }
-
-    &.col-end {
-      align-items: flex-end;
-    }
-  }
+  pointer-events: none;
 
   & .info {
     box-sizing: border-box;
     padding: var(--bm-spacing-medium);
+    pointer-events: auto;
     background: #000;
 
     & > div {
@@ -350,10 +347,6 @@ function onClickGears() {
         & > * {
           flex: 1;
         }
-      }
-
-      & .row {
-        padding: var(--bm-spacing-medium) 0;
       }
     }
   }
@@ -408,6 +401,70 @@ function onClickGears() {
       left: 0;
       width: 100%;
     }
+  }
+}
+
+.bm-attitude-indicator {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+}
+
+.attitude-indicator {
+  position: relative;
+  width: 72px;
+
+  &::before {
+    display: block;
+    padding-top: 100%;
+    content: '';
+  }
+}
+
+.warning {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  width: 100%;
+  font-family: var(--font-bit-font-family);
+  font-size: var(--font-bit-font-size);
+  line-height: var(--font-bit-line-height);
+
+  & span {
+    box-sizing: border-box;
+    padding: var(--bm-spacing-small) var(--bm-spacing-medium);
+    line-height: 1;
+    color: black;
+    background: #f00;
+  }
+
+  text-align: center;
+  text-transform: uppercase;
+
+  &.fuel {
+    animation: blink 1s infinite steps(1);
+  }
+
+  &.ready {
+    & span {
+      background-color: yellow;
+    }
+  }
+}
+
+@keyframes blink {
+  0% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
   }
 }
 </style>

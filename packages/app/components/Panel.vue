@@ -6,11 +6,11 @@
       [`style-type-${styleType ?? 'default'}`]: true,
       'has-title': !hideTitle && hasTitle
     }">
-    <div v-if="!hideTitle && hasTitle" class="title">
+    <div v-if="!hideTitle && hasTitle" class="title" :title="title">
       <slot name="title">{{ title }}</slot>
     </div>
     <div class="content">
-      <slot></slot>
+      <slot :title="title"></slot>
     </div>
   </div>
 </template>
@@ -79,10 +79,15 @@ export enum PANEL_POSITION {
 
   & .title {
     display: block;
-    font-size: 12px;
-    font-weight: bold;
+    width: calc(20 * 8px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: var(--font-bit-font-family);
+    font-size: var(--font-bit-font-size);
+    line-height: var(--font-bit-line-height);
     color: #fd2;
     text-align: center;
+    white-space: nowrap;
   }
 
   & .content {

@@ -1,7 +1,16 @@
 import textureFire from '@blue-might/app/assets/fire/fire.png?url';
-import textureSmokeLight from '@blue-might/app/assets/fire/smoke/light.png?url';
-import textureSmokeMedium from '@blue-might/app/assets/fire/smoke/medium.png?url';
-import textureSmokeHeavy from '@blue-might/app/assets/fire/smoke/heavy.png?url';
+import textureSmokeLight_1 from '@blue-might/app/assets/fire/smoke/light/1.png?url';
+import textureSmokeLight_2 from '@blue-might/app/assets/fire/smoke/light/2.png?url';
+import textureSmokeLight_3 from '@blue-might/app/assets/fire/smoke/light/3.png?url';
+import textureSmokeLight_4 from '@blue-might/app/assets/fire/smoke/light/4.png?url';
+import textureSmokeMedium_1 from '@blue-might/app/assets/fire/smoke/medium/1.png?url';
+import textureSmokeMedium_2 from '@blue-might/app/assets/fire/smoke/medium/2.png?url';
+import textureSmokeMedium_3 from '@blue-might/app/assets/fire/smoke/medium/3.png?url';
+import textureSmokeMedium_4 from '@blue-might/app/assets/fire/smoke/medium/4.png?url';
+import textureSmokeHeavy_1 from '@blue-might/app/assets/fire/smoke/heavy/1.png?url';
+import textureSmokeHeavy_2 from '@blue-might/app/assets/fire/smoke/heavy/2.png?url';
+import textureSmokeHeavy_3 from '@blue-might/app/assets/fire/smoke/heavy/3.png?url';
+import textureSmokeHeavy_4 from '@blue-might/app/assets/fire/smoke/heavy/4.png?url';
 import { Texture, type Object3D } from 'three';
 import { Group, NearestFilter, Vector3 } from 'three';
 import assetLoader from '@blue-might/app/services/assetLoader';
@@ -43,9 +52,9 @@ export default class EffectModule extends MapModule<State, Observables> {
   private textures: {
     fire: Texture<ImageBitmap>;
     smoke: {
-      [SMOKE_TYPE.LIGHT]: Texture<ImageBitmap>;
-      [SMOKE_TYPE.MEDIUM]: Texture<ImageBitmap>;
-      [SMOKE_TYPE.HEAVY]: Texture<ImageBitmap>;
+      [SMOKE_TYPE.LIGHT]: Texture<ImageBitmap>[];
+      [SMOKE_TYPE.MEDIUM]: Texture<ImageBitmap>[];
+      [SMOKE_TYPE.HEAVY]: Texture<ImageBitmap>[];
     };
   } | null = null;
 
@@ -64,7 +73,7 @@ export default class EffectModule extends MapModule<State, Observables> {
       if (tex instanceof Texture) {
         tex.dispose();
       } else {
-        Object.values(tex).forEach(t => t.dispose());
+        Object.values(tex).forEach(t => t.forEach(tex => tex.dispose()));
       }
     });
   }
@@ -149,9 +158,13 @@ export default class EffectModule extends MapModule<State, Observables> {
     }
   ) {
     if (!this.textures) return;
+    const smokeTextures =
+      this.textures.smoke[options?.type ?? SMOKE_TYPE.LIGHT];
+    const smokeIndex = Math.floor(Math.random() * smokeTextures.length);
+
     const smoke = new Smoke({
       ...options,
-      texture: this.textures.smoke[options?.type ?? SMOKE_TYPE.LIGHT],
+      texture: smokeTextures[smokeIndex],
       life: options?.life ?? 0.8,
       velocity: new Vector3(
         (Math.random() - 0.5) * 0.1,
@@ -195,8 +208,36 @@ export default class EffectModule extends MapModule<State, Observables> {
 }
 
 async function loadTextures() {
-  const [fire, smokeLight, smokeMedium, smokeHeavy] = await Promise.all(
-    [textureFire, textureSmokeLight, textureSmokeMedium, textureSmokeHeavy].map(
+  const [
+    fire,
+    smokeLight_1,
+    smokeLight_2,
+    smokeLight_3,
+    smokeLight_4,
+    smokeMedium_1,
+    smokeMedium_2,
+    smokeMedium_3,
+    smokeMedium_4,
+    smokeHeavy_1,
+    smokeHeavy_2,
+    smokeHeavy_3,
+    smokeHeavy_4
+  ] = await Promise.all(
+    [
+      textureFire,
+      textureSmokeLight_1,
+      textureSmokeLight_2,
+      textureSmokeLight_3,
+      textureSmokeLight_4,
+      textureSmokeMedium_1,
+      textureSmokeMedium_2,
+      textureSmokeMedium_3,
+      textureSmokeMedium_4,
+      textureSmokeHeavy_1,
+      textureSmokeHeavy_2,
+      textureSmokeHeavy_3,
+      textureSmokeHeavy_4
+    ].map(
       async textureUrl =>
         await assetLoader.add<Texture>({
           value: textureUrl,
@@ -213,16 +254,31 @@ async function loadTextures() {
   return {
     fire,
     smoke: {
-      [SMOKE_TYPE.LIGHT]: smokeLight,
-      [SMOKE_TYPE.MEDIUM]: smokeMedium,
-      [SMOKE_TYPE.HEAVY]: smokeHeavy
+      [SMOKE_TYPE.LIGHT]: [
+        smokeLight_1,
+        smokeLight_2,
+        smokeLight_3,
+        smokeLight_4
+      ],
+      [SMOKE_TYPE.MEDIUM]: [
+        smokeMedium_1,
+        smokeMedium_2,
+        smokeMedium_3,
+        smokeMedium_4
+      ],
+      [SMOKE_TYPE.HEAVY]: [
+        smokeHeavy_1,
+        smokeHeavy_2,
+        smokeHeavy_3,
+        smokeHeavy_4
+      ]
     }
   } as {
     fire: Texture<ImageBitmap>;
     smoke: {
-      [SMOKE_TYPE.LIGHT]: Texture<ImageBitmap>;
-      [SMOKE_TYPE.MEDIUM]: Texture<ImageBitmap>;
-      [SMOKE_TYPE.HEAVY]: Texture<ImageBitmap>;
+      [SMOKE_TYPE.LIGHT]: Texture<ImageBitmap>[];
+      [SMOKE_TYPE.MEDIUM]: Texture<ImageBitmap>[];
+      [SMOKE_TYPE.HEAVY]: Texture<ImageBitmap>[];
     };
   };
 }

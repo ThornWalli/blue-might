@@ -9,6 +9,7 @@
     :ratio="ratio"
     :hydrate-when-visible="hydrateWhenVisible"
     class="bm-object-preview-unit"
+    :title="title"
     @animation-loop="!animationLoop$.closed && animationLoop$.next($event)" />
 </template>
 
@@ -41,6 +42,7 @@ const $props = defineProps<{
   hydrateWhenVisible?: boolean;
   showGround?: boolean;
   size?: Vector3 | null;
+  title?: string;
 }>();
 
 const root = ref<Object3D>(new Object3D());

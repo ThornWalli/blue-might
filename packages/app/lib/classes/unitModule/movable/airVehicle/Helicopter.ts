@@ -145,7 +145,7 @@ export default class HelicopterUnitModule<
           )
         )
         .subscribe(controls => {
-          if (controls.gear) {
+          if (controls.gear && this.canToggleGears()) {
             this.toggleGears();
           }
         })
@@ -178,17 +178,7 @@ export default class HelicopterUnitModule<
     this.subscription.add(
       unit.observables.position$
         .pipe(
-          map(position => {
-            const groundHeight =
-              unit
-                .getMap()
-                ?.modules.ground.getSurfaceHeightAt(
-                  position.x,
-                  position.z,
-                  u => !u.equals(unit)
-                ) ?? 0;
-            return position.y - groundHeight < 1;
-          }),
+          map(() => this.canToggleGears()),
           distinctUntilChanged()
         )
         .subscribe(() => this.toggleGears())
@@ -251,13 +241,9 @@ export default class HelicopterUnitModule<
 
     const controls = this.getControls();
 
-    if (controls.gear) {
-      this.toggleGears();
-    }
-
     const friction = this.options.friction;
     const maxSpeed = this.options.maxSpeed;
-    const yawAccel = this.options.yawSpeed; // use as angular accel
+    const yawAccel = this.options.yawSpeed;
     const pitchPower = this.options.pitchPower;
     const rollPower = this.options.rollPower;
     const liftPower = this.options.liftPower;

@@ -1,6 +1,7 @@
 <template>
   <bm-panel
     v-if="unit && ready"
+    v-slot="{ title }"
     class="bm-panel-unit-preview"
     :title="panelTitle">
     <div>
@@ -22,6 +23,7 @@
         <div>
           <bm-object-preview-unit
             v-if="previewOptions"
+            :title="title"
             :app="app"
             :ratio="1"
             :size="null"
@@ -29,10 +31,33 @@
         </div>
       </div>
     </div>
-    <p>
-      <span>Pos.:</span>
-      {{ position?.round().toArray().join(' / ') }}<br />
-    </p>
+
+    <fieldset>
+      <legend>General</legend>
+      <bm-control-item
+        indicator
+        label="Damage"
+        :status="
+          unitDamage.level >= DAMAGE_LEVEL.DESTROYED
+            ? CONTROL_ITEM_STATUS.DANGER
+            : unitDamage.level >= DAMAGE_LEVEL.DAMAGED
+              ? CONTROL_ITEM_STATUS.WARNING
+              : CONTROL_ITEM_STATUS.NORMAL
+        "
+        :value="
+          Math.round((unitDamage.value / unitDamage.max) * 100)
+            .toString()
+            .padStart(9 - 1, '\u00A0') + '%'
+        " />
+      <!-- <bm-control-item
+        label="Position"
+        :value="
+          `${position?.x.toFixed(2) ?? ''} / ${position?.y.toFixed(2) ?? ''} / ${position?.z.toFixed(2) ?? ''}`.padStart(
+            9 - 1,
+            '\u00A0'
+          )
+        " /> -->
+    </fieldset>
     <bm-button v-if="canFocusUnit" @click="onClickFocusUnit">
       Focus Unit
     </bm-button>
@@ -50,6 +75,7 @@ import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 
+import BmControlItem, { CONTROL_ITEM_STATUS } from '../element/ControlItem.vue';
 import BmButton from '../Button.vue';
 import type App from '../../lib/classes/App';
 import BmPanel from '../Panel.vue';
@@ -64,9 +90,11 @@ const unit = ref<Raw<Unit> | null>(null);
 const unitDamage = ref<{
   value: number;
   level: number;
+  max: number;
 }>({
   value: 0,
-  level: 0
+  level: 0,
+  max: 0
 });
 
 const player = computed(() =>
@@ -106,7 +134,8 @@ async function setup() {
             unit?.modules.damage.observables.damage$.pipe(
               map(() => ({
                 value: unit?.modules.damage.getDamageValue(),
-                level: unit?.modules.damage.getDamageLevel()
+                level: unit?.modules.damage.getDamageLevel(),
+                max: unit?.modules.damage.getMaxDamage()
               }))
             ) ?? EMPTY
         )

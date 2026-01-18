@@ -11,6 +11,8 @@ import type AirVehicleUnit from '../../unit/AirVehicle';
 
 import { FLIGHT_STATUS } from './airVehicle/Helicopter';
 
+const MIN_GEARS_ALTITUDE = 3 / 4;
+
 declare module '../../Unit' {
   interface ModuleStates {
     building: Partial<AirVehicleUnitModuleState>;
@@ -88,6 +90,20 @@ export default class AirVehicleUnitModule<
       1
     );
     //#endregion
+  }
+
+  canToggleGears() {
+    const unit = this.getUnit();
+    const position = unit.getPosition();
+    const groundHeight =
+      this.getUnit()
+        .getMap()
+        ?.modules.ground.getSurfaceHeightAt(
+          position.x,
+          position.z,
+          u => !u.equals(unit)
+        ) ?? 0;
+    return position.y - groundHeight > MIN_GEARS_ALTITUDE;
   }
 
   toggleGears() {

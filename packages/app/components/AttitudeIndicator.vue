@@ -85,6 +85,8 @@ onUnmounted(() => {
   --color-surface-top: #444;
   --color-surface-bottom: #222;
 
+  position: relative;
+
   & .lines {
     position: absolute;
     top: calc(50% - calc((var(--tilt-x) / var(--max-tilt-x)) * 50%));
@@ -126,12 +128,21 @@ onUnmounted(() => {
     }
   }
 
+  &::before {
+    display: block;
+    padding-top: 100%;
+    content: '';
+  }
+
   & > div {
-    position: relative;
-    width: 64px;
-    height: 64px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
-    border: solid 4px var(--color-gdi-secondary);
+    border: solid 4px var(--color-gray-dark);
     border-radius: 50%;
   }
 }

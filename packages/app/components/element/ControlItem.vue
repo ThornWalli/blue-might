@@ -3,6 +3,7 @@
     :is="button ? 'button' : 'div'"
     class="bm-control-item"
     :class="{
+      blinking,
       [`status-${status}`]: status
     }">
     <div>
@@ -17,13 +18,20 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
+import { computed } from 'vue';
+
+const $props = defineProps<{
   indicator?: boolean;
   button?: boolean;
   status?: CONTROL_ITEM_STATUS;
   label: string;
   value: string;
+  blink?: boolean;
 }>();
+
+const blinking = computed(
+  () => $props.blink || $props.status === CONTROL_ITEM_STATUS.WARNING
+);
 </script>
 
 <script lang="ts">
@@ -39,9 +47,10 @@ export enum CONTROL_ITEM_STATUS {
 .bm-control-item {
   display: block;
   width: 100%;
+  user-select: none;
 
   --color-inactive: #555;
-  --color-normal: green;
+  --color-normal: lime;
   --color-warning: yellow;
   --color-danger: red;
 
@@ -65,6 +74,7 @@ export enum CONTROL_ITEM_STATUS {
     font-family: var(--font-bit-font-family);
     font-size: var(--font-bit-font-size);
     line-height: var(--font-bit-line-height);
+    white-space: nowrap;
     border: solid 2px transparent;
   }
 
@@ -89,27 +99,44 @@ export enum CONTROL_ITEM_STATUS {
 
   & .indicator-lamp {
     display: inline-block;
-    width: 14px;
-    height: 14px;
-    background-color: var(--color-inactive);
+    width: 12px;
+    height: 12px;
+    background-color: var(--color);
     border-radius: 50%;
-    box-shadow: inset 0 0 2px rgb(0 0 0 / 50%);
+    box-shadow: inset 0 0 6px rgb(0 0 0 / 100%);
+  }
+
+  &.blinking {
+    & .indicator-lamp {
+      animation: blinking var(--bm-easing-duration-very-long) infinite steps(1);
+    }
   }
 
   &.status-inactive .indicator-lamp {
-    background-color: var(--color-inactive);
+    --color: var(--color-inactive);
   }
 
   &.status-normal .indicator-lamp {
-    background-color: var(--color-normal);
+    --color: var(--color-normal);
   }
 
   &.status-warning .indicator-lamp {
-    background-color: var(--color-warning);
+    --color: var(--color-warning);
   }
 
   &.status-danger .indicator-lamp {
-    background-color: var(--color-danger);
+    --color: var(--color-danger);
+  }
+}
+
+@keyframes blinking {
+  0%,
+  100% {
+    background-color: var(--color-inactive);
+  }
+
+  50% {
+    background-color: var(--color);
   }
 }
 </style>

@@ -19,7 +19,7 @@ import type App from '../../lib/classes/App';
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
 import BmPanelDebug from '../panel/Debug.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
-import BmPanelPlayerUnit from '../panel/PlayerUnitOld.vue';
+import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
 
 defineProps<{
   app: App;

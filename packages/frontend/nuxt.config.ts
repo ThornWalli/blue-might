@@ -48,7 +48,7 @@ export default defineNuxtConfig({
     '@blue-might/app/assets/css/vars.pcss',
     '@blue-might/app/assets/css/transitions.pcss',
     '@blue-might/app/assets/css/base.pcss',
-    '@blue-might/app/assets/css/mixins.pcss'
+    '@blue-might/app/assets/css/grid.pcss'
   ],
 
   imports: {
@@ -67,6 +67,7 @@ export default defineNuxtConfig({
   devServer: {
     port: getPort(),
     host: getHost(),
+
     https: getHttps()
   },
 

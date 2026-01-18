@@ -5,7 +5,7 @@
     :class="{ ready }"
     :style="{ '--width': currentWidth, '--ratio': ratio }">
     <div class="image">
-      <img v-if="previewSrc" :src="previewSrc" />
+      <img v-if="previewSrc" :title="title" :src="previewSrc" />
       <canvas v-else ref="canvasEl" />
     </div>
   </div>
@@ -56,6 +56,7 @@ const $props = defineProps<{
   zoomRoot?: Object3D;
   hydrateWhenVisible?: boolean;
   size?: Vector3 | null;
+  title?: string;
 }>();
 
 const ready = ref(false);
