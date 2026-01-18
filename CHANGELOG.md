@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.35](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.34...v1.0.0-beta.35) (2026-01-18)
+
+
+### Bug Fixes
+
+* **update:** refactor zoom controls to use dedicated functions ([4dc2cbf](https://github.com/ThornWalli/blue-might/commit/4dc2cbfafefa012a8685cd66f74aa65f8615d97e))
+
 # [1.0.0-beta.34](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.33...v1.0.0-beta.34) (2026-01-18)
 
 
