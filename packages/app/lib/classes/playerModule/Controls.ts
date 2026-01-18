@@ -275,10 +275,6 @@ export default class ControlsModule extends PlayerModule<State, Observables> {
     // }
     this.observables.controls$.next({ ...controls });
   }
-
-  override destroy(): void {
-    super.destroy();
-  }
 }
 
 export interface ControlState {

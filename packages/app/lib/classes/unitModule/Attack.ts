@@ -168,7 +168,11 @@ export default class AttackUnitModule extends UnitModule<
   private lastUpdateTime = 0;
   override update({ time }: AnimationLoopValue): void {
     const unit = this.getUnit();
-    if (isUnitDestroyed(unit) || !unit.modules.weapon?.isAutoAimActive()) {
+    if (
+      this.destroyed ||
+      isUnitDestroyed(unit) ||
+      !unit.modules.weapon?.isAutoAimActive()
+    ) {
       return;
     }
     if ((time - this.lastUpdateTime) / 1000 < 1) {

@@ -29,15 +29,15 @@ import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { playSound } from '@blue-might/weapon/utils';
 import {
   autoAimFunction,
-  createBarrelTargetShoot
-} from '@blue-might/app/lib/utils/turret';
+  createBarrelTargetShoot,
+  updateControls
+} from '@blue-might/app/lib/utils/unit/weapon';
 import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/Animation';
 import type {
   WeaponSupportOptions,
   WeaponSupportState
 } from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
-import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/combat_helicopter_1.glb?url';
 

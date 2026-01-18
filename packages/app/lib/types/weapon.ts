@@ -13,6 +13,9 @@ export type ProjectileIdentifier = string;
 
 export interface ProjectileDescription {
   id: ProjectileIdentifier;
+  name: string;
+  shortName?: string | null;
+  description?: string | null;
   maxLifetime: number;
   speed: number;
   strength: number;

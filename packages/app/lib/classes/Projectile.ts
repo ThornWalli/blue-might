@@ -18,6 +18,9 @@ export type ProjectileUpdateContext = {
 
 export default abstract class Projectile implements ProjectileDescription {
   id: ProjectileIdentifier;
+  name: string;
+  shortName: string | null;
+  description: string | null;
   /**
    * Aktuelle Lebensdauer in Sekunden
    */
@@ -36,6 +39,9 @@ export default abstract class Projectile implements ProjectileDescription {
   };
   constructor(options?: ProjectileDescription) {
     this.id = options?.id ?? '';
+    this.name = options?.name ?? 'Unnamed Projectile';
+    this.shortName = options?.shortName ?? null;
+    this.description = options?.description ?? null;
     this.maxLifetime = options?.maxLifetime ?? 5; // Standardwert, z. B. 5 Sekunden
     this.speed = options?.speed ?? 1;
     this.strength = options?.strength ?? 0.1;
@@ -94,6 +100,9 @@ export default abstract class Projectile implements ProjectileDescription {
   toDescription(): ProjectileDescription {
     return {
       id: this.id,
+      name: this.name,
+      shortName: this.shortName,
+      description: this.description,
       maxLifetime: this.maxLifetime,
       speed: this.speed,
       strength: this.strength,

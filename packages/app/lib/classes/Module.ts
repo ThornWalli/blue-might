@@ -55,7 +55,9 @@ export default class Module<
     return;
   }
 
+  protected destroyed = false;
   destroy() {
+    this.destroyed = true;
     Object.values(this.observables).forEach(o =>
       (o as SubscriptionLike).unsubscribe()
     );

@@ -25,7 +25,9 @@
                       : CONTROL_ITEM_STATUS.NORMAL
                     : CONTROL_ITEM_STATUS.INACTIVE
                 "
-                :label="`Weapon #${index + 1}`"
+                :label="
+                  slot.weapon.projectile.shortName ?? `Weapon #${index + 1}`
+                "
                 :value="
                   `${slot.ammunition}/${slot.maxAmmunition}`
                     .toString()

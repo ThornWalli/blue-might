@@ -14,6 +14,9 @@ export default class AirSurfaceMissile_1 extends Projectile {
   constructor() {
     super({
       id: PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1,
+      name: 'Air Surface Missile 1',
+      shortName: 'Air Surface 1',
+      description: 'A homing missile that targets surface enemies.',
       maxLifetime: 5,
       speed: 30,
       strength: 0.75,

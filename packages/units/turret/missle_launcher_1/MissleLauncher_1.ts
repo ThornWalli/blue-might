@@ -25,8 +25,9 @@ import AttackUnitModule, {
 } from '@blue-might/app/lib/classes/unitModule/Attack';
 import {
   autoAimFunction,
-  createBarrelTargetShoot
-} from '@blue-might/app/lib/utils/turret';
+  createBarrelTargetShoot,
+  updateControls
+} from '@blue-might/app/lib/utils/unit/weapon';
 import { ReplaySubject, Subject } from 'rxjs';
 import { playSound } from '@blue-might/weapon/utils';
 import { lerp } from 'three/src/math/MathUtils.js';
@@ -36,7 +37,6 @@ import type {
   WeaponSupportState
 } from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
-import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/missle_launcher_1.glb?url';
 

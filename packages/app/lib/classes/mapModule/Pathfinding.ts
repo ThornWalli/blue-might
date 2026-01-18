@@ -173,14 +173,15 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       : this.groundNavigationSmall!;
   }
 
-  override destroy(): void {
-    super.destroy();
+  override destroy() {
     this.airNavigation?.destroy();
     this.groundNavigationSmall?.destroy();
     this.groundNavigationLarge?.destroy();
     this.debugObject?.removeFromParent();
     this.debugObject?.remove();
     this.unitSubscriptions.forEach(sub => sub.unsubscribe());
+
+    super.destroy();
   }
 
   addUnit(unit: Unit) {

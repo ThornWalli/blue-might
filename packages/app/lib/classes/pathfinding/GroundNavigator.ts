@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import { Vector3, type Object3D } from 'three';
 
 import type { TILE_TYPE } from '../../utils/pathfinding';

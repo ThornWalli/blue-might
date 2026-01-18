@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import type { Object3D, Vector3, Texture } from 'three';
 import { Raycaster, Vector2 } from 'three';
 

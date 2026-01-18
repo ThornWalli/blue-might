@@ -12,8 +12,9 @@ import SeaVehicleUnit, {
 } from '@blue-might/app/lib/classes/unit/SeaVehicle';
 import {
   autoAimFunction,
-  createBarrelTargetShoot
-} from '@blue-might/app/lib/utils/turret';
+  createBarrelTargetShoot,
+  updateControls
+} from '@blue-might/app/lib/utils/unit/weapon';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import WeaponUnitModule, {
   type AutoAimFnOptions
@@ -27,7 +28,6 @@ import type {
   WeaponSupportState
 } from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
-import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/combat_ship_1.glb?url';
 

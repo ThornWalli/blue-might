@@ -30,9 +30,10 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
     //#endregion
   }
 
-  override destroy(): void {
-    super.destroy();
+  override destroy() {
     this.state.players.forEach(player => player.destroy());
+
+    super.destroy();
   }
 
   getPlayerById(id: string) {

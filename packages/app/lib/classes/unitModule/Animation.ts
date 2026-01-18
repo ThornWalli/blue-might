@@ -84,9 +84,9 @@ export class AnimationUnitModule extends UnitModule<
     //#endregion
   }
 
-  override destroy(): void {
-    super.destroy();
+  override destroy() {
     this.mixer?.stopAllAction();
+    super.destroy();
   }
 
   override renderUpdate({ delta }: AnimationLoopValue) {

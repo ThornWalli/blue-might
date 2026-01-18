@@ -20,8 +20,9 @@ import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import { playSound } from '@blue-might/weapon/utils';
 import {
   autoAimFunction,
-  createBarrelTargetShoot
-} from '@blue-might/app/lib/utils/turret';
+  createBarrelTargetShoot,
+  updateControls
+} from '@blue-might/app/lib/utils/unit/weapon';
 import Weapon from '@blue-might/app/lib/classes/Weapon';
 import {
   PROJECTILE_TYPE,
@@ -32,7 +33,6 @@ import type {
   WeaponSupportState
 } from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
-import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/turret_1.glb?url';
 

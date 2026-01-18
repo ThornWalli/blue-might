@@ -22,12 +22,11 @@ import type {
   WeaponSupportState
 } from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
-import { updateControls } from '@blue-might/app/lib/utils/unit/weapon';
-
 import {
   autoAimFunction,
-  createBarrelTargetShoot
-} from '../../../app/lib/utils/turret';
+  createBarrelTargetShoot,
+  updateControls
+} from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/combat_tank_1.glb?url';
 

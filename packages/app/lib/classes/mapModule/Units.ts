@@ -68,11 +68,12 @@ export default class UnitsModule extends MapModule<State, Observables> {
       this.map.app.renderer.modules.intersection.registerListener();
   }
 
-  override destroy(): void {
-    super.destroy();
+  override destroy() {
     this.state.units.forEach(unit => unit.destroy());
     this.state.units.clear();
     this.state.visibleUnits = [];
+
+    super.destroy();
   }
 
   override async setup() {

@@ -218,7 +218,7 @@ export default class WeaponUnitModule<
     });
   }
 
-  override destroy(): void {
+  override destroy() {
     const map = this.getUnit().getMap();
     const app = map?.app;
 
@@ -228,6 +228,8 @@ export default class WeaponUnitModule<
         disposeObject3D(line);
       }
     });
+
+    super.destroy();
   }
 
   public shoot() {
@@ -247,7 +249,7 @@ export default class WeaponUnitModule<
   }
 
   override async update(_v: AnimationLoopValue) {
-    if (this.getUnit().preview) return;
+    if (this.getUnit().preview || this.destroyed) return;
     this.updateShoot(_v);
     this.updateAutoAIM();
     if (this.debug) {

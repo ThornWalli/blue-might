@@ -81,7 +81,7 @@ export default class ShootModule extends MapModule<State, Observables> {
     [key: string]: Object3D;
   } = {};
 
-  override destroy(): void {
+  override destroy() {
     Object.values(this.shootByProjectile).forEach(obj => {
       disposeObject3D(obj);
     });

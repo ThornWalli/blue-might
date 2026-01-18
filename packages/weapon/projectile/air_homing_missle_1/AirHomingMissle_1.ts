@@ -19,6 +19,9 @@ export default class AirHomingMissile_1 extends Projectile {
   constructor({ homingAccuracy }: { homingAccuracy?: number } = {}) {
     super({
       id: PROJECTILE_TYPE.AIR_HOMING_MISSILE_1,
+      name: 'Air Homing Missile 1',
+      shortName: 'Air Homing 1',
+      description: 'A homing missile that targets airborne enemies.',
       maxLifetime: 1,
       speed: 30,
       strength: 0.75,

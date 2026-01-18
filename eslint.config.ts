@@ -19,7 +19,7 @@ export default withNuxt({
     complexity: [
       'error',
       {
-        max: 12
+        max: 15
       }
     ],
     'no-multiple-empty-lines': [

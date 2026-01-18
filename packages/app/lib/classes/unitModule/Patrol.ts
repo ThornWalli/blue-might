@@ -105,7 +105,7 @@ export default class PatrolUnitModule extends UnitModule<
     }
   }
 
-  override destroy(): void {
+  override destroy() {
     this.stopPatrol();
     if (this.debugLine) {
       disposeObject3D(this.debugLine);

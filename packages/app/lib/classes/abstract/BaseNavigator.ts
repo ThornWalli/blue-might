@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import EasyStar from 'easystarjs';
 import {
   Box3,

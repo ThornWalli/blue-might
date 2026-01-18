@@ -30,10 +30,6 @@ export default class SelectionAppModule extends AppModule<State, Observables> {
     //#endregion
   }
 
-  override destroy(): void {
-    super.destroy();
-  }
-
   getSelectedUnit() {
     return this.state.selectedUnit;
   }

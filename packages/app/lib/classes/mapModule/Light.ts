@@ -52,12 +52,13 @@ export default class LightModule extends MapModule<State, Observables> {
     this.updateLightPosition();
   }
 
-  override destroy(): void {
-    super.destroy();
+  override destroy() {
     this.lights.forEach(light => {
       light.parent?.remove(light);
       light.remove();
     });
+
+    super.destroy();
   }
 
   override async setup() {

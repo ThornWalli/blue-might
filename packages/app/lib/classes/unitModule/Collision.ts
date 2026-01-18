@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import type { Box3Helper, Object3D } from 'three';
 import {
   Box3,

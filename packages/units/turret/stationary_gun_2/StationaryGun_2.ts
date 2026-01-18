@@ -20,8 +20,7 @@ import { replaceColors } from '@blue-might/app/lib/utils/material';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import type { ControlState } from '@blue-might/app/lib/classes/playerModule/Controls';
 import { playSound } from '@blue-might/weapon/utils';
-
-import { createBarrelTargetShoot } from '../../../app/lib/utils/turret';
+import { createBarrelTargetShoot } from '@blue-might/app/lib/utils/unit/weapon';
 
 import baseGlb from './assets/stationary_gun_2.glb?url';
 

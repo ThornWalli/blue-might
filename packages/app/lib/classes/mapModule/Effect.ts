@@ -68,7 +68,7 @@ export default class EffectModule extends MapModule<State, Observables> {
     return this.root;
   }
 
-  override destroy(): void {
+  override destroy() {
     Object.values(this.textures ?? {}).forEach(tex => {
       if (tex instanceof Texture) {
         tex.dispose();
@@ -76,6 +76,8 @@ export default class EffectModule extends MapModule<State, Observables> {
         Object.values(tex).forEach(t => t.forEach(tex => tex.dispose()));
       }
     });
+
+    super.destroy();
   }
 
   constructor(map: Map, debug: boolean) {

@@ -34,8 +34,6 @@ export default class Explosion extends Particle {
   private fadeOutEase = easeExpoIn;
   private steps = 32;
   private radius = 1.2;
-
-  // eslint-disable-next-line complexity
   constructor(options?: Partial<ExplosionOptions>) {
     super({
       ...options,

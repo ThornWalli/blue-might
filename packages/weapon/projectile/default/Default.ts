@@ -11,6 +11,9 @@ export default class Default extends Projectile {
     super({
       ...options,
       id: options.id ?? PROJECTILE_TYPE.DEFAULT,
+      name: options.name ?? 'Default Projectile',
+      shortName: options.shortName ?? 'Default',
+      description: options.description ?? 'A standard projectile type.',
       maxLifetime: options.maxLifetime ?? 5,
       speed: options.speed ?? 10,
       strength: options.strength ?? 0.1,
@@ -44,6 +47,9 @@ export class LightProjectile extends Default {
   constructor() {
     super({
       id: PROJECTILE_TYPE.LIGHT_PROJECTILE,
+      name: 'Light Projectile',
+      shortName: 'Light',
+      description: 'A lightweight projectile.',
       speed: 15,
       strength: 0.2,
       weight: 0.01
@@ -56,6 +62,9 @@ export class MediumProjectile extends Default {
   constructor() {
     super({
       id: PROJECTILE_TYPE.MEDIUM_PROJECTILE,
+      name: 'Medium Projectile',
+      shortName: 'Medium',
+      description: 'A medium-weight projectile.',
       speed: 10,
       strength: 0.3,
       weight: 0.1
@@ -68,6 +77,9 @@ export class HeavyProjectile extends Default {
   constructor() {
     super({
       id: PROJECTILE_TYPE.HEAVY_PROJECTILE,
+      name: 'Heavy Projectile',
+      shortName: 'Heavy',
+      description: 'A heavy-weight projectile.',
       speed: 20,
       strength: 1,
       weight: 0.25

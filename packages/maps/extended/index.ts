@@ -392,7 +392,7 @@ export default function (): MapDescription {
           new MissleLauncher_1({
             position: new Vector3(position[0], 0, position[1]),
             moduleDebug: {
-              attack: true
+              attack: false
             },
             moduleOptions: {
               faction: {

@@ -44,7 +44,7 @@ export default class Windsock_1<
 
     this.subscription.add(
       this.modules.damage.observables.destroyed$.subscribe(() => {
-        const flag = this.root.getObjectByName('flag')!;
+        const flag = this.root.getObjectByName('windsock')!;
         flag.visible = false;
       })
     );
