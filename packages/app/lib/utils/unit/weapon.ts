@@ -36,7 +36,7 @@ export function updateControls(
 
   let value = 0.005;
   if (controls[ControlAction.MODIFIER]) {
-    value *= unit.state.weaponControlPrecision ?? 1;
+    value *= unit.state.weaponControlPrecision ?? 1 / 3;
   }
 
   if (controls[ControlAction.UP]) {

@@ -6,8 +6,8 @@
       <div class="target"></div>
     </div>
     <div class="controls">
-      <bm-button @click="zoom *= zoomFactor">Z (+)</bm-button>
-      <bm-button @click="zoom /= zoomFactor">Z (-)</bm-button>
+      <bm-button @click="onClickZoomIn">Z (+)</bm-button>
+      <bm-button @click="onClickZoomOut">Z (-)</bm-button>
     </div>
   </div>
 </template>
@@ -106,6 +106,14 @@ onUnmounted(() => {
     composer?.dispose();
   }
 });
+
+function onClickZoomIn() {
+  zoom.value *= zoomFactor.value;
+}
+
+function onClickZoomOut() {
+  zoom.value = Math.max(1, zoom.value / zoomFactor.value);
+}
 </script>
 
 <style lang="postcss" scoped>
