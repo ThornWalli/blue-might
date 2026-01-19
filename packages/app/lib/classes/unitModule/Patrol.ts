@@ -106,6 +106,7 @@ export default class PatrolUnitModule extends UnitModule<
   }
 
   override destroy() {
+    window.clearTimeout(this.timeout);
     this.stopPatrol();
     if (this.debugLine) {
       disposeObject3D(this.debugLine);
@@ -244,21 +245,23 @@ export default class PatrolUnitModule extends UnitModule<
     try {
       const success = await pathfinding.move(worldPath[index]!);
       if (success) {
-        this.patrolFaileds = 0; // Reset bei Erfolg
-        // ...existing code...
+        this.patrolFaileds = 0;
       } else {
         this.patrolFaileds++;
-        if (this.patrolFaileds >= 3) {
-          console.error('Patrol failed 3 times, stopping');
+        if (this.patrolFaileds >= 10) {
+          console.error('Patrol failed 10 times, stopping');
           this.stopPatrol();
           return;
         }
-        // Versuche nächsten Punkt
-        this.patrolRecursive(
-          worldPath,
-          (index + 1) % worldPath.length,
-          pathfinding
-        );
+        window.clearTimeout(this.timeout);
+        this.timeout = window.setTimeout(() => {
+          // Versuche nächsten Punkt
+          this.patrolRecursive(
+            worldPath,
+            (index + 1) % worldPath.length,
+            pathfinding
+          );
+        }, 1000);
       }
     } catch (error) {
       console.error('Patrol move error:', error);
@@ -276,6 +279,8 @@ export default class PatrolUnitModule extends UnitModule<
       await this.patrolRecursive(worldPath, 0, pathfinding);
     }
   }
+
+  private timeout: number = 0;
 
   //#region debug
   private debugLine: Line | null = null;

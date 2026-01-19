@@ -3,7 +3,6 @@
     <debug-app-component
       :config="{ debug: { map: { pathfinding: false } } }"
       :on-setup="onSetup"
-      :player-unit="playerUnitId"
       :map="map" />
   </div>
 </template>
@@ -13,14 +12,7 @@ import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
-import {
-  CombatTank_1,
-  ControlTower_1,
-  LandingPortSupplyStation,
-  SupplyStation
-} from '@blue-might/units';
 import { Subscription } from 'rxjs';
-import { Euler, Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
 
 const DebugAppComponent = defineAsyncComponent(() => import('./DebugApp.vue'));
@@ -31,17 +23,37 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
-const playerUnitId = 'player-unit';
-
 const map: Partial<MapDescription> = {
   factions: [blueFaction, enemyFaction],
+  playerOptions: {
+    position: [0, 0, 0],
+    unit: {
+      key: 'combat_tank_1',
+      options: {
+        moduleDebug: {
+          collision: true,
+          pathfinding: false,
+          patrol: false
+        },
+        moduleOptions: {
+          damage: {
+            maxDamage: 1000
+          },
+          movable: {
+            active: true
+          }
+        }
+      }
+    }
+  },
   units: [
-    new ControlTower_1({
+    {
+      key: 'control_tower_1',
       moduleDebug: {
         collision: true
       },
-      position: new Vector3(0.0, 0, 1.25)
-    }),
+      position: [0.0, 0, 1.25]
+    },
 
     // new CombatTank_1({
     //   position: new Vector3(-1.83, 0, 0.17),
@@ -68,29 +80,10 @@ const map: Partial<MapDescription> = {
     //     }
     //   }
     // }),
-    new CombatTank_1({
-      id: playerUnitId,
-      position: new Vector3(0, 0, 0),
-      moduleDebug: {
-        collision: true,
-        pathfinding: false,
-        patrol: false
-      },
-      moduleOptions: {
-        damage: {
-          maxDamage: 1000
-        },
-        faction: {
-          faction: blueFaction
-        },
-        movable: {
-          active: true
-        }
-      }
-    }),
-    new SupplyStation({
-      position: new Vector3(2, 0, 2),
-      rotation: new Euler(0, Math.PI, 0),
+    {
+      key: 'supply_station_1',
+      position: [2, 0, 2],
+      rotation: [0, Math.PI, 0],
       moduleDebug: {
         collision: false,
         supply: false
@@ -100,10 +93,11 @@ const map: Partial<MapDescription> = {
           faction: blueFaction
         }
       }
-    }),
-    new LandingPortSupplyStation({
-      position: new Vector3(-2, 0, 2),
-      rotation: new Euler(0, Math.PI, 0),
+    },
+    {
+      key: 'landing_port_supply_station_1',
+      position: [2, 0, 2],
+      rotation: [0, Math.PI, 0],
       moduleDebug: {
         collision: false,
         supply: false
@@ -113,7 +107,7 @@ const map: Partial<MapDescription> = {
           faction: blueFaction
         }
       }
-    })
+    }
   ]
 };
 

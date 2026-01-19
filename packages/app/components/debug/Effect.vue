@@ -32,11 +32,12 @@ onMounted(() => {
 function onClickLockAddExplosion() {
   const app = $props.app;
   const map = app.modules.map.getMap();
-  const y = map.modules.ground.getSurfaceHeightAt(
-    currentPosition.value.x,
-    currentPosition.value.y
-  );
-  map.modules.effect.addExplosion(
+  const y =
+    map?.modules.ground.getSurfaceHeightAt(
+      currentPosition.value.x,
+      currentPosition.value.y
+    ) ?? 0;
+  map?.modules.effect.addExplosion(
     new Vector3(currentPosition.value.x, y, currentPosition.value.y)
   );
 }

@@ -34,8 +34,8 @@ onMounted(() => {
   const app = $props.app;
   const followedUnit$ = app.modules.unitFocus.observables.followedUnit$;
   const vehicle$ = app.modules.player.observables.currentPlayer$.pipe(
-    switchMap(player => player.modules.vehicle.observables.vehicle$),
-    map(({ current }) => current as VehicleUnit | null)
+    switchMap(player => player.modules.vehicle.observables.unit$),
+    map(unit => unit as VehicleUnit | null)
   );
 
   //#region unit

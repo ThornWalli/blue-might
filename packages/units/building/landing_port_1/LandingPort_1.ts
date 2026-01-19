@@ -1,7 +1,9 @@
 import { Mesh, SkinnedMesh } from 'three';
 import type {
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  RawUnitDescription,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import LandingPortUnit, {
   type LandingPortUnitModuleList,
@@ -17,7 +19,11 @@ import baseGlb from './assets/landing_port_1.glb?url';
 export type Options = LandingPortUnitOptions;
 export type Modules = LandingPortUnitModules;
 export type ModuleList = LandingPortUnitModuleList;
-
+export interface RawUnitDescription_LandingPort_1<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'landing_port_1';
+}
 export default class LandingPort_1 extends LandingPortUnit<
   Modules,
   ModuleList,

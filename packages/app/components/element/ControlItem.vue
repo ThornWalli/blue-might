@@ -8,9 +8,12 @@
     }">
     <div>
       <div>
-        <span v-if="indicator" class="indicator-lamp"></span>
-        <span v-else></span>
-        {{ label.padStart(10, '\u00A0') }}
+        <slot name="indicator">
+          <span v-if="indicator" class="indicator-lamp"></span>
+          <span v-else></span>
+        </slot>
+
+        <slot name="label">{{ label.padStart(10, '\u00A0') }}</slot>
       </div>
       <div v-html="value"></div>
     </div>
@@ -103,7 +106,10 @@ export enum CONTROL_ITEM_STATUS {
     height: 12px;
     background-color: var(--color);
     border-radius: 50%;
-    box-shadow: inset 0 0 6px rgb(0 0 0 / 100%);
+    box-shadow:
+      inset 0 0 2px rgb(0 0 0 / 100%),
+      inset 0 0 4px rgb(0 0 0 / 100%),
+      inset 0 0 6px rgb(0 0 0 / 100%);
   }
 
   &.blinking {

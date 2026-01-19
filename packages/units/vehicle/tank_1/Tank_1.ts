@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import TankUnit, {
   type TankUnitModuleList,
@@ -16,6 +18,12 @@ import baseGlb from './assets/tank_1.glb?url';
 export type Options = TankUnitOptions;
 export type Modules = TankUnitModules;
 export type ModuleList = TankUnitModuleList;
+
+export interface RawUnitDescription_Tank_1<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'tank_1';
+}
 
 export default class Tank_1<
   Modules extends TankUnitModules = TankUnitModules,

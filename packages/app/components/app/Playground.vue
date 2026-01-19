@@ -19,15 +19,30 @@
       </div>
     </template>
     <template #[PANEL.BOTTOM]>
-      <bm-panel-secondary-screen key="secondary-screen" :app="app"
-    /></template>
+      <bm-panel-secondary-screen key="secondary-screen" :app="app" />
+    </template>
     <template #[PANEL.BOTTOM_RIGHT]>
       <bm-panel-unit-preview key="unit-preview" :app="app" />
+    </template>
+    <template #foreground>
+      <bm-message v-if="messageType" :type="messageType" />
     </template>
   </bm-app-layout>
 </template>
 
 <script lang="ts" setup>
+import { onMounted, onUnmounted, ref } from 'vue';
+import {
+  EMPTY,
+  filter,
+  fromEvent,
+  map,
+  merge,
+  Subscription,
+  switchMap
+} from 'rxjs';
+import { ControlAction } from '@blue-might/app/lib/classes/playerModule/Controls';
+
 import type App from '../../lib/classes/App';
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
 import BmPanelDebug from '../panel/Debug.vue';
@@ -36,10 +51,84 @@ import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
 import BmPanelSecondaryScreen from '../panel/GunScreen.vue';
 import BmPanelMap from '../panel/Map.vue';
+import BmMessage, { MESSAGE_TYPE } from '../Message.vue';
 
-defineProps<{
+const messageType = ref<MESSAGE_TYPE | null>(null);
+
+const $props = defineProps<{
   app: App;
 }>();
+
+const subscription = new Subscription();
+
+onMounted(() => {
+  const app = $props.app;
+  subscription.add(
+    app.modules.player.observables.currentPlayer$
+      .pipe(
+        switchMap(player => player?.modules.vehicle.observables.unit$ ?? EMPTY),
+        switchMap(unit => unit?.modules.damage.observables.destroyed$ ?? EMPTY),
+        switchMap(() => app.modules.player.observables.currentPlayer$ ?? EMPTY)
+      )
+      .subscribe(player => {
+        const subscription = merge(
+          player?.modules.controls.observables.controls$.pipe(
+            map(controls => controls[ControlAction.RESTART]),
+            filter(Boolean)
+          ) ?? EMPTY,
+          fromEvent(document, 'click').pipe(map(() => true))
+        ).subscribe(async () => {
+          if (player.modules.life.isGameOver()) {
+            await app.restartMap();
+          } else {
+            await app.modules.player.respawnPlayer();
+          }
+          subscription.unsubscribe();
+        });
+        subscription.add(subscription);
+      })
+  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).restartMap = app.restartMap.bind(app);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).app = app;
+
+  subscription.add(
+    app.modules.player.observables.currentPlayer$
+      .pipe(
+        switchMap(player =>
+          player
+            ? merge(
+                player.modules.vehicle.observables.unit$,
+                player.modules.vehicle.observables.unit$.pipe(
+                  switchMap(
+                    unit => unit?.modules.damage.observables.destroyed$ ?? EMPTY
+                  )
+                )
+              )
+            : EMPTY
+        )
+      )
+      .subscribe(() => {
+        const player = app.modules.player.getCurrentPlayer();
+        const unit = player.modules.vehicle.getUnit();
+
+        if (unit?.modules.damage.isDestroyed()) {
+          if (player.modules.life.isGameOver()) {
+            messageType.value = MESSAGE_TYPE.DESTROYED_GAME_OVER;
+          } else {
+            messageType.value = MESSAGE_TYPE.DESTROYED_RESTART;
+          }
+        } else {
+          messageType.value = null;
+        }
+      })
+  );
+});
+
+onUnmounted(() => {
+  subscription.unsubscribe();
+});
 </script>
 
 <style lang="postcss" scoped>
@@ -61,5 +150,13 @@ defineProps<{
     height: 100%;
     transform: translate(-50%, -50%);
   }
+}
+
+.message {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
 }
 </style>

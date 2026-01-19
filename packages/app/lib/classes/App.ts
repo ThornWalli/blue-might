@@ -124,9 +124,8 @@ export class BaseApp<
       this.modules.player.observables.currentPlayer$
         .pipe(
           switchMap(
-            player => player.modules.vehicle?.observables.vehicle$ ?? EMPTY
+            player => player.modules.vehicle?.observables.unit$ ?? EMPTY
           ),
-          map(({ current }) => current),
           filter(Boolean),
           switchMap(
             vehicle =>
@@ -141,15 +140,25 @@ export class BaseApp<
     this.ready = true;
   }
 
-  async enterMap(desc: MapDescription) {
-    const map = await this.loadMap(desc);
-    map.setModuleDebug(this.config.debug?.map ?? {});
-    await this.modules.map.setMap(map);
-    console.log('Map loaded', map, map.toDescription());
+  private mapDescription: MapDescription | null = null;
+  async enterMap(description: MapDescription) {
+    const map = this.modules.map.getMap();
+    if (map) {
+      map.destroy();
+    }
+
+    this.mapDescription = description;
+    const newMap = this.modules.map.fromDescription(description);
+    newMap.setModuleDebug(this.config.debug?.map ?? {});
+    await this.modules.map.setMap(newMap);
+    console.log('Map loaded', newMap, newMap.toDescription());
   }
 
-  private async loadMap(description: MapDescription) {
-    return this.modules.map.fromDescription(description);
+  restartMap() {
+    if (!this.mapDescription) {
+      throw new Error('No map description available to restart');
+    }
+    this.enterMap(this.mapDescription);
   }
 
   destroy() {

@@ -89,9 +89,10 @@ export default function usePlayerUnitInterface(app: App) {
     fuel: 0,
     fuelMax: 0
   });
+  const playerLifes = ref<number>(3);
 
-  const seaHeight = computed(() =>
-    app.modules.map.getMap().modules.ground.getSeaLevel()
+  const seaHeight = computed(
+    () => app.modules.map.getMap()?.modules.ground.getSeaLevel() ?? 0
   );
   const currentHeight = computed(() => {
     return seaHeight.value + ((position.value?.y ?? 0) - seaHeight.value);
@@ -99,9 +100,12 @@ export default function usePlayerUnitInterface(app: App) {
 
   const groundHeight = computed(() => {
     return position.value
-      ? app.modules.map
+      ? (app.modules.map
           .getMap()
-          .modules.ground.getSurfaceHeightAt(position.value.x, position.value.z)
+          ?.modules.ground.getSurfaceHeightAt(
+            position.value.x,
+            position.value.z
+          ) ?? 0)
       : 0;
   });
 
@@ -127,8 +131,8 @@ export default function usePlayerUnitInterface(app: App) {
 
   onMounted(() => {
     const vehicle$ = app.modules.player.observables.currentPlayer$.pipe(
-      switchMap(player => player.modules.vehicle.observables.vehicle$),
-      map(({ current }) => current as VehicleUnit | null)
+      switchMap(player => player.modules.vehicle.observables.unit$),
+      map(unit => unit as VehicleUnit | null)
     );
 
     const vehicleModule$ = vehicle$.pipe(
@@ -146,6 +150,14 @@ export default function usePlayerUnitInterface(app: App) {
 
     const helicopterModule$ = vehicle$.pipe(
       map(vehicle => (vehicle as AirVehicleUnit)?.modules.airVehicle)
+    );
+
+    subscription.add(
+      app.modules.player.observables.currentPlayer$
+        .pipe(
+          switchMap(player => player?.modules.life.observables.lifes$ ?? EMPTY)
+        )
+        .subscribe(lifes => (playerLifes.value = lifes))
     );
 
     //#region vehicle
@@ -314,6 +326,8 @@ export default function usePlayerUnitInterface(app: App) {
             })
         )
     );
+
+    //#endregion
   });
 
   onUnmounted(() => {
@@ -339,6 +353,7 @@ export default function usePlayerUnitInterface(app: App) {
     compassValue,
     groundHeight,
     currentHeight,
+    playerLifes,
     isVehicle: computed(() => isVehicle(unit.value)),
     isAirVehicle: computed(() => isAirVehicle(unit.value)),
     isSeaVehicle: computed(() => isSeaVehicle(unit.value)),

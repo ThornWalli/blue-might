@@ -180,7 +180,7 @@ function onClickUseVehicle() {
     const player = app.modules.player.getCurrentPlayer();
 
     if (!player) return;
-    player.modules.vehicle.setVehicle(u as MovableUnit);
+    player.modules.vehicle.setUnit(u as MovableUnit);
     u.getModuleByType(PlayerUnitModule)?.setPlayer(player);
     unit.value = u;
   }

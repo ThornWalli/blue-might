@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Object3D, AxesHelper, Mesh, SkinnedMesh, Vector2 } from 'three';
@@ -46,6 +48,12 @@ export interface CombatSubmarineModules extends SeaVehicleUnitModules {
 }
 export type CombatSubmarineModuleList = SeaVehicleUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
+
+export interface RawUnitDescription_CombatSubmarine_1<
+  O extends UnitOptions = CombatSubmarineOptions
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'combat_submarine_1';
+}
 
 export default class CombatSubmarine_1
   extends SeaVehicleUnit<

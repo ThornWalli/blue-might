@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, LoopRepeat, SkinnedMesh } from 'three';
@@ -14,6 +16,12 @@ import { replaceColors } from '@blue-might/app/lib/utils/material';
 import baseGlb from './assets/control_tower_1.glb?url';
 
 export type Options = BuildingUnitOptions;
+
+export interface RawUnitDescription_ControlTower_1<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'control_tower_1';
+}
 
 export default class ControlTower_1<
   Modules extends BuildingUnitModules = BuildingUnitModules,

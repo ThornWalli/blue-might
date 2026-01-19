@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import type { MeshStandardMaterial } from 'three';
@@ -15,6 +17,12 @@ import { replaceColors } from '@blue-might/app/lib/utils/material';
 import baseGlb from './assets/lighthouse_1.glb?url';
 
 export type Options = BuildingUnitOptions;
+
+export interface RawUnitDescription_Lighthouse_1<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'lighthouse_1';
+}
 
 export default class Lighthouse_1<
   Modules extends BuildingUnitModules = BuildingUnitModules,

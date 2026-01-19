@@ -54,9 +54,6 @@ export default class MapAppModule extends AppModule<State, Observables> {
   }
 
   getMap() {
-    if (!this.state.map) {
-      throw new Error('Map is not set');
-    }
     return this.state.map;
   }
 

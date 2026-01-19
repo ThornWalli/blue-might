@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import type { MeshStandardMaterial } from 'three';
@@ -15,6 +17,12 @@ import BuildingUnit, {
 import baseGlb from './assets/tower_1.glb?url';
 
 export type Options = BuildingUnitOptions;
+
+export interface RawUnitDescription_Tower_1<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'tower_1';
+}
 
 export default class Tower_1<
   Modules extends BuildingUnitModules = BuildingUnitModules,

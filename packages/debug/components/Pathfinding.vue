@@ -3,7 +3,6 @@
     <debug-app-component
       :config="{ debug: { map: { pathfinding: true } } }"
       :on-setup="onSetup"
-      :player-unit="playerUnitId"
       :map="map" />
   </div>
 </template>
@@ -12,9 +11,7 @@
 import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import { CombatHelicopter_1, Tank_1, Tree_1 } from '@blue-might/units';
 import { Subscription } from 'rxjs';
-import { Euler, Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
 
 const DebugAppComponent = defineAsyncComponent(() => import('./DebugApp.vue'));
@@ -25,14 +22,29 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
-const playerUnitId = 'combat-helicopter-1';
-
 const map: Partial<MapDescription> = {
+  playerOptions: {
+    position: [2, 0, 0],
+    unit: {
+      key: 'combat_helicopter_1',
+      options: {
+        moduleOptions: {
+          movable: {
+            active: true
+          }
+        },
+        moduleDebug: {
+          pathfinding: true
+        }
+      }
+    }
+  },
   units: [
-    new Tank_1({
+    {
+      key: 'tank_1',
       id: 'tank-1',
-      position: new Vector3(0, 0, 0),
-      rotation: new Euler(0, 0, 0),
+      position: [0, 0, 0],
+      rotation: [0, 0, 0],
       moduleOptions: {
         movable: {
           active: true
@@ -41,24 +53,13 @@ const map: Partial<MapDescription> = {
       moduleDebug: {
         pathfinding: true
       }
-    }),
-    new CombatHelicopter_1({
-      id: 'combat-helicopter-1',
-      position: new Vector3(2, 0, 0),
-      moduleOptions: {
-        movable: {
-          active: true
-        }
-      },
-      moduleDebug: {
-        pathfinding: true
-      }
-    }),
-    new Tree_1({
+    },
+    {
+      key: 'tree_1',
       id: 'tree-1',
-      position: new Vector3(-0.17, 0, 2.83),
-      rotation: new Euler(0, 0, 0)
-    })
+      position: [-0.17, 0, 2.83],
+      rotation: [0, 0, 0]
+    }
   ]
 };
 

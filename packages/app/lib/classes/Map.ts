@@ -1,7 +1,14 @@
-import type { Texture } from 'three';
+import {
+  Euler,
+  Vector3,
+  type EulerTuple,
+  type Texture,
+  type Vector3Tuple
+} from 'three';
 import { Object3D } from 'three';
 import assetLoader from '@blue-might/app/services/assetLoader';
 import { Subscription } from 'rxjs';
+import type { UnitDescriptions } from '@blue-might/units';
 
 import type App from './App';
 import type { AnimationLoopValue } from './Renderer';
@@ -15,7 +22,7 @@ import EffectModule from './mapModule/Effect';
 import FactionModule from './mapModule/Faction';
 import AirFlowModule from './mapModule/AirFlow';
 import type { FactionDescription } from './Faction';
-import type { UnitDescription } from './Unit';
+import type { RawUnitDescription } from './Unit';
 
 type MapModuleList = (
   | typeof UnitsModule
@@ -61,6 +68,7 @@ export default class Map<
   modules: Modules = {} as Modules;
   root: Object3D;
   description: MapDescription;
+  playerOptions: PlayerOptions<UnitDescriptions>;
   textures: {
     heightMap: Texture<ImageBitmap> | null;
     backgroundTexture: Texture<ImageBitmap> | null;
@@ -80,6 +88,13 @@ export default class Map<
     this.root.name = 'map';
 
     this.description = description;
+    this.playerOptions = {
+      ...description.playerOptions,
+      position: new Vector3().fromArray(description.playerOptions.position),
+      rotation: description.playerOptions.rotation
+        ? new Euler().fromArray(description.playerOptions.rotation)
+        : undefined
+    };
 
     this.moduleDebug = { ...this.moduleDebug, ...description.debug };
   }
@@ -174,10 +189,15 @@ export default class Map<
     return this.description.name;
   }
 
+  get playerStartPosition() {
+    return this.description.playerOptions;
+  }
+
   toDescription(): MapDescription {
     return {
       debug: this.moduleDebug,
       name: this.name,
+      playerOptions: this.playerStartPosition,
       ground: {
         heightMap: this.description.ground.heightMap,
         backgroundTexture: this.description.ground.backgroundTexture,
@@ -194,15 +214,29 @@ export default class Map<
   }
 }
 
+export interface RawPlayerOptions<
+  UD extends UnitDescriptions = UnitDescriptions,
+  V3 = Vector3Tuple,
+  E = EulerTuple
+> {
+  unit: UD;
+  position: V3;
+  rotation?: E;
+}
+
+export type PlayerOptions<UD extends UnitDescriptions = UnitDescriptions> =
+  RawPlayerOptions<UD, Vector3, Euler>;
+
 export interface MapDescription {
   debug?: Partial<ModuleDebug>;
   name: string;
+  playerOptions: RawPlayerOptions;
   ground: {
     heightMap: string;
     backgroundTexture: string;
     foregroundTexture: string;
     noiseMonochrome?: boolean;
   };
-  units: UnitDescription[];
+  units: RawUnitDescription[];
   factions: FactionDescription[];
 }

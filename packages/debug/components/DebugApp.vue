@@ -10,13 +10,12 @@ import type { AppConfig } from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
-import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 import type { UnitIdentifier } from '@blue-might/app/lib/types/unit';
 import { debugGroundMap, debugSeaMap } from '@blue-might/maps';
-import { filter, Subscription, map as rxjsMap, switchMap, EMPTY } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { onUnmounted, defineAsyncComponent, markRaw } from 'vue';
 import { defu } from 'defu';
-import type Faction from '@blue-might/app/lib/classes/Faction';
+import { blueFaction } from '@blue-might/app/lib/utils/factions';
 const subscription = new Subscription();
 
 const $props = defineProps<{
@@ -51,10 +50,7 @@ const AppComponent = defineAsyncComponent(
 async function onSetupApp(app: App) {
   subscription.add(
     app.modules.map.observables.map$.subscribe(async map => {
-      await setupPlayer(
-        app,
-        map.modules.faction.getFactionById('blue-faction')!
-      );
+      await setupPlayer(app);
       if (!map) return;
 
       if ($props.onSetup) {
@@ -66,32 +62,19 @@ async function onSetupApp(app: App) {
     })
   );
 }
-async function setupPlayer(app: App, faction: Faction) {
-  let player = new HumanPlayer(app, {
-    name: 'Player'
-  });
-  player.modules.faction.setFaction(faction);
-  player = await app.modules.player.addPlayer(markRaw(player));
-  if ($props.playerUnit) {
-    subscription.add(
-      app.modules.map.observables.map$
-        .pipe(
-          switchMap(
-            map =>
-              map?.modules.units.observables.ready$.pipe(
-                rxjsMap(() => {
-                  return map?.modules.units.getById<MovableUnit>(
-                    $props.playerUnit!
-                  );
-                })
-              ) ?? EMPTY
-          ),
-          filter(Boolean)
-        )
-        .subscribe(vehicle => player.modules.vehicle.setVehicle(vehicle))
-    );
-  }
-  return player;
+async function setupPlayer(app: App) {
+  await app.modules.player.addPlayer(
+    markRaw(
+      new HumanPlayer(app, {
+        name: 'Player',
+        moduleStates: {
+          faction: {
+            faction: blueFaction
+          }
+        }
+      })
+    )
+  );
 }
 </script>
 

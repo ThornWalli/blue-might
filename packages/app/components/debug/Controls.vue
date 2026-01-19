@@ -65,21 +65,14 @@ onMounted(() => {
   subscription.add(
     app.modules.debug.observables.currentPosition$.subscribe(p => {
       currentPosition.value.copy(p);
-
-      const navigator = app.modules.map
-        .getMap()
-        .modules.pathfinding.getGroundNavigatorLarge();
+      const map = app.modules.map.getMap()!;
+      const navigator = map.modules.pathfinding.getGroundNavigatorLarge();
       const grid = navigator.getGrid();
       const node = navigator.worldToNode(p.x, p.y);
 
       tileType.value = (node && grid.getTileType?.(node).toString()) ?? '';
-
-      surfaceHeight.value = app.modules.map
-        .getMap()
-        .modules.ground.getSurfaceHeightAt(p.x, p.y);
-      terrainHeight.value = app.modules.map
-        .getMap()
-        .modules.ground.getHeightAt(p.x, p.y);
+      surfaceHeight.value = map.modules.ground.getSurfaceHeightAt(p.x, p.y);
+      terrainHeight.value = map.modules.ground.getHeightAt(p.x, p.y);
     })
   );
 });

@@ -2,6 +2,7 @@ import { ReplaySubject } from 'rxjs';
 
 import type {
   PlayerModuleObservables,
+  PlayerModuleOptions,
   PlayerModuleState
 } from '../PlayerModule';
 import PlayerModule from '../PlayerModule';
@@ -12,15 +13,21 @@ interface Observables extends PlayerModuleObservables {
   faction$: ReplaySubject<Faction>;
 }
 
+type Options = PlayerModuleOptions;
+
 interface State extends PlayerModuleState {
   faction: Faction;
 }
 
-export default class FactionModule extends PlayerModule<State, Observables> {
+export default class FactionPlayerModule extends PlayerModule<
+  Options,
+  State,
+  Observables
+> {
   static override TYPE = 'faction';
 
-  constructor(player: Player, state: State, debug?: boolean) {
-    super(player, state, debug);
+  constructor(player: Player, options: Options, state: State, debug?: boolean) {
+    super(player, options, state, debug);
 
     //#region observables
     this.observables.faction$ = new ReplaySubject<Faction>();
@@ -33,6 +40,7 @@ export default class FactionModule extends PlayerModule<State, Observables> {
   }
 
   setFaction(faction: Faction) {
+    if (this.state.faction === faction) return;
     this.state.faction = faction;
     this.observables.faction$.next(faction);
   }

@@ -1,11 +1,4 @@
-import { Vector3 } from 'three';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import LandingPort_1 from '@blue-might/units/building/landing_port_1/LandingPort_1';
-import Tank_1 from '@blue-might/units/vehicle/tank_1/Tank_1';
-import { Barrack_1, ControlTower_1 } from '@blue-might/units';
-import CombatHelicopter_1 from '@blue-might/units/vehicle/combat_helicopter_1/CombatHelicopter_1';
-import Tree_1 from '@blue-might/units/tree/tree_1/Tree_1';
-import Soldat_1 from '@blue-might/units/vehicle/soldat_1/Soldat_1';
 import { blueFaction } from '@blue-might/app/lib/utils/factions';
 
 import foregroundTexture from './texture_fg.png';
@@ -17,6 +10,13 @@ export const playerFaction = blueFaction;
 export default function (): MapDescription {
   return {
     name: 'Default Map',
+    playerOptions: {
+      position: [9.5, 0, 5.5],
+      rotation: [0, Math.PI, 0],
+      unit: {
+        key: 'combat_helicopter_1'
+      }
+    },
     ground: {
       heightMap,
       backgroundTexture,
@@ -24,27 +24,33 @@ export default function (): MapDescription {
     },
     factions: [blueFaction],
     units: [
-      new Tree_1({
-        position: new Vector3(3, 0, 9)
-      }),
-      new Tree_1({
-        position: new Vector3(2.5, 0, 10)
-      }),
-      new LandingPort_1({
-        position: new Vector3(9.5, 0.4, 5.5)
-      }),
-      new LandingPort_1({
-        position: new Vector3(-3, 0, 10)
-      }),
-      new Tank_1({
-        id: 'tank-1',
-        position: new Vector3(7.5, 0, 2)
-      }),
-      new Tank_1({
-        position: new Vector3(8.5, 0, 2)
-      }),
-      new Tank_1({
-        position: new Vector3(6.5, 0, 2),
+      {
+        key: 'tree_1',
+        position: [3, 0, 9]
+      },
+      {
+        key: 'tree_2',
+        position: [2.5, 0, 10]
+      },
+      {
+        key: 'landing_port_1',
+        position: [9.5, 0.4, 5.5]
+      },
+      {
+        key: 'landing_port_1',
+        position: [-3, 0, 10]
+      },
+      {
+        key: 'tank_1',
+        position: [7.5, 0, 2]
+      },
+      {
+        key: 'tank_1',
+        position: [8.5, 0, 2]
+      },
+      {
+        key: 'tank_1',
+        position: [6.5, 0, 2],
         moduleOptions: {
           movable: {
             active: true
@@ -56,32 +62,22 @@ export default function (): MapDescription {
               [2.17, -8.5],
               [13.83, 0.5],
               [9.5, 3.5],
-              [8.83, 11.83],
-              [-1.83, 14.83],
-              [-9.17, 11.17],
-              [2.17, 7.17]
+              [8.83, 11.83]
             ]
           }
         }
-      }),
-      new ControlTower_1({
-        position: new Vector3(5, 0, 5)
-      }),
-      new CombatHelicopter_1({
-        id: 'combat-helicopter-1',
-        position: new Vector3(9.5, 0, 5.5),
-        moduleOptions: {
-          faction: {
-            faction: blueFaction
-          }
-        }
-      }),
-      new Barrack_1({
-        position: new Vector3(10.5, 0, 1)
-      }),
-      new Soldat_1({
-        id: 'soldat-1',
-        position: new Vector3(12.83, 0, 3.83),
+      },
+      {
+        key: 'control_tower_1',
+        position: [5, 0, 5]
+      },
+      {
+        key: 'barrack_1',
+        position: [10.5, 0, 1]
+      },
+      {
+        key: 'soldat_1',
+        position: [12.83, 0, 3.83],
         moduleOptions: {
           patrol: {
             active: false,
@@ -95,10 +91,10 @@ export default function (): MapDescription {
             ]
           }
         }
-      }),
-      new Soldat_1({
-        id: 'soldat-2',
-        position: new Vector3(5.5, 0, 4.17),
+      },
+      {
+        key: 'soldat_1',
+        position: [5.5, 0, 4.17],
         moduleOptions: {
           patrol: {
             active: false,
@@ -110,7 +106,7 @@ export default function (): MapDescription {
             ]
           }
         }
-      })
+      }
     ]
   };
 }

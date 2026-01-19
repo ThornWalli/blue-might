@@ -13,20 +13,7 @@ import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
-import {
-  CombatHelicopter_1,
-  ControlTower_1,
-  Factory_1,
-  FactoryChimney_1,
-  Lighthouse_1,
-  SeaLandingPortSupplyStation,
-  Soldat_1,
-  Tank_1,
-  Tower_1
-} from '@blue-might/units';
-import House_1 from '@blue-might/units/building/house_1/House_1';
 import { Subscription } from 'rxjs';
-import { Euler, Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
 
 const DebugAppComponent = defineAsyncComponent(() => import('./DebugApp.vue'));
@@ -40,40 +27,51 @@ onUnmounted(() => {
 const playerUnitId = 'tank-1';
 
 const map: Partial<MapDescription> = {
+  playerOptions: {
+    position: [2.83, 0, 2.17],
+    rotation: [0, Math.PI, 0],
+    unit: {
+      key: 'combat_helicopter_1'
+    }
+  },
   factions: [blueFaction, enemyFaction],
   units: [
-    new CombatHelicopter_1({
-      id: playerUnitId,
-      position: new Vector3(2.83, 0, 2.17),
-      rotation: new Euler(0, Math.PI, 0)
-    }),
-    new Tank_1({
-      position: new Vector3(1, 0, 0.5)
-    }),
-    new Soldat_1({
-      position: new Vector3(0.64, 0, -0.06)
-    }),
-    new House_1({
-      position: new Vector3(0, 0, 0)
-    }),
-    new Tower_1({
-      position: new Vector3(4.17, 0, 0.17)
-    }),
-    new SeaLandingPortSupplyStation({
-      position: new Vector3(2.83, 0, 2.17)
-    }),
-    new ControlTower_1({
-      position: new Vector3(1.5, 0, 3.17)
-    }),
-    new Factory_1({
-      position: new Vector3(7.5, 0, -2.17)
-    }),
-    new FactoryChimney_1({
-      position: new Vector3(8.83, 0, -0.17)
-    }),
-    new Lighthouse_1({
-      position: new Vector3(-8.83, 0, -0.17)
-    })
+    {
+      key: 'tank_1',
+      position: [1, 0, 0.5]
+    },
+    {
+      key: 'soldat_1',
+      position: [0.64, 0, -0.06]
+    },
+    {
+      key: 'house_1',
+      position: [0, 0, 0]
+    },
+    {
+      key: 'tower_1',
+      position: [4.17, 0, 0.17]
+    },
+    {
+      key: 'sea_landing_port_supply_station_1',
+      position: [2.83, 0, 2.17]
+    },
+    {
+      key: 'control_tower_1',
+      position: [1.5, 0, 3.17]
+    },
+    {
+      key: 'factory_1',
+      position: [7.5, 0, -2.17]
+    },
+    {
+      key: 'factory_chimney_1',
+      position: [8.83, 0, -0.17]
+    },
+    {
+      key: 'lighthouse_1',
+      position: [-8.83, 0, -0.17]
+    }
   ]
 };
 

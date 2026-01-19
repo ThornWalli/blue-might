@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import TankUnit, {
   type TankUnitModuleList,
@@ -44,6 +46,12 @@ export interface CombatTankModules extends TankUnitModules {
 }
 export type CombatTankModuleList = TankUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
+
+export interface RawUnitDescription_CombatTank_1<
+  O extends UnitOptions = CombatTankOptions
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'combat_tank_1';
+}
 
 export default class CombatTank_1
   extends TankUnit<CombatTankModules, CombatTankModuleList, CombatTankOptions>

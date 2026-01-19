@@ -22,11 +22,6 @@ export default abstract class MapModule<
     super({} as State, debug);
   }
 
-  override destroy() {
-    this.map.destroy();
-    super.destroy();
-  }
-
   getScene() {
     return this.map.app.renderer.scene;
   }

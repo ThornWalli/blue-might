@@ -1,24 +1,27 @@
-import { ReplaySubject, type SubscriptionLike } from 'rxjs';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { SubscriptionLike } from 'rxjs';
 import { Subscription } from 'rxjs';
 
-import type Unit from './Unit';
-import VehicleModule from './playerModule/Vehicle';
+import MovablePlayerModule from './playerModule/Movable';
 import type MovableUnit from './unit/Movable';
-import ControlsModule from './playerModule/Controls';
-import FactionModule from './playerModule/Faction';
+import ControlsPlayerModule from './playerModule/Controls';
+import FactionPlayerModule from './playerModule/Faction';
 import type App from './App';
-import type { PlayerModuleState } from './PlayerModule';
+import LifePlayerModule from './playerModule/Life';
+import type { ModuleOptions, ModuleStates } from './Unit';
 
 export type PlayerModuleList = (
-  | typeof VehicleModule
-  | typeof ControlsModule
-  | typeof FactionModule
+  | typeof MovablePlayerModule
+  | typeof ControlsPlayerModule
+  | typeof FactionPlayerModule
+  | typeof LifePlayerModule
 )[];
 
 export interface PlayerModules {
-  vehicle: VehicleModule;
-  controls: ControlsModule;
-  faction: FactionModule;
+  vehicle: MovablePlayerModule;
+  controls: ControlsPlayerModule;
+  faction: FactionPlayerModule;
+  life: LifePlayerModule;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -27,7 +30,8 @@ export interface PlayerState {}
 export interface PlayerConstructorOptions {
   id?: string;
   name: string;
-  moduleStates?: { [key: string]: PlayerModuleState };
+  moduleOptions?: Partial<ModuleOptions>;
+  moduleStates?: Partial<ModuleStates>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
@@ -38,11 +42,9 @@ export default class Player<
   ModuleList extends PlayerModuleList = PlayerModuleList
 > {
   debug = false;
-
   private ready: boolean = false;
   state: PlayerState = {};
   modules: Modules = {} as Modules;
-
   id: string;
   name: string;
   observables: Observables = {} as Observables;
@@ -50,48 +52,46 @@ export default class Player<
 
   constructor(
     public app: App,
-    { id, name, moduleStates }: PlayerConstructorOptions,
+    { id, name, moduleStates, moduleOptions }: PlayerConstructorOptions,
     protected moduleList: unknown[] = []
   ) {
-    moduleList.push(ControlsModule, VehicleModule, FactionModule);
+    moduleList.push(
+      ControlsPlayerModule,
+      MovablePlayerModule,
+      FactionPlayerModule,
+      LifePlayerModule
+    );
 
     this.id = id || crypto.randomUUID();
     this.name = name || 'Player';
-
-    this.observables = {
-      unit$: new ReplaySubject<{
-        lastUnit?: Unit;
-        unit: Unit;
-      }>(1)
-    };
 
     const preparedModules = (moduleList as ModuleList)
       .map(ModuleClass => {
         const types = ModuleClass.TYPES;
 
-        const { state } = types.reduce<{
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { options, state } = types.reduce<{
+          options: any;
           state: any;
         }>(
           (acc, type) => {
+            acc.options = {
+              ...acc.options,
+              ...(moduleOptions?.[type] ?? {})
+            };
             acc.state = {
               ...acc.state,
               ...(moduleStates?.[type] ?? {})
             };
             return acc;
           },
-          { state: {} }
+          { options: {}, state: {} }
         );
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const moduleInstance = new (ModuleClass as any)(
-          this,
-          state,
-          this.debug
-        );
+        const moduleInstance = new ModuleClass(this, options, state);
         return ModuleClass.TYPES.map(type => [type, moduleInstance]);
       })
       .flat();
+
     this.modules = Object.fromEntries(preparedModules);
   }
 
@@ -126,8 +126,8 @@ export default class Player<
 
   setVehicle(unit: MovableUnit | null) {
     if (this.modules.vehicle.hasVehicle()) {
-      this.modules.vehicle.getVehicle()?.modules.player.setPlayer(null);
+      this.modules.vehicle.getUnit()?.modules.player.setPlayer(null);
     }
-    this.modules.vehicle.setVehicle(unit);
+    this.modules.vehicle.setUnit(unit);
   }
 }

@@ -53,10 +53,8 @@ onMounted(() => {
   subscription.add(
     $props.app.modules.player.observables.currentPlayer$
       .pipe(
-        switchMap(
-          player => player?.modules.vehicle.observables.vehicle$ || EMPTY
-        ),
-        map(({ current }) => getAirVehicle(current)),
+        switchMap(player => player?.modules.vehicle.observables.unit$ || EMPTY),
+        map(getAirVehicle),
         filter(Boolean),
         switchMap(unit => timer(0, 100).pipe(map(() => unit)))
       )

@@ -1,7 +1,9 @@
 import { Mesh, SkinnedMesh } from 'three';
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import LandingPortUnit, {
   type LandingPortUnitModuleList,
@@ -21,12 +23,18 @@ export interface Modules extends LandingPortUnitModules {
 }
 export type ModuleList = LandingPortUnitModuleList & [typeof SupplyUnitModule];
 
-export default class LandingPortSupplyStation extends LandingPortUnit<
+export interface RawUnitDescription_LandingPortSupplyStation_1<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'landing_port_supply_station_1';
+}
+
+export default class LandingPortSupplyStation_1 extends LandingPortUnit<
   Modules,
   ModuleList,
   Options
 > {
-  static override KEY = 'landing_port_supply_station';
+  static override KEY = 'landing_port_supply_station_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []

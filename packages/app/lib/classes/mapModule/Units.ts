@@ -108,7 +108,19 @@ export default class UnitsModule extends MapModule<State, Observables> {
   override async afterSetup() {
     await super.afterSetup();
 
-    await this.setupUnits(resolveUnits(this.map.description.units) || []);
+    await this.setupUnits(
+      resolveUnits(
+        this.map.description.units.map(unit => ({
+          ...unit,
+          position: Array.isArray(unit.position)
+            ? new Vector3().fromArray(unit.position)
+            : new Vector3(),
+          rotation: Array.isArray(unit.rotation)
+            ? new Euler().fromArray(unit.rotation)
+            : new Euler()
+        }))
+      ) || []
+    );
 
     this.listener.addMeshes(this.getUnits().map(unit => unit.root));
   }
@@ -145,15 +157,21 @@ export default class UnitsModule extends MapModule<State, Observables> {
 
   override update(v: AnimationLoopValue) {
     this.getUnits().forEach(unit => {
-      if (this.state.visibleUnits.includes(unit)) {
-        unit.renderUpdate(v);
+      if (!unit.isDestroyed()) {
+        if (this.state.visibleUnits.includes(unit)) {
+          unit.renderUpdate(v);
+        }
+        unit.update(v);
       }
-      unit.update(v);
     });
   }
 
   getUnits() {
     return Array.from(this.state.units.values());
+  }
+
+  getUnitsInRadius(position: Vector3, radius: number) {
+    return this.chunkManager.getUnitsInRadius(position, radius);
   }
 
   getUnitById(id: string) {
@@ -178,6 +196,11 @@ export default class UnitsModule extends MapModule<State, Observables> {
           this.chunkManager.assignToChunk(unit);
           this.updateVisibility();
         })
+    );
+    unit.subscription.add(
+      unit.observables.destroyed$.subscribe(() => {
+        this.remove(unit);
+      })
     );
     this.state.units.set(unit.id, unit);
     this.root.add(unit.root);
@@ -232,14 +255,22 @@ const unitMap = new globalThis.Map(
 function resolveUnits(units: UnitDescription[]): Unit[] {
   return units.map(unit => {
     const { key, ...rest } = unit;
-    const Class = unitMap.get(unit.key)!;
+    const UnitClass = unitMap.get(unit.key)!;
     if (unit instanceof Unit) {
       return unit;
     }
-    return new Class({
+    return new UnitClass({
       ...rest,
-      position: new Vector3().fromArray(rest.position as Vector3Tuple),
-      rotation: new Euler().fromArray(rest.rotation as Vector3Tuple)
+      position:
+        rest.position instanceof Vector3
+          ? rest.position
+          : new Vector3().fromArray(
+              (rest.position ?? [0, 0, 0]) as Vector3Tuple
+            ),
+      rotation:
+        rest.rotation instanceof Euler
+          ? rest.rotation
+          : new Euler().fromArray((rest.rotation ?? [0, 0, 0]) as Vector3Tuple)
     });
   });
 }

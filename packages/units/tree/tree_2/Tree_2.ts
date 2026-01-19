@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh } from 'three';
@@ -14,6 +16,11 @@ import { prepareForRaycast } from '@blue-might/app/lib/utils/raycast';
 import baseGlb from './assets/tree_2.glb?url';
 
 export type Options = BuildingUnitOptions;
+export interface RawUnitDescription_Tree_2<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'tree_2';
+}
 
 export default class Tree_2<
   Modules extends BuildingUnitModules = BuildingUnitModules,

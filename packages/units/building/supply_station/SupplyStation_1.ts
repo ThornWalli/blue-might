@@ -1,65 +1,58 @@
 import { Mesh, SkinnedMesh } from 'three';
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
-import LandingPortUnit, {
-  type LandingPortUnitModuleList,
-  type LandingPortUnitModules,
-  type LandingPortUnitOptions
-} from '@blue-might/app/lib/classes/unit/LandingPort';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { replaceColors } from '@blue-might/app/lib/utils/material';
+import BuildingUnit, {
+  type BuildingUnitModuleList,
+  type BuildingUnitModules,
+  type BuildingUnitOptions
+} from '@blue-might/app/lib/classes/unit/Building';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
 
-import baseGlb from './assets/sea_landing_port_supply_station.glb?url';
+import baseGlb from './assets/supply_station.glb?url';
+// import baseTexture from './texture.png?url';
 
-export type Options = LandingPortUnitOptions;
-export interface Modules extends LandingPortUnitModules {
+export type Options = BuildingUnitOptions;
+export interface Modules extends BuildingUnitModules {
   supply: SupplyUnitModule;
 }
-export type ModuleList = LandingPortUnitModuleList & [typeof SupplyUnitModule];
+export type ModuleList = BuildingUnitModuleList & [typeof SupplyUnitModule];
+export interface RawUnitDescription_SupplyStation_1<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'supply_station_1';
+}
 
-export default class SeaLandingPortSupplyStation extends LandingPortUnit<
-  Modules,
-  ModuleList,
-  Options
-> {
-  static override KEY = 'sea_landing_port_supply_station';
+export default class SupplyStation_1 extends BuildingUnit {
+  static override KEY = 'supply_station_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList: ModuleList = [] as unknown as ModuleList
   ) {
     moduleList.push(SupplyUnitModule);
     super(
       {
         ...options,
-        name: 'Sea Landing Port Supply Station',
+        name: 'Landing Port Supply Station',
         moduleOptions: {
           ...options.moduleOptions,
-          damage: {
-            enabled: false
-          },
           supply: {
             ...options.moduleOptions?.supply,
-            radius: 0.5,
-            sphereTarget: {
-              name: 'base'
-            },
-            allowedType: {
-              air: true
-            }
+            radius: 0.5
+          },
+          landingPort: {
+            ...options.moduleOptions?.landingPort,
+            support: true
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targets: [
-              { name: 'base' },
-              { name: 'additional_1' },
-              { name: 'additional_2' },
-              { name: 'plattform' },
-              { name: 'stand' }
-            ]
+            targets: [{ name: 'additional_1' }]
           }
         }
       },
@@ -70,12 +63,6 @@ export default class SeaLandingPortSupplyStation extends LandingPortUnit<
   override async afterSetup(_context: SetupContext): Promise<void> {
     await super.afterSetup(_context);
 
-    // this.subscription.add(
-    //   this.modules.landingPort.observables.landedUnit.subscribe(unit =>
-    //     this.modules.supply.setSupplyUnit(unit)
-    //   )
-    // );
-
     this.setMaterialReady();
   }
 
@@ -85,12 +72,10 @@ export default class SeaLandingPortSupplyStation extends LandingPortUnit<
     this.modules.animation.setAnimations(animations);
 
     setIgnorePathfinding(object.getObjectByName('base')!, true);
-    setIgnorePathfinding(object.getObjectByName('plattform')!, true);
 
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.receiveShadow = true;
-        child.castShadow = true;
         replaceColors(
           [
             [

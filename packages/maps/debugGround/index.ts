@@ -4,7 +4,7 @@ import heightMap from './heightMap.png';
 import backgroundTexture from './texture_bg.png';
 import foregroundTexture from './texture_fg.png';
 
-export default function (): MapDescription {
+export default function (): Omit<MapDescription, 'playerOptions'> {
   return {
     name: 'Default Map',
     ground: {

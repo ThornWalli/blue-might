@@ -33,12 +33,10 @@ onMounted(() => {
   subscription.add(
     $props.app.modules.player.observables.currentPlayer$
       .pipe(
-        switchMap(
-          player => player?.modules.vehicle.observables.vehicle$ ?? EMPTY
-        ),
+        switchMap(player => player?.modules.vehicle.observables.unit$ ?? EMPTY),
         map(
-          ({ current }) =>
-            current as Unit<UnitModules & { weapon: WeaponUnitModule }> | null
+          unit =>
+            unit as Unit<UnitModules & { weapon: WeaponUnitModule }> | null
         )
       )
       .subscribe(u => {

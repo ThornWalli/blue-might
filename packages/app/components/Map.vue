@@ -66,10 +66,8 @@ onMounted(() => {
   );
 
   const position$ = $props.app.modules.player.observables.currentPlayer$.pipe(
-    switchMap(player => player.modules.vehicle.observables.vehicle$ ?? EMPTY),
-    switchMap(({ current }) =>
-      current ? current.observables.position$ : EMPTY
-    )
+    switchMap(player => player.modules.vehicle.observables.unit$ ?? EMPTY),
+    switchMap(unit => (unit ? unit.observables.position$ : EMPTY))
   );
 
   subscription.add(
@@ -78,7 +76,7 @@ onMounted(() => {
         switchMap(map => (map ? map.modules.units.observables.addUnit$ : EMPTY))
       )
       .subscribe(() => {
-        units = $props.app.modules.map.getMap().modules.units.getUnits();
+        units = $props.app.modules.map.getMap()?.modules.units.getUnits() ?? [];
       })
   );
 
@@ -218,7 +216,7 @@ function renderUnits() {
   units.forEach(unit => {
     if (
       unit.modules.damage.isDestroyed() ||
-      currentPlayer.value?.modules.vehicle.getVehicle() === unit
+      currentPlayer.value?.modules.vehicle.getUnit() === unit
     ) {
       return;
     }

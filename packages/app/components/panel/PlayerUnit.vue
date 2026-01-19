@@ -5,49 +5,77 @@
     style-type="transparent"
     class="bm-panel-player-unit"
     :title="panelTitle">
-    <div class="grid-r grid-r-start">
+    <div class="grid-row grid-row-start">
       <div class="info weapon">
         <div>
           <!-- weapons -->
           <fieldset v-if="weaponSlots.length > 0">
             <legend>Weapons</legend>
-            <div>
-              <bm-control-item
-                v-for="(slot, index) in weaponSlots"
-                :key="index"
-                indicator
-                :status="
-                  slot.active
-                    ? slot.ammunition / slot.maxAmmunition < 0.5
-                      ? slot.ammunition <= 0
-                        ? CONTROL_ITEM_STATUS.DANGER
-                        : CONTROL_ITEM_STATUS.WARNING
-                      : CONTROL_ITEM_STATUS.NORMAL
-                    : CONTROL_ITEM_STATUS.INACTIVE
-                "
-                :label="
-                  slot.weapon.projectile.shortName ?? `Weapon #${index + 1}`
-                "
-                :value="
-                  `${slot.ammunition}/${slot.maxAmmunition}`
-                    .toString()
-                    .padStart(padLength, '\u00A0')
-                " />
-              <bm-control-item
-                v-if="weaponSlots.length === 1"
-                label="(none)"
-                :value="'-'.padStart(padLength, '\u00A0')" />
-            </div>
+            <bm-control-item
+              button
+              indicator
+              label="AIM"
+              :value="
+                (autoAimActive ? 'On' : 'Off').padStart(padLength, '\u00A0')
+              "
+              :status="
+                autoAimActive
+                  ? CONTROL_ITEM_STATUS.NORMAL
+                  : CONTROL_ITEM_STATUS.INACTIVE
+              "
+              @click="onClickAimActive" />
+            <bm-control-item
+              v-for="(slot, index) in weaponSlots"
+              :key="index"
+              indicator
+              :status="
+                slot.active
+                  ? slot.ammunition / slot.maxAmmunition < 0.5
+                    ? slot.ammunition <= 0
+                      ? CONTROL_ITEM_STATUS.DANGER
+                      : CONTROL_ITEM_STATUS.WARNING
+                    : CONTROL_ITEM_STATUS.NORMAL
+                  : CONTROL_ITEM_STATUS.INACTIVE
+              "
+              :label="
+                slot.weapon.projectile.shortName ?? `Weapon #${index + 1}`
+              "
+              :value="
+                `${slot.ammunition}/${slot.maxAmmunition}`
+                  .toString()
+                  .padStart(padLength, '\u00A0')
+              " />
+            <bm-control-item
+              v-if="weaponSlots.length === 1"
+              label="(none)"
+              :value="'-'.padStart(padLength, '\u00A0')" />
           </fieldset>
         </div>
       </div>
-      <div class="grid-c grid-c-end grid-c-full">
+      <div class="grid-col grid-col-end grid-col-full">
         <div class="info general">
           <div>
-            <div class="grid-r">
-              <div class="grid-c">
+            <div class="grid-row">
+              <div class="grid-col">
                 <fieldset>
                   <legend>General</legend>
+
+                  <bm-control-item
+                    indicator
+                    label="Lives"
+                    :status="
+                      playerLifes > 1
+                        ? CONTROL_ITEM_STATUS.NORMAL
+                        : CONTROL_ITEM_STATUS.DANGER
+                    "
+                    :value="
+                      playerLifes.toString().padStart(padLength, '\u00A0')
+                    ">
+                    <template #indicator>
+                      <svg-icon-heart class="heart" />
+                    </template>
+                  </bm-control-item>
+
                   <bm-control-item
                     indicator
                     label="Damage"
@@ -122,22 +150,6 @@
                       ).padStart(padLength, '\u00A0')
                     "
                     @click="onClickGears" />
-                  <bm-control-item
-                    button
-                    indicator
-                    label="AIM"
-                    :value="
-                      (autoAimActive ? 'On' : 'Off').padStart(
-                        padLength,
-                        '\u00A0'
-                      )
-                    "
-                    :status="
-                      autoAimActive
-                        ? CONTROL_ITEM_STATUS.NORMAL
-                        : CONTROL_ITEM_STATUS.INACTIVE
-                    "
-                    @click="onClickAimActive" />
                 </fieldset>
               </div>
               <div class="col">
@@ -172,17 +184,17 @@
             </div>
           </div>
         </div>
-        <div class="grid-c grid-c-full grid-c-end">
+        <div class="grid-col grid-col-full grid-col-end">
           <div v-if="isAirVehicle" class="info air">
             <fieldset>
               <legend>Air Control</legend>
-              <div class="grid-r">
-                <div class="grid-c grid-c-full grid-c-v">
+              <div class="grid-row">
+                <div class="grid-col grid-col-full grid-col-v">
                   <div class="attitude-indicator">
                     <bm-attitude-indicator :app="app" />
                   </div>
                 </div>
-                <div class="grid-c grid-c-vertical">
+                <div class="grid-col grid-col-vertical">
                   <bm-control-item
                     indicator
                     label="Altitude"
@@ -236,6 +248,7 @@ import BmControlItem, { CONTROL_ITEM_STATUS } from '../element/ControlItem.vue';
 import BmPanel from '../Panel.vue';
 import BmAttitudeIndicator from '../AttitudeIndicator.vue';
 import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
+import SvgIconHeart from '../../assets/icons/heart.svg?component';
 
 const padLength = 7;
 
@@ -263,7 +276,8 @@ const {
   hasFuelWarning,
   currentHeight,
   seaHeight,
-  groundHeight
+  groundHeight,
+  playerLifes
 } = usePlayerUnitInterface($props.app);
 
 const previewOptions = computed(() => {
@@ -285,7 +299,7 @@ function onClickUnitActive(e: Event) {
   (e.target as HTMLButtonElement).blur();
   const vehicle = player.value?.modules.vehicle;
   if (!vehicle) return;
-  const movableModule = vehicle.getVehicle()?.modules.movable;
+  const movableModule = vehicle.getUnit()?.modules.movable;
 
   if (movableModule) {
     if (movableModule.isTurnOn()) {
@@ -301,7 +315,7 @@ function onClickAimActive(e: Event) {
   autoAimActive.value = !autoAimActive.value;
   const vehicle = player.value?.modules.vehicle;
   if (!vehicle) return;
-  const gunModule = vehicle.getVehicle()!.getModuleByType(WeaponUnitModule);
+  const gunModule = vehicle.getUnit()!.getModuleByType(WeaponUnitModule);
 
   if (gunModule) {
     gunModule.setAutoAimActive(autoAimActive.value);
@@ -309,8 +323,7 @@ function onClickAimActive(e: Event) {
 }
 
 function onClickGears() {
-  const vehicleUnit =
-    player.value?.modules.vehicle.getVehicle() as AirVehicleUnit;
+  const vehicleUnit = player.value?.modules.vehicle.getUnit() as AirVehicleUnit;
   if (!(vehicleUnit instanceof AirVehicleUnit)) return;
 
   const airVehicleModule = vehicleUnit.modules.airVehicle;
@@ -454,6 +467,11 @@ function onClickGears() {
       background-color: yellow;
     }
   }
+}
+
+.heart {
+  width: 12px;
+  color: red;
 }
 
 @keyframes blink {

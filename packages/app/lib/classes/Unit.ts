@@ -20,18 +20,27 @@ import FactionUnitModule from './unitModule/Faction';
 import type MovableUnitModule from './unitModule/Movable';
 import type PatrolUnitModule from './unitModule/Patrol';
 
-export interface UnitDescription {
+export interface RawUnitDescription<
+  Options = UnitOptions,
+  V3 = Vector3Tuple,
+  E = EulerTuple
+> {
   key: string;
-  debug: boolean;
-  id: string;
-  name: string;
-  position: Vector3Tuple | Vector3;
-  rotation: EulerTuple | Euler;
-  options: UnitOptions;
-  moduleOptions: Partial<ModuleOptions>;
-  moduleDebug: Partial<ModuleDebug>;
-  visible: boolean;
+  debug?: boolean;
+  id?: string;
+  name?: string;
+  position?: V3;
+  rotation?: E;
+  options?: Partial<Options>;
+  moduleOptions?: Partial<ModuleOptions>;
+  moduleDebug?: Partial<ModuleDebug>;
+  visible?: boolean;
 }
+export type UnitDescription<Options = UnitOptions> = RawUnitDescription<
+  Options,
+  Vector3,
+  Euler
+>;
 
 export enum GROUND_ADJUSTMENT_MODE {
   MIN_HEIGHT = 'min-height',
@@ -74,7 +83,7 @@ export interface ModuleDebug extends Record<any, boolean> {}
 
 export type UnitConstructorOptions<Options extends UnitOptions = UnitOptions> =
   Partial<
-    Exclude<UnitDescription, 'options' | 'position' | 'rotation'> & {
+    Exclude<UnitDescription<Options>, 'options' | 'position' | 'rotation'> & {
       preview?: boolean;
       id?: UnitIdentifier;
       position: Vector3;
@@ -98,6 +107,7 @@ export interface SetupContext {
 }
 
 export interface UnitObservables {
+  destroyed$: ReplaySubject<void>;
   position$: ReplaySubject<Vector3>;
   rotation$: ReplaySubject<Euler>;
   ready$: ReplaySubject<void>;
@@ -110,7 +120,7 @@ export default class Unit<
   ModuleList extends UnitModuleList = UnitModuleList,
   Options extends UnitOptions = UnitOptions,
   Observables extends UnitObservables = UnitObservables
-> implements UnitDescription {
+> implements UnitDescription<Options> {
   static KEY = 'unit';
   static NAME = 'Unit';
 
@@ -170,6 +180,7 @@ export default class Unit<
     this.visible = visible ?? true;
 
     //#region observables
+    this.observables.destroyed$ = new ReplaySubject<void>(1);
     this.observables.ready$ = new ReplaySubject<void>(1);
     this.observables.materialReady$ = new ReplaySubject<void>(1);
     this.observables.position$ = new ReplaySubject<Vector3>(1);
@@ -348,12 +359,17 @@ export default class Unit<
     this.rollWrapper.add(object);
     setMainObjectRecursive(object, this.root);
   }
-
+  private destroyed = false;
   destroy() {
     this.subscription.unsubscribe();
     Object.values(this.modules).forEach(module => module.destroy());
     this.root.removeFromParent();
     this.root.remove();
+    this.destroyed = true;
+    this.observables.destroyed$.next();
+  }
+  isDestroyed() {
+    return this.destroyed;
   }
 
   getMap() {
@@ -765,7 +781,7 @@ export default class Unit<
 
   //#endregion
 
-  toDescription(): UnitDescription {
+  toDescription(): RawUnitDescription {
     return {
       key: (this.constructor as typeof Unit).KEY,
       debug: this.debug,

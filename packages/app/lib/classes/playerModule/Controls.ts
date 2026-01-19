@@ -1,7 +1,8 @@
-import { fromEvent, ReplaySubject } from 'rxjs';
+import { Subject, fromEvent } from 'rxjs';
 
 import type {
   PlayerModuleObservables,
+  PlayerModuleOptions,
   PlayerModuleState
 } from '../PlayerModule';
 import PlayerModule from '../PlayerModule';
@@ -33,7 +34,8 @@ export enum ControlAction {
   ROLL_LEFT = 'rollLeft',
   ROLL_RIGHT = 'rollRight',
   FIRE_PRIMARY = 'firePrimary',
-  FIRE_SECONDARY = 'fireSecondary'
+  FIRE_SECONDARY = 'fireSecondary',
+  RESTART = 'restart'
 }
 
 type KeyBindings = {
@@ -110,6 +112,9 @@ const actionBindings: KeyBindings = {
   [ControlAction.FIRE_SECONDARY]: {
     keyCode: ['Space'],
     modifier: true
+  },
+  [ControlAction.RESTART]: {
+    keyCode: ['KeyR']
   }
 };
 
@@ -141,8 +146,10 @@ const keyBindings: {
 } = getKeyMap(actionBindings);
 
 interface Observables extends PlayerModuleObservables {
-  controls$: ReplaySubject<ControlState>;
+  controls$: Subject<ControlState>;
 }
+
+type Options = PlayerModuleOptions;
 
 interface State extends PlayerModuleState {
   controls: ControlState;
@@ -173,22 +180,27 @@ export function getDefaultControls<
     [ControlAction.PITCH_UP]: false,
     [ControlAction.PITCH_DOWN]: false,
     [ControlAction.ROLL_LEFT]: false,
-    [ControlAction.ROLL_RIGHT]: false
+    [ControlAction.ROLL_RIGHT]: false,
+    [ControlAction.RESTART]: false
   } as Controls;
 }
 
-export default class ControlsModule extends PlayerModule<State, Observables> {
+export default class ControlsPlayerModule extends PlayerModule<
+  Options,
+  State,
+  Observables
+> {
   static override TYPE = 'controls';
 
   override state: State = {
     controls: getDefaultControls()
   };
 
-  constructor(player: Player, state: State, debug?: boolean) {
-    super(player, state, debug);
+  constructor(player: Player, options: Options, state: State, debug?: boolean) {
+    super(player, options, state, debug);
 
     //#region observables
-    this.observables.controls$ = new ReplaySubject<ControlState>();
+    this.observables.controls$ = new Subject<ControlState>();
     //#endregion
   }
 
@@ -213,7 +225,7 @@ export default class ControlsModule extends PlayerModule<State, Observables> {
   }
 
   private handleKeyEvent(event: KeyboardEvent, isKeyDown: boolean) {
-    const vehicle = this.player.modules.vehicle.getVehicle();
+    const vehicle = this.player.modules.vehicle.getUnit();
     if (!vehicle) return;
 
     const controls: ControlState = this.state.controls;
@@ -230,49 +242,6 @@ export default class ControlsModule extends PlayerModule<State, Observables> {
       });
     }
 
-    // switch (event.code) {
-    //   case 'KeyQ':
-    //     controls.rotateLeft = isKeyDown;
-    //     break;
-    //   case 'KeyG':
-    //     controls.gear = isKeyDown;
-    //     break;
-    //   case 'KeyL':
-    //     controls.landing = isKeyDown;
-    //     break;
-    //   case 'KeyE':
-    //     controls.rotateRight = isKeyDown;
-    //     break;
-    //   case 'KeyR':
-    //     controls.ascend = isKeyDown;
-    //     break;
-    //   case 'KeyF':
-    //     controls.descend = isKeyDown;
-    //     break;
-    //   case 'KeyW':
-    //   case 'ArrowUp':
-    //     controls.moveForward = isKeyDown;
-    //     controls.pitchUp = isKeyDown;
-    //     break;
-    //   case 'KeyS':
-    //   case 'ArrowDown':
-    //     controls.moveBackward = isKeyDown;
-    //     controls.pitchDown = isKeyDown;
-    //     break;
-    //   case 'KeyA':
-    //   case 'ArrowLeft':
-    //     controls.moveLeft = isKeyDown;
-    //     controls.rollLeft = isKeyDown;
-    //     break;
-    //   case 'KeyD':
-    //   case 'ArrowRight':
-    //     controls.moveRight = isKeyDown;
-    //     controls.rollRight = isKeyDown;
-    //     break;
-    //   case 'Space':
-    //     controls.space = isKeyDown;
-    //     break;
-    // }
     this.observables.controls$.next({ ...controls });
   }
 }
@@ -319,6 +288,8 @@ export interface ControlState {
    * right tilt
    */
   [ControlAction.ROLL_RIGHT]: boolean | number;
+
+  [ControlAction.RESTART]?: boolean;
 }
 
 export enum Controls {

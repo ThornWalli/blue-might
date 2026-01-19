@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Euler, Mesh, SkinnedMesh } from 'three';
@@ -15,7 +17,11 @@ import { replaceColors } from '@blue-might/app/lib/utils/material';
 import baseGlb from './assets/windsock_1.glb?url';
 
 export type Options = BuildingUnitOptions;
-
+export interface RawUnitDescription_Windsock_1<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'windsock_1';
+}
 export default class Windsock_1<
   Modules extends BuildingUnitModules = BuildingUnitModules,
   ModuleList extends BuildingUnitModuleList = BuildingUnitModuleList

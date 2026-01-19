@@ -1,19 +1,16 @@
-import type {
-  SetupContext,
-  UnitConstructorOptions,
-  UnitOptions
-} from '../Unit';
+import type { SetupContext, UnitConstructorOptions } from '../Unit';
 import PatrolUnitModule from '../unitModule/Patrol';
 import PlayerUnitModule from '../unitModule/Player';
 import { setDestroyedMaterials } from '../../utils/material';
 
 import MovableUnit, {
   type MovableUnitModuleList,
-  type MovableUnitModules
+  type MovableUnitModules,
+  type MovableUnitOptions
 } from './Movable';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface VehicleUnitOptions extends UnitOptions {}
+export interface VehicleUnitOptions extends MovableUnitOptions {}
 
 export type VehicleUnitModules = MovableUnitModules & {
   patrol: PatrolUnitModule;

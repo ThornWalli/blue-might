@@ -1,3 +1,5 @@
+export type * from './types';
+
 //#region buildings
 export { default as ControlTower_1 } from './building/control_tower_1/ControlTower_1';
 export { default as LandingPort_1 } from './building/landing_port_1/LandingPort_1';
@@ -18,10 +20,10 @@ export { default as FactoryChimney_1 } from './building/factory_chimney_1/Factor
 //#endregion
 
 //#region supply
-export { default as SeaSupplyStation } from './building/sea_supply_station/SeaSupplyStation';
+export { default as SeaSupplyStation } from './building/sea_supply_station_1/SeaSupplyStation_1';
 export { default as LandingPortSupplyStation } from './building/landing_port_supply_station/LandingPortSupplyStation';
-export { default as SeaLandingPortSupplyStation } from './building/sea_landing_port_supply_station/SeaLandingPortSupplyStation';
-export { default as SupplyStation } from './building/supply_station/SupplyStation';
+export { default as SeaLandingPortSupplyStation } from './building/sea_landing_port_supply_station_1/SeaLandingPortSupplyStation_1';
+export { default as SupplyStation } from './building/supply_station/SupplyStation_1';
 //#endregion
 
 //#region vehicles

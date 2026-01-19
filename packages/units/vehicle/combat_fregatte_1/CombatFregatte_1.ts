@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import {
@@ -54,6 +56,12 @@ export interface CombatFregatteModules extends SeaVehicleUnitModules {
 }
 export type CombatFregatteModuleList = SeaVehicleUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
+
+export interface RawUnitDescription_CombatFregatte_1<
+  O extends UnitOptions = CombatFregatteOptions
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'combat_fregatte_1';
+}
 
 export default class CombatFregatte_1
   extends SeaVehicleUnit<

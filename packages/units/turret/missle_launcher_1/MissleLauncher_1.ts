@@ -1,9 +1,11 @@
 /* eslint-disable complexity */
 import {
   GROUND_ADJUSTMENT_MODE,
+  type RawUnitDescription,
   type SetupContext,
   type UnitConstructorOptions,
-  type UnitObservables
+  type UnitObservables,
+  type UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import type { Object3D } from 'three';
@@ -64,6 +66,12 @@ export interface MissleLauncherModules extends BuildingUnitModules {
 export type MissleLauncherModuleList = BuildingUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
+export interface RawUnitDescription_MissleLauncher_1<
+  O extends UnitOptions = MissleLauncherOptions
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'missile_launcher_1';
+}
+
 const CLOSE_DELAY = 1000;
 
 export default class MissleLauncher_1
@@ -75,7 +83,7 @@ export default class MissleLauncher_1
   >
   implements WeaponUnitInterface<State>
 {
-  static override KEY = 'missle_launcher_1';
+  static override KEY = 'missile_launcher_1';
   closeTimeout: number = 0;
   reopen = false;
 

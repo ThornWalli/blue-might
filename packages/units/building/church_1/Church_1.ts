@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh } from 'three';
@@ -14,7 +16,11 @@ import BuildingUnit, {
 import baseGlb from './assets/church_1.glb?url';
 
 export type Options = BuildingUnitOptions;
-
+export interface RawUnitDescription_Church_1<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'church_1';
+}
 export default class Church_1<
   Modules extends BuildingUnitModules = BuildingUnitModules,
   ModuleList extends BuildingUnitModuleList = BuildingUnitModuleList

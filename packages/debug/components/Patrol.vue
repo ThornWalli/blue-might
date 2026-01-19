@@ -1,10 +1,6 @@
 <template>
   <div>
-    <debug-app-component
-      :config="config"
-      :on-setup="onSetup"
-      :player-unit="playerUnitId"
-      :map="map" />
+    <debug-app-component :config="config" :on-setup="onSetup" :map="map" />
   </div>
 </template>
 
@@ -14,14 +10,8 @@ import type App from '@blue-might/app/lib/classes/App';
 import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
-import {
-  CombatHelicopter_1,
-  Soldat_1,
-  Tank_1,
-  Tree_1
-} from '@blue-might/units';
+import type { UnitDescriptions } from '@blue-might/units';
 import { Subscription } from 'rxjs';
-import { Euler, Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
 
 const DebugAppComponent = defineAsyncComponent(() => import('./DebugApp.vue'));
@@ -32,96 +22,18 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
-const playerUnitId = 'tank-1';
-
 const config: Partial<AppConfig> = {
   debug: {
-    map: { pathfinding: true }
+    map: { pathfinding: false }
   }
 };
 
 const map: Partial<MapDescription> = {
-  factions: [blueFaction, enemyFaction],
-  units: [
-    new Tree_1({
-      id: 'tree-1',
-      position: new Vector3(-0.17, 0, 2.5),
-      rotation: new Euler(0, 0, 0),
-      moduleDebug: {
-        collision: true
-      }
-    }),
-    new Tree_1({
-      id: 'tree-2',
-      position: new Vector3(-0.17, 0, -2.5),
-      rotation: new Euler(0, 0, 0),
-      moduleDebug: {
-        collision: true
-      }
-    }),
-    new Tree_1({
-      id: 'tree-3',
-      position: new Vector3(2.83, 0, 2.5),
-      rotation: new Euler(0, 0, 0),
-      moduleDebug: {
-        collision: true
-      }
-    }),
-    new Tree_1({
-      id: 'tree-4',
-      position: new Vector3(-2.83, 0, 2.5),
-      rotation: new Euler(0, 0, 0),
-      moduleDebug: {
-        collision: true
-      }
-    }),
-    new Tree_1({
-      id: 'tree-5',
-      position: new Vector3(2.83, 0, -2.5),
-      rotation: new Euler(0, 0, 0),
-      moduleDebug: {
-        collision: true
-      }
-    }),
-    new Tree_1({
-      id: 'tree-6',
-      position: new Vector3(-2.83, 0, -2.5),
-      rotation: new Euler(0, 0, 0),
-      moduleDebug: {
-        collision: true
-      }
-    }),
-
-    new CombatHelicopter_1({
-      id: 'combat-helicopter-1',
-      moduleDebug: {
-        pathfinding: true,
-        patrol: true
-      },
-      position: new Vector3(2, 0, 0),
-      moduleOptions: {
-        faction: {
-          faction: blueFaction
-        },
-        movable: {
-          active: true
-        },
-        patrol: {
-          active: true,
-          path: [
-            [4.17, -4.17],
-            [4.17, 4.17],
-            [-4.17, 4.17],
-            [-4.17, -4.17]
-          ]
-        }
-      }
-    }),
-
-    new Tank_1({
-      id: 'tank-1',
-      position: new Vector3(0.5, 0, -0.17),
-      rotation: new Euler(0, 0, 0),
+  playerOptions: {
+    position: [0.5, 0, -0.17],
+    rotation: [0, 0, 0],
+    unit: {
+      key: 'tank_1',
       moduleDebug: {
         pathfinding: true,
         patrol: true
@@ -143,11 +55,112 @@ const map: Partial<MapDescription> = {
           ]
         }
       }
-    }),
-    new Tank_1({
-      id: 'tank-2',
-      position: new Vector3(-0.5, 0, -0.17),
-      rotation: new Euler(0, Math.PI, 0),
+    }
+  },
+  factions: [blueFaction, enemyFaction],
+  units: [
+    {
+      key: 'tree_1',
+
+      position: [-0.17, 0, 2.5],
+      rotation: [0, 0, 0],
+      moduleDebug: {
+        collision: true
+      }
+    },
+    {
+      key: 'tree_1',
+
+      position: [-0.17, 0, -2.5],
+      rotation: [0, 0, 0],
+      moduleDebug: {
+        collision: true
+      }
+    },
+    {
+      key: 'tree_1',
+
+      position: [2.83, 0, 2.5],
+      rotation: [0, 0, 0],
+      moduleDebug: {
+        collision: true
+      }
+    },
+    {
+      key: 'tree_1',
+
+      position: [-2.83, 0, 2.5],
+      rotation: [0, 0, 0],
+      moduleDebug: {
+        collision: true
+      }
+    },
+    {
+      key: 'tree_1',
+
+      position: [-2.83, 0, 2.5],
+      rotation: [0, 0, 0],
+      moduleDebug: {
+        collision: true
+      }
+    },
+    {
+      key: 'tree_1',
+
+      position: [2.83, 0, -2.5],
+      rotation: [0, 0, 0],
+      moduleDebug: {
+        collision: true
+      }
+    },
+    {
+      key: 'tree_1',
+
+      position: [2.83, 0, -2.5],
+      rotation: [0, 0, 0],
+      moduleDebug: {
+        collision: true
+      }
+    },
+    {
+      key: 'tree_1',
+
+      position: [-2.83, 0, -2.5],
+      rotation: [0, 0, 0],
+      moduleDebug: {
+        collision: true
+      }
+    },
+
+    {
+      key: 'combat_helicopter_1',
+      moduleDebug: {
+        pathfinding: true,
+        patrol: true
+      },
+      position: [2, 0, 0],
+      moduleOptions: {
+        faction: {
+          faction: blueFaction
+        },
+        movable: {
+          active: true
+        },
+        patrol: {
+          active: true,
+          path: [
+            [4.17, -4.17],
+            [4.17, 4.17],
+            [-4.17, 4.17],
+            [-4.17, -4.17]
+          ]
+        }
+      }
+    },
+    {
+      key: 'tank_1',
+      position: [-0.5, 0, -0.17],
+      rotation: [0, Math.PI, 0],
       moduleDebug: {
         pathfinding: true,
         patrol: true
@@ -169,14 +182,15 @@ const map: Partial<MapDescription> = {
           ]
         }
       }
-    }),
-    ...Array(5)
+    },
+    ...(Array(5)
       .fill(null)
       .map((_, i) => {
-        return new Soldat_1({
+        return {
+          key: 'soldat_1',
           id: `soldat-1-${i + 1}`,
-          position: new Vector3(1 + i * 0.2, 0, 1),
-          rotation: new Euler(0, 0, 0),
+          position: [1 + i * 0.2, 0, 1],
+          rotation: [0, 0, 0],
 
           moduleDebug: {
             pathfinding: true
@@ -195,15 +209,16 @@ const map: Partial<MapDescription> = {
               ]
             }
           }
-        });
-      }),
-    ...Array(5)
+        };
+      }) as UnitDescriptions[]),
+    ...(Array(5)
       .fill(null)
       .map((_, i) => {
-        return new Soldat_1({
+        return {
+          key: 'soldat_1',
           id: `soldat-2-${i + 1}`,
-          position: new Vector3(-1 + i * -0.2, 0, 1),
-          rotation: new Euler(0, 0, 0),
+          position: [-1 + i * -0.2, 0, 1],
+          rotation: [0, 0, 0],
 
           moduleOptions: {
             faction: {
@@ -219,8 +234,8 @@ const map: Partial<MapDescription> = {
               ]
             }
           }
-        });
-      })
+        };
+      }) as UnitDescriptions[])
   ]
 };
 

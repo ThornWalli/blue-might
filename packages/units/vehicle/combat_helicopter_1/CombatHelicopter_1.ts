@@ -1,8 +1,10 @@
 /* eslint-disable complexity */
 import { combineLatest, filter } from 'rxjs';
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import {
@@ -60,6 +62,12 @@ export interface CombatHelicopterModules extends HelicopterUnitModules {
 }
 export type CombatHelicopterModuleList = HelicopterUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule];
+
+export interface RawUnitDescription_CombatHelicopter_1<
+  O extends UnitOptions = CombatHelicopterOptions
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'combat_helicopter_1';
+}
 
 export default class CombatHelicopter_1
   extends HelicopterUnit<

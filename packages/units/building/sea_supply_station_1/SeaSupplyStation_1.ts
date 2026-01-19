@@ -1,7 +1,9 @@
 import { LoopRepeat, Mesh, SkinnedMesh } from 'three';
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { replaceColors } from '@blue-might/app/lib/utils/material';
@@ -20,13 +22,18 @@ export interface Modules extends BuildingUnitModules {
   supply: SupplyUnitModule;
 }
 export type ModuleList = BuildingUnitModuleList & [typeof SupplyUnitModule];
+export interface RawUnitDescription_SeaSupplyStation_1<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'sea_supply_station_1';
+}
 
-export default class SeaSupplyStation extends BuildingUnit<
+export default class SeaSupplyStation_1 extends BuildingUnit<
   Modules,
   ModuleList,
   Options
 > {
-  static override KEY = 'sea_supply_station';
+  static override KEY = 'sea_supply_station_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList: unknown[] = []

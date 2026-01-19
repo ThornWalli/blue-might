@@ -1,23 +1,13 @@
 <template>
   <div>
-    <debug-app-component
-      map-type="sea"
-      :player-unit="playerUnitId"
-      :map="map" />
+    <debug-app-component map-type="sea" :map="map" />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
-import {
-  CombatFregatte_1,
-  CombatShip_1,
-  CombatSubmarine_1,
-  Lighthouse_1
-} from '@blue-might/units';
 import { Subscription } from 'rxjs';
-import { Vector3 } from 'three';
 import { onUnmounted, defineAsyncComponent } from 'vue';
 
 const DebugAppComponent = defineAsyncComponent(() => import('./DebugApp.vue'));
@@ -28,21 +18,31 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
-const playerUnitId = 'player-1';
-
 const map: Partial<MapDescription> = {
   factions: [blueFaction, enemyFaction],
+  playerOptions: {
+    position: [4, 0, 0],
+    unit: {
+      key: 'combat_fregatte_1',
+      options: {
+        moduleDebug: {
+          collision: true
+        }
+      }
+    }
+  },
   debug: {
     pathfinding: false
   },
   units: [
-    new CombatShip_1({
+    {
+      key: 'combat_ship_1',
+      position: [0, 0, 0],
       debug: false,
       moduleDebug: {
         pathfinding: false,
         attack: false
       },
-      position: new Vector3(0, 0, 0),
 
       moduleOptions: {
         damage: {
@@ -52,19 +52,21 @@ const map: Partial<MapDescription> = {
           faction: blueFaction
         }
       }
-    }),
+    },
 
-    new Lighthouse_1({
-      position: new Vector3(2.67, 0, 9.19),
+    {
+      key: 'lighthouse_1',
+      position: [2.67, 0, 9.19],
       moduleOptions: {
         faction: {
           faction: blueFaction
         }
       }
-    }),
+    },
 
-    new CombatSubmarine_1({
-      position: new Vector3(2, 0, 0),
+    {
+      key: 'combat_submarine_1',
+      position: [2, 0, 0],
       moduleDebug: {
         collision: true
       },
@@ -82,20 +84,7 @@ const map: Partial<MapDescription> = {
         //   active: true
         // }
       }
-    }),
-
-    new CombatFregatte_1({
-      id: playerUnitId,
-      position: new Vector3(4, 0, 0),
-      moduleDebug: {
-        collision: true
-      },
-      moduleOptions: {
-        faction: {
-          faction: blueFaction
-        }
-      }
-    })
+    }
   ]
 };
 </script>

@@ -1,30 +1,7 @@
-import { Euler, Vector3 } from 'three';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import {
-  Barrack_1,
-  ControlTower_1,
-  LandingPort_1,
-  Tank_1,
-  Tree_1,
-  Soldat_1,
-  Turret_1,
-  CombatHelicopter_1,
-  CombatTank_1,
-  House_1,
-  LandingPortSupplyStation,
-  SupplyStation,
-  CombatShip_1,
-  CombatSubmarine_1,
-  Lighthouse_1,
-  CombatFregatte_1,
-  Flag_1,
-  Church_1,
-  Tree_2,
-  Windsock_1
-} from '@blue-might/units';
 import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
 import { neutralFaction } from '@blue-might/app/lib/classes/mapModule/Faction';
-import MissleLauncher_1 from '@blue-might/units/turret/missle_launcher_1/MissleLauncher_1';
+import type { UnitDescriptions } from '@blue-might/units';
 
 import foregroundTexture from './texture_fg.png';
 import backgroundTexture from './texture_bg.png';
@@ -34,6 +11,15 @@ export const playerFaction = blueFaction;
 export default function (): MapDescription {
   return {
     name: 'Extended Map',
+
+    playerOptions: {
+      position: [43.5, 0, -26.5],
+      rotation: [0, Math.PI, 0],
+      unit: {
+        key: 'combat_helicopter_1'
+      }
+    },
+
     ground: {
       heightMap,
       backgroundTexture,
@@ -43,31 +29,17 @@ export default function (): MapDescription {
     factions: [blueFaction, enemyFaction],
 
     units: [
-      new CombatHelicopter_1({
-        id: 'combat-helicopter-1',
-        position: new Vector3(43.5, 0, -26.5), // 34+9.5, -32+5.5
-        rotation: new Euler(0, Math.PI, 0),
-        moduleOptions: {
-          faction: {
-            faction: blueFaction
-          }
-        }
-      }),
-      ...[[40.5, -27.5]].map(
-        position =>
-          new Flag_1({
-            position: new Vector3(position[0], 0, position[1])
-          })
-      ),
-      ...[[42.5, -27.5]].map(
-        position =>
-          new Windsock_1({
-            position: new Vector3(position[0], 0, position[1])
-          })
-      ),
-      new CombatSubmarine_1({
-        position: new Vector3(2.36, 0, -47.18),
-
+      ...([[40.5, -27.5]].map(position => ({
+        key: 'flag_1',
+        position: [position[0], 0, position[1]]
+      })) as UnitDescriptions[]),
+      ...([[42.5, -27.5]].map(position => ({
+        key: 'windsock_1',
+        position: [position[0], 0, position[1]]
+      })) as UnitDescriptions[]),
+      {
+        key: 'combat_submarine_1',
+        position: [2.36, 0, -47.18],
         moduleOptions: {
           patrol: {
             active: true,
@@ -82,9 +54,10 @@ export default function (): MapDescription {
             faction: enemyFaction
           }
         }
-      }),
-      new CombatFregatte_1({
-        position: new Vector3(47.6, 0, 3.14),
+      },
+      {
+        key: 'combat_fregatte_1',
+        position: [47.6, 0, 3.14],
         moduleDebug: {
           attack: false
         },
@@ -103,39 +76,39 @@ export default function (): MapDescription {
             faction: enemyFaction
           }
         }
-      }),
+      },
 
-      ...[
+      ...([
         [27.67, -37.36],
         [26.13, -39.27],
         [37, -23]
-      ].map(
-        position =>
-          new Tree_1({
-            position: new Vector3(position[0], 0, position[1])
-          })
-      ),
-      ...[[36.5, -22]].map(
-        position =>
-          new Tree_2({
-            position: new Vector3(position[0], 0, position[1])
-          })
-      ),
-      new LandingPort_1({
-        position: new Vector3(43.5, 0, -26.5),
-        moduleDebug: {
-          collision: false
-        }
-      }),
-      new LandingPort_1({
-        position: new Vector3(41.5, 0, -26.5),
-        moduleDebug: {
-          collision: false
-        }
-      }),
+      ].map(position => ({
+        key: 'tree_1',
+        position: [position[0], 0, position[1]]
+      })) as UnitDescriptions[]),
 
-      new SupplyStation({
-        position: new Vector3(41.5, 0, -30.17),
+      ...([[36.5, -22]].map(position => ({
+        key: 'tree_2',
+        position: [position[0], 0, position[1]]
+      })) as UnitDescriptions[]),
+
+      {
+        key: 'landing_port_1',
+        position: [43.5, 0, -26.5],
+        moduleDebug: {
+          collision: false
+        }
+      },
+      {
+        key: 'landing_port_1',
+        position: [41.5, 0, -26.5],
+        moduleDebug: {
+          collision: false
+        }
+      },
+      {
+        key: 'supply_station_1',
+        position: [41.5, 0, -30.17],
         moduleDebug: {
           collision: false
         },
@@ -144,10 +117,10 @@ export default function (): MapDescription {
             faction: blueFaction
           }
         }
-      }),
-
-      new LandingPortSupplyStation({
-        position: new Vector3(39.5, 0, -26.5),
+      },
+      {
+        key: 'landing_port_supply_station_1',
+        position: [39.5, 0, -26.5],
         moduleDebug: {
           collision: false
         },
@@ -156,60 +129,66 @@ export default function (): MapDescription {
             faction: blueFaction
           }
         }
-      }),
-      new ControlTower_1({
-        position: new Vector3(37, 0, -27),
+      },
+      {
+        key: 'control_tower_1',
+        position: [37, 0, -27],
         moduleOptions: {
           faction: {
             faction: blueFaction
           }
         }
-      }),
-      new Lighthouse_1({
-        position: new Vector3(26.38, 0, -36.66),
+      },
+      {
+        key: 'lighthouse_1',
+        position: [26.38, 0, -36.66],
         moduleOptions: {
           faction: {
             faction: neutralFaction
           }
         }
-      }),
-
-      new Barrack_1({
-        position: new Vector3(44, 0, -31),
+      },
+      {
+        key: 'barrack_1',
+        position: [44, 0, -31],
         moduleOptions: {
           faction: {
             faction: blueFaction
           }
         }
-      }),
-      new Barrack_1({
-        position: new Vector3(42.83, 0, -31),
+      },
+
+      {
+        key: 'barrack_1',
+        position: [42.83, 0, -31],
         moduleOptions: {
           faction: {
             faction: blueFaction
           }
         }
-      }),
-
-      new CombatTank_1({
+      },
+      {
+        key: 'combat_tank_1',
         id: 'combat-tank-1',
-        position: new Vector3(38.83, 0, -30.17),
+        position: [38.83, 0, -30.17],
         moduleOptions: {
           faction: {
             faction: blueFaction
           }
         }
-      }),
-      new Tank_1({
-        position: new Vector3(38.17, 0, -30.17),
+      },
+      {
+        key: 'tank_1',
+        position: [38.17, 0, -30.17],
         moduleOptions: {
           faction: {
             faction: blueFaction
           }
         }
-      }),
-      new Tank_1({
-        position: new Vector3(37.5, 0, -30.17),
+      },
+      {
+        key: 'tank_1',
+        position: [37.5, 0, -30.17],
         moduleOptions: {
           faction: {
             faction: blueFaction
@@ -228,10 +207,11 @@ export default function (): MapDescription {
             ]
           }
         }
-      }),
-      new Soldat_1({
+      },
+      {
+        key: 'soldat_1',
         id: 'soldat-1',
-        position: new Vector3(44.83, 0, -28.17),
+        position: [44.83, 0, -28.17],
         moduleOptions: {
           faction: {
             faction: blueFaction
@@ -248,10 +228,11 @@ export default function (): MapDescription {
             ]
           }
         }
-      }),
-      new Soldat_1({
+      },
+      {
+        key: 'soldat_1',
         id: 'soldat-2',
-        position: new Vector3(37.5, 0, -27.83),
+        position: [37.5, 0, -27.83],
         moduleOptions: {
           faction: {
             faction: blueFaction
@@ -266,50 +247,44 @@ export default function (): MapDescription {
             ]
           }
         }
-      }),
-      ...[
+      },
+      ...([
         [45.17, -25.83],
         [37.83, -25.83],
         [45.17, -32.5],
         [34.83, -32.5],
         [35.0, -25.24]
-      ].map(
-        position =>
-          new Turret_1({
-            position: new Vector3(position[0], 0, position[1]),
-            moduleOptions: {
-              faction: {
-                faction: blueFaction
-              }
-            }
-          })
-      ),
-
-      new Church_1({
-        position: new Vector3(39.17, 0, -17.5),
-        rotation: new Euler(0, 0, 0)
-      }),
-
-      ...[
+      ].map(position => ({
+        key: 'turret_1',
+        position: [position[0], 0, position[1]],
+        moduleOptions: {
+          faction: {
+            faction: blueFaction
+          }
+        }
+      })) as UnitDescriptions[]),
+      {
+        key: 'church_1',
+        position: [39.17, 0, -17.5],
+        rotation: [0, 0, 0]
+      },
+      ...([
         {
-          position: new Vector3(38.17, 0, -20.17),
-          rotation: new Euler(0, -Math.PI / 2, 0)
+          position: [38.17, 0, -20.17],
+          rotation: [0, -Math.PI / 2, 0]
         },
         {
-          position: new Vector3(40.83, 0, -20.5),
-          rotation: new Euler(0, Math.PI, 0)
+          position: [40.83, 0, -20.5],
+          rotation: [0, Math.PI, 0]
         }
-      ].map(
-        ({ position, rotation }) =>
-          new House_1({
-            position,
-            rotation
-          })
-      ),
-
-      new CombatShip_1({
-        debug: false,
-        position: new Vector3(15.61, 0, -29.73),
+      ].map(({ position, rotation }) => ({
+        key: 'house_1',
+        position,
+        rotation
+      })) as UnitDescriptions[]),
+      {
+        key: 'combat_ship_1',
+        position: [15.61, 0, -29.73],
         moduleOptions: {
           faction: {
             faction: enemyFaction
@@ -332,10 +307,10 @@ export default function (): MapDescription {
             ]
           }
         }
-      }),
-      new CombatShip_1({
-        debug: false,
-        position: new Vector3(30.33, 0, -51.45),
+      },
+      {
+        key: 'combat_ship_1',
+        position: [30.33, 0, -51.45],
         moduleOptions: {
           faction: {
             faction: enemyFaction
@@ -358,11 +333,10 @@ export default function (): MapDescription {
             ]) as [number, number][]
           }
         }
-      }),
-
-      new CombatShip_1({
-        debug: false,
-        position: new Vector3(55.83, 0, -20.47),
+      },
+      {
+        key: 'combat_ship_1',
+        position: [55.83, 0, -20.47],
         moduleOptions: {
           faction: {
             faction: enemyFaction
@@ -385,37 +359,31 @@ export default function (): MapDescription {
             ]
           }
         }
-      }),
-
-      ...[[0.5, 4.5]].map(
-        position =>
-          new MissleLauncher_1({
-            position: new Vector3(position[0], 0, position[1]),
-            moduleDebug: {
-              attack: false
-            },
-            moduleOptions: {
-              faction: {
-                faction: enemyFaction
-              }
-            }
-          })
-      ),
-
-      ...[
+      },
+      ...([[0.5, 4.5]].map(position => ({
+        key: 'missile_launcher_1',
+        position: [position[0], 0, position[1]],
+        moduleDebug: {
+          attack: false
+        },
+        moduleOptions: {
+          faction: {
+            faction: enemyFaction
+          }
+        }
+      })) as UnitDescriptions[]),
+      ...([
         [0.75, 9.96],
         [-2.98, 4.63]
-      ].map(
-        position =>
-          new Turret_1({
-            position: new Vector3(position[0], 0, position[1]),
-            moduleOptions: {
-              faction: {
-                faction: enemyFaction
-              }
-            }
-          })
-      )
+      ].map(position => ({
+        key: 'turret_1',
+        position: [position[0], 0, position[1]],
+        moduleOptions: {
+          faction: {
+            faction: enemyFaction
+          }
+        }
+      })) as UnitDescriptions[])
     ]
   };
 }

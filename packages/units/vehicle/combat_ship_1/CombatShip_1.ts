@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { AxesHelper, Mesh, Object3D, SkinnedMesh, Vector2 } from 'three';
@@ -47,6 +49,12 @@ export interface CombatShipModules extends SeaVehicleUnitModules {
 export type CombatShipModuleList = SeaVehicleUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
+export interface RawUnitDescription_CombatShip_1<
+  O extends UnitOptions = CombatShipOptions
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'combat_ship_1';
+}
+
 export default class CombatShip_1
   extends SeaVehicleUnit<
     CombatShipModules,
@@ -55,7 +63,7 @@ export default class CombatShip_1
   >
   implements WeaponUnitInterface<State>
 {
-  static override KEY = 'boat_1';
+  static override KEY = 'combat_ship_1';
 
   state: State = {
     weaponActive: false,

@@ -1,6 +1,8 @@
 import type {
+  RawUnitDescription,
   SetupContext,
-  UnitConstructorOptions
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Euler, Mesh, SkinnedMesh } from 'three';
@@ -15,6 +17,12 @@ import { replaceColors } from '@blue-might/app/lib/utils/material';
 import baseGlb from './assets/flag_1.glb?url';
 
 export type Options = BuildingUnitOptions;
+
+export interface RawUnitDescription_Flag_1<
+  O extends UnitOptions = Options
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'flag_1';
+}
 
 export default class Flag_1<
   Modules extends BuildingUnitModules = BuildingUnitModules,

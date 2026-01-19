@@ -1,7 +1,9 @@
 import {
   GROUND_ADJUSTMENT_MODE,
+  type RawUnitDescription,
   type SetupContext,
-  type UnitConstructorOptions
+  type UnitConstructorOptions,
+  type UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Vector2, Mesh, SkinnedMesh, Object3D } from 'three';
@@ -52,6 +54,12 @@ export interface TurretModules extends BuildingUnitModules {
 
 export type TurretModuleList = BuildingUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
+
+export interface RawUnitDescription_Turret_1<
+  O extends UnitOptions = TurretOptions
+> extends RawUnitDescription<UnitConstructorOptions<O>> {
+  key: 'turret_1';
+}
 
 export default class Turret_1
   extends BuildingUnit<TurretModules, TurretModuleList, TurretOptions>
