@@ -1,15 +1,13 @@
 <template>
   <div>
-    <debug-app-component :config="config" :on-setup="onSetup" :map="map" />
+    <debug-app-component :config="config" :map="map" />
   </div>
 </template>
 
 <script setup lang="ts">
 import type { AppConfig } from '@blue-might/app/lib/classes/App';
-import type App from '@blue-might/app/lib/classes/App';
-import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
+import factions, { FACTION } from '@blue-might/app/lib/utils/factions';
 import type { UnitDescriptions } from '@blue-might/units';
 import { Subscription } from 'rxjs';
 import { onUnmounted, defineAsyncComponent } from 'vue';
@@ -32,6 +30,7 @@ const map: Partial<MapDescription> = {
   playerOptions: {
     position: [0.5, 0, -0.17],
     rotation: [0, 0, 0],
+    faction: FACTION.BLUE,
     unit: {
       key: 'tank_1',
       moduleDebug: {
@@ -40,7 +39,7 @@ const map: Partial<MapDescription> = {
       },
       moduleOptions: {
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         },
         movable: {
           active: false
@@ -57,7 +56,7 @@ const map: Partial<MapDescription> = {
       }
     }
   },
-  factions: [blueFaction, enemyFaction],
+  factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]],
   units: [
     {
       key: 'tree_1',
@@ -141,7 +140,7 @@ const map: Partial<MapDescription> = {
       position: [2, 0, 0],
       moduleOptions: {
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         },
         movable: {
           active: true
@@ -167,7 +166,7 @@ const map: Partial<MapDescription> = {
       },
       moduleOptions: {
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         },
         movable: {
           active: false
@@ -197,7 +196,7 @@ const map: Partial<MapDescription> = {
           },
           moduleOptions: {
             faction: {
-              faction: blueFaction
+              faction: FACTION.BLUE
             },
             patrol: {
               active: true,
@@ -222,7 +221,7 @@ const map: Partial<MapDescription> = {
 
           moduleOptions: {
             faction: {
-              faction: blueFaction
+              faction: FACTION.BLUE
             },
             patrol: {
               active: true,
@@ -238,8 +237,4 @@ const map: Partial<MapDescription> = {
       }) as UnitDescriptions[])
   ]
 };
-
-async function onSetup({ app, map }: { app: App; map: Map }) {
-  console.log(app, map);
-}
 </script>

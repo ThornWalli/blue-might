@@ -1,5 +1,6 @@
 <template>
   <div ref="rootEl" class="bm-app-layout">
+    <slot name="background"></slot>
     <bm-panel-group :id="PANEL.TOP_LEFT" position="top-left">
       <slot :name="PANEL.TOP_LEFT" />
     </bm-panel-group>

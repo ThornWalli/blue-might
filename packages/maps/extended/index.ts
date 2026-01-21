@@ -1,13 +1,12 @@
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
-import { neutralFaction } from '@blue-might/app/lib/classes/mapModule/Faction';
+import factions, { FACTION } from '@blue-might/app/lib/utils/factions';
 import type { UnitDescriptions } from '@blue-might/units';
 
 import foregroundTexture from './texture_fg.png';
 import backgroundTexture from './texture_bg.png';
 import heightMap from './heightMap.png';
 
-export const playerFaction = blueFaction;
+export const playerFaction = FACTION.BLUE;
 export default function (): MapDescription {
   return {
     name: 'Extended Map',
@@ -15,6 +14,7 @@ export default function (): MapDescription {
     playerOptions: {
       position: [43.5, 0, -26.5],
       rotation: [0, Math.PI, 0],
+      faction: FACTION.BLUE,
       unit: {
         key: 'combat_helicopter_1'
       }
@@ -26,7 +26,7 @@ export default function (): MapDescription {
       foregroundTexture
     },
 
-    factions: [blueFaction, enemyFaction],
+    factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]],
 
     units: [
       ...([[40.5, -27.5]].map(position => ({
@@ -51,7 +51,7 @@ export default function (): MapDescription {
             ]
           },
           faction: {
-            faction: enemyFaction
+            faction: FACTION.ENEMY
           }
         }
       },
@@ -73,7 +73,7 @@ export default function (): MapDescription {
             ]
           },
           faction: {
-            faction: enemyFaction
+            faction: FACTION.ENEMY
           }
         }
       },
@@ -114,7 +114,7 @@ export default function (): MapDescription {
         },
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           }
         }
       },
@@ -126,7 +126,7 @@ export default function (): MapDescription {
         },
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           }
         }
       },
@@ -135,7 +135,7 @@ export default function (): MapDescription {
         position: [37, 0, -27],
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           }
         }
       },
@@ -144,7 +144,7 @@ export default function (): MapDescription {
         position: [26.38, 0, -36.66],
         moduleOptions: {
           faction: {
-            faction: neutralFaction
+            faction: FACTION.NEUTRAL
           }
         }
       },
@@ -153,7 +153,7 @@ export default function (): MapDescription {
         position: [44, 0, -31],
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           }
         }
       },
@@ -163,7 +163,7 @@ export default function (): MapDescription {
         position: [42.83, 0, -31],
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           }
         }
       },
@@ -173,7 +173,7 @@ export default function (): MapDescription {
         position: [38.83, 0, -30.17],
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           }
         }
       },
@@ -182,7 +182,7 @@ export default function (): MapDescription {
         position: [38.17, 0, -30.17],
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           }
         }
       },
@@ -191,7 +191,7 @@ export default function (): MapDescription {
         position: [37.5, 0, -30.17],
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           },
           patrol: {
             active: false,
@@ -214,7 +214,7 @@ export default function (): MapDescription {
         position: [44.83, 0, -28.17],
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           },
           patrol: {
             active: true,
@@ -235,7 +235,7 @@ export default function (): MapDescription {
         position: [37.5, 0, -27.83],
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           },
           patrol: {
             active: false,
@@ -259,7 +259,7 @@ export default function (): MapDescription {
         position: [position[0], 0, position[1]],
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           }
         }
       })) as UnitDescriptions[]),
@@ -287,7 +287,7 @@ export default function (): MapDescription {
         position: [15.61, 0, -29.73],
         moduleOptions: {
           faction: {
-            faction: enemyFaction
+            faction: FACTION.ENEMY
           },
           patrol: {
             active: true,
@@ -313,7 +313,7 @@ export default function (): MapDescription {
         position: [30.33, 0, -51.45],
         moduleOptions: {
           faction: {
-            faction: enemyFaction
+            faction: FACTION.ENEMY
           },
           patrol: {
             active: true,
@@ -339,7 +339,7 @@ export default function (): MapDescription {
         position: [55.83, 0, -20.47],
         moduleOptions: {
           faction: {
-            faction: enemyFaction
+            faction: FACTION.ENEMY
           },
           patrol: {
             active: true,
@@ -368,7 +368,7 @@ export default function (): MapDescription {
         },
         moduleOptions: {
           faction: {
-            faction: enemyFaction
+            faction: FACTION.ENEMY
           }
         }
       })) as UnitDescriptions[]),
@@ -380,7 +380,7 @@ export default function (): MapDescription {
         position: [position[0], 0, position[1]],
         moduleOptions: {
           faction: {
-            faction: enemyFaction
+            faction: FACTION.ENEMY
           }
         }
       })) as UnitDescriptions[])

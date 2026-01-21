@@ -77,6 +77,8 @@ export default class EffectModule extends MapModule<State, Observables> {
       }
     });
 
+    this.state.particles.forEach(particle => particle.destroy());
+
     super.destroy();
   }
 

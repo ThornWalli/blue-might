@@ -37,15 +37,15 @@ export default class MapAppModule extends AppModule<State, Observables> {
     this.subscription.add(
       this.observables.map$
         .pipe(
-          switchMap(map =>
-            map
+          switchMap(map => {
+            return map
               ? renderer.observables.animationLoop$.pipe(
                   rxjsMap(context => {
                     return { map, context };
                   })
                 )
-              : EMPTY
-          )
+              : EMPTY;
+          })
         )
         .subscribe(({ map, context }) => {
           map.update(context);
@@ -63,6 +63,8 @@ export default class MapAppModule extends AppModule<State, Observables> {
     renderer.addToScene(map.root);
     this.state.map = map;
     this.observables.map$.next(map);
+
+    return map;
   }
 
   fromDescription(description: MapDescription) {

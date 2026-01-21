@@ -69,6 +69,11 @@ export default class UnitsModule extends MapModule<State, Observables> {
   }
 
   override destroy() {
+    if (this.listener) {
+      this.map.app.renderer.modules.intersection.unregisterListener(
+        this.listener
+      );
+    }
     this.state.units.forEach(unit => unit.destroy());
     this.state.units.clear();
     this.state.visibleUnits = [];
@@ -83,7 +88,7 @@ export default class UnitsModule extends MapModule<State, Observables> {
 
     this.subscription.add(
       merge(
-        this.observables.addUnit$.pipe(map(() => null)),
+        this.observables.addUnit$,
         this.map.app.renderer.modules.controls.observables.change$
       )
         .pipe(throttleTime(1000))
@@ -199,6 +204,7 @@ export default class UnitsModule extends MapModule<State, Observables> {
     );
     unit.subscription.add(
       unit.observables.destroyed$.subscribe(() => {
+        debugger;
         this.remove(unit);
       })
     );
@@ -223,6 +229,7 @@ export default class UnitsModule extends MapModule<State, Observables> {
   }
 
   remove(unit: Unit) {
+    this.listener!.removeMeshes(getMeshes(unit.root));
     this.state.units.delete(unit.id);
     this.chunkManager.removeFromChunk(unit);
     this.root.remove(unit.root);

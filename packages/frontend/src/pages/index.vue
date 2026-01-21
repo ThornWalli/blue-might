@@ -16,8 +16,6 @@ import { extendedMap } from '@blue-might/maps';
 import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import { Subscription } from 'rxjs';
 import type App from '@blue-might/app/lib/classes/App';
-import { playerFaction } from '@blue-might/maps/default';
-import FactionPlayerModule from '@blue-might/app/lib/classes/playerModule/Faction';
 
 const subscription = new Subscription();
 
@@ -47,12 +45,7 @@ async function setupPlayer(app: App) {
   await app.modules.player.addPlayer(
     markRaw(
       new HumanPlayer(app, {
-        name: 'Player',
-        moduleStates: {
-          [FactionPlayerModule.TYPE]: {
-            faction: playerFaction
-          }
-        }
+        name: 'Player'
       })
     )
   );

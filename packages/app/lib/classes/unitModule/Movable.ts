@@ -130,6 +130,7 @@ export default class MovableUnitModule<
 
   override async setup() {
     const unit = this.getUnit();
+
     this.subscription.add(
       unit.modules.damage.observables.destroyed$.subscribe(() => {
         this.clearAutopilotControls();

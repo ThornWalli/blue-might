@@ -21,7 +21,7 @@ import ShootModule from './mapModule/Shoot';
 import EffectModule from './mapModule/Effect';
 import FactionModule from './mapModule/Faction';
 import AirFlowModule from './mapModule/AirFlow';
-import type { FactionDescription } from './Faction';
+import type { FactionDescription, FactionIdentifier } from './Faction';
 import type { RawUnitDescription } from './Unit';
 
 type MapModuleList = (
@@ -62,7 +62,7 @@ export default class Map<
     this.moduleDebug = { ...this.moduleDebug, ...debug };
   }
   //#endregion
-
+  private destroyed = false;
   subscription = new Subscription();
   state: MapState = {};
   modules: Modules = {} as Modules;
@@ -93,7 +93,8 @@ export default class Map<
       position: new Vector3().fromArray(description.playerOptions.position),
       rotation: description.playerOptions.rotation
         ? new Euler().fromArray(description.playerOptions.rotation)
-        : undefined
+        : undefined,
+      faction: description.playerOptions.faction
     };
 
     this.moduleDebug = { ...this.moduleDebug, ...description.debug };
@@ -113,11 +114,11 @@ export default class Map<
   private async setupModules() {
     const moduleList = this.moduleList as ModuleList;
     moduleList.push(
+      FactionModule,
       UnitsModule,
       GroundModule,
       LightModule,
       ShootModule,
-      FactionModule,
       PathfindingModule,
       AirFlowModule,
       EffectModule
@@ -169,6 +170,7 @@ export default class Map<
     this.app.getScene().remove(this.root);
     this.root.remove();
     Object.values(this.modules).forEach(module => module.destroy());
+    this.destroyed = true;
   }
 
   addToRoot(...object: Object3D[]) {
@@ -222,6 +224,7 @@ export interface RawPlayerOptions<
   unit: UD;
   position: V3;
   rotation?: E;
+  faction: FactionIdentifier;
 }
 
 export type PlayerOptions<UD extends UnitDescriptions = UnitDescriptions> =

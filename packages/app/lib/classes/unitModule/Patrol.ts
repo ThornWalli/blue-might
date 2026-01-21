@@ -53,6 +53,9 @@ export default class PatrolUnitModule extends UnitModule<
   private pausedIndex: number | null = null;
   private pausedPosition: Vector3 | null = null;
 
+  private startPatrolTimeout: number = 0;
+  private patrolRecursiveTimeout: number = 0;
+
   constructor(
     unit: Unit,
     options: PatrolUnitModuleOptions,
@@ -83,7 +86,7 @@ export default class PatrolUnitModule extends UnitModule<
       this.getUnit().modules.damage.observables.destroyed$.subscribe(
         async () => {
           await this.stopPatrol();
-          this.destroy();
+          this.subscription.unsubscribe();
         }
       )
     );
@@ -96,7 +99,7 @@ export default class PatrolUnitModule extends UnitModule<
     }
 
     if (this.state.active) {
-      window.setTimeout(() => {
+      this.startPatrolTimeout = window.setTimeout(() => {
         this.startPatrol();
         if (this.debug && this.hasPath()) {
           this.setupDebug();
@@ -105,9 +108,10 @@ export default class PatrolUnitModule extends UnitModule<
     }
   }
 
-  override destroy() {
-    window.clearTimeout(this.timeout);
-    this.stopPatrol();
+  override async destroy() {
+    window.clearTimeout(this.startPatrolTimeout);
+    window.clearTimeout(this.patrolRecursiveTimeout);
+    await this.stopPatrol();
     if (this.debugLine) {
       disposeObject3D(this.debugLine);
     }
@@ -253,8 +257,8 @@ export default class PatrolUnitModule extends UnitModule<
           this.stopPatrol();
           return;
         }
-        window.clearTimeout(this.timeout);
-        this.timeout = window.setTimeout(() => {
+        window.clearTimeout(this.patrolRecursiveTimeout);
+        this.patrolRecursiveTimeout = window.setTimeout(() => {
           // Versuche nächsten Punkt
           this.patrolRecursive(
             worldPath,
@@ -279,8 +283,6 @@ export default class PatrolUnitModule extends UnitModule<
       await this.patrolRecursive(worldPath, 0, pathfinding);
     }
   }
-
-  private timeout: number = 0;
 
   //#region debug
   private debugLine: Line | null = null;

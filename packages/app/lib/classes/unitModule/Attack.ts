@@ -125,7 +125,7 @@ export default class AttackUnitModule extends UnitModule<
         this.unitSubscription?.unsubscribe();
         this.subscription.remove(this.unitSubscription!);
         this.unitSubscription = null;
-        this.destroy();
+        this.subscription.unsubscribe();
       })
     );
     this.subscription.add(

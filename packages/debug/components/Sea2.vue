@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
+import factions, { FACTION } from '@blue-might/app/lib/utils/factions';
 import { Subscription } from 'rxjs';
 import { onUnmounted, defineAsyncComponent } from 'vue';
 
@@ -19,9 +19,10 @@ onUnmounted(() => {
 });
 
 const map: Partial<MapDescription> = {
-  factions: [blueFaction, enemyFaction],
+  factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]],
   playerOptions: {
     position: [4, 0, 0],
+    faction: FACTION.BLUE,
     unit: {
       key: 'combat_fregatte_1',
       options: {
@@ -49,7 +50,7 @@ const map: Partial<MapDescription> = {
           maxDamage: 1000
         },
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         }
       }
     },
@@ -59,7 +60,7 @@ const map: Partial<MapDescription> = {
       position: [2.67, 0, 9.19],
       moduleOptions: {
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         }
       }
     },
@@ -78,7 +79,7 @@ const map: Partial<MapDescription> = {
           active: true
         },
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         }
         // patrol: {
         //   active: true

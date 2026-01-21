@@ -30,6 +30,7 @@ import { resizeCanvas } from '../../utils/canvas';
 import { FLIGHT_STATUS } from '../unitModule/movable/airVehicle/Helicopter';
 import type AirVehicleUnit from '../unit/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
+import type { IntersectionListener } from '../rendererModule/Intersection';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -73,6 +74,15 @@ export default class GroundModule extends MapModule<State, Observables> {
     this.observables.select$ = new Subject<Vector2>();
     this.observables.hover$ = new Subject<Vector2>();
     //#endregion
+  }
+
+  override destroy() {
+    if (this.listener) {
+      this.map.app.renderer.modules.intersection.unregisterListener(
+        this.listener
+      );
+    }
+    super.destroy();
   }
 
   getSeaLevel() {
@@ -225,12 +235,16 @@ export default class GroundModule extends MapModule<State, Observables> {
     raycaster.far = maxDistance;
     raycaster.set(this.surfaceData.position, this.surfaceData.direction);
 
-    const allMeshes: Object3D[] = [];
+    let allMeshes: Object3D[] = [];
     this.map.modules.units.getUnits().forEach(unit => {
       if (!unitFilter || unitFilter(unit)) {
         allMeshes.push(...getAllMeshes(unit.root));
       }
     });
+
+    allMeshes = allMeshes.filter(
+      mesh => !mesh.userData[OBJECT_USER_DATA.IGNORE_RAYCASTER]
+    );
 
     const intersections = raycaster.intersectObjects(allMeshes, true);
     const unitIntersections = intersections.map(intersection => ({
@@ -319,12 +333,16 @@ export default class GroundModule extends MapModule<State, Observables> {
     raycaster.far = maxDistance;
     raycaster.set(this.surfaceData.position, this.surfaceData.direction);
 
-    const allMeshes: Object3D[] = [];
+    let allMeshes: Object3D[] = [];
     this.map.modules.units.getUnits().forEach(unit => {
       if (!ignoredUnits.includes(unit) && unit instanceof BuildingUnit) {
         allMeshes.push(...getAllMeshes(unit.root));
       }
     });
+
+    allMeshes = allMeshes.filter(
+      mesh => !mesh.userData[OBJECT_USER_DATA.IGNORE_RAYCASTER]
+    );
 
     const intersections = raycaster.intersectObjects(allMeshes, false);
     const height = this.getHeightAt(x, z);
@@ -473,6 +491,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     this.resetHeightCache();
   }
 
+  listener: IntersectionListener | undefined;
   override async setup() {
     await super.setup();
 
@@ -482,6 +501,7 @@ export default class GroundModule extends MapModule<State, Observables> {
 
     const listener =
       this.map.app.renderer.modules.intersection.registerListener();
+    this.listener = listener;
     listener.addMeshes(Array.from(object.children));
 
     this.subscription.add(

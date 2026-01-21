@@ -24,6 +24,7 @@
     <template #[PANEL.BOTTOM_RIGHT]>
       <bm-panel-unit-preview key="unit-preview" :app="app" />
     </template>
+    <template #background><div id="testtt"></div></template>
     <template #foreground>
       <bm-message v-if="messageType" :type="messageType" />
     </template>
@@ -63,6 +64,14 @@ const subscription = new Subscription();
 
 onMounted(() => {
   const app = $props.app;
+  setupMessages(app);
+});
+
+onUnmounted(() => {
+  subscription.unsubscribe();
+});
+
+function setupMessages(app: App) {
   subscription.add(
     app.modules.player.observables.currentPlayer$
       .pipe(
@@ -88,10 +97,6 @@ onMounted(() => {
         subscription.add(subscription);
       })
   );
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).restartMap = app.restartMap.bind(app);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window as any).app = app;
 
   subscription.add(
     app.modules.player.observables.currentPlayer$
@@ -99,7 +104,7 @@ onMounted(() => {
         switchMap(player =>
           player
             ? merge(
-                player.modules.vehicle.observables.unit$,
+                player.modules.vehicle.observables.unit$.pipe(filter(Boolean)),
                 player.modules.vehicle.observables.unit$.pipe(
                   switchMap(
                     unit => unit?.modules.damage.observables.destroyed$ ?? EMPTY
@@ -124,11 +129,7 @@ onMounted(() => {
         }
       })
   );
-});
-
-onUnmounted(() => {
-  subscription.unsubscribe();
-});
+}
 </script>
 
 <style lang="postcss" scoped>

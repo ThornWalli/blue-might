@@ -223,7 +223,7 @@ function renderUnits() {
     const pos = unit.getPosition();
     const faction = unit.modules.faction.getFaction();
     drawIndicator(ctx, new Vector2(pos.x, pos.z), {
-      color: faction.mapColor,
+      color: faction?.mapColor ?? 'gray',
       pan,
       scaledMapSize,
       dimension

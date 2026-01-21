@@ -106,10 +106,13 @@ export enum CONTROL_ITEM_STATUS {
     height: 12px;
     background-color: var(--color);
     border-radius: 50%;
+
+    /*
     box-shadow:
       inset 0 0 2px rgb(0 0 0 / 100%),
       inset 0 0 4px rgb(0 0 0 / 100%),
       inset 0 0 6px rgb(0 0 0 / 100%);
+   */
   }
 
   &.blinking {

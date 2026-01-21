@@ -128,9 +128,7 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
         this.observables.currentPlayer$
       ])
         .pipe(filter(([map, player]) => !!map && !!player))
-        .subscribe(async () => {
-          this.setupPlayerUnit();
-        })
+        .subscribe(async () => this.setupPlayerUnit())
     );
   }
 
@@ -146,7 +144,7 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
       rotation: map.playerOptions.rotation?.clone(),
       moduleOptions: {
         faction: {
-          faction: player.modules.faction.getFaction()
+          faction: map.playerOptions.faction
         }
       }
     });

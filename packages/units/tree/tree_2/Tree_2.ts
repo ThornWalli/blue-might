@@ -11,7 +11,6 @@ import BuildingUnit, {
   type BuildingUnitModules,
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
-import { prepareForRaycast } from '@blue-might/app/lib/utils/raycast';
 
 import baseGlb from './assets/tree_2.glb?url';
 
@@ -57,8 +56,6 @@ export default class Tree_2<
         child.receiveShadow = false;
       }
     });
-
-    prepareForRaycast(object);
 
     return object;
   }

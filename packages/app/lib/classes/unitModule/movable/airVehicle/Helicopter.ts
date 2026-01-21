@@ -515,7 +515,9 @@ export default class HelicopterUnitModule<
       if (
         (this.state.isAirborne &&
           unitPosition.y <= Math.max(groundModule?.getSeaLevel(), minY)) ||
-        (status === FLIGHT_STATUS.LANDED && unitPosition.y < minY)
+        ((status === FLIGHT_STATUS.TAKING_OFF ||
+          status === FLIGHT_STATUS.LANDED) &&
+          unitPosition.y < minY)
       ) {
         if (!isDestroyed) {
           const impactStrength = Math.abs(velocity.y);

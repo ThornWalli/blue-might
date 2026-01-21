@@ -211,6 +211,7 @@ export default class ShootModule extends MapModule<State, Observables> {
       if (!shoot.isActive) {
         continue;
       }
+
       shoot.lifetime -= delta;
 
       if (shoot.lifetime < 0) {
@@ -272,7 +273,6 @@ export default class ShootModule extends MapModule<State, Observables> {
           const intersection = intersections[0]!;
           const point = intersection.point;
           const normal = intersection.face?.normal;
-
           const distanceToIntersection = oldPosition.distanceTo(point);
 
           const moveDistance = shoot.velocity.length() * delta;
@@ -305,23 +305,8 @@ export default class ShootModule extends MapModule<State, Observables> {
               this.map.modules.effect.addFire(point);
             }
 
-            const projectileRadius = shoot.projectile.radius || 0;
-            if (projectileRadius > 0) {
-              this.temp.hitSphere.set(point, projectileRadius);
-              const hitUnits: { unit: Unit; distance: number }[] = [];
-
-              this.map.modules.units.getUnits().forEach(unit => {
-                const unitRoot = unit.getRoot();
-                if (this.temp.hitSphere.containsPoint(unitRoot.position)) {
-                  const distance = point.distanceTo(unitRoot.position);
-                  hitUnits.push({ unit, distance });
-                }
-              });
-
-              hitUnits.sort((a, b) => a.distance - b.distance);
-              hitUnits.forEach(({ unit, distance }) => {
-                this.hitUnit(unit, shoot, distance);
-              });
+            if (shoot.projectile.radius > 0) {
+              this.hitByProjectileRadius(shoot, point);
             } else {
               if (intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]) {
                 const unit = this.map.app
@@ -336,6 +321,22 @@ export default class ShootModule extends MapModule<State, Observables> {
         }
       }
 
+      if (!hit && obj.position.y <= this.map.modules.ground.getSeaLevel()) {
+        hit = true;
+        if (shoot.projectile.hasExplosion()) {
+          const position = new Vector3()
+            .copy(obj.position)
+            .setY(
+              this.map.modules.ground.getSurfaceHeightAt(
+                obj.position.x,
+                obj.position.z
+              )
+            );
+          this.map.modules.effect.addExplosion(position, 1);
+          this.hitByProjectileRadius(shoot, position);
+        }
+      }
+
       const distanceFromStart = obj.position.distanceTo(shoot.startPosition);
       if (hit || distanceFromStart > 50) {
         shoot.isActive = false;
@@ -344,6 +345,27 @@ export default class ShootModule extends MapModule<State, Observables> {
       if (this.raycastFrameCounter > 10) {
         this.raycastFrameCounter = 0;
       }
+    }
+  }
+
+  private hitByProjectileRadius(shoot: ShootDescription, position: Vector3) {
+    const projectileRadius = shoot.projectile.radius || 0;
+    if (projectileRadius > 0) {
+      this.temp.hitSphere.set(position, projectileRadius);
+      const hitUnits: { unit: Unit; distance: number }[] = [];
+
+      this.map.modules.units.getUnits().forEach(unit => {
+        const unitRoot = unit.getRoot();
+        if (this.temp.hitSphere.containsPoint(unitRoot.position)) {
+          const distance = position.distanceTo(unitRoot.position);
+          hitUnits.push({ unit, distance });
+        }
+      });
+
+      hitUnits.sort((a, b) => a.distance - b.distance);
+      hitUnits.forEach(({ unit, distance }) => {
+        this.hitUnit(unit, shoot, distance);
+      });
     }
   }
 

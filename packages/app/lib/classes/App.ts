@@ -142,15 +142,27 @@ export class BaseApp<
 
   private mapDescription: MapDescription | null = null;
   async enterMap(description: MapDescription) {
-    const map = this.modules.map.getMap();
-    if (map) {
-      map.destroy();
+    const lastMap = this.modules.map.getMap();
+    if (lastMap) {
+      lastMap.destroy();
     }
-
     this.mapDescription = description;
     const newMap = this.modules.map.fromDescription(description);
     newMap.setModuleDebug(this.config.debug?.map ?? {});
-    await this.modules.map.setMap(newMap);
+    const map = await this.modules.map.setMap(newMap);
+
+    const faction = map.modules.faction.getFactionById(
+      map.playerOptions.faction
+    );
+
+    if (faction) {
+      this.modules.player
+        .getCurrentPlayer()
+        .modules.faction.setFaction(faction);
+    } else {
+      console.warn('Faction not found:', map.playerOptions.faction);
+    }
+
     console.log('Map loaded', newMap, newMap.toDescription());
   }
 
@@ -158,7 +170,11 @@ export class BaseApp<
     if (!this.mapDescription) {
       throw new Error('No map description available to restart');
     }
-    this.enterMap(this.mapDescription);
+
+    const player = this.modules.player.getCurrentPlayer();
+    player.reset();
+
+    this.enterMap(this.mapDescription!);
   }
 
   destroy() {

@@ -147,6 +147,7 @@ export default class WeaponUnitModule<
     const unit = this.getUnit();
 
     const attackModule = unit.modules.attack;
+
     if (attackModule) {
       this.subscription.add(
         attackModule.observables.target$.subscribe(target => {
@@ -158,7 +159,7 @@ export default class WeaponUnitModule<
     this.subscription.add(
       unit.modules.damage.observables.destroyed$.subscribe(() => {
         this.abortShoot();
-        this.destroy();
+        this.subscription.unsubscribe();
       })
     );
 

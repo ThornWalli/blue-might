@@ -6,6 +6,7 @@ import { Euler, Quaternion, Vector3, Group } from 'three';
 
 import { OBJECT_USER_DATA, setMainObjectRecursive } from '../utils/object';
 import type { UnitIdentifier } from '../types/unit';
+import { prepareForRaycast } from '../utils/raycast';
 
 import type UnitModule from './UnitModule';
 import type { UnitModuleOptions, UnitModuleState } from './UnitModule';
@@ -294,6 +295,8 @@ export default class Unit<
       mesh = await module.setupMesh({ mesh, root: this.root, ...context });
     }
 
+    prepareForRaycast(mesh);
+
     // Filter modules that have update method
     const updateModules = modules.filter(
       module => typeof module.update === 'function'
@@ -361,13 +364,15 @@ export default class Unit<
   }
   private destroyed = false;
   destroy() {
+    this.destroyed = true;
+    this.observables.destroyed$.next();
+
     this.subscription.unsubscribe();
     Object.values(this.modules).forEach(module => module.destroy());
     this.root.removeFromParent();
     this.root.remove();
-    this.destroyed = true;
-    this.observables.destroyed$.next();
   }
+
   isDestroyed() {
     return this.destroyed;
   }

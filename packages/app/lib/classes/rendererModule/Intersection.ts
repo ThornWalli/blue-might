@@ -41,6 +41,7 @@ export interface IntersectionListener {
 
   addMeshes: (newMeshes: Object3D[]) => void;
   removeMeshes: (removeMeshes: Object3D[]) => void;
+  destroy: () => void;
 }
 
 export type State = RendererModuleState;
@@ -155,8 +156,20 @@ export default class IntersectionRendererModule extends RendererModule<State> {
     return listener;
   }
 
-  unregisterListener(id: string) {
-    this.listeners.delete(id);
+  unregisterListener(listener: IntersectionListener | string) {
+    let id;
+    if (typeof listener === 'string') {
+      id = listener;
+    } else {
+      id = listener.id;
+    }
+    const l = this.listeners.get(id);
+    if (l) {
+      l?.destroy();
+      this.listeners.delete(l.id);
+    } else {
+      console.warn(`Intersection listener not found: ${id}`);
+    }
   }
 
   override update() {
@@ -237,7 +250,17 @@ function createListener() {
     pointerup$,
     pointermove$,
     pointerenter$,
-    pointerout$
+    pointerout$,
+    destroy: () => {
+      hoverIntersect$.unsubscribe();
+      clickIntersect$.unsubscribe();
+      clickIntersects$.unsubscribe();
+      pointerdown$.unsubscribe();
+      pointerup$.unsubscribe();
+      pointermove$.unsubscribe();
+      pointerenter$.unsubscribe();
+      pointerout$.unsubscribe();
+    }
   };
   return listener;
 }

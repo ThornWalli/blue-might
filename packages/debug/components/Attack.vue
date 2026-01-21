@@ -15,7 +15,7 @@
 <script setup lang="ts">
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { WeaponSlot } from '@blue-might/app/lib/classes/WeaponSlot';
-import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
+import factions, { FACTION } from '@blue-might/app/lib/utils/factions';
 import { weapons } from '@blue-might/weapon';
 import { defineAsyncComponent } from 'vue';
 
@@ -47,6 +47,7 @@ const unitWeapons: WeaponSlot[] = [
 const map: Partial<MapDescription> = {
   playerOptions: {
     position: [0, 0, 0],
+    faction: FACTION.BLUE,
     unit: {
       key: 'turret_1',
       options: {
@@ -56,7 +57,7 @@ const map: Partial<MapDescription> = {
         },
         moduleOptions: {
           faction: {
-            faction: blueFaction
+            faction: FACTION.BLUE
           },
           weapon: {
             autoAimActive: true,
@@ -66,7 +67,7 @@ const map: Partial<MapDescription> = {
       }
     }
   },
-  factions: [blueFaction, enemyFaction],
+  factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]],
   units: [
     {
       key: 'tank_1',
@@ -75,7 +76,7 @@ const map: Partial<MapDescription> = {
       rotation: [0, Math.PI / 4, 0],
       moduleOptions: {
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         }
       }
     },
@@ -88,7 +89,7 @@ const map: Partial<MapDescription> = {
           maxDamage: 500
         },
         faction: {
-          faction: enemyFaction
+          faction: FACTION.ENEMY
         },
         patrol: {
           active: true,
@@ -105,7 +106,7 @@ const map: Partial<MapDescription> = {
       position: [2, 0, 0],
       moduleOptions: {
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         }
       }
     }

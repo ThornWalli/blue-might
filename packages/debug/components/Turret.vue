@@ -2,16 +2,13 @@
   <div>
     <debug-app-component
       :config="{ debug: { map: { pathfinding: false } } }"
-      :on-setup="onSetup"
       :map="map" />
   </div>
 </template>
 
 <script setup lang="ts">
-import type App from '@blue-might/app/lib/classes/App';
-import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import { blueFaction, enemyFaction } from '@blue-might/app/lib/utils/factions';
+import factions, { FACTION } from '@blue-might/app/lib/utils/factions';
 import { Subscription } from 'rxjs';
 import { onUnmounted, defineAsyncComponent } from 'vue';
 
@@ -24,9 +21,10 @@ onUnmounted(() => {
 });
 
 const map: Partial<MapDescription> = {
-  factions: [blueFaction, enemyFaction],
+  factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]],
   playerOptions: {
     position: [0, 0, 0],
+    faction: FACTION.BLUE,
     unit: {
       key: 'combat_helicopter_1',
       options: {
@@ -56,7 +54,7 @@ const map: Partial<MapDescription> = {
       position: [0, 0, 0],
       moduleOptions: {
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         }
       }
     },
@@ -65,7 +63,7 @@ const map: Partial<MapDescription> = {
       position: [-2.83, 0, 2.5],
       moduleOptions: {
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         }
       }
     },
@@ -74,7 +72,7 @@ const map: Partial<MapDescription> = {
       position: [2.83, 0, 2.5],
       moduleOptions: {
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         }
       }
     },
@@ -83,7 +81,7 @@ const map: Partial<MapDescription> = {
       position: [2.83, 0, 2.5],
       moduleOptions: {
         faction: {
-          faction: blueFaction
+          faction: FACTION.BLUE
         }
       }
     },
@@ -92,7 +90,7 @@ const map: Partial<MapDescription> = {
       position: [-2.83, 0, 14.83],
       moduleOptions: {
         faction: {
-          faction: enemyFaction
+          faction: FACTION.ENEMY
         }
       }
     },
@@ -101,14 +99,10 @@ const map: Partial<MapDescription> = {
       position: [2.83, 0, 14.83],
       moduleOptions: {
         faction: {
-          faction: enemyFaction
+          faction: FACTION.ENEMY
         }
       }
     }
   ]
 };
-
-async function onSetup({ app, map }: { app: App; map: Map }) {
-  console.log(app, map);
-}
 </script>

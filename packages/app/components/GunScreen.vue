@@ -1,16 +1,20 @@
 <template>
-  <div class="bm-gun-screen">
+  <div ref="rootEl" class="bm-gun-screen" :class="{ fullscreen }">
     <div ref="screenEl" class="screen">
       <canvas ref="canvasEl"></canvas>
       <div class="effect"></div>
       <div class="target"></div>
     </div>
-    <div class="controls">
+    <div class="controls bottom">
       <button @click="onClickZoomIn">
         <svg-icon-plus />
       </button>
       <button @click="onClickZoomOut">
         <svg-icon-minus />
+      </button>
+      <button @click="onClickFullscreen">
+        <svg-icon-arrows-pointing-in v-if="fullscreen" />
+        <svg-icon-arrows-pointing-out v-else />
       </button>
     </div>
   </div>
@@ -31,16 +35,25 @@ import type { EffectComposer } from 'three/examples/jsm/postprocessing/EffectCom
 
 import SvgIconPlus from '../assets/icons/micro/plus.svg?component';
 import SvgIconMinus from '../assets/icons/micro/minus.svg?component';
+import SvgIconArrowsPointingIn from '../assets/icons/micro/arrows-pointing-in.svg?component';
+import SvgIconArrowsPointingOut from '../assets/icons/micro/arrows-pointing-out.svg?component';
 import type App from '../lib/classes/App';
 import type Unit from '../lib/classes/Unit';
 import type { UnitModules } from '../lib/classes/Unit';
 
+const rootEl = ref<HTMLDivElement | null>(null);
 const screenEl = ref<HTMLDivElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
+
+const fullscreen = ref(false);
 
 const $props = defineProps<{
   app: App;
   unit: Unit<UnitModules & { weapon: WeaponUnitModule }>;
+}>();
+
+const $emit = defineEmits<{
+  (e: 'fullscreen', value: boolean): void;
 }>();
 
 const zoom = ref(1);
@@ -48,6 +61,16 @@ const zoomFactor = ref(1.25);
 
 let renderer: WebGLRenderer;
 let composer: EffectComposer;
+const resizeObserver = new ResizeObserver(() => {
+  if (renderer && composer) {
+    const dimension = new Vector2(
+      rootEl.value!.offsetWidth,
+      rootEl.value!.offsetHeight
+    );
+    renderer.setSize(dimension.x, dimension.y);
+    composer.setSize(dimension.x, dimension.y);
+  }
+});
 
 function setup() {
   if (renderer) return;
@@ -55,8 +78,8 @@ function setup() {
   const appRenderer = $props.app.renderer;
   const scene = appRenderer.scene;
   const dimension = new Vector2(
-    screenEl.value!.offsetWidth,
-    screenEl.value!.offsetHeight
+    rootEl.value!.offsetWidth,
+    rootEl.value!.offsetHeight
   );
 
   const camera = new PerspectiveCamera(
@@ -101,9 +124,11 @@ function setup() {
 }
 onMounted(() => {
   setup();
+  resizeObserver.observe(rootEl.value!);
 });
 
 onUnmounted(() => {
+  resizeObserver.disconnect();
   if (renderer) {
     renderer.setAnimationLoop(null);
     renderer?.dispose();
@@ -118,20 +143,40 @@ function onClickZoomIn() {
 function onClickZoomOut() {
   zoom.value = Math.max(1, zoom.value / zoomFactor.value);
 }
+
+function onClickFullscreen() {
+  fullscreen.value = !fullscreen.value;
+  $emit('fullscreen', fullscreen.value);
+}
 </script>
 
 <style lang="postcss" scoped>
 .bm-gun-screen {
   position: relative;
+  pointer-events: auto;
 
-  & .screen {
-    position: relative;
-
+  &:not(.fullscreen) {
     &::before {
       display: block;
       padding-top: 100%;
       content: '';
     }
+  }
+
+  &.fullscreen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  & .screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
 
     & canvas {
       position: absolute;
@@ -194,7 +239,9 @@ function onClickZoomOut() {
     bottom: 0;
     left: 0;
     display: flex;
+    gap: var(--bm-spacing-small);
     justify-content: space-between;
+    justify-content: center;
     width: 100%;
 
     & button {

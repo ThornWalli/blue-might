@@ -1,11 +1,9 @@
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
-import { blueFaction } from '@blue-might/app/lib/utils/factions';
+import factions, { FACTION } from '@blue-might/app/lib/utils/factions';
 
 import foregroundTexture from './texture_fg.png';
 import backgroundTexture from './texture_bg.png';
 import heightMap from './heightMap.png';
-
-export const playerFaction = blueFaction;
 
 export default function (): MapDescription {
   return {
@@ -13,6 +11,7 @@ export default function (): MapDescription {
     playerOptions: {
       position: [9.5, 0, 5.5],
       rotation: [0, Math.PI, 0],
+      faction: FACTION.BLUE,
       unit: {
         key: 'combat_helicopter_1'
       }
@@ -22,7 +21,7 @@ export default function (): MapDescription {
       backgroundTexture,
       foregroundTexture
     },
-    factions: [blueFaction],
+    factions: [factions[FACTION.BLUE]],
     units: [
       {
         key: 'tree_1',

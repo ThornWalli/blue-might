@@ -18,6 +18,8 @@ interface State extends PlayerModuleState {
   lifes: number;
 }
 
+const DEFAULT_LIFES = 3;
+
 export default class LifePlayerModule extends PlayerModule<
   Options,
   State,
@@ -26,7 +28,12 @@ export default class LifePlayerModule extends PlayerModule<
   static override TYPE = 'life';
 
   constructor(player: Player, options: Options, state: State, debug?: boolean) {
-    super(player, options, { ...state, lifes: state.lifes ?? 1 }, debug);
+    super(
+      player,
+      options,
+      { ...state, lifes: state.lifes ?? DEFAULT_LIFES },
+      debug
+    );
 
     //#region observables
     this.observables.lifes$ = new ReplaySubject<number>();
@@ -54,5 +61,9 @@ export default class LifePlayerModule extends PlayerModule<
 
   isGameOver() {
     return this.state.lifes === 0;
+  }
+
+  reset() {
+    this.setLifes(DEFAULT_LIFES);
   }
 }

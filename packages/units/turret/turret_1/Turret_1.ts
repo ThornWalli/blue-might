@@ -35,6 +35,7 @@ import type {
   WeaponSupportState
 } from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
+import { OBJECT_USER_DATA } from '@blue-might/app/lib/utils/object';
 
 import baseGlb from './assets/turret_1.glb?url';
 
@@ -227,6 +228,11 @@ export default class Turret_1
           child
         );
       }
+    });
+
+    object.getObjectByName('barrel')?.traverse(obj => {
+      obj.userData[OBJECT_USER_DATA.IGNORE_RAYCASTER] = true;
+      console.log('SET IGNORE RAYCASTER', obj);
     });
 
     return object;

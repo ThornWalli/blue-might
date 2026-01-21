@@ -95,6 +95,11 @@ export default class Player<
     this.modules = Object.fromEntries(preparedModules);
   }
 
+  reset() {
+    this.setVehicle(null);
+    this.modules.life.reset();
+  }
+
   async setup() {
     await this.setupModules();
   }
@@ -115,6 +120,7 @@ export default class Player<
   setReady(value: boolean) {
     this.ready = value;
   }
+
   isReady() {
     return this.ready;
   }

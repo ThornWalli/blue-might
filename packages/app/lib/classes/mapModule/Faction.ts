@@ -8,6 +8,7 @@ import MapModule, {
 import type Map from '../Map';
 import type { FactionIdentifier } from '../Faction';
 import type Unit from '../Unit';
+import factions, { FACTION } from '../../utils/factions';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -26,13 +27,21 @@ interface State extends MapModuleState {
 export default class FactionModule extends MapModule<State, Observables> {
   static override TYPE = 'faction';
   override state: State = {
-    factions: [neutralFaction]
+    factions: [new Faction(factions[FACTION.NEUTRAL])]
   };
   constructor(map: Map, debug: boolean) {
     super(map, debug);
     //#region observables
     this.observables.factionAdded$ = new Subject<Faction>();
     //#endregion
+  }
+
+  override async setup() {
+    await super.setup();
+
+    this.map.description.factions.forEach(faction =>
+      this.addFaction(new Faction(faction))
+    );
   }
 
   addFaction(faction: Faction) {
@@ -48,26 +57,14 @@ export default class FactionModule extends MapModule<State, Observables> {
     return this.state.factions.find(faction => faction.id === id);
   }
   getNeutralFactions() {
-    return [neutralFaction];
+    return [FACTION.NEUTRAL];
   }
 
   isFriend(unit: Unit, target: Unit) {
     const friendlyFactions = [
-      neutralFaction,
-      unit.modules.faction.getFaction()
+      FACTION.NEUTRAL,
+      unit.modules.faction.getFaction()?.id
     ];
-    unit.modules.faction.getFaction();
-    return friendlyFactions.includes(target.modules.faction.getFaction());
+    return friendlyFactions.includes(target.modules.faction.getFaction()?.id);
   }
 }
-
-function createNeutralFaction() {
-  return new Faction({
-    id: 'neutral',
-    name: 'Neutral Faction',
-    colors: [0x808080, 0xffffff],
-    mapColor: 0x808080
-  });
-}
-
-export const neutralFaction = createNeutralFaction();

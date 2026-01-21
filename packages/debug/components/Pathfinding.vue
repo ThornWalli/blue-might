@@ -2,15 +2,13 @@
   <div>
     <debug-app-component
       :config="{ debug: { map: { pathfinding: true } } }"
-      :on-setup="onSetup"
       :map="map" />
   </div>
 </template>
 
 <script setup lang="ts">
-import type App from '@blue-might/app/lib/classes/App';
-import type Map from '@blue-might/app/lib/classes/Map';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import { FACTION } from '@blue-might/app/lib/utils/factions';
 import { Subscription } from 'rxjs';
 import { onUnmounted, defineAsyncComponent } from 'vue';
 
@@ -25,6 +23,7 @@ onUnmounted(() => {
 const map: Partial<MapDescription> = {
   playerOptions: {
     position: [2, 0, 0],
+    faction: FACTION.BLUE,
     unit: {
       key: 'combat_helicopter_1',
       options: {
@@ -62,8 +61,4 @@ const map: Partial<MapDescription> = {
     }
   ]
 };
-
-async function onSetup({ app, map }: { app: App; map: Map }) {
-  console.log(app, map);
-}
 </script>

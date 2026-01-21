@@ -3,8 +3,14 @@
     v-if="unit"
     hide-title
     class="bm-panel-gun-screen"
+    :class="{ fullscreen }"
     title="Gun Screen">
-    <bm-gun-screen :app="$props.app" :unit="unit" />
+    <teleport to="#testtt" :disabled="!fullscreen">
+      <bm-gun-screen
+        :app="$props.app"
+        :unit="unit"
+        @fullscreen="fullscreen = $event" />
+    </teleport>
   </bm-panel>
 </template>
 
@@ -18,6 +24,8 @@ import type { UnitModules } from '@blue-might/app/lib/classes/Unit';
 import BmGunScreen from '../GunScreen.vue';
 import BmPanel from '../Panel.vue';
 import type App from '../../lib/classes/App';
+
+const fullscreen = ref(false);
 
 const $props = defineProps<{
   app: App;
@@ -47,7 +55,13 @@ onMounted(() => {
 </script>
 
 <style lang="postcss" scoped>
-.bm-gun-screen {
-  width: 120px;
+.bm-panel-gun-screen {
+  &.fullscreen {
+    display: none;
+  }
+
+  & .bm-gun-screen {
+    width: 120px;
+  }
 }
 </style>
