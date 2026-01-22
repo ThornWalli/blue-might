@@ -232,7 +232,6 @@ export default class Turret_1
 
     object.getObjectByName('barrel')?.traverse(obj => {
       obj.userData[OBJECT_USER_DATA.IGNORE_RAYCASTER] = true;
-      console.log('SET IGNORE RAYCASTER', obj);
     });
 
     return object;
