@@ -35,7 +35,7 @@ export function updateControls(
     state: WeaponSupportState;
   }
 ) {
-  if (!unit.modules.player) return {};
+  if (!unit.modules.player || unit.modules.damage.isDestroyed()) return;
 
   const controls = unit.modules.player
     ?.getPlayer()

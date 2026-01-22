@@ -68,9 +68,6 @@ const map: Partial<MapDescription> = {
     {
       key: 'combat_submarine_1',
       position: [2, 0, 0],
-      moduleDebug: {
-        collision: true
-      },
       moduleOptions: {
         damage: {
           maxDamage: 1000

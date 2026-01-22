@@ -61,16 +61,24 @@ const zoomFactor = ref(1.25);
 
 let renderer: WebGLRenderer;
 let composer: EffectComposer;
+let camera: PerspectiveCamera;
 const resizeObserver = new ResizeObserver(() => {
+  refresh();
+});
+
+function refresh() {
   if (renderer && composer) {
     const dimension = new Vector2(
       rootEl.value!.offsetWidth,
       rootEl.value!.offsetHeight
     );
+    console.log('dimension', dimension);
     renderer.setSize(dimension.x, dimension.y);
     composer.setSize(dimension.x, dimension.y);
+    camera.aspect = dimension.x / dimension.y;
+    camera.updateProjectionMatrix();
   }
-});
+}
 
 function setup() {
   if (renderer) return;
@@ -82,12 +90,7 @@ function setup() {
     rootEl.value!.offsetHeight
   );
 
-  const camera = new PerspectiveCamera(
-    60,
-    dimension.x / dimension.y,
-    0.1,
-    2000
-  );
+  camera = new PerspectiveCamera(60, dimension.x / dimension.y, 0.1, 2000);
 
   renderer = createRenderer(canvasEl.value!, dimension, {
     pixelated: appRenderer.getPixelated()
@@ -147,6 +150,9 @@ function onClickZoomOut() {
 function onClickFullscreen() {
   fullscreen.value = !fullscreen.value;
   $emit('fullscreen', fullscreen.value);
+  window.setTimeout(() => {
+    refresh();
+  }, 2000);
 }
 </script>
 
