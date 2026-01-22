@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.41](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.40...v1.0.0-beta.41) (2026-01-22)
+
+
+### Bug Fixes
+
+* **turret:** remove debug log for raycaster ignore ([c616e0e](https://github.com/ThornWalli/blue-might/commit/c616e0e45e541b8089c937d5198e294ecca1b53a))
+
 # [1.0.0-beta.40](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.39...v1.0.0-beta.40) (2026-01-22)
 
 
