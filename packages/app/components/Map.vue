@@ -21,10 +21,10 @@ import { onMounted, onUnmounted, ref, watchEffect } from 'vue';
 import { EMPTY, of, Subscription, switchMap } from 'rxjs';
 import { Color, Vector2, Vector3 } from 'three';
 
-import type App from '../lib/classes/App';
 import type Map from '../lib/classes/Map';
 import type Player from '../lib/classes/Player';
 import type Unit from '../lib/classes/Unit';
+import type { App } from '../lib/types';
 
 import BmButton from './Button.vue';
 
@@ -65,11 +65,24 @@ onMounted(() => {
     switchMap(map => (map ? of(map) : EMPTY))
   );
 
-  const position$ = $props.app.modules.player.observables.currentPlayer$.pipe(
-    switchMap(player => player.modules.vehicle.observables.unit$ ?? EMPTY),
-    switchMap(unit => (unit ? unit.observables.position$ : EMPTY))
-  );
+  const app = $props.app;
 
+  if ('player' in app.modules) {
+    const position$ = app.modules.player.observables.currentPlayer$.pipe(
+      switchMap(player => player.modules.vehicle.observables.unit$ ?? EMPTY),
+      switchMap(unit => (unit ? unit.observables.position$ : EMPTY))
+    );
+    subscription.add(
+      position$.subscribe(position => {
+        playerPosition.value.copy(position);
+      })
+    );
+    subscription.add(
+      app.modules.player.observables.currentPlayer$.subscribe(player => {
+        currentPlayer.value = player;
+      })
+    );
+  }
   subscription.add(
     $props.app.modules.map.observables.map$
       .pipe(
@@ -81,13 +94,8 @@ onMounted(() => {
   );
 
   subscription.add(
-    $props.app.modules.player.observables.currentPlayer$.subscribe(player => {
-      currentPlayer.value = player;
-    })
-  );
-  subscription.add(
     map$.subscribe(m => {
-      const { backgroundTexture } = m.textures;
+      const { backgroundTexture } = m.getTextures();
       map.value = m;
       units = m.modules.units.getUnits();
       mapDimension.value = new Vector2(
@@ -101,11 +109,6 @@ onMounted(() => {
         mapSize.y / localScale.value
       );
       renderBackground();
-    })
-  );
-  subscription.add(
-    position$.subscribe(position => {
-      playerPosition.value.copy(position);
     })
   );
 
@@ -149,7 +152,7 @@ function renderBackground() {
   const canvas = canvasEl.value;
   if (!canvas || !map.value) return;
 
-  const { backgroundTexture, foregroundTexture } = map.value.textures;
+  const { backgroundTexture, foregroundTexture } = map.value.getTextures();
 
   if (!backgroundTexture || !foregroundTexture) return;
 

@@ -21,7 +21,6 @@ import HelicopterUnit, {
   type HelicopterUnitModules,
   type HelicopterUnitOptions
 } from '@blue-might/app/lib/classes/unit/vehicle/Helicopter';
-import { replaceColors } from '@blue-might/app/lib/utils/material';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import WeaponUnitModule, {
   type AutoAimFnOptions
@@ -293,21 +292,6 @@ export default class CombatHelicopter_1
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-        // (child.material as MeshStandardMaterial).wireframe = true;
-
-        replaceColors(
-          [
-            [
-              'primary',
-              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-            ],
-            [
-              'secondary',
-              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-            ]
-          ],
-          child
-        );
       }
     });
 

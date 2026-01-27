@@ -1,11 +1,14 @@
+import type { FactionDescription } from '../classes/Faction';
+
 export enum FACTION {
   NEUTRAL = 'neutral',
   BLUE = 'blue',
   ENEMY = 'enemy'
 }
 
-export default Object.freeze({
+const factions: Record<FACTION, FactionDescription> = Object.freeze({
   [FACTION.NEUTRAL]: {
+    builtin: true,
     id: FACTION.NEUTRAL,
     name: 'Neutral Faction',
     colors: [0x808080, 0xffffff],
@@ -24,3 +27,4 @@ export default Object.freeze({
     mapColor: 0xff0000
   }
 });
+export default factions;

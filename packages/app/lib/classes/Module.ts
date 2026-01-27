@@ -73,9 +73,7 @@ export default class Module<
   }
 
   getState() {
-    return {
-      ...this.state
-    };
+    return {};
   }
 
   isForceUpdate() {

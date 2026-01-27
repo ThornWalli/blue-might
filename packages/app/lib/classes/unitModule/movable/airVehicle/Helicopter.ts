@@ -475,7 +475,7 @@ export default class HelicopterUnitModule<
       const groundHeight =
         unit
           .getMap()
-          ?.modules.ground.getSurfaceHeightAt(
+          ?.modules.surface.getSurfaceHeightAt(
             unitPosition.x,
             unitPosition.z,
             u => !u.equals(unit)
@@ -500,7 +500,7 @@ export default class HelicopterUnitModule<
     if (!active || !controls.ascend) {
       const isDestroyed = isUnitDestroyed(unit);
 
-      const groundModule = unit.getMap()!.modules.ground;
+      const groundModule = unit.getMap()!.modules.surface;
       let minY =
         groundModule.getSurfaceHeightAt(
           unitPosition.x,

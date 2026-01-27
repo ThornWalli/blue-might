@@ -74,10 +74,10 @@ import type { Vector3 } from 'three';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
+import type { App } from '@blue-might/app/lib/types';
 
 import BmControlItem, { CONTROL_ITEM_STATUS } from '../element/ControlItem.vue';
 import BmButton from '../Button.vue';
-import type App from '../../lib/classes/App';
 import BmPanel from '../Panel.vue';
 import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
 import type Unit from '../../lib/classes/Unit';
@@ -173,10 +173,12 @@ const canUseVehicle = computed(() => {
 const canFocusUnit = ref(true);
 
 function onClickUseVehicle() {
+  const app = $props.app;
+  if (!('player' in app.modules)) return;
+
   const u = unit.value;
   if (!u) return;
   if (canUseVehicle.value) {
-    const app = $props.app;
     const player = app.modules.player.getCurrentPlayer();
 
     if (!player) return;

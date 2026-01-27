@@ -17,7 +17,6 @@ import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import WeaponUnitModule, {
   type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
-import { replaceColors } from '@blue-might/app/lib/utils/material';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import { playSound } from '@blue-might/weapon/utils';
 import {
@@ -213,20 +212,6 @@ export default class Turret_1
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-
-        replaceColors(
-          [
-            [
-              'primary',
-              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-            ],
-            [
-              'secondary',
-              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-            ]
-          ],
-          child
-        );
       }
     });
 

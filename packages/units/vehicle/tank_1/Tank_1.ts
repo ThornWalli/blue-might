@@ -11,7 +11,6 @@ import TankUnit, {
 } from '@blue-might/app/lib/classes/unit/vehicle/Tank';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh } from 'three';
-import { replaceColors } from '@blue-might/app/lib/utils/material';
 
 import baseGlb from './assets/tank_1.glb?url';
 
@@ -68,20 +67,6 @@ export default class Tank_1<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-
-        replaceColors(
-          [
-            [
-              'primary',
-              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-            ],
-            [
-              'secondary',
-              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-            ]
-          ],
-          child
-        );
       }
     });
 

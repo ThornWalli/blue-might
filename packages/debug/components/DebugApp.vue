@@ -5,8 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import type App from '@blue-might/app/lib/classes/App';
-import type { AppConfig } from '@blue-might/app/lib/classes/App';
+import type { AppConfig } from '@blue-might/app/lib/classes/BaseApp';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import type { UnitIdentifier } from '@blue-might/app/lib/types/unit';
@@ -14,6 +13,7 @@ import { debugGroundMap, debugSeaMap } from '@blue-might/maps';
 import { Subscription } from 'rxjs';
 import { onUnmounted, defineAsyncComponent, markRaw } from 'vue';
 import { defu } from 'defu';
+import type { App } from '@blue-might/app/lib/types';
 const subscription = new Subscription();
 
 const $props = defineProps<{
@@ -55,6 +55,7 @@ async function onSetupApp(app: App) {
 }
 
 async function setupPlayer(app: App) {
+  if (!('player' in app.modules)) return;
   await app.modules.player.addPlayer(
     markRaw(
       new HumanPlayer(app, {

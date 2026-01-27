@@ -28,8 +28,9 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Subscription } from 'rxjs';
 import { Vector2 } from 'three';
 import { NAVIGATOR_TYPE } from '@blue-might/app/lib/classes/mapModule/Pathfinding';
+import type { App } from '@blue-might/app/lib/types';
+import type DebugAppModule from '@blue-might/app/lib/classes/appModule/Debug';
 
-import type App from '../../lib/classes/App';
 import BmButton from '../Button.vue';
 import BmDetails from '../Details.vue';
 import BmSelect from '../Select.vue';
@@ -42,6 +43,14 @@ const lockGrid = ref<boolean>(false);
 const $props = defineProps<{
   app: App;
 }>();
+
+const debugModule = computed(() => {
+  const app = $props.app;
+  if ('debug' in app.modules) {
+    return app.modules.debug as DebugAppModule;
+  }
+  return null;
+});
 
 const currentNavigator = ref<NAVIGATOR_TYPE | null>(
   NAVIGATOR_TYPE.GROUND_LARGE
@@ -56,25 +65,27 @@ const navigatorOptions = computed(() => {
 });
 
 onMounted(() => {
-  const app = $props.app;
-  subscription.add(
-    app.modules.debug.observables.lockGrid$.subscribe(v => {
-      lockGrid.value = v;
-    })
-  );
-  subscription.add(
-    app.modules.debug.observables.currentPosition$.subscribe(p => {
-      currentPosition.value.copy(p);
-      const map = app.modules.map.getMap()!;
-      const navigator = map.modules.pathfinding.getGroundNavigatorLarge();
-      const grid = navigator.getGrid();
-      const node = navigator.worldToNode(p.x, p.y);
+  if (debugModule.value) {
+    const app = $props.app;
+    subscription.add(
+      debugModule.value.observables.lockGrid$.subscribe(v => {
+        lockGrid.value = v;
+      })
+    );
+    subscription.add(
+      debugModule.value.observables.currentPosition$.subscribe(p => {
+        currentPosition.value.copy(p);
+        const map = app.modules.map.getMap()!;
+        const navigator = map.modules.pathfinding.getGroundNavigatorLarge();
+        const grid = navigator.getGrid();
+        const node = navigator.worldToNode(p.x, p.y);
 
-      tileType.value = (node && grid.getTileType?.(node).toString()) ?? '';
-      surfaceHeight.value = map.modules.ground.getSurfaceHeightAt(p.x, p.y);
-      terrainHeight.value = map.modules.ground.getHeightAt(p.x, p.y);
-    })
-  );
+        tileType.value = (node && grid.getTileType?.(node).toString()) ?? '';
+        surfaceHeight.value = map.modules.surface.getSurfaceHeightAt(p.x, p.y);
+        terrainHeight.value = map.modules.surface.getHeightAt(p.x, p.y);
+      })
+    );
+  }
 });
 
 const tileType = ref<string>('');
@@ -88,14 +99,12 @@ onUnmounted(() => {
 watch(
   () => currentNavigator.value,
   newValue => {
-    const app = $props.app;
-    app.modules.debug.setLockGridNavigator(newValue);
+    debugModule.value?.setLockGridNavigator(newValue);
   }
 );
 
 function onClickLockGrid() {
-  const app = $props.app;
-  app.modules.debug.setLockGrid(!lockGrid.value);
+  debugModule.value?.setLockGrid(!lockGrid.value);
 }
 </script>
 

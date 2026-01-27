@@ -23,8 +23,8 @@ import { EMPTY, filter, map, Subscription, switchMap, timer } from 'rxjs';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Vector3 } from 'three';
 
-import type App from '../lib/classes/App';
 import { getAirVehicle } from '../lib/utils/unit';
+import type { App } from '../lib/types';
 
 const $props = defineProps<{
   app: App;
@@ -50,24 +50,28 @@ onMounted(() => {
 
   gap.value = (dimension.value[1] / lines.value.length) * 2;
 
-  subscription.add(
-    $props.app.modules.player.observables.currentPlayer$
-      .pipe(
-        switchMap(player => player?.modules.vehicle.observables.unit$ || EMPTY),
-        map(getAirVehicle),
-        filter(Boolean),
-        switchMap(unit => timer(0, 100).pipe(map(() => unit)))
-      )
-      .subscribe(vehicle => {
-        const airModule = vehicle.modules.airVehicle;
-        tilt.value
-          .copy(airModule.getTilt())
-          .multiplyScalar(100)
-          .round()
-          .divideScalar(100);
-        maxTilt.value.set(airModule.getMaxPitch(), 0, airModule.getMaxRoll());
-      })
-  );
+  if ('player' in $props.app.modules) {
+    subscription.add(
+      $props.app.modules.player.observables.currentPlayer$
+        .pipe(
+          switchMap(
+            player => player?.modules.vehicle.observables.unit$ || EMPTY
+          ),
+          map(getAirVehicle),
+          filter(Boolean),
+          switchMap(unit => timer(0, 100).pipe(map(() => unit)))
+        )
+        .subscribe(vehicle => {
+          const airModule = vehicle.modules.airVehicle;
+          tilt.value
+            .copy(airModule.getTilt())
+            .multiplyScalar(100)
+            .round()
+            .divideScalar(100);
+          maxTilt.value.set(airModule.getMaxPitch(), 0, airModule.getMaxRoll());
+        })
+    );
+  }
 });
 
 onUnmounted(() => {

@@ -85,7 +85,7 @@ export enum PANEL_POSITION {
     font-family: var(--font-bit-font-family);
     font-size: var(--font-bit-font-size);
     line-height: var(--font-bit-line-height);
-    color: #fd2;
+    color: var(--bm-panel-title);
     text-align: center;
     white-space: nowrap;
   }

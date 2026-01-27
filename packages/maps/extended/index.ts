@@ -20,10 +20,12 @@ export default function (): MapDescription {
       }
     },
 
-    ground: {
-      heightMap,
-      backgroundTexture,
-      foregroundTexture
+    surface: {
+      textures: {
+        heightMap,
+        backgroundTexture,
+        foregroundTexture
+      }
     },
 
     factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]],

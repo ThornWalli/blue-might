@@ -52,8 +52,6 @@ export default abstract class UnitModule<
   }
 
   getOptions() {
-    return {
-      ...this.options
-    };
+    return {};
   }
 }

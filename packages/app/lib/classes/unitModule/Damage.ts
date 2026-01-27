@@ -156,8 +156,8 @@ export default class DamageUnitModule extends UnitModule<
     this.setValue(this.options.maxDamage);
   }
 
-  setValue(value: number) {
-    if (!this.canDamage()) return;
+  setValue(value: number, force?: boolean) {
+    if (!force && !this.canDamage()) return;
     this.state.damage = Math.min(this.options.maxDamage, Math.max(0, value));
     this.observables.damage$.next(this.state.damage);
     if (this.isDestroyed()) {
@@ -209,5 +209,11 @@ export default class DamageUnitModule extends UnitModule<
       ?.modules.effect.addFire(this.getUnit().getPosition(), {
         life: 0.5 + Math.random() * 0.3
       });
+  }
+
+  override getState() {
+    return {
+      damage: this.state.damage
+    };
   }
 }

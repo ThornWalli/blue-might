@@ -1,3 +1,4 @@
+import { UNIT_TYPE } from '../../types/unit';
 import type { UnitConstructorOptions } from '../Unit';
 import AirVehicleUnitModule from '../unitModule/movable/AirVehicle';
 
@@ -20,6 +21,7 @@ export default class AirVehicleUnit<
   ModuleList extends AirVehicleUnitModuleList = AirVehicleUnitModuleList,
   Options extends AirVehicleUnitOptions = AirVehicleUnitOptions
 > extends VehicleUnit<Modules, ModuleList, Options> {
+  static override TYPE = UNIT_TYPE.AIR_VEHICLE;
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []

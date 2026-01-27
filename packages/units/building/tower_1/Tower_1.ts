@@ -12,7 +12,6 @@ import BuildingUnit, {
   type BuildingUnitModules,
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
-// import { replaceColors } from '@blue-might/app/lib/utils/material';
 
 import baseGlb from './assets/tower_1.glb?url';
 
@@ -57,19 +56,6 @@ export default class Tower_1<
         child.castShadow = true;
         child.receiveShadow = false;
         (child.material as MeshStandardMaterial).side = DoubleSide;
-        // replaceColors(
-        //   [
-        //     [
-        //       'primary',
-        //       this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-        //     ],
-        //     [
-        //       'secondary',
-        //       this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-        //     ]
-        //   ],
-        //   child
-        // );
       }
     });
 

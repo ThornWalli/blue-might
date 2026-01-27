@@ -98,7 +98,7 @@ export default class AirVehicleUnitModule<
     const groundHeight =
       this.getUnit()
         .getMap()
-        ?.modules.ground.getSurfaceHeightAt(
+        ?.modules.surface.getSurfaceHeightAt(
           position.x,
           position.z,
           u => !u.equals(unit)

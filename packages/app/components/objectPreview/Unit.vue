@@ -22,10 +22,10 @@ import * as units from '@blue-might/units';
 import type Unit from '@blue-might/app/lib/classes/Unit';
 import type { UnitConstructorOptions } from '@blue-might/app/lib/classes/Unit';
 import type { FactionIdentifier } from '@blue-might/app/lib/classes/Faction';
+import type { App } from '@blue-might/app/lib/types';
 
 import BmObjectPreview from '../ObjectPreview.vue';
 import type { AnimationLoopValue } from '../../lib/classes/Renderer';
-import type App from '../../lib/classes/App';
 
 const unitMap = new Map(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

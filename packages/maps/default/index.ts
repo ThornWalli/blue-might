@@ -16,10 +16,12 @@ export default function (): MapDescription {
         key: 'combat_helicopter_1'
       }
     },
-    ground: {
-      heightMap,
-      backgroundTexture,
-      foregroundTexture
+    surface: {
+      textures: {
+        heightMap,
+        backgroundTexture,
+        foregroundTexture
+      }
     },
     factions: [factions[FACTION.BLUE]],
     units: [

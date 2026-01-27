@@ -134,7 +134,7 @@ export default abstract class BaseNavigator {
     debug = false
   ) {
     const pos = this.toWorldPosition(x, y, grid);
-    let walkable = pos.y > this.map.modules.ground.getSeaLevel();
+    let walkable = pos.y > this.map.modules.surface.getSeaLevel();
     let collisionType = COLLISION_TYPE.NONE;
 
     // Basis-Kollisionsprüfung
@@ -409,7 +409,7 @@ export default abstract class BaseNavigator {
     const worldPosition = (grid || this.grid).toWorld(nodeX, nodeY);
     const x = worldPosition.x;
     const z = worldPosition.y;
-    const y = this.map.modules.ground.getSurfaceHeightAt(x, z);
+    const y = this.map.modules.surface.getSurfaceHeightAt(x, z);
     return new Vector3(x, y, z);
   }
 

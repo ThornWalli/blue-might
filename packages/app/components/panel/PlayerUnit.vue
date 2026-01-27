@@ -236,13 +236,13 @@
 </template>
 
 <script lang="ts" setup>
-import type App from '@blue-might/app/lib/classes/App';
 import { computed } from 'vue';
 import AirVehicleUnit from '@blue-might/app/lib/classes/unit/AirVehicle';
 import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 import { MAX_AIR_VEHICLE_ALTITUDE } from '@blue-might/app/lib/classes/unitModule/movable/AirVehicle';
 import usePlayerUnitInterface from '@blue-might/app/composables/usePlayerUnitInterface';
+import type { App } from '@blue-might/app/lib/types';
 
 import BmControlItem, { CONTROL_ITEM_STATUS } from '../element/ControlItem.vue';
 import BmPanel from '../Panel.vue';

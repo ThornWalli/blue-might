@@ -5,13 +5,13 @@
 </template>
 
 <script lang="ts" setup>
-import type App from '@blue-might/app/lib/classes/App';
+import type AppPlayground from '@blue-might/app/lib/classes/app/AppPlayground';
 
 import BmPanel from '../Panel.vue';
 import BmAttitudeIndicator from '../AttitudeIndicator.vue';
 
 const $props = defineProps<{
-  app: App;
+  app: AppPlayground;
 }>();
 </script>
 

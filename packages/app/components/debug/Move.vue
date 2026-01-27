@@ -2,7 +2,10 @@
   <bm-details class="bm-debug-move" label="Move Unit">
     <bm-button
       :disabled="
-        (isVehicle && !unitActive) || !unit || !(unit instanceof MovableUnit)
+        !debugModule ||
+        (isVehicle && !unitActive) ||
+        !unit ||
+        !(unit instanceof MovableUnit)
       "
       @click="onClickMoveUnit">
       Move Unit
@@ -23,10 +26,11 @@ import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
 import type Unit from '@blue-might/app/lib/classes/Unit';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
+import type { App } from '@blue-might/app/lib/types';
+import type DebugAppModule from '@blue-might/app/lib/classes/appModule/Debug';
 
 import BmDetails from '../Details.vue';
 import BmButton from '../Button.vue';
-import type App from '../../lib/classes/App';
 
 const subscription = new Subscription();
 
@@ -44,27 +48,37 @@ const $props = defineProps<{
   app: App;
 }>();
 
+const debugModule = computed(() => {
+  const app = $props.app;
+  if ('debug' in app.modules) {
+    return app.modules.debug as DebugAppModule;
+  }
+  return null;
+});
+
 onMounted(() => {
   const app = $props.app;
 
-  subscription.add(
-    app.modules.debug.observables.positionMarkers$.subscribe(positions => {
-      positionMarkers.value = positions;
-    })
-  );
-  subscription.add(
-    merge(
-      app.modules.debug.observables.abortAddMarker$,
-      app.modules.debug.observables.endAddMarker$
-    ).subscribe(() => {
-      startAddMarker.value = false;
-    })
-  );
-  subscription.add(
-    app.modules.debug.observables.startAddMarker$.subscribe(() => {
-      startAddMarker.value = true;
-    })
-  );
+  if (debugModule.value) {
+    subscription.add(
+      debugModule.value.observables.positionMarkers$.subscribe(positions => {
+        positionMarkers.value = positions;
+      })
+    );
+    subscription.add(
+      merge(
+        debugModule.value.observables.abortAddMarker$,
+        debugModule.value.observables.endAddMarker$
+      ).subscribe(() => {
+        startAddMarker.value = false;
+      })
+    );
+    subscription.add(
+      debugModule.value.observables.startAddMarker$.subscribe(() => {
+        startAddMarker.value = true;
+      })
+    );
+  }
   const vehicle$ = app.modules.selection.observables.selectUnit$;
 
   const vehicleModule$ = vehicle$.pipe(
@@ -87,8 +101,7 @@ onMounted(() => {
 });
 
 function onClickMoveUnit() {
-  const app = $props.app;
-  app.modules.debug.startMove();
+  debugModule.value?.startMove();
 }
 function onClickUnitActive(e: Event) {
   (e.target as HTMLButtonElement).blur();

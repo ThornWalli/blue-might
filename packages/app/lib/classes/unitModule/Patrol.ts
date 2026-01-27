@@ -1,5 +1,6 @@
+import type { Object3D } from 'three';
 import { BufferGeometry, Line, LineBasicMaterial, Vector3 } from 'three';
-import { Subject } from 'rxjs';
+import { ReplaySubject, Subject } from 'rxjs';
 
 import UnitModule, {
   type UnitModuleObservables,
@@ -8,8 +9,12 @@ import UnitModule, {
 } from '../UnitModule';
 import type Unit from '../Unit';
 import { disposeObject3D } from '../../utils/object';
+import type SurfaceModule from '../mapModule/Surface';
 
 import type PathfindingUnitModule from './Pathfinding';
+
+export type PatrolPathSegment = [number, number];
+export type PatrolPath = PatrolPathSegment[];
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -24,6 +29,7 @@ declare module '../Unit' {
 }
 
 interface Observables extends UnitModuleObservables {
+  active$: ReplaySubject<boolean>;
   start$: Subject<void>;
   stop$: Subject<void>;
   end$: Subject<void>;
@@ -34,7 +40,7 @@ interface Observables extends UnitModuleObservables {
 
 export interface PatrolUnitModuleOptions extends UnitModuleOptions {
   active: boolean;
-  path: [number, number][];
+  path: PatrolPath;
 }
 
 export interface PatrolUnitModuleState extends UnitModuleState {
@@ -70,6 +76,8 @@ export default class PatrolUnitModule extends UnitModule<
     );
 
     //#region observables
+    this.observables.active$ = new ReplaySubject<boolean>(1);
+    this.observables.active$.next(this.state.active);
     this.observables.start$ = new Subject<void>();
     this.observables.stop$ = new Subject<void>();
     this.observables.end$ = new Subject<void>();
@@ -98,14 +106,21 @@ export default class PatrolUnitModule extends UnitModule<
       });
     }
 
-    if (this.state.active) {
-      this.startPatrolTimeout = window.setTimeout(() => {
-        this.startPatrol();
-        if (this.debug && this.hasPath()) {
-          this.setupDebug();
+    this.subscription.add(
+      this.observables.active$.subscribe(active => {
+        if (active) {
+          this.startPatrolTimeout = window.setTimeout(() => {
+            this.startPatrol();
+            if (this.debug && this.hasPath()) {
+              this.setupDebug();
+            }
+          }, 1000);
+        } else {
+          this.stopPatrol();
+          window.clearTimeout(this.startPatrolTimeout);
         }
-      }, 1000);
-    }
+      })
+    );
   }
 
   override async destroy() {
@@ -180,11 +195,19 @@ export default class PatrolUnitModule extends UnitModule<
     const map = this.getUnit().getMap()!;
     return this.options.path.map(point => {
       const y = Math.max(
-        map.modules.ground.getSeaLevel(),
-        map.modules.ground.getTerrainHeightAt(point[0], point[1])
+        map.modules.surface.getSeaLevel(),
+        map.modules.surface.getTerrainHeightAt(point[0], point[1])
       );
       return new Vector3(point[0], y, point[1]);
     });
+  }
+
+  getPath(): PatrolPath {
+    return this.options.path;
+  }
+
+  setPath(path: PatrolPath) {
+    this.options.path = path;
   }
 
   hasPath(): boolean {
@@ -198,6 +221,15 @@ export default class PatrolUnitModule extends UnitModule<
     }
     this.patrolLoop();
     this.observables.start$.next();
+  }
+
+  async setActive(active: boolean) {
+    if (this.state.active === active) return;
+    if (!active) {
+      await this.stopPatrol();
+    }
+    this.state.active = active;
+    this.observables.active$.next(this.state.active);
   }
 
   async stopPatrol() {
@@ -285,24 +317,47 @@ export default class PatrolUnitModule extends UnitModule<
   }
 
   //#region debug
-  private debugLine: Line | null = null;
+  private debugLine: Object3D | null = null;
   private setupDebug() {
+    const groundModule = this.getUnit().getMap()!.modules.surface;
+    const debugLine = createLine(getWorldPath(groundModule, this.getPath()));
+    this.debugLine = debugLine;
     const scene = this.getUnit().getMap()?.app.getScene();
-    let worldPath = this.getWorldPath();
-    worldPath = [...worldPath, worldPath[0]!];
-
-    const geometry = new BufferGeometry().setFromPoints(
-      worldPath.map(p => new Vector3(p.x, p.y + 0.1, p.z))
-    );
-    this.debugLine = new Line(
-      geometry,
-      new LineBasicMaterial({
-        color: 0xffff00,
-        linewidth: 2
-      })
-    );
     scene?.add(this.debugLine);
   }
 
   //#endregion
+
+  override getOptions() {
+    return {
+      path: this.getPath()
+    };
+  }
+}
+
+export function getWorldPath(groundModule: SurfaceModule, path: PatrolPath) {
+  return path.map(point => {
+    const y = Math.max(
+      groundModule.getSeaLevel(),
+      groundModule.getTerrainHeightAt(point[0], point[1])
+    );
+    return new Vector3(point[0], y, point[1]);
+  });
+}
+
+export function createLine(worldPath: Vector3[]) {
+  worldPath = [...worldPath, worldPath[0]!];
+
+  const geometry = new BufferGeometry().setFromPoints(
+    worldPath.map(p => new Vector3(p.x, p.y + 0.1, p.z))
+  );
+
+  const line = new Line(
+    geometry,
+    new LineBasicMaterial({
+      color: 0xffff00,
+      linewidth: 2
+    })
+  );
+  return line;
 }

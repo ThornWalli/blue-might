@@ -183,7 +183,7 @@ export default class UnitsModule extends MapModule<State, Observables> {
     return this.state.units.get(id);
   }
 
-  async add(unit: Unit) {
+  async add<U extends Unit>(unit: U) {
     const context = {
       unit,
       map: this.map
@@ -203,10 +203,7 @@ export default class UnitsModule extends MapModule<State, Observables> {
         })
     );
     unit.subscription.add(
-      unit.observables.destroyed$.subscribe(() => {
-        debugger;
-        this.remove(unit);
-      })
+      unit.observables.destroyed$.subscribe(() => this.remove(unit))
     );
     this.state.units.set(unit.id, unit);
     this.root.add(unit.root);
@@ -218,6 +215,8 @@ export default class UnitsModule extends MapModule<State, Observables> {
     this.listener!.addMeshes(getMeshes(unit.root));
 
     this.observables.addUnit$.next(unit);
+
+    return unit;
   }
 
   updateVisibility() {

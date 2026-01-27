@@ -1,14 +1,17 @@
-import { Subject } from 'rxjs';
+import { EMPTY, ReplaySubject, switchMap } from 'rxjs';
+import { Mesh, SkinnedMesh, type Object3D } from 'three';
 
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
+  type UnitModuleSetupContext,
   type UnitModuleState
 } from '../UnitModule';
 import type Unit from '../Unit';
 import type Faction from '../Faction';
 import type { FactionIdentifier } from '../Faction';
 import { FACTION } from '../../utils/factions';
+import { replaceColors } from '../../utils/material';
 
 import type { FactionDescription } from './../Faction';
 
@@ -26,9 +29,10 @@ declare module '../Unit' {
 }
 
 interface Observables extends UnitModuleObservables {
-  faction$: Subject<FactionIdentifier>;
+  faction$: ReplaySubject<FactionIdentifier>;
 }
 export interface FactionUnitModuleOptions extends UnitModuleOptions {
+  disabled?: boolean;
   faction: FactionIdentifier;
   friendlyFactions: FactionIdentifier[];
   /**
@@ -55,6 +59,7 @@ export default class FactionUnitModule extends UnitModule<
       unit,
       {
         ...options,
+        disabled: options.disabled ?? false,
         faction: options.faction ?? FACTION.NEUTRAL,
         friendlyFactions: options.friendlyFactions ?? []
       },
@@ -62,8 +67,16 @@ export default class FactionUnitModule extends UnitModule<
       debug
     );
     //#region observables
-    this.observables.faction$ = new Subject<FactionIdentifier>();
+    this.observables.faction$ = new ReplaySubject<FactionIdentifier>();
+    this.observables.faction$.next(this.options.faction);
     //#endregion
+  }
+
+  override async setupMesh(context: UnitModuleSetupContext) {
+    if (!this.options.disabled) {
+      this.setupFactionColors(context.mesh);
+    }
+    return context.mesh;
   }
 
   getFaction() {
@@ -79,9 +92,9 @@ export default class FactionUnitModule extends UnitModule<
     return this.options.faction;
   }
 
-  setFaction(faction: FactionIdentifier) {
-    this.options.faction = faction;
-    this.observables.faction$.next(faction);
+  setFaction(faction: FactionIdentifier | null) {
+    this.options.faction = faction ?? FACTION.NEUTRAL;
+    this.observables.faction$.next(this.options.faction);
   }
 
   isFriendlyFaction(
@@ -99,4 +112,41 @@ export default class FactionUnitModule extends UnitModule<
         this.options.friendlyFactions.includes(faction))
     );
   }
+
+  setupFactionColors(object: Object3D) {
+    this.subscription.add(
+      this.getUnit()
+        .observables.map$.pipe(
+          switchMap(map => map?.modules.faction.observables.factions$ ?? EMPTY)
+        )
+        .subscribe(() => {
+          useColors(object, this.getFaction()!);
+        })
+    );
+    this.subscription.add(
+      this.observables.faction$.subscribe(() => {
+        useColors(object, this.getFaction()!);
+      })
+    );
+  }
+
+  override getOptions() {
+    return {
+      faction: this.options.faction
+    };
+  }
+}
+
+function useColors(object: Object3D, faction: FactionDescription) {
+  object.traverse(child => {
+    if (child instanceof Mesh || child instanceof SkinnedMesh) {
+      replaceColors(
+        [
+          ['primary', faction.colors[0] ?? 0xf2f2f2],
+          ['secondary', faction.colors[1] ?? 0xf2f2f2]
+        ],
+        child
+      );
+    }
+  });
 }

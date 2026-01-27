@@ -9,7 +9,7 @@
 </template>
 
 <script lang="ts" setup>
-import type App from '../lib/classes/App';
+import type { App } from '../lib/types';
 
 import BmDebugPages from './debug/Pages.vue';
 import BmDebugControls from './debug/Controls.vue';

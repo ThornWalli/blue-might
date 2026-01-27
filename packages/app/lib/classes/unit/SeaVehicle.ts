@@ -1,3 +1,4 @@
+import { UNIT_TYPE } from '../../types/unit';
 import { GROUND_ADJUSTMENT_MODE, type UnitConstructorOptions } from '../Unit';
 import SeaVehicleUnitModule from '../unitModule/movable/SeaVehicle';
 
@@ -20,6 +21,7 @@ export default class SeaVehicleUnit<
   ModuleList extends SeaVehicleUnitModuleList = SeaVehicleUnitModuleList,
   Options extends SeaVehicleUnitOptions = SeaVehicleUnitOptions
 > extends VehicleUnit<Modules, ModuleList, Options> {
+  static override TYPE = UNIT_TYPE.SEA_VEHICLE;
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []

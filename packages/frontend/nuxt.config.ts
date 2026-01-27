@@ -80,7 +80,7 @@ export default defineNuxtConfig({
   },
 
   vite: {
-    assetsInclude: ['**/*.md'],
+    assetsInclude: ['**/*.md', '**/*.zip'],
     plugins: [
       // viteMkcert({
       //   savePath: './.certs',

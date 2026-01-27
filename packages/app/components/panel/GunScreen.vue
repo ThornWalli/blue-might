@@ -23,12 +23,12 @@ import type { UnitModules } from '@blue-might/app/lib/classes/Unit';
 
 import BmGunScreen from '../GunScreen.vue';
 import BmPanel from '../Panel.vue';
-import type App from '../../lib/classes/App';
+import type AppPlayground from '../../lib/classes/app/AppPlayground';
 
 const fullscreen = ref(false);
 
 const $props = defineProps<{
-  app: App;
+  app: AppPlayground;
 }>();
 
 const subscription = new Subscription();

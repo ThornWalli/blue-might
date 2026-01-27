@@ -5,11 +5,12 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { Subscription } from 'rxjs';
 import { Vector2, Vector3 } from 'three';
+import type { App } from '@blue-might/app/lib/types';
+import type DebugAppModule from '@blue-might/app/lib/classes/appModule/Debug';
 
-import type App from '../../lib/classes/App';
 import BmButton from '../Button.vue';
 import BmDetails from '../Details.vue';
 
@@ -20,20 +21,29 @@ const $props = defineProps<{
   app: App;
 }>();
 
-onMounted(() => {
+const debugModule = computed(() => {
   const app = $props.app;
-  subscription.add(
-    app.modules.debug.observables.currentPosition$.subscribe(p => {
-      currentPosition.value.copy(p);
-    })
-  );
+  if ('debug' in app.modules) {
+    return app.modules.debug as DebugAppModule;
+  }
+  return null;
+});
+
+onMounted(() => {
+  if (debugModule.value) {
+    subscription.add(
+      debugModule.value.observables.currentPosition$.subscribe(p => {
+        currentPosition.value.copy(p);
+      })
+    );
+  }
 });
 
 function onClickLockAddExplosion() {
   const app = $props.app;
   const map = app.modules.map.getMap();
   const y =
-    map?.modules.ground.getSurfaceHeightAt(
+    map?.modules.surface.getSurfaceHeightAt(
       currentPosition.value.x,
       currentPosition.value.y
     ) ?? 0;

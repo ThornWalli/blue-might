@@ -31,10 +31,11 @@ import { FLIGHT_STATUS } from '../unitModule/movable/airVehicle/Helicopter';
 import type AirVehicleUnit from '../unit/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
 import type { IntersectionListener } from '../rendererModule/Intersection';
+import type { Textures } from '../Map';
 
 declare module '../Map' {
   interface ModuleDebug {
-    ground: boolean;
+    surface: boolean;
   }
 }
 
@@ -51,8 +52,8 @@ interface State extends MapModuleState {
   origin: Vector3;
 }
 
-export default class GroundModule extends MapModule<State, Observables> {
-  static override TYPE = 'ground';
+export default class SurfaceModule extends MapModule<State, Observables> {
+  static override TYPE = 'surface';
   private root?: Object3D;
   override state: State = {
     segments: 64,
@@ -162,7 +163,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     x: number,
     z: number,
     sampleDistance = 1,
-    func = this.map.modules.ground.getHeightAt.bind(this.map.modules.ground)
+    func = this.getHeightAt.bind(this)
   ): number {
     const directions = [
       [0, 0],
@@ -181,7 +182,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     x: number,
     z: number,
     sampleDistance = 1,
-    func = this.map.modules.ground.getHeightAt.bind(this.map.modules.ground)
+    func = this.getHeightAt.bind(this)
   ): number {
     const directions = [
       [0, 0],
@@ -197,7 +198,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     x: number,
     z: number,
     sampleDistance = 1,
-    func = this.map.modules.ground.getHeightAt.bind(this.map.modules.ground)
+    func = this.getHeightAt.bind(this)
   ): number {
     const directions = [
       [0, 0],
@@ -296,7 +297,7 @@ export default class GroundModule extends MapModule<State, Observables> {
   getTerrainHeightAt(
     x: number | Vector2,
     z?: number,
-    ignoredUnits: Unit[] = [],
+    _ignoredUnits: Unit[] = [],
     maxDistance = 100
   ): number {
     if (x instanceof Vector2) {
@@ -306,9 +307,9 @@ export default class GroundModule extends MapModule<State, Observables> {
     return this.getHeightFromRaycast(
       x,
       z!,
-      unit =>
-        !ignoredUnits.includes(unit) &&
-        !!(unit as BuildingUnit).modules.building,
+      () => false,
+      // !ignoredUnits.includes(unit) &&
+      // !!(unit as BuildingUnit).modules.building,
       maxDistance
     );
   }
@@ -364,7 +365,7 @@ export default class GroundModule extends MapModule<State, Observables> {
   }
 
   private getGroundHeights(segments = 64) {
-    const heightMap = this.map.textures.heightMap!;
+    const heightMap = this.map.getTextures().heightMap!;
     heightMap.minFilter = NearestFilter;
     heightMap.magFilter = NearestFilter;
     heightMap.generateMipmaps = false;
@@ -399,41 +400,54 @@ export default class GroundModule extends MapModule<State, Observables> {
   }
 
   async createMeshes() {
-    const backgroundTexture = this.map.textures.backgroundTexture!;
+    const textures = this.map.getTextures();
+    const backgroundTexture = textures.backgroundTexture!;
 
-    const width = backgroundTexture.width; // Terraingröße
-    const height = backgroundTexture.height;
+    // Terrain-Dimensionen
+    const dimension = new Vector2(
+      backgroundTexture.width,
+      backgroundTexture.height
+    );
 
-    this.state.terrainWidth = width;
-    this.state.terrainHeight = height;
+    this.state.terrainWidth = dimension.x;
+    this.state.terrainHeight = dimension.y;
 
     const segments = this.state.segments;
     const heights = this.getGroundHeights(segments);
     this.state.heights = heights;
 
-    const foregroundTexture = this.map.textures.foregroundTexture!;
+    const foregroundTexture = textures.foregroundTexture!;
     const noiseTexture = new CanvasTexture(
       resizeCanvas(
         generateNoiseTexture({
-          width: width * 2,
-          height: height * 2,
+          width: dimension.x * 2,
+          height: dimension.y * 2,
           intensity: 0.25,
           opacity: 1,
-          monochrome: this.map.description.ground.noiseMonochrome ?? false
+          monochrome: this.map.description.surface.noiseMonochrome ?? false
         }),
         foregroundTexture.image.width
       )
     );
 
     const combinedTexture = combineTerrainTextures(
-      backgroundTexture,
-      noiseTexture,
-      foregroundTexture,
-      width,
-      height
+      {
+        noise: true,
+        heightMap: true
+      },
+      {
+        ...textures,
+        noiseTexture
+      },
+      dimension
     );
 
-    const geometry = new PlaneGeometry(width, height, segments, segments);
+    const geometry = new PlaneGeometry(
+      dimension.x,
+      dimension.y,
+      segments,
+      segments
+    );
     geometry.rotateX(-Math.PI / 2);
 
     const vertexCount = (segments + 1) * (segments + 1);
@@ -465,7 +479,7 @@ export default class GroundModule extends MapModule<State, Observables> {
       opacity: 0.9
     });
 
-    const waterGeometry = new PlaneGeometry(width, height, 1, 1);
+    const waterGeometry = new PlaneGeometry(dimension.x, dimension.y, 1, 1);
     waterGeometry.rotateX(-Math.PI / 2);
     waterGeometry.translate(0, -9, 0);
 
@@ -494,6 +508,8 @@ export default class GroundModule extends MapModule<State, Observables> {
   listener: IntersectionListener | undefined;
   override async setup() {
     await super.setup();
+
+    const textures = this.map.getTextures();
 
     const object = await this.createMeshes();
     this.map.addToRoot(object);
@@ -537,7 +553,7 @@ export default class GroundModule extends MapModule<State, Observables> {
       return undefined;
     }
 
-    const { width, height } = this.map.textures.backgroundTexture!;
+    const { width, height } = textures.backgroundTexture!;
 
     // Pathfinder cells
     const cellSize = 3;
@@ -547,7 +563,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     );
 
     tileMap = await getCostsFromImage(
-      this.map.textures.heightMap!,
+      textures.heightMap!,
       (r, g, b) => {
         const maxSeaLevel = 255 * 0.9;
 
@@ -563,7 +579,7 @@ export default class GroundModule extends MapModule<State, Observables> {
     );
 
     tileMap = await getCostsFromImage(
-      this.map.textures.foregroundTexture!,
+      textures.foregroundTexture!,
       tileTypeByColor,
       new Vector2(width, height),
       cellSize,
@@ -643,44 +659,70 @@ function getPixelsFromTexture(texture: Texture<ImageBitmap>) {
 }
 
 function combineTerrainTextures(
-  backgroundTexture: Texture<ImageBitmap>,
-  noiseTexture: CanvasTexture<HTMLCanvasElement>,
-  foregroundTexture: Texture<ImageBitmap>,
-  width: number,
-  height: number
+  combine: {
+    heightMap: boolean;
+    noise: boolean;
+  },
+  textures: Textures & {
+    noiseTexture: CanvasTexture<HTMLCanvasElement>;
+  },
+  dimension: Vector2
 ): CanvasTexture {
   let canvas: HTMLCanvasElement | OffscreenCanvas =
     document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
+  canvas.width = dimension.x;
+  canvas.height = dimension.y;
   let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D =
     canvas.getContext('2d')!;
 
-  ctx.drawImage(backgroundTexture.image, 0, 0, width, height);
+  ctx.fillStyle = 'yellow';
+  ctx.fillRect(0, 0, dimension.x, dimension.y);
+  ctx.drawImage(
+    textures.backgroundTexture.image,
+    0,
+    0,
+    dimension.x,
+    dimension.y
+  );
+
+  if (combine.heightMap) {
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 1;
+    ctx.drawImage(
+      textures.heightMap.image,
+      0,
+      0,
+      textures.heightMap.width,
+      textures.heightMap.height
+    );
+  }
+
   // Canvas resize for foreground texture
-  canvas = resizeCanvas(canvas, foregroundTexture.image.width);
+  canvas = resizeCanvas(canvas, textures.foregroundTexture.image.width);
 
   ctx = canvas.getContext('2d')!;
 
-  ctx.globalCompositeOperation = 'multiply';
-  ctx.globalAlpha = 0.5;
-  ctx.drawImage(
-    noiseTexture.image,
-    0,
-    0,
-    noiseTexture.width,
-    noiseTexture.height
-  );
+  if (combine.noise) {
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalAlpha = 0.5;
+    ctx.drawImage(
+      textures.noiseTexture.image,
+      0,
+      0,
+      textures.noiseTexture.width,
+      textures.noiseTexture.height
+    );
+  }
 
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
 
   ctx.drawImage(
-    foregroundTexture.image,
+    textures.foregroundTexture.image,
     0,
     0,
-    foregroundTexture.image.width,
-    foregroundTexture.image.height
+    textures.foregroundTexture.image.width,
+    textures.foregroundTexture.image.height
   );
 
   // Zurück zu Default

@@ -1,8 +1,14 @@
 <template>
-  <button>
+  <component :is="tag ?? 'button'">
     <slot />
-  </button>
+  </component>
 </template>
+
+<script setup lang="ts">
+defineProps<{
+  tag?: string;
+}>();
+</script>
 
 <style lang="postcss" scoped>
 button {

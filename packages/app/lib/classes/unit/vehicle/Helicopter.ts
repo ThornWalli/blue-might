@@ -1,3 +1,5 @@
+import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';
+
 import {
   GROUND_ADJUSTMENT_MODE,
   type UnitConstructorOptions
@@ -22,6 +24,7 @@ export default class HelicopterUnit<
   ModuleList extends HelicopterUnitModuleList = HelicopterUnitModuleList,
   Options extends HelicopterUnitOptions = HelicopterUnitOptions
 > extends AirVehicleUnit<Modules, ModuleList, Options> {
+  static override TYPE = UNIT_TYPE.HELICOPTER;
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []

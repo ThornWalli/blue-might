@@ -141,7 +141,7 @@ export default class SeaVehicleUnitModule<
     const sinkSpeed =
       unit
         .getMap()
-        ?.modules.ground.getHeightAt(
+        ?.modules.surface.getHeightAt(
           unit.getPosition().x,
           unit.getPosition().z
         ) ?? 1.0;
@@ -294,9 +294,9 @@ export default class SeaVehicleUnitModule<
     if (Math.abs(dx) > eps || Math.abs(dz) > eps) {
       const newPos = pos.clone().add(new Vector3(dx, 0, dz));
 
-      const seaLevel = map.modules.ground.getSeaLevel() ?? 0;
+      const seaLevel = map.modules.surface.getSeaLevel() ?? 0;
 
-      const test = map.modules.ground.getSurfaceHeightAt(
+      const test = map.modules.surface.getSurfaceHeightAt(
         newPos.x,
         newPos.z,
         u => !u.equals(unit) && ignoreByUnitByType({ seaVehicle: true })(u)

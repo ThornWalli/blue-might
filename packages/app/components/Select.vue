@@ -4,18 +4,23 @@
       :id="id"
       :model-value="modelValue"
       :options="options"
+      :attrs="attrs"
       @update:model-value="$emit('update:modelValue', $event)" />
-    <span class="indicator"> </span>
+    <span v-if="!attrs?.size" class="indicator"> </span>
   </div>
 </template>
 
 <script lang="ts" setup generic="T">
+import type { SelectHTMLAttributes } from 'vue';
+
 import BaseSelect from './base/Select.vue';
+import type { SelectOption } from './base/SelectOption.vue';
 
 defineProps<{
   id?: string;
   modelValue: T;
-  options: Array<{ label: string; value: T }>;
+  attrs?: SelectHTMLAttributes;
+  options: Array<SelectOption<T>>;
 }>();
 
 defineEmits<{
@@ -50,7 +55,7 @@ defineEmits<{
     box-sizing: border-box;
     display: block;
     width: 100%;
-    padding: var(--bm-spacing-small) var(--bm-spacing-medium);
+    padding: var(--bm-spacing-small);
     font-family: var(--font-base);
     font-size: 12px;
     color: var(--color-foreground);
@@ -58,6 +63,7 @@ defineEmits<{
     cursor: pointer;
     outline: none;
     background: transparent;
+    border: none;
   }
 
   & span {

@@ -27,15 +27,20 @@ import {
 import { fromEvent, Subscription } from 'rxjs';
 import { Vector2 } from 'three';
 
-import App, { APP_MODE, type AppConfig } from '../lib/classes/App';
 import type Renderer from '../lib/classes/Renderer';
 import type { Cursor } from '../lib/classes/appModule/Cursor';
 import type { MapDescription } from '../lib/classes/Map';
+import AppEditor from '../lib/classes/app/AppEditor';
+import AppDebug from '../lib/classes/app/AppDebug';
+import AppPlayground from '../lib/classes/app/AppPlayground';
+import { APP_MODE, type AppConfig } from '../lib/classes/BaseApp';
+import type { App } from '../lib/types';
 
 import setupFonts from './../utils/fonts';
 import BmRenderer from './Renderer.vue';
 
 setupFonts();
+
 const $props = defineProps<{
   config: AppConfig;
   map: MapDescription;
@@ -43,7 +48,6 @@ const $props = defineProps<{
 }>();
 
 const rendererEl = ref<InstanceType<typeof BmRenderer> | null>(null);
-
 const rootEl = ref<HTMLElement>();
 const dimension = ref<Vector2>();
 const subscription = new Subscription();
@@ -54,6 +58,8 @@ const currentComponent = computed(() => {
   switch ($props.config.mode) {
     case APP_MODE.DEBUG:
       return defineAsyncComponent(() => import('./app/Debug.vue'));
+    case APP_MODE.EDITOR:
+      return defineAsyncComponent(() => import('./app/Editor.vue'));
     default:
       return defineAsyncComponent(() => import('./app/Playground.vue'));
   }
@@ -82,7 +88,7 @@ async function setup() {
   await setupApp(renderer);
   if (app.value) {
     await $props.onSetup?.(app.value);
-    await app.value.enterMap($props.map);
+    await app.value.modules.map.enterMap($props.map);
   } else {
     throw new Error('App not initialized');
   }
@@ -90,8 +96,19 @@ async function setup() {
 
 const currentCursor = ref<Cursor>();
 
+const appDefinitions = {
+  [APP_MODE.PLAYGROUND]: AppPlayground,
+  [APP_MODE.EDITOR]: AppEditor,
+  [APP_MODE.DEBUG]: AppDebug
+};
+
 async function setupApp(renderer: Renderer) {
-  app.value = markRaw(new App($props.config, renderer));
+  app.value = markRaw(
+    new appDefinitions[$props.config.mode ?? APP_MODE.PLAYGROUND](
+      $props.config,
+      renderer
+    )
+  );
 
   await app.value.setup();
   ready.value = true;

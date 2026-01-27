@@ -1,35 +1,26 @@
 <template>
-  <select @input="onInput">
-    <component
-      :is="group ? 'optgroup' : 'option'"
-      v-for="{ group, label, value, ...item } in preparedOptions"
-      :key="`${label}-${value}`"
-      :label="label"
-      :value="value">
-      {{ group ? undefined : label }}
-      <option
-        v-for="option in item.options"
-        :key="String(option.value ?? option.label)"
-        :value="option.value">
-        {{ option.label }}
-      </option>
-    </component>
+  <select v-bind="attrs" @input="onInput">
+    <bm-select-option
+      v-for="option in preparedOptions"
+      :key="String(option.value)"
+      :label="option.label"
+      :value="option.value"
+      :selected="modelValue === option.value"
+      :options="option.options"
+      :disabled="option.disabled" />
   </select>
 </template>
 
 <script lang="ts" setup generic="T">
-import { computed } from 'vue';
+import { computed, type SelectHTMLAttributes } from 'vue';
 
-interface Option {
-  group?: string;
-  label: string;
-  value?: T;
-  options?: Option[];
-}
+import type { SelectOption } from './SelectOption.vue';
+import BmSelectOption from './SelectOption.vue';
 
 const $props = defineProps<{
   modelValue: T;
-  options: Option[];
+  attrs?: SelectHTMLAttributes;
+  options: SelectOption<T>[];
 }>();
 
 const $emit = defineEmits<{

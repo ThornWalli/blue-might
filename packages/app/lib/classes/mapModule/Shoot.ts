@@ -202,7 +202,7 @@ export default class ShootModule extends MapModule<State, Observables> {
     this.raycastFrameCounter++;
 
     // Baue die Liste der Ziele nur einmal pro Frame auf
-    const allPossibleTargets = [this.map.modules.ground.getRoot()];
+    const allPossibleTargets = [this.map.modules.surface.getRoot()];
     this.map.modules.units
       .getUnits()
       .forEach(u => allPossibleTargets.push(u.getRoot()));
@@ -321,13 +321,13 @@ export default class ShootModule extends MapModule<State, Observables> {
         }
       }
 
-      if (!hit && obj.position.y <= this.map.modules.ground.getSeaLevel()) {
+      if (!hit && obj.position.y <= this.map.modules.surface.getSeaLevel()) {
         hit = true;
         if (shoot.projectile.hasExplosion()) {
           const position = new Vector3()
             .copy(obj.position)
             .setY(
-              this.map.modules.ground.getSurfaceHeightAt(
+              this.map.modules.surface.getSurfaceHeightAt(
                 obj.position.x,
                 obj.position.z
               )

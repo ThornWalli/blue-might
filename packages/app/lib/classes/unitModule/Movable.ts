@@ -138,34 +138,36 @@ export default class MovableUnitModule<
       })
     );
 
-    this.subscription.add(
-      unit
-        .getMap()
-        ?.app.modules.player.observables.currentPlayer$.pipe(
-          switchMap(player => {
-            return player.modules.controls.observables.controls$;
-          })
-        )
-        .subscribe(controls => {
-          const { power } = controls;
+    const app = unit.getMap()?.app;
+    if (app && 'player' in app.modules) {
+      this.subscription.add(
+        app.modules.player.observables.currentPlayer$
+          .pipe(
+            switchMap(player => {
+              return player.modules.controls.observables.controls$;
+            })
+          )
+          .subscribe(controls => {
+            const { power } = controls;
 
-          if (power) {
-            if (this.state.active) {
-              this.turnOff();
-            } else {
-              this.turnOn();
+            if (power) {
+              if (this.state.active) {
+                this.turnOff();
+              } else {
+                this.turnOn();
+              }
             }
+          })
+      );
+
+      this.subscription.add(
+        unit.modules.player.observables.player$.subscribe(player => {
+          if (!player) {
+            this.turnOn();
           }
         })
-    );
-
-    this.subscription.add(
-      unit.modules.player.observables.player$.subscribe(player => {
-        if (!player) {
-          this.turnOn();
-        }
-      })
-    );
+      );
+    }
   }
 
   /**

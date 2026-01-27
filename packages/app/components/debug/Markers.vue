@@ -28,10 +28,11 @@
 
 <script lang="ts" setup>
 import type { PositionMarker } from '@blue-might/app/lib/classes/appModule/Debug';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { merge, Subscription } from 'rxjs';
+import type { App } from '@blue-might/app/lib/types';
+import type DebugAppModule from '@blue-might/app/lib/classes/appModule/Debug';
 
-import type App from '../../lib/classes/App';
 import BmButton from '../Button.vue';
 import BmDetails from '../Details.vue';
 
@@ -44,53 +45,60 @@ const $props = defineProps<{
   app: App;
 }>();
 
-onMounted(() => {
+const debugModule = computed(() => {
   const app = $props.app;
+  if ('debug' in app.modules) {
+    return app.modules.debug as DebugAppModule;
+  }
+  return null;
+});
 
-  subscription.add(
-    app.modules.debug.observables.positionMarkers$.subscribe(positions => {
-      positionMarkers.value = positions;
-    })
-  );
-  subscription.add(
-    merge(
-      app.modules.debug.observables.abortAddMarker$,
-      app.modules.debug.observables.endAddMarker$
-    ).subscribe(() => {
-      startAddMarker.value = false;
-    })
-  );
-  subscription.add(
-    app.modules.debug.observables.startAddMarker$.subscribe(() => {
-      startAddMarker.value = true;
-    })
-  );
+onMounted(() => {
+  if (debugModule.value) {
+    subscription.add(
+      debugModule.value.observables.positionMarkers$.subscribe(positions => {
+        positionMarkers.value = positions;
+      })
+    );
+    subscription.add(
+      merge(
+        debugModule.value.observables.abortAddMarker$,
+        debugModule.value.observables.endAddMarker$
+      ).subscribe(() => {
+        startAddMarker.value = false;
+      })
+    );
+    subscription.add(
+      debugModule.value.observables.startAddMarker$.subscribe(() => {
+        startAddMarker.value = true;
+      })
+    );
+  }
 });
 
 function onClickAddMarker() {
-  const app = $props.app;
   if (startAddMarker.value) {
-    app.modules.debug.abortAddMarker();
+    debugModule.value?.abortAddMarker();
   } else {
-    app.modules.debug.startAddMarker();
+    debugModule.value?.startAddMarker();
   }
 }
 
 function onClickMarkerUp(marker: PositionMarker) {
-  $props.app.modules.debug.moveMarkerUp(marker);
+  debugModule.value?.moveMarkerUp(marker);
 }
 
 function onClickMarkerDown(marker: PositionMarker) {
-  $props.app.modules.debug.moveMarkerDown(marker);
+  debugModule.value?.moveMarkerDown(marker);
 }
 
 function onClickMarkerRemove(marker: PositionMarker) {
-  $props.app.modules.debug.removeMarker(marker);
+  debugModule.value?.removeMarker(marker);
 }
 
 function onClickCopyPositions() {
-  const app = $props.app;
-  const markers = app.modules.debug.getPositionMarkers();
+  if (!debugModule.value) return;
+  const markers = debugModule.value.getPositionMarkers();
   const positions = markers
     .map(
       marker =>

@@ -7,14 +7,14 @@
     </div>
     <div class="controls bottom">
       <button @click="onClickZoomIn">
-        <svg-icon-plus />
+        <icon-plus />
       </button>
       <button @click="onClickZoomOut">
-        <svg-icon-minus />
+        <icon-minus />
       </button>
       <button @click="onClickFullscreen">
-        <svg-icon-arrows-pointing-in v-if="fullscreen" />
-        <svg-icon-arrows-pointing-out v-else />
+        <icon-arrows-pointing-in v-if="fullscreen" />
+        <icon-arrows-pointing-out v-else />
       </button>
     </div>
   </div>
@@ -33,13 +33,15 @@ import {
 import type WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import type { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 
-import SvgIconPlus from '../assets/icons/micro/plus.svg?component';
-import SvgIconMinus from '../assets/icons/micro/minus.svg?component';
-import SvgIconArrowsPointingIn from '../assets/icons/micro/arrows-pointing-in.svg?component';
-import SvgIconArrowsPointingOut from '../assets/icons/micro/arrows-pointing-out.svg?component';
-import type App from '../lib/classes/App';
 import type Unit from '../lib/classes/Unit';
 import type { UnitModules } from '../lib/classes/Unit';
+import type BaseApp from '../lib/classes/BaseApp';
+import icons, { ICON } from '../utils/icons';
+
+const IconPlus = await icons[ICON.PLUS];
+const IconMinus = await icons[ICON.MINUS];
+const IconArrowsPointingIn = await icons[ICON.ARROWS_POINTING_IN];
+const IconArrowsPointingOut = await icons[ICON.ARROWS_POINTING_OUT];
 
 const rootEl = ref<HTMLDivElement | null>(null);
 const screenEl = ref<HTMLDivElement | null>(null);
@@ -48,7 +50,7 @@ const canvasEl = ref<HTMLCanvasElement | null>(null);
 const fullscreen = ref(false);
 
 const $props = defineProps<{
-  app: App;
+  app: BaseApp;
   unit: Unit<UnitModules & { weapon: WeaponUnitModule }>;
 }>();
 

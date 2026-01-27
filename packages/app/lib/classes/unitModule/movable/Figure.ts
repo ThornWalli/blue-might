@@ -187,7 +187,7 @@ export default class FigureUnitModule extends MovableUnitModule<
     const groundHeight =
       unit
         .getMap()
-        ?.modules.ground.getSurfaceHeightAt(
+        ?.modules.surface.getSurfaceHeightAt(
           pos.x,
           pos.z,
           u => !u.equals(unit)

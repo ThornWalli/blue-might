@@ -5,7 +5,7 @@ import AppModule, {
   type AppModuleObservables,
   type AppModuleState
 } from '../AppModule';
-import type App from '../App';
+import type BaseApp from '../BaseApp';
 
 export enum CURSOR_TYPE {
   DEFAULT = 'default',
@@ -33,7 +33,7 @@ export default class CursorAppModule extends AppModule<State, Observables> {
 
   private currentSubject = new ReplaySubject<Cursor>(0);
 
-  constructor(app: App) {
+  constructor(app: BaseApp) {
     super(app, {} as State);
     //#region observables
     this.observables.current$ = this.currentSubject.pipe(

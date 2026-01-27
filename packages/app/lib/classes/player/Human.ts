@@ -1,4 +1,4 @@
-import type App from '../App';
+import type { App } from '../../types';
 import Player, {
   type PlayerConstructorOptions,
   type PlayerModuleList,

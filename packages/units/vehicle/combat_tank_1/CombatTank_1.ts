@@ -11,7 +11,6 @@ import TankUnit, {
 } from '@blue-might/app/lib/classes/unit/vehicle/Tank';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Object3D, Vector2, Mesh, SkinnedMesh } from 'three';
-import { replaceColors } from '@blue-might/app/lib/utils/material';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
@@ -72,6 +71,8 @@ export default class CombatTank_1
     barrelTargetShoots: Object3D[];
   }[] = [];
 
+  private barrelTargetShootTimeouts: number[] = [];
+
   constructor(
     options: Omit<UnitConstructorOptions<CombatTankOptions>, 'name'> = {},
     moduleList: Partial<CombatTankModuleList> = []
@@ -131,8 +132,6 @@ export default class CombatTank_1
     );
   }
 
-  private barrelTargetShootTimeouts: number[] = [];
-
   override async afterSetup(context: SetupContext) {
     await super.afterSetup(context);
     //#region barrel target shoot
@@ -186,20 +185,6 @@ export default class CombatTank_1
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-
-        replaceColors(
-          [
-            [
-              'primary',
-              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-            ],
-            [
-              'secondary',
-              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-            ]
-          ],
-          child
-        );
       }
     });
 

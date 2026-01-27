@@ -15,11 +15,11 @@ import AppModule, {
   type AppModuleState
 } from '../AppModule';
 import type Player from '../Player';
-import type App from '../App';
 import { HumanPlayer } from '../player/Human';
 import { isAirVehicle, isGroundVehicle } from '../../utils/unit';
 import type MovableUnit from '../unit/Movable';
 import type { UnitDescription } from '../Unit';
+import type BaseApp from '../BaseApp';
 
 const unitMap = new Map(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -39,7 +39,7 @@ interface State extends AppModuleState {
 export default class PlayerAppModule extends AppModule<State, Observables> {
   static override TYPE = 'player';
 
-  constructor(app: App) {
+  constructor(app: BaseApp) {
     super(app, { players: [] });
     //#region observables
     this.observables.currentPlayer$ = new ReplaySubject<Player>(1);
@@ -135,16 +135,17 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
   private async setupPlayerUnit() {
     const player = this.getCurrentPlayer();
     const map = this.app.modules.map.getMap()!;
-    const description = map.playerOptions.unit as unknown as UnitDescription;
+    const playerOptions = map.getPlayerOptions();
+    const description = playerOptions.unit as unknown as UnitDescription;
     const unit = new (await getUnitClass<typeof MovableUnit>(
-      map.playerOptions.unit.key
+      playerOptions.unit.key
     ))({
       ...description,
-      position: map.playerOptions.position.clone(),
-      rotation: map.playerOptions.rotation?.clone(),
+      position: playerOptions.position.clone(),
+      rotation: playerOptions.rotation?.clone(),
       moduleOptions: {
         faction: {
-          faction: map.playerOptions.faction
+          faction: playerOptions.faction
         }
       }
     });
@@ -160,7 +161,7 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
   cleanUpStartPosition() {
     const player = this.getCurrentPlayer();
     const map = this.app.modules.map.getMap()!;
-    const startPosition = map.playerOptions.position;
+    const startPosition = map.getPlayerOptions().position;
 
     const unitsByRadius = map.modules.units.getUnitsInRadius(
       new Vector3(startPosition.x, 0, startPosition.y),

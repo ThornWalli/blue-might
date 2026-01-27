@@ -25,10 +25,10 @@
 
 <script lang="ts" setup>
 import BmPanel from '../Panel.vue';
-import type App from '../../lib/classes/App';
+import type AppPlayground from '../../lib/classes/app/AppPlayground';
 
 defineProps<{
-  app: App;
+  app: AppPlayground;
 }>();
 </script>
 <style lang="postcss" scoped>

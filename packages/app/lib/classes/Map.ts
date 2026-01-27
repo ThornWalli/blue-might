@@ -1,20 +1,22 @@
 import {
   Euler,
+  Texture,
   Vector3,
   type EulerTuple,
-  type Texture,
   type Vector3Tuple
 } from 'three';
 import { Object3D } from 'three';
 import assetLoader from '@blue-might/app/services/assetLoader';
-import { Subscription } from 'rxjs';
+import { ReplaySubject, Subscription } from 'rxjs';
 import type { UnitDescriptions } from '@blue-might/units';
+import { imageBitmapToBlob } from '@blue-might/app/utils/blob';
 
-import type App from './App';
+import type { App } from '../types';
+
 import type { AnimationLoopValue } from './Renderer';
 import { LOADER } from './AssetLoader';
 import UnitsModule from './mapModule/Units';
-import GroundModule from './mapModule/Ground';
+import SurfaceModule from './mapModule/Surface';
 import LightModule from './mapModule/Light';
 import PathfindingModule from './mapModule/Pathfinding';
 import ShootModule from './mapModule/Shoot';
@@ -24,9 +26,19 @@ import AirFlowModule from './mapModule/AirFlow';
 import type { FactionDescription, FactionIdentifier } from './Faction';
 import type { RawUnitDescription } from './Unit';
 
+export interface Textures {
+  heightMap: Texture<ImageBitmap>;
+  backgroundTexture: Texture<ImageBitmap>;
+  foregroundTexture: Texture<ImageBitmap>;
+}
+
+interface MapObservables {
+  playerOptions$: ReplaySubject<PlayerOptions>;
+}
+
 type MapModuleList = (
   | typeof UnitsModule
-  | typeof GroundModule
+  | typeof SurfaceModule
   | typeof LightModule
   | typeof PathfindingModule
   | typeof ShootModule
@@ -37,7 +49,7 @@ type MapModuleList = (
 
 interface MapModules {
   units: UnitsModule;
-  ground: GroundModule;
+  surface: SurfaceModule;
   light: LightModule;
   pathfinding: PathfindingModule;
   shoot: ShootModule;
@@ -46,8 +58,9 @@ interface MapModules {
   effect: EffectModule;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface MapState {}
+interface MapState {
+  playerOptions: PlayerOptions<UnitDescriptions>;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-explicit-any
 export interface ModuleDebug extends Record<any, boolean> {}
@@ -64,20 +77,25 @@ export default class Map<
   //#endregion
   private destroyed = false;
   subscription = new Subscription();
-  state: MapState = {};
+  state: MapState;
+  observables: MapObservables;
   modules: Modules = {} as Modules;
   root: Object3D;
   description: MapDescription;
-  playerOptions: PlayerOptions<UnitDescriptions>;
-  textures: {
-    heightMap: Texture<ImageBitmap> | null;
-    backgroundTexture: Texture<ImageBitmap> | null;
-    foregroundTexture: Texture<ImageBitmap> | null;
-  } = {
-    heightMap: null,
-    backgroundTexture: null,
-    foregroundTexture: null
+
+  private textures: Textures = {
+    heightMap: new Texture(),
+    backgroundTexture: new Texture(),
+    foregroundTexture: new Texture()
   };
+
+  getTextures() {
+    return this.textures;
+  }
+
+  setTextures(textures: Textures) {
+    this.textures = textures;
+  }
 
   constructor(
     description: MapDescription,
@@ -88,14 +106,23 @@ export default class Map<
     this.root.name = 'map';
 
     this.description = description;
-    this.playerOptions = {
-      ...description.playerOptions,
-      position: new Vector3().fromArray(description.playerOptions.position),
-      rotation: description.playerOptions.rotation
-        ? new Euler().fromArray(description.playerOptions.rotation)
-        : undefined,
-      faction: description.playerOptions.faction
+    this.state = {
+      playerOptions: {
+        ...description.playerOptions,
+        position: new Vector3().fromArray(description.playerOptions.position),
+        rotation: description.playerOptions.rotation
+          ? new Euler().fromArray(description.playerOptions.rotation)
+          : undefined,
+        faction: description.playerOptions.faction
+      }
     };
+
+    //#region observables
+    this.observables = {
+      playerOptions$: new ReplaySubject<PlayerOptions>()
+    };
+    this.observables.playerOptions$.next(this.state.playerOptions);
+    //#endregion
 
     this.moduleDebug = { ...this.moduleDebug, ...description.debug };
   }
@@ -116,7 +143,7 @@ export default class Map<
     moduleList.push(
       FactionModule,
       UnitsModule,
-      GroundModule,
+      SurfaceModule,
       LightModule,
       ShootModule,
       PathfindingModule,
@@ -143,19 +170,29 @@ export default class Map<
     );
   }
 
+  getPlayerOptions() {
+    return this.state.playerOptions;
+  }
+
+  setPlayerOptions(playerOptions: PlayerOptions) {
+    if (this.state.playerOptions === playerOptions) return;
+    this.state.playerOptions = playerOptions;
+    this.observables.playerOptions$.next(playerOptions);
+  }
+
   private async loadAssets() {
     const [heightMap, backgroundTexture, foregroundTexture] = await Promise.all(
       [
         assetLoader.add<Texture<ImageBitmap>>({
-          value: this.description.ground.heightMap,
+          value: this.description.surface.textures.heightMap,
           loader: LOADER.TEXTURE
         }),
         assetLoader.add<Texture<ImageBitmap>>({
-          value: this.description.ground.backgroundTexture,
+          value: this.description.surface.textures.backgroundTexture,
           loader: LOADER.TEXTURE
         }),
         assetLoader.add<Texture<ImageBitmap>>({
-          value: this.description.ground.foregroundTexture,
+          value: this.description.surface.textures.foregroundTexture,
           loader: LOADER.TEXTURE
         })
       ]
@@ -195,23 +232,32 @@ export default class Map<
     return this.description.playerOptions;
   }
 
-  toDescription(): MapDescription {
+  async toDescription(): Promise<MapDescription> {
+    const textures = Object.fromEntries(
+      await Promise.all(
+        Object.entries(this.textures).map(async ([key, texture]) => {
+          return [
+            key,
+            URL.createObjectURL(await imageBitmapToBlob(texture.image))
+          ];
+        })
+      )
+    );
+
     return {
       debug: this.moduleDebug,
       name: this.name,
       playerOptions: this.playerStartPosition,
-      ground: {
-        heightMap: this.description.ground.heightMap,
-        backgroundTexture: this.description.ground.backgroundTexture,
-        foregroundTexture: this.description.ground.foregroundTexture,
-        noiseMonochrome: this.description.ground.noiseMonochrome
+      surface: {
+        textures: textures,
+        noiseMonochrome: this.description.surface.noiseMonochrome ?? false
       },
       units: Object.values(this.modules.units.getUnits()).map(unit =>
         unit.toDescription()
       ),
-      factions: Object.values(this.modules.faction.getFactions()).map(faction =>
-        faction.toDescription()
-      )
+      factions: Object.values(this.modules.faction.getFactions())
+        .filter(faction => !faction.builtin)
+        .map(faction => faction.toDescription())
     };
   }
 }
@@ -234,10 +280,12 @@ export interface MapDescription {
   debug?: Partial<ModuleDebug>;
   name: string;
   playerOptions: RawPlayerOptions;
-  ground: {
-    heightMap: string;
-    backgroundTexture: string;
-    foregroundTexture: string;
+  surface: {
+    textures: {
+      heightMap: string;
+      backgroundTexture: string;
+      foregroundTexture: string;
+    };
     noiseMonochrome?: boolean;
   };
   units: RawUnitDescription[];

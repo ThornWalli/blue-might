@@ -14,8 +14,8 @@ import type { GridNode } from './Grid';
 export default class SeaNavigator extends BaseNavigator {
   protected getHeightAt(x: number, z: number): number {
     return Math.max(
-      this.map.modules.ground.getSeaLevel(),
-      this.map.modules.ground.getSurfaceHeightAt(x, z)
+      this.map.modules.surface.getSeaLevel(),
+      this.map.modules.surface.getSurfaceHeightAt(x, z)
     );
   }
 
@@ -67,16 +67,16 @@ export default class SeaNavigator extends BaseNavigator {
   ) {
     const pos = this.toWorldPosition(x, y, grid).setY(0);
 
-    const test = this.map.modules.ground.getMaxHeightAt(
+    const test = this.map.modules.surface.getMaxHeightAt(
       pos.x,
       pos.z,
       2,
-      (x, z) => this.map.modules.ground.getSurfaceHeightAt(x, z)
+      (x, z) => this.map.modules.surface.getSurfaceHeightAt(x, z)
     );
 
     let walkable =
-      test <= this.map.modules.ground.getSeaLevel() &&
-      pos.y <= this.map.modules.ground.getSeaLevel();
+      test <= this.map.modules.surface.getSeaLevel() &&
+      pos.y <= this.map.modules.surface.getSeaLevel();
     let collisionType = COLLISION_TYPE.NONE;
 
     // Filtere Colliders: Ignoriere fliegende Helicopters (nur gelandete blockieren)
@@ -129,7 +129,7 @@ export default class SeaNavigator extends BaseNavigator {
   }
 
   protected getTileTypeAtNode(node: GridNode): TILE_TYPE | undefined {
-    return this.map.modules.ground.getPathfinderTileTypes()[node.y]?.[node.x];
+    return this.map.modules.surface.getPathfinderTileTypes()[node.y]?.[node.x];
   }
 
   // private isCellOccupiedByOthers(x: number, z: number, self: Object3D) {

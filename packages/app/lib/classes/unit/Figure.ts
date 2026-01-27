@@ -6,6 +6,7 @@ import {
 import FigureUnitModule from '../unitModule/movable/Figure';
 import PatrolUnitModule from '../unitModule/Patrol';
 import { COLLISION_TYPE } from '../unitModule/Collision';
+import { UNIT_TYPE } from '../../types/unit';
 
 import MovableUnit, {
   type MovableUnitModuleList,
@@ -30,6 +31,7 @@ export default class FigureUnit<
   ModuleList extends FigureUnitModuleList = FigureUnitModuleList,
   Options extends FigureUnitOptions = FigureUnitOptions
 > extends MovableUnit<Modules, ModuleList, Options> {
+  static override TYPE = UNIT_TYPE.FIGURE;
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []
