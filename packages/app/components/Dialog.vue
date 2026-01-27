@@ -172,4 +172,36 @@ function onClickFullscreen() {
     }
   }
 }
+
+:deep(fieldset) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bm-spacing-small);
+  padding: 0;
+  margin: 0;
+  border: none;
+
+  & legend {
+    display: flex;
+    gap: var(--bm-spacing-medium);
+    align-items: center;
+    width: 100%;
+    margin-bottom: var(--bm-spacing-medium);
+    font-family: var(--font-bit-font-family);
+    font-size: var(--font-bit-font-size);
+    line-height: var(--font-bit-line-height);
+    opacity: 0.6;
+
+    &::after {
+      flex: 1;
+      content: '';
+      border-top: solid white 2px;
+    }
+  }
+
+  & > div {
+    display: flex;
+    flex-direction: column;
+  }
+}
 </style>

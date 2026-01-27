@@ -17,7 +17,7 @@ details {
 }
 
 details summary {
-  margin-bottom: 2px;
+  margin-bottom: var(--bm-spacing-medium);
   font-size: 12px;
   font-weight: bold;
 }

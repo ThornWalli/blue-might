@@ -1,5 +1,5 @@
 <template>
-  <div class="bm-editor-faction-settings">
+  <div class="bm-dialog-editor-faction-settings">
     <div class="items">
       <div class="head">
         <div>Name</div>
@@ -111,7 +111,7 @@ function prepareFactions(factions: FactionDescription[]): FactionDescription[] {
 </script>
 
 <style lang="postcss" scoped>
-.bm-editor-faction-settings {
+.bm-dialog-editor-faction-settings {
   & .items {
     display: flex;
     flex-direction: column;

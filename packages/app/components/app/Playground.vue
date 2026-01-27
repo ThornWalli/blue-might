@@ -1,11 +1,8 @@
 <template>
   <bm-app-layout class="bm-app-playground">
     <template #[PANEL.BOTTOM_LEFT]>
-      <!-- <div class="panel-row">
-        <bm-panel-debug key="general" :app="app" />
-      </div> -->
-      <div class="panel-row">
-        <bm-panel-controls key="general" :app="app" />
+      <div class="panel-column">
+        <bm-panel-general key="general" :app="app" />
       </div>
     </template>
     <template #[PANEL.TOP_LEFT]>
@@ -46,7 +43,7 @@ import { ControlAction } from '@blue-might/app/lib/classes/playerModule/Controls
 import type AppPlayground from '../../lib/classes/app/AppPlayground';
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
 // import BmPanelDebug from '../panel/Debug.vue';
-import BmPanelControls from '../panel/Controls.vue';
+import BmPanelGeneral from '../panel/General.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
 import BmPanelSecondaryScreen from '../panel/GunScreen.vue';

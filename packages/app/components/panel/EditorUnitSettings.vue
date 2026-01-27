@@ -101,7 +101,6 @@ function onUpdateFaction(factionId: FactionIdentifier | null) {
 
 function onUpdateDamage(damage: number) {
   if (unit.value) {
-    debugger;
     unit.value.modules.damage.setValue(damage, true);
   }
 }

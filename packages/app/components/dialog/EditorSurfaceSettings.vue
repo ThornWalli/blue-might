@@ -1,5 +1,5 @@
 <template>
-  <div class="bm-editor-surface-settings">
+  <div class="bm-dialog-editor-surface-settings">
     <div class="textures">
       <figure
         v-for="{ key, path, texture } in previewItems"
@@ -148,7 +148,7 @@ async function onClickApply() {
 </script>
 
 <style lang="postcss" scoped>
-.bm-editor-surface-settings {
+.bm-dialog-editor-surface-settings {
   display: flex;
   flex-direction: column;
   gap: var(--bm-spacing-medium);
