@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.42](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.41...v1.0.0-beta.42) (2026-01-27)
+
+
+### Bug Fixes
+
+* **update:** added editor ([9b7f9c1](https://github.com/ThornWalli/blue-might/commit/9b7f9c128ca74ed347a0cfd7546162aa425cc85b))
+
 # [1.0.0-beta.41](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.40...v1.0.0-beta.41) (2026-01-22)
 
 
