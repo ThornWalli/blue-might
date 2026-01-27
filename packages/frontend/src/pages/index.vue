@@ -10,12 +10,24 @@
 </template>
 
 <script lang="ts" setup>
-import { defineAsyncComponent, markRaw, onUnmounted, ref } from 'vue';
+import type { Raw } from 'vue';
+import {
+  defineAsyncComponent,
+  markRaw,
+  onUnmounted,
+  ref,
+  onMounted
+} from 'vue';
 import { extendedMap } from '@blue-might/maps';
 import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import { Subscription } from 'rxjs';
 import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/BaseApp';
 import type { App } from '@blue-might/app/lib/types';
+import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import { joinURL } from 'ufo';
+import { getMapDescriptionFromArrayBuffer } from '@blue-might/app/utils/export';
+
+import { useRuntimeConfig } from '#imports';
 
 const subscription = new Subscription();
 
@@ -35,6 +47,18 @@ const config = ref<AppConfig>({
       pathfinding: false
     }
   }
+});
+
+const runtimeConfig = useRuntimeConfig();
+const description = ref<Raw<MapDescription>>();
+onMounted(async () => {
+  description.value = markRaw(
+    await getMapDescriptionFromArrayBuffer(
+      await fetch(
+        joinURL('/', runtimeConfig.app.baseURL, 'extended_map.zip')
+      ).then(res => res.arrayBuffer())
+    )
+  );
 });
 
 async function onSetup(app: App) {

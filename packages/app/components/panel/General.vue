@@ -1,6 +1,11 @@
 <template>
   <bm-panel class="bm-panel-general" hide-title title="General">
     <div class="controls">
+      <bm-button-upload
+        v-if="!hideImport"
+        label="Use local Map"
+        @files="onFiles" />
+      <hr />
       <bm-button label="Instructions" @click="onClickInstructions" />
       <bm-button label="Menu" @click="onClickMenu" />
     </div>
@@ -24,18 +29,21 @@
 <script lang="ts" setup>
 import { ref } from 'vue';
 import type { App } from '@blue-might/app/lib/types';
+import { createImport } from '@blue-might/app/utils/export';
 
 import BmPanel from '../Panel.vue';
 import BmDialog from '../Dialog.vue';
 import BmButton from '../Button.vue';
+import BmButtonUpload from '../button/Upload.vue';
 import BmDialogMenu from '../dialog/Menu.vue';
 import BmDialogInstructions from '../dialog/Instructions.vue';
 
 const instructionsDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 const menuDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 
-defineProps<{
+const $props = defineProps<{
   app: App;
+  hideImport?: boolean;
 }>();
 
 function onClickInstructions() {
@@ -44,6 +52,13 @@ function onClickInstructions() {
 
 function onClickMenu() {
   menuDialog.value?.context?.open();
+}
+
+async function onFiles(files: FileList) {
+  const file = files.item(0);
+  if (file) {
+    $props.app.modules.map.enterMap(await createImport(file));
+  }
 }
 </script>
 

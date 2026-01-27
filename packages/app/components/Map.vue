@@ -152,7 +152,8 @@ function renderBackground() {
   const canvas = canvasEl.value;
   if (!canvas || !map.value) return;
 
-  const { backgroundTexture, foregroundTexture } = map.value.getTextures();
+  const { backgroundTexture, heightMap, foregroundTexture } =
+    map.value.getTextures();
 
   if (!backgroundTexture || !foregroundTexture) return;
 
@@ -162,32 +163,85 @@ function renderBackground() {
 
   ctx.imageSmoothingEnabled = false;
 
-  const backgroundTextureScale = backgroundTexture.image.width / mapSize.x;
-  ctx.drawImage(
-    backgroundTexture.image,
-    pan.x * backgroundTextureScale,
-    pan.y * backgroundTextureScale,
-    scaledMapSize.x * backgroundTextureScale,
-    scaledMapSize.y * backgroundTextureScale,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+  const test: {
+    image: ImageBitmap;
+    globalCompositeOperation: GlobalCompositeOperation;
+    globalAlpha: number;
+  }[] = [
+    {
+      image: backgroundTexture.image,
+      globalCompositeOperation: 'source-over',
+      globalAlpha: 1
+    },
+    {
+      image: heightMap.image,
+      globalCompositeOperation: 'multiply',
+      globalAlpha: 1
+    },
+    {
+      image: foregroundTexture.image,
+      globalCompositeOperation: 'source-over',
+      globalAlpha: 0.2
+    }
+  ];
+  test.forEach(layer => {
+    const scale = layer.image.width / mapSize.x;
+    ctx.globalCompositeOperation = layer.globalCompositeOperation;
+    ctx.globalAlpha = layer.globalAlpha;
+    ctx.drawImage(
+      layer.image,
+      pan.x * scale,
+      pan.y * scale,
+      scaledMapSize.x * scale,
+      scaledMapSize.y * scale,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+  });
 
-  ctx.globalAlpha = 0.2;
-  const foregroundTextureScale = foregroundTexture.image.width / mapSize.x;
-  ctx.drawImage(
-    foregroundTexture.image,
-    pan.x * foregroundTextureScale,
-    pan.y * foregroundTextureScale,
-    scaledMapSize.x * foregroundTextureScale,
-    scaledMapSize.y * foregroundTextureScale,
-    0,
-    0,
-    canvas.width,
-    canvas.height
-  );
+  // const backgroundTextureScale = backgroundTexture.image.width / mapSize.x;
+  // ctx.drawImage(
+  //   backgroundTexture.image,
+  //   pan.x * backgroundTextureScale,
+  //   pan.y * backgroundTextureScale,
+  //   scaledMapSize.x * backgroundTextureScale,
+  //   scaledMapSize.y * backgroundTextureScale,
+  //   0,
+  //   0,
+  //   canvas.width,
+  //   canvas.height
+  // );
+
+  // const heightMapScale = heightMap.image.width / mapSize.x;
+  // ctx.globalCompositeOperation = 'multiply';
+  // ctx.drawImage(
+  //   heightMap.image,
+  //   pan.x * heightMapScale,
+  //   pan.y * heightMapScale,
+  //   scaledMapSize.x * heightMapScale,
+  //   scaledMapSize.y * heightMapScale,
+  //   0,
+  //   0,
+  //   canvas.width,
+  //   canvas.height
+  // );
+
+  // ctx.globalCompositeOperation = 'source-over';
+  // ctx.globalAlpha = 0.2;
+  // const foregroundTextureScale = foregroundTexture.image.width / mapSize.x;
+  // ctx.drawImage(
+  //   foregroundTexture.image,
+  //   pan.x * foregroundTextureScale,
+  //   pan.y * foregroundTextureScale,
+  //   scaledMapSize.x * foregroundTextureScale,
+  //   scaledMapSize.y * foregroundTextureScale,
+  //   0,
+  //   0,
+  //   canvas.width,
+  //   canvas.height
+  // );
   ctx.globalAlpha = 1;
 
   ctx.globalCompositeOperation = 'color';

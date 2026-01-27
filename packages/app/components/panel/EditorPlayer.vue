@@ -2,9 +2,15 @@
   <bm-panel class="bm-panel-editor-player" title="Editor Player">
     <bm-form-field label-top label="Faction">
       <bm-select
-        :model-value="playerOptions!.faction ?? neutralFaction"
+        :model-value="playerFaction"
         :options="factionOptions"
         @update:model-value="onUpdateFaction" />
+    </bm-form-field>
+    <bm-form-field label-top label="Unit">
+      <bm-select
+        :model-value="playerOptions.unit?.key"
+        :options="unitOptions"
+        @update:model-value="onUpdateUnit" />
     </bm-form-field>
     <bm-button label="Set start position" @click="onClickSetStartPosition" />
     <bm-button
@@ -21,6 +27,8 @@ import { Subscription } from 'rxjs';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
 import type { PlayerOptions } from '@blue-might/app/lib/classes/Map';
 import { Euler, MathUtils, Vector3 } from 'three';
+import * as units from '@blue-might/units';
+import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';
 
 import BmPanel from '../Panel.vue';
 import BmButton from '../Button.vue';
@@ -38,12 +46,32 @@ const $emit = defineEmits<{
 }>();
 
 const neutralFaction = $props.app.modules.editorFaction.neutralFaction;
+const playerFaction = computed(() => {
+  return playerOptions.value?.faction ?? neutralFaction.id;
+});
 const factionOptions = computed(() => {
   return (
     $props.app.modules.map.getMap()?.modules.faction.getFactions() ?? []
-  ).map(faction => ({
-    label: faction.name,
-    value: faction.id
+  ).map(f => ({
+    label: f.name,
+    value: f.id
+  }));
+});
+
+const unitOptions = computed(() => {
+  return (
+    Object.values(units)
+
+      .filter(
+        u =>
+          u.TYPES.includes(UNIT_TYPE.FIGURE) ||
+          u.TYPES.includes(UNIT_TYPE.AIR_VEHICLE) ||
+          u.TYPES.includes(UNIT_TYPE.SEA_VEHICLE) ||
+          u.TYPES.includes(UNIT_TYPE.GROUND_VEHICLE)
+      ) ?? []
+  ).map(u => ({
+    label: u.KEY,
+    value: u.KEY
   }));
 });
 
@@ -66,6 +94,19 @@ function onUpdateFaction(factionId: FactionIdentifier) {
     $props.app.modules.editorPlayer.setPlayerOptions({
       ...playerOptions.value,
       faction: factionId
+    });
+  }
+}
+
+function onUpdateUnit(key: string) {
+  if (playerOptions.value) {
+    $props.app.modules.editorPlayer.setPlayerOptions({
+      ...playerOptions.value,
+      unit: {
+        ...playerOptions.value.unit,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        key: key as any
+      }
     });
   }
 }

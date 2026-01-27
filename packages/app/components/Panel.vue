@@ -147,6 +147,14 @@ export enum PANEL_POSITION {
   }
 }
 
+:deep(hr) {
+  width: 100%;
+  margin: 0;
+  margin: var(--bm-spacing-small) 0;
+  border: none;
+  border-top: solid var(--bm-line-color) 3px;
+}
+
 :deep(fieldset) {
   display: flex;
   flex-direction: column;
@@ -164,12 +172,12 @@ export enum PANEL_POSITION {
     font-family: var(--font-bit-font-family);
     font-size: var(--font-bit-font-size);
     line-height: var(--font-bit-line-height);
-    opacity: 0.6;
+    color: var(--bm-fieldset-foreground);
 
     &::after {
       flex: 1;
       content: '';
-      border-top: solid white 2px;
+      border-top: solid var(--bm-fieldset-border-color) 2px;
     }
   }
 

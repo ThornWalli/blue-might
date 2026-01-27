@@ -26,7 +26,6 @@
     <bm-button label="Units" @click="onClickUnits" />
     <bm-button label="Factions" @click="onClickFactions" />
     <bm-button label="Export" @click="onClickExport" />
-    <bm-button-upload upload label="Import" @files="onFilesChange" />
     <teleport to="body">
       <bm-dialog ref="surfaceDialog">
         <template #header>Surface Settings</template>
@@ -46,7 +45,7 @@
 
 <script lang="ts" setup>
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
-import { createExport, createImport } from '@blue-might/app/utils/export';
+import { createExport } from '@blue-might/app/utils/export';
 import { onMounted, onUnmounted, ref } from 'vue';
 import { EDITOR_MODE } from '@blue-might/app/lib/classes/app/AppEditor';
 import { ICON } from '@blue-might/app/utils/icons';
@@ -54,7 +53,6 @@ import { Subscription } from 'rxjs';
 
 import BmPanel from '../Panel.vue';
 import BmButton from '../Button.vue';
-import BmButtonUpload from '../button/Upload.vue';
 import BmDialog from '../Dialog.vue';
 import BmDialogEditorFactionSettings from '../dialog/EditorFactionSettings.vue';
 import BmDialogEditorSurfaceSettings from '../dialog/EditorSurfaceSettings.vue';
@@ -115,12 +113,6 @@ async function onClickExport() {
   if (description) {
     console.log(description);
     createExport(description);
-  }
-}
-function onFilesChange(files: FileList) {
-  const file = files.item(0);
-  if (file) {
-    console.log(createImport(file));
   }
 }
 

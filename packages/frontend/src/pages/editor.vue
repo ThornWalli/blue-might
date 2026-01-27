@@ -1,26 +1,14 @@
 <template>
   <div>
     <client-only>
-      <app-component
-        v-if="description"
-        :config="config"
-        :map="description"
-        :on-setup="onSetup" />
+      <app-component v-if="description" :config="config" :map="description" />
     </client-only>
   </div>
 </template>
 
 <script lang="ts" setup>
 import type { Raw } from 'vue';
-import {
-  defineAsyncComponent,
-  markRaw,
-  onMounted,
-  onUnmounted,
-  ref
-} from 'vue';
-import { Subscription } from 'rxjs';
-import type BaseApp from '@blue-might/app/lib/classes/BaseApp';
+import { defineAsyncComponent, markRaw, onMounted, ref } from 'vue';
 import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/BaseApp';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { getMapDescriptionFromArrayBuffer } from '@blue-might/app/utils/export';
@@ -28,21 +16,18 @@ import { joinURL } from 'ufo';
 
 import { useRuntimeConfig } from '#imports';
 
-const subscription = new Subscription();
-
 const AppComponent = defineAsyncComponent(
   () => import('@blue-might/app/components/App.vue')
 );
 
-const test = useRuntimeConfig();
-
+const runtimeConfig = useRuntimeConfig();
 const description = ref<Raw<MapDescription>>();
 onMounted(async () => {
   description.value = markRaw(
     await getMapDescriptionFromArrayBuffer(
-      await fetch(joinURL('/', test.app.baseURL, 'editor_map.zip')).then(res =>
-        res.arrayBuffer()
-      )
+      await fetch(
+        joinURL('/', runtimeConfig.app.baseURL, 'editor_map.zip')
+      ).then(res => res.arrayBuffer())
     )
   );
 });
@@ -54,13 +39,6 @@ const config = ref<AppConfig>({
     pixelated: false,
     controls: true
   }
-});
-
-async function onSetup(_app: BaseApp) {
-  //
-}
-onUnmounted(() => {
-  subscription.unsubscribe();
 });
 </script>
 
