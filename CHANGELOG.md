@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.45](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.44...v1.0.0-beta.45) (2026-01-27)
+
+
+### Bug Fixes
+
+* **app:** add instructions and menu components with dialog functionality ([307b5e2](https://github.com/ThornWalli/blue-might/commit/307b5e2fac7831ac1d2ecf8f03e09ca3e37824d5))
+
 # [1.0.0-beta.44](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.43...v1.0.0-beta.44) (2026-01-27)
 
 
