@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.46](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.45...v1.0.0-beta.46) (2026-01-27)
+
+
+### Bug Fixes
+
+* **app:** add General panel and adjust styles in EditorGeneral ([a7376ba](https://github.com/ThornWalli/blue-might/commit/a7376ba4fad65e557b937c5ad59100fd7e7ac6a5))
+
 # [1.0.0-beta.45](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.44...v1.0.0-beta.45) (2026-01-27)
 
 
