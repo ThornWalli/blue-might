@@ -23,19 +23,19 @@
 
 <script lang="ts" setup>
 import { ref } from 'vue';
+import type { App } from '@blue-might/app/lib/types';
 
 import BmPanel from '../Panel.vue';
 import BmDialog from '../Dialog.vue';
 import BmButton from '../Button.vue';
 import BmDialogMenu from '../dialog/Menu.vue';
 import BmDialogInstructions from '../dialog/Instructions.vue';
-import type AppPlayground from '../../lib/classes/app/AppPlayground';
 
 const instructionsDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 const menuDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 
 defineProps<{
-  app: AppPlayground;
+  app: App;
 }>();
 
 function onClickInstructions() {
@@ -54,6 +54,7 @@ function onClickMenu() {
     flex-direction: column;
     gap: var(--bm-spacing-small);
     align-items: stretch;
+    width: 160px;
 
     & > * {
       flex: 1;

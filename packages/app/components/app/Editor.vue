@@ -18,6 +18,10 @@
           v-if="isMode(EDITOR_MODE.DEFAULT)"
           key="editor-general"
           :app="app" />
+        <bm-panel-general
+          v-if="isMode(EDITOR_MODE.DEFAULT)"
+          key="general"
+          :app="app" />
       </div>
     </template>
     <template #[PANEL.TOP_LEFT]>
@@ -51,6 +55,7 @@ import { EDITOR_MODE } from '@blue-might/app/lib/classes/app/AppEditor';
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
 import BmPanelEditorUnitSettings from '../panel/EditorUnitSettings.vue';
 import BmPanelMap from '../panel/Map.vue';
+import BmPanelGeneral from '../panel/General.vue';
 import BmPanelEditorGrid from '../panel/EditorGrid.vue';
 import BmPanelEditorUnits from '../panel/EditorUnits.vue';
 import BmPanelEditorGeneral from '../panel/EditorGeneral.vue';

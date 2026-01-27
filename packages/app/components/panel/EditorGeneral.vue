@@ -144,6 +144,7 @@ function onClickRevert() {
     display: flex;
     gap: var(--bm-spacing-small);
     align-items: center;
+    width: 160px;
 
     & > :first-child {
       flex: 1;
