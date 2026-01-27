@@ -11,20 +11,22 @@
 </template>
 
 <script lang="ts" setup>
+import type { Raw } from 'vue';
 import {
   defineAsyncComponent,
   markRaw,
   onMounted,
   onUnmounted,
-  ref,
-  type Raw
+  ref
 } from 'vue';
-// import { editorMap } from '@blue-might/maps';
 import { Subscription } from 'rxjs';
 import type BaseApp from '@blue-might/app/lib/classes/BaseApp';
 import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/BaseApp';
 import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { getMapDescriptionFromArrayBuffer } from '@blue-might/app/utils/export';
+import { joinURL } from 'ufo';
+
+import { useRuntimeConfig } from '#imports';
 
 const subscription = new Subscription();
 
@@ -32,11 +34,15 @@ const AppComponent = defineAsyncComponent(
   () => import('@blue-might/app/components/App.vue')
 );
 
+const test = useRuntimeConfig();
+
 const description = ref<Raw<MapDescription>>();
 onMounted(async () => {
   description.value = markRaw(
     await getMapDescriptionFromArrayBuffer(
-      await fetch('editor_map.zip').then(res => res.arrayBuffer())
+      await fetch(joinURL('/', test.app.baseURL, 'editor_map.zip')).then(res =>
+        res.arrayBuffer()
+      )
     )
   );
 });
