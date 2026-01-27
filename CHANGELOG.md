@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.43](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.42...v1.0.0-beta.43) (2026-01-27)
+
+
+### Bug Fixes
+
+* **frontend:** clean up imports and enhance fetch URL logic ([d0086d5](https://github.com/ThornWalli/blue-might/commit/d0086d5f148660ce2282648747f64f20d0d33fd1))
+
 # [1.0.0-beta.42](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.41...v1.0.0-beta.42) (2026-01-27)
 
 
