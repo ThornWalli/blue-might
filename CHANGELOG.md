@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.44](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.43...v1.0.0-beta.44) (2026-01-27)
+
+
+### Bug Fixes
+
+* **app:** add download functionality to texture preview button ([193807c](https://github.com/ThornWalli/blue-might/commit/193807c8ad468ed57dd8cd95b9ce4a7740851b35))
+
 # [1.0.0-beta.43](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.42...v1.0.0-beta.43) (2026-01-27)
 
 
