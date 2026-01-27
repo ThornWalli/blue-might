@@ -38,7 +38,7 @@ catalog:
   stylelint: 16.26.1
   stylelint-config-css-modules: 4.6.0
   stylelint-config-recess-order: 7.6.0
-  stylelint-config-standard: 39.0.1
+  stylelint-config-standard: 40.0.0
   stylelint-prettier: 5.0.3
   svgo: 4.0.0
   three: 0.182.0
