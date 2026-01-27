@@ -124,7 +124,7 @@ export default class EffectModule extends MapModule<State, Observables> {
       normal?.clone().multiplyScalar(0.001) ?? new Vector3(0, 0.001, 0)
     );
 
-    if (normal && hitObject !== this.map.modules.ground.getRoot()) {
+    if (normal && hitObject !== this.map.modules.surface.getRoot()) {
       root.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), normal);
     }
     disableRaycaster(root);
@@ -146,7 +146,7 @@ export default class EffectModule extends MapModule<State, Observables> {
       normal?.clone().multiplyScalar(0.001) ?? new Vector3(0, 0.001, 0)
     );
 
-    if (normal && hitObject !== this.map.modules.ground.getRoot()) {
+    if (normal && hitObject !== this.map.modules.surface.getRoot()) {
       root.quaternion.setFromUnitVectors(new Vector3(0, 1, 0), normal);
     }
     disableRaycaster(root);

@@ -6,7 +6,6 @@ import type {
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Object3D, AxesHelper, Mesh, SkinnedMesh, Vector2 } from 'three';
-import { replaceColors } from '@blue-might/app/lib/utils/material';
 import SeaVehicleUnit, {
   type SeaVehicleUnitModuleList,
   type SeaVehicleUnitModules,
@@ -229,21 +228,6 @@ export default class CombatSubmarine_1
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-        // (child.material as MeshMatcapMaterial).wireframe = true;
-
-        replaceColors(
-          [
-            [
-              'primary',
-              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-            ],
-            [
-              'secondary',
-              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-            ]
-          ],
-          child
-        );
       }
     });
 

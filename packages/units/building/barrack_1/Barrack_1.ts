@@ -11,7 +11,6 @@ import BuildingUnit, {
   type BuildingUnitModules,
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
-import { replaceColors } from '@blue-might/app/lib/utils/material';
 
 import baseGlb from './assets/barrack_1.glb?url';
 
@@ -42,6 +41,7 @@ export default class Barrack_1<
 
   override async afterSetup(_context: SetupContext) {
     await super.afterSetup(_context);
+
     this.setMaterialReady();
   }
 
@@ -54,20 +54,6 @@ export default class Barrack_1<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-
-        replaceColors(
-          [
-            [
-              'primary',
-              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-            ],
-            [
-              'secondary',
-              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-            ]
-          ],
-          child
-        );
       }
     });
 

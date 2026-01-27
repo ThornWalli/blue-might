@@ -11,7 +11,6 @@ import BuildingUnit, {
   type BuildingUnitModules,
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
-// import { replaceColors } from '@blue-might/app/lib/utils/material';
 
 import baseGlb from './assets/church_1.glb?url';
 

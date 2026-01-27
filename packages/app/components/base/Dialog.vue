@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { provide, ref, type Ref } from 'vue';
 
 const $props = defineProps<{
   forceOpen?: boolean;
@@ -49,13 +49,31 @@ function toggleFullscreen() {
   fullscreen.value = !fullscreen.value;
 }
 
-defineExpose({
+provide<DialogContext>('dialog', {
   open,
   close,
   visible,
   fullscreen,
   toggleFullscreen
 });
+
+defineExpose<DialogContext>({
+  open,
+  close,
+  visible,
+  fullscreen,
+  toggleFullscreen
+});
+</script>
+
+<script lang="ts">
+export interface DialogContext<Result = unknown> {
+  open: () => Promise<Result>;
+  close: (value?: Result | undefined) => void;
+  visible: Ref<boolean, boolean>;
+  fullscreen: Ref<boolean, boolean>;
+  toggleFullscreen: () => void;
+}
 </script>
 
 <style lang="postcss" scoped>

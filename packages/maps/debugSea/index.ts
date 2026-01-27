@@ -7,10 +7,12 @@ import foregroundTexture from './texture_fg.png';
 export default function (): Omit<MapDescription, 'playerOptions'> {
   return {
     name: 'Default Map',
-    ground: {
-      heightMap,
-      backgroundTexture,
-      foregroundTexture
+    surface: {
+      textures: {
+        heightMap,
+        backgroundTexture,
+        foregroundTexture
+      }
     },
     factions: [],
     units: []

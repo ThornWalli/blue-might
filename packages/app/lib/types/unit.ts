@@ -2,10 +2,23 @@ import type { Vector2 } from 'three';
 
 export type UnitIdentifier = string;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface UnitType {}
+export enum UNIT_TYPE {
+  DEFAULT = 'default',
+  BUILDING = 'building',
+  SEA_VEHICLE = 'seaVehicle',
+  AIR_VEHICLE = 'airVehicle',
+  GROUND_VEHICLE = 'groundVehicle',
+  FIGURE = 'figure',
+  LANDING_PORT = 'landingPort',
+  CAR = 'car',
+  HELICOPTER = 'helicopter',
+  TANK = 'tank'
+}
 
-export const UNIT_TYPE: UnitType = {} as UnitType;
+// // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+// export interface UnitType {}
+
+// export const UNIT_TYPE: UnitType = {} as UnitType;
 
 // export interface RawUnitDescription<Rotation = string, Position = number[]> {
 //   id: string;

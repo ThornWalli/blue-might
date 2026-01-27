@@ -5,7 +5,7 @@ import type { Object3D, Scene, Vector3Tuple, EulerTuple } from 'three';
 import { Euler, Quaternion, Vector3, Group } from 'three';
 
 import { OBJECT_USER_DATA, setMainObjectRecursive } from '../utils/object';
-import type { UnitIdentifier } from '../types/unit';
+import { UNIT_TYPE, type UnitIdentifier } from '../types/unit';
 import { prepareForRaycast } from '../utils/raycast';
 
 import type UnitModule from './UnitModule';
@@ -34,6 +34,7 @@ export interface RawUnitDescription<
   rotation?: E;
   options?: Partial<Options>;
   moduleOptions?: Partial<ModuleOptions>;
+  moduleStates?: Partial<ModuleStates>;
   moduleDebug?: Partial<ModuleDebug>;
   visible?: boolean;
 }
@@ -114,6 +115,7 @@ export interface UnitObservables {
   ready$: ReplaySubject<void>;
   materialReady$: ReplaySubject<void>;
   visible$: ReplaySubject<boolean>;
+  map$: ReplaySubject<Map | null>;
 }
 
 export default class Unit<
@@ -124,6 +126,25 @@ export default class Unit<
 > implements UnitDescription<Options> {
   static KEY = 'unit';
   static NAME = 'Unit';
+  static TYPE: UNIT_TYPE = UNIT_TYPE.DEFAULT;
+
+  static get TYPES() {
+    const types = [];
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    let current = this;
+
+    while (current && current !== Function.prototype) {
+      if (
+        Object.prototype.hasOwnProperty.call(current, 'TYPE') &&
+        current.TYPE
+      ) {
+        types.push(current.TYPE);
+      }
+      current = Object.getPrototypeOf(current);
+    }
+
+    return types;
+  }
 
   debug: boolean;
   preview: boolean;
@@ -190,6 +211,7 @@ export default class Unit<
     this.observables.rotation$.next(this.rotation.clone());
     this.observables.visible$ = new ReplaySubject<boolean>(1);
     this.observables.visible$.next(this.visible);
+    this.observables.map$ = new ReplaySubject<Map | null>(1);
     //#endregion
 
     this.debug = debug ?? false;
@@ -281,6 +303,7 @@ export default class Unit<
 
   async setup(context: SetupContext) {
     this.map = context.map ?? null;
+    this.observables.map$.next(this.map);
 
     const modules: UnitModule[] = Array.from(
       new Set(Object.values(this.modules))
@@ -337,7 +360,7 @@ export default class Unit<
     this.setPosition(
       new Vector3(
         this.position!.x,
-        this.map?.modules.ground.getSurfaceHeightAt(
+        this.map?.modules.surface.getSurfaceHeightAt(
           this.position.x,
           this.position.z
         ),
@@ -467,6 +490,13 @@ export default class Unit<
     ) {
       desired =
         this.updateGroundAlignment(desired, [unit], false).position ?? desired;
+    } else if (
+      !this.map?.app.isUpdateActive() &&
+      this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FLIGHT
+    ) {
+      desired.y =
+        (this.map?.modules.surface.getSurfaceHeightAt(desired.x, desired.z) ??
+          desired.y) + 1;
     }
 
     const isAutopilot = unit.modules.movable?.hasAIControls() ?? false;
@@ -568,7 +598,7 @@ export default class Unit<
   getMinGroundInfo() {
     const sampleDistance = 0;
     const rotation = this.rotation.y;
-    const groundModule = this.map!.modules.ground!;
+    const groundModule = this.map!.modules.surface!;
 
     const info = groundModule.getTerrainInfoAt(
       this.position.x,
@@ -605,7 +635,7 @@ export default class Unit<
   calculateGroundNormal() {
     const sampleDistance = 1;
     const rotation = this.rotation.y;
-    const groundModule = this.map?.modules.ground;
+    const groundModule = this.map?.modules.surface;
     if (!groundModule) return;
     // 4 Punkte um das Fahrzeug herum samplen
     const front = groundModule.getHeightAt(
@@ -642,7 +672,7 @@ export default class Unit<
     ignoredUnits: Unit[] = [],
     groundNormals = true
   ) {
-    const groundModule = this.map?.modules.ground;
+    const groundModule = this.map?.modules.surface;
 
     if (position) {
       this.position.copy(position);
@@ -698,7 +728,7 @@ export default class Unit<
           this.position.y = Math.max(info.position.y, this.position.y);
           info.position.setY(this.position.y);
         } else {
-          const seaLevel = this.map?.modules.ground.getSeaLevel() ?? 0;
+          const seaLevel = this.map?.modules.surface.getSeaLevel() ?? 0;
           this.position.y = seaLevel; // Höhe auf Sea Level setzen
           info.position.setY(seaLevel);
         }
@@ -786,22 +816,28 @@ export default class Unit<
 
   //#endregion
 
+  getOptions() {
+    return {};
+  }
+
   toDescription(): RawUnitDescription {
     return {
       key: (this.constructor as typeof Unit).KEY,
-      debug: this.debug,
       id: this.id,
-      name: this.name,
       position: this.getPosition().toArray(),
       rotation: this.getRotation().toArray(),
-      options: this.options,
+      options: this.getOptions(),
       moduleOptions: Object.fromEntries(
         Object.entries(this.modules).map(([key, module]) => {
-          return [key, module.getOptions()];
+          return [key, (module as UnitModule).getOptions()];
         })
       ),
-      moduleDebug: this.moduleDebug,
-      visible: this.getVisible()
+      moduleStates: Object.fromEntries(
+        Object.entries(this.modules).map(([key, module]) => {
+          return [key, (module as UnitModule).getState()];
+        })
+      ),
+      moduleDebug: this.moduleDebug
     };
   }
 }

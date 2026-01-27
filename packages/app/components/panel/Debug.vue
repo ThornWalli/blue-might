@@ -5,9 +5,10 @@
 </template>
 
 <script lang="ts" setup>
+import type { App } from '@blue-might/app/lib/types';
+
 import BmDebug from '../Debug.vue';
 import BmPanel from '../Panel.vue';
-import type App from '../../lib/classes/App';
 
 defineProps<{
   app: App;

@@ -1,11 +1,11 @@
-import { ReplaySubject } from 'rxjs';
+import { ReplaySubject, Subscription } from 'rxjs';
 
 import AppModule, {
   type AppModuleObservables,
   type AppModuleState
 } from '../AppModule';
 import type Unit from '../Unit';
-import type App from '../App';
+import type BaseApp from '../BaseApp';
 
 interface Observables extends AppModuleObservables {
   selectUnit$: ReplaySubject<Unit | null>;
@@ -17,8 +17,9 @@ interface State extends AppModuleState {
 
 export default class SelectionAppModule extends AppModule<State, Observables> {
   static override TYPE = 'selection';
+  private unitSubscription: Subscription = new Subscription();
 
-  constructor(app: App) {
+  constructor(app: BaseApp) {
     super(app, {} as State);
 
     //#region state
@@ -30,6 +31,10 @@ export default class SelectionAppModule extends AppModule<State, Observables> {
     //#endregion
   }
 
+  override destroy(): void {
+    this.unitSubscription.unsubscribe();
+  }
+
   getSelectedUnit() {
     return this.state.selectedUnit;
   }
@@ -38,7 +43,6 @@ export default class SelectionAppModule extends AppModule<State, Observables> {
     this.state.selectedUnit = null;
     this.observables.selectUnit$.next(null);
   }
-
   setSelectedUnit(unit: Unit | null) {
     if (unit && !unit.modules.selection) {
       throw new Error('Unit does not have selection module');
@@ -57,6 +61,9 @@ export default class SelectionAppModule extends AppModule<State, Observables> {
     //   return;
     // }
 
+    this.unitSubscription.unsubscribe();
+    this.unitSubscription = new Subscription();
+
     if (this.state.selectedUnit) {
       this.state.selectedUnit.modules.selection?.unselect();
       this.state.selectedUnit = null;
@@ -64,6 +71,13 @@ export default class SelectionAppModule extends AppModule<State, Observables> {
 
     if (unit) {
       unit.modules.selection?.select();
+      this.unitSubscription.add(
+        unit.observables.destroyed$.subscribe(() => {
+          if (this.state.selectedUnit?.id === unit.id) {
+            this.setSelectedUnit(null);
+          }
+        })
+      );
       this.state.selectedUnit = unit;
     } else {
       this.state.selectedUnit = null;
@@ -80,12 +94,6 @@ export default class SelectionAppModule extends AppModule<State, Observables> {
     this.setSelectedUnit(null);
   }
   abort() {
-    this.setSelectedUnit(null);
-  }
-  remove() {
-    this.app.modules.map
-      .getMap()
-      ?.modules.units.remove(this.state.selectedUnit!);
     this.setSelectedUnit(null);
   }
 }

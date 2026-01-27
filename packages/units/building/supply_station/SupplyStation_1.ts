@@ -6,7 +6,6 @@ import type {
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { replaceColors } from '@blue-might/app/lib/utils/material';
 import BuildingUnit, {
   type BuildingUnitModuleList,
   type BuildingUnitModules,
@@ -76,19 +75,6 @@ export default class SupplyStation_1 extends BuildingUnit {
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.receiveShadow = true;
-        replaceColors(
-          [
-            [
-              'primary',
-              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-            ],
-            [
-              'secondary',
-              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-            ]
-          ],
-          child
-        );
       }
     });
 

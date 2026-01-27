@@ -38,9 +38,7 @@ const preparedId = computed(() => $props.id || defaultId);
 .bm-base-form-field {
   display: flex;
   flex-direction: column;
-  gap: var(--bm-spacing-small);
-  font-family: var(--font-base);
-  font-weight: bold;
+  gap: var(--bm-spacing-medium);
 
   &:not(.label-top) {
     flex-direction: row;
@@ -49,7 +47,9 @@ const preparedId = computed(() => $props.id || defaultId);
   }
 
   & label {
+    font-family: var(--font-base);
     font-size: 12px;
+    font-weight: bold;
     user-select: none;
 
     &.colon {
@@ -57,6 +57,10 @@ const preparedId = computed(() => $props.id || defaultId);
         content: ':';
       }
     }
+  }
+
+  & > *:not(label) {
+    flex: 1;
   }
 }
 </style>

@@ -12,7 +12,6 @@ import {
   timer
 } from 'rxjs';
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
-import type App from '@blue-might/app/lib/classes/App';
 import type { Vector3 } from 'three';
 import { Euler, MathUtils } from 'three';
 
@@ -25,15 +24,23 @@ import { DAMAGE_LEVEL } from '../lib/classes/unitModule/Damage';
 import type { WeaponSlot } from '../lib/classes/WeaponSlot';
 import type Unit from '../lib/classes/Unit';
 import type { UnitModules } from '../lib/classes/Unit';
-import type PlayerUnitModule from '../lib/classes/unitModule/Player';
 import {
   isAirVehicle,
   isGroundVehicle,
   isSeaVehicle,
   isVehicle
 } from '../lib/utils/unit';
+import type { App } from '../lib/types';
+import type PlayerUnitModule from '../lib/classes/unitModule/Player';
+
 export default function usePlayerUnitInterface(app: App) {
   const subscription = new Subscription();
+
+  if (!('player' in app.modules)) {
+    throw new Error('Module "player" is not available in the app.');
+  }
+
+  const playerModule = app.modules.player;
 
   const unit = ref<Raw<
     Unit<
@@ -92,7 +99,7 @@ export default function usePlayerUnitInterface(app: App) {
   const playerLifes = ref<number>(3);
 
   const seaHeight = computed(
-    () => app.modules.map.getMap()?.modules.ground.getSeaLevel() ?? 0
+    () => app.modules.map.getMap()?.modules.surface.getSeaLevel() ?? 0
   );
   const currentHeight = computed(() => {
     return seaHeight.value + ((position.value?.y ?? 0) - seaHeight.value);
@@ -102,7 +109,7 @@ export default function usePlayerUnitInterface(app: App) {
     return position.value
       ? (app.modules.map
           .getMap()
-          ?.modules.ground.getSurfaceHeightAt(
+          ?.modules.surface.getSurfaceHeightAt(
             position.value.x,
             position.value.z
           ) ?? 0)
@@ -130,7 +137,7 @@ export default function usePlayerUnitInterface(app: App) {
   });
 
   onMounted(() => {
-    const vehicle$ = app.modules.player.observables.currentPlayer$.pipe(
+    const vehicle$ = playerModule.observables.currentPlayer$.pipe(
       switchMap(player => player.modules.vehicle.observables.unit$),
       map(unit => unit as VehicleUnit | null)
     );
@@ -153,7 +160,7 @@ export default function usePlayerUnitInterface(app: App) {
     );
 
     subscription.add(
-      app.modules.player.observables.currentPlayer$
+      playerModule.observables.currentPlayer$
         .pipe(
           switchMap(player => player?.modules.life.observables.lifes$ ?? EMPTY)
         )

@@ -6,9 +6,9 @@ import MovablePlayerModule from './playerModule/Movable';
 import type MovableUnit from './unit/Movable';
 import ControlsPlayerModule from './playerModule/Controls';
 import FactionPlayerModule from './playerModule/Faction';
-import type App from './App';
 import LifePlayerModule from './playerModule/Life';
 import type { ModuleOptions, ModuleStates } from './Unit';
+import type BaseApp from './BaseApp';
 
 export type PlayerModuleList = (
   | typeof MovablePlayerModule
@@ -51,7 +51,7 @@ export default class Player<
   subscription = new Subscription();
 
   constructor(
-    public app: App,
+    public app: BaseApp,
     { id, name, moduleStates, moduleOptions }: PlayerConstructorOptions,
     protected moduleList: unknown[] = []
   ) {

@@ -73,8 +73,8 @@ export default class PlayerUnitModule extends UnitModule<
   }
 
   isCurrentPlayer() {
-    return this._player?.equal(
-      this.getUnit()?.getMap()?.app.modules.player.getCurrentPlayer()
-    );
+    const app = this.getUnit()?.getMap()?.app;
+    if (!app || !('player' in app.modules)) return;
+    return this._player?.equal(app.modules.player.getCurrentPlayer());
   }
 }

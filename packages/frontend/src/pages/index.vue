@@ -10,12 +10,12 @@
 </template>
 
 <script lang="ts" setup>
-import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/App';
 import { defineAsyncComponent, markRaw, onUnmounted, ref } from 'vue';
 import { extendedMap } from '@blue-might/maps';
 import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import { Subscription } from 'rxjs';
-import type App from '@blue-might/app/lib/classes/App';
+import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/BaseApp';
+import type { App } from '@blue-might/app/lib/types';
 
 const subscription = new Subscription();
 
@@ -42,6 +42,7 @@ async function onSetup(app: App) {
 }
 
 async function setupPlayer(app: App) {
+  if (!('player' in app.modules)) return;
   await app.modules.player.addPlayer(
     markRaw(
       new HumanPlayer(app, {

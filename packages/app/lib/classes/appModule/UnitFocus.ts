@@ -4,8 +4,8 @@ import AppModule, {
   type AppModuleObservables,
   type AppModuleState
 } from '../AppModule';
-import type App from '../App';
 import type Unit from '../Unit';
+import type BaseApp from '../BaseApp';
 
 interface Observables extends AppModuleObservables {
   followedUnit$: ReplaySubject<Unit | null>;
@@ -21,7 +21,7 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
     followedUnit: null
   };
 
-  constructor(app: App) {
+  constructor(app: BaseApp) {
     super(app, {} as State);
 
     //#region observables

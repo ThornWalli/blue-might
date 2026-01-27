@@ -1,6 +1,6 @@
 import { Subscription, type SubscriptionLike } from 'rxjs';
 
-import type App from './App';
+import type AppPlayground from './app/AppPlayground';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface AppModuleControllerState {}
@@ -16,12 +16,12 @@ export default class AppModuleController<
   setup() {
     // throw new Error('Method not implemented.');
   }
-  app: App;
+  app: AppPlayground;
   state: State = {} as State;
   subscription: Subscription = new Subscription();
   observables: Observables = {} as Observables;
 
-  constructor(app: App) {
+  constructor(app: AppPlayground) {
     this.app = app;
   }
 

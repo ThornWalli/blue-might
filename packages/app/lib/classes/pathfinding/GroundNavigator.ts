@@ -13,7 +13,7 @@ import type { GridNode } from './Grid';
 
 export default class GroundNavigator extends BaseNavigator {
   protected getHeightAt(x: number, z: number): number {
-    return this.map.modules.ground.getSurfaceHeightAt(x, z);
+    return this.map.modules.surface.getSurfaceHeightAt(x, z);
   }
 
   protected isWalkableExtra(
@@ -34,7 +34,7 @@ export default class GroundNavigator extends BaseNavigator {
     debug = false
   ) {
     const pos = this.toWorldPosition(x, y, grid);
-    let walkable = pos.y > this.map.modules.ground.getSeaLevel();
+    let walkable = pos.y > this.map.modules.surface.getSeaLevel();
     let collisionType = COLLISION_TYPE.NONE;
 
     // Filtere Colliders: Ignoriere fliegende Helicopters (nur gelandete blockieren)
@@ -86,7 +86,7 @@ export default class GroundNavigator extends BaseNavigator {
   }
 
   protected getTileTypeAtNode(node: GridNode): TILE_TYPE | undefined {
-    return this.map.modules.ground.getPathfinderTileTypes()[node.y]?.[node.x];
+    return this.map.modules.surface.getPathfinderTileTypes()[node.y]?.[node.x];
   }
 
   // private isCellOccupiedByOthers(x: number, z: number, self: Object3D) {

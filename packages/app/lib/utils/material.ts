@@ -20,7 +20,7 @@ export function setDestroyedMaterials(
 }
 
 export function replaceColors(
-  colorReplace: [string, number][],
+  colorReplace: [string, number | string][],
   object: Mesh | SkinnedMesh
 ) {
   colorReplace.forEach(([name, color]) => {

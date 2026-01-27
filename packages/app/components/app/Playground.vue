@@ -1,9 +1,9 @@
 <template>
   <bm-app-layout class="bm-app-playground">
     <template #[PANEL.BOTTOM_LEFT]>
-      <div class="panel-row">
+      <!-- <div class="panel-row">
         <bm-panel-debug key="general" :app="app" />
-      </div>
+      </div> -->
       <div class="panel-row">
         <bm-panel-controls key="general" :app="app" />
       </div>
@@ -24,7 +24,6 @@
     <template #[PANEL.BOTTOM_RIGHT]>
       <bm-panel-unit-preview key="unit-preview" :app="app" />
     </template>
-    <template #background><div id="testtt"></div></template>
     <template #foreground>
       <bm-message v-if="messageType" :type="messageType" />
     </template>
@@ -44,9 +43,9 @@ import {
 } from 'rxjs';
 import { ControlAction } from '@blue-might/app/lib/classes/playerModule/Controls';
 
-import type App from '../../lib/classes/App';
+import type AppPlayground from '../../lib/classes/app/AppPlayground';
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
-import BmPanelDebug from '../panel/Debug.vue';
+// import BmPanelDebug from '../panel/Debug.vue';
 import BmPanelControls from '../panel/Controls.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
@@ -57,7 +56,7 @@ import BmMessage, { MESSAGE_TYPE } from '../Message.vue';
 const messageType = ref<MESSAGE_TYPE | null>(null);
 
 const $props = defineProps<{
-  app: App;
+  app: AppPlayground;
 }>();
 
 const subscription = new Subscription();
@@ -71,7 +70,7 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
-function setupMessages(app: App) {
+function setupMessages(app: AppPlayground) {
   subscription.add(
     app.modules.player.observables.currentPlayer$
       .pipe(
@@ -88,7 +87,7 @@ function setupMessages(app: App) {
           fromEvent(document, 'click').pipe(map(() => true))
         ).subscribe(async () => {
           if (player.modules.life.isGameOver()) {
-            await app.restartMap();
+            await app.modules.map.restartMap();
           } else {
             await app.modules.player.respawnPlayer();
           }

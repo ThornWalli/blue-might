@@ -95,8 +95,8 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       {
         gridSize: 1 / 3,
         size: new Vector2(
-          this.map.modules.ground.state.terrainWidth,
-          this.map.modules.ground.state.terrainHeight
+          this.map.modules.surface.state.terrainWidth,
+          this.map.modules.surface.state.terrainHeight
         ),
         sphere: false
       },
@@ -109,8 +109,8 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       {
         gridSize: 1 / 3,
         size: new Vector2(
-          this.map.modules.ground.state.terrainWidth,
-          this.map.modules.ground.state.terrainHeight
+          this.map.modules.surface.state.terrainWidth,
+          this.map.modules.surface.state.terrainHeight
         ),
         sphere: true
       },
@@ -126,8 +126,8 @@ export default class PathfindingModule extends MapModule<State, Observables> {
       {
         gridSize: 1 / 3,
         size: new Vector2(
-          this.map.modules.ground.state.terrainWidth,
-          this.map.modules.ground.state.terrainHeight
+          this.map.modules.surface.state.terrainWidth,
+          this.map.modules.surface.state.terrainHeight
         ),
         sphere: true
       },
@@ -141,8 +141,8 @@ export default class PathfindingModule extends MapModule<State, Observables> {
         tileCostsType: 'sea',
         gridSize: 1,
         size: new Vector2(
-          this.map.modules.ground.state.terrainWidth,
-          this.map.modules.ground.state.terrainHeight
+          this.map.modules.surface.state.terrainWidth,
+          this.map.modules.surface.state.terrainHeight
         ),
         sphere: true // Oder true, je nach Bedarf
       },

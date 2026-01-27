@@ -35,7 +35,12 @@ export default class Tree_1<
     super(
       {
         ...options,
-        name: 'Tree 1'
+        name: 'Tree 1',
+        moduleOptions: {
+          faction: {
+            disabled: true
+          }
+        }
       },
       moduleList as ModuleList
     );

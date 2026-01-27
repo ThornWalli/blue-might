@@ -4,6 +4,7 @@ import MapModule, {
   type MapModuleObservables,
   type MapModuleState
 } from '../MapModule';
+
 declare module '../Map' {
   interface ModuleDebug {
     light: boolean;
@@ -44,9 +45,7 @@ export default class LightModule extends MapModule<State, Observables> {
 
     this.subscription.add(
       this.map.app.renderer?.modules.controls?.observables.change$.subscribe(
-        () => {
-          this.updateLightPosition();
-        }
+        () => this.updateLightPosition()
       )
     );
     this.updateLightPosition();

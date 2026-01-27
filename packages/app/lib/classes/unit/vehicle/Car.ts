@@ -1,3 +1,5 @@
+import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';
+
 import type { UnitConstructorOptions } from '../../Unit';
 import GroundVehicleUnitModule from '../../unitModule/movable/GroundVehicle';
 import type PlayerUnitModule from '../../unitModule/Player';
@@ -25,6 +27,7 @@ export default class CarUnit<
   ModuleList extends CarUnitModuleList = CarUnitModuleList,
   Options extends CarUnitOptions = CarUnitOptions
 > extends VehicleUnit<Modules, ModuleList, Options> {
+  static override TYPE = UNIT_TYPE.CAR;
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []

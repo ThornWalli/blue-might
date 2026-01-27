@@ -61,17 +61,16 @@ export default class CameraRendererModule extends RendererModule<
 
   updateCamera(options?: {
     position: Vector3;
-    quaternion: Quaternion;
+    quaternion?: Quaternion;
     lerpFactor?: number;
     view?: 'back' | 'side';
   }) {
     const { controls } = this.renderer.modules.controls;
-    if (!controls) return;
 
     const camera = this.getCamera<PerspectiveCamera>();
 
     if (!camera) return;
-    camera.zoom = (controls.object as PerspectiveCamera)?.zoom || 1;
+    camera.zoom = (controls?.object as PerspectiveCamera)?.zoom || 1;
 
     if (options) {
       const { position, quaternion } = options;
@@ -93,27 +92,28 @@ export default class CameraRendererModule extends RendererModule<
 
       lerpFactor = lerpFactor ?? 0.1;
 
-      const offsetToApply = applyRotation
-        ? cameraOffset.clone().applyQuaternion(quaternion)
-        : cameraOffset;
+      const offsetToApply =
+        applyRotation && quaternion
+          ? cameraOffset.clone().applyQuaternion(quaternion)
+          : cameraOffset;
 
       const idealPosition = position.clone().add(offsetToApply);
 
       camera.position.lerp(idealPosition, lerpFactor);
       camera.lookAt(position);
 
-      controls.target.copy(position);
+      controls?.target.copy(position);
     } else {
-      const distance = 10;
+      const distance = 20;
       camera.position.set(distance, distance, distance);
       camera.lookAt(0, 0, 0); // Explizit auf Zentrum schauen
 
-      controls.target.set(0, 0, 0); // Target der Controls setzen
+      controls?.target.set(0, 0, 0); // Target der Controls setzen
     }
 
     camera.updateMatrix();
     camera.updateMatrixWorld();
-    controls.update();
+    controls?.update();
   }
 
   addCamera(type: CameraType, camera: PerspectiveCamera) {

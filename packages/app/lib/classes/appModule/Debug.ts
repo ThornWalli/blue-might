@@ -16,7 +16,6 @@ import {
   Vector3
 } from 'three';
 
-import type App from '../App';
 import AppModule, {
   type AppModuleObservables,
   type AppModuleState
@@ -25,6 +24,7 @@ import type Map from '../Map';
 import { disposeObject3D } from '../../utils/object';
 import type { NAVIGATOR_TYPE } from '../mapModule/Pathfinding';
 import { DEFAULT_NAVIGATOR_TYPE } from '../mapModule/Pathfinding';
+import type BaseApp from '../BaseApp';
 
 export interface PositionMarker {
   id: string;
@@ -65,7 +65,7 @@ export default class DebugAppModule extends AppModule<State, Observables> {
   };
   private positionMarkerObjects: Object3D[] = [];
 
-  constructor(app: App) {
+  constructor(app: BaseApp) {
     super(app, {
       currentPosition: new Vector2(0, 0),
       positionMarkers: [],
@@ -120,8 +120,8 @@ export default class DebugAppModule extends AppModule<State, Observables> {
     if (!helper) return;
 
     const y = Math.max(
-      map.modules.ground.getSeaLevel(),
-      map.modules.ground.getSurfaceHeightAt(position.x, position.y)
+      map.modules.surface.getSeaLevel(),
+      map.modules.surface.getSurfaceHeightAt(position.x, position.y)
     );
     helper.position.set(position.x, y, position.y);
   }
@@ -141,7 +141,7 @@ export default class DebugAppModule extends AppModule<State, Observables> {
 
     const y = this.app.modules.map
       .getMap()!
-      .modules.ground.getAvgHeightAt(currentPosition.x, currentPosition.y);
+      .modules.surface.getAvgHeightAt(currentPosition.x, currentPosition.y);
     const position = new Vector3(currentPosition.x, y, currentPosition.y);
     this.observables.startMove$.next();
     unit?.modules.pathfinding.move(position);
@@ -178,7 +178,7 @@ export default class DebugAppModule extends AppModule<State, Observables> {
         .pipe(
           switchMap(
             map =>
-              map?.modules.ground.observables.hover$.pipe(
+              map?.modules.surface.observables.hover$.pipe(
                 rxjsMap(position => {
                   return {
                     position,
@@ -199,7 +199,7 @@ export default class DebugAppModule extends AppModule<State, Observables> {
         .pipe(
           switchMap(
             map =>
-              map?.modules.ground.observables.select$.pipe(
+              map?.modules.surface.observables.select$.pipe(
                 rxjsMap(position => {
                   return {
                     position,
@@ -319,8 +319,8 @@ export default class DebugAppModule extends AppModule<State, Observables> {
         color: 0xffff00
       });
       const y = Math.max(
-        map.modules.ground.getSeaLevel(),
-        map.modules.ground.getSurfaceHeightAt(position.x, position.y)
+        map.modules.surface.getSeaLevel(),
+        map.modules.surface.getSurfaceHeightAt(position.x, position.y)
       );
       marker.position.set(position.x, y, position.y);
       this.app.getScene().add(marker);

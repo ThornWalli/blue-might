@@ -21,7 +21,6 @@ import { weapons } from '@blue-might/weapon';
 import WeaponUnitModule, {
   type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
-import { replaceColors } from '@blue-might/app/lib/utils/material';
 import AttackUnitModule, {
   ATTACK_TYPE
 } from '@blue-might/app/lib/classes/unitModule/Attack';
@@ -330,20 +329,6 @@ export default class MissleLauncher_1
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
-
-        replaceColors(
-          [
-            [
-              'primary',
-              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-            ],
-            [
-              'secondary',
-              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-            ]
-          ],
-          child
-        );
       }
     });
 

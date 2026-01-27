@@ -15,7 +15,8 @@
 </template>
 
 <script lang="ts" setup>
-import type App from '../../lib/classes/App';
+import type { App } from '@blue-might/app/lib/types';
+
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
 import BmPanelDebug from '../panel/Debug.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';

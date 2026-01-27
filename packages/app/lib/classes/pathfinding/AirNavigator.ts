@@ -36,7 +36,9 @@ export default class AirNavigator extends BaseNavigator {
   }
 
   protected getHeightAt(x: number, z: number): number {
-    return this.map.modules.ground.getSurfaceHeightAt(x, z) + this.flightHeight;
+    return (
+      this.map.modules.surface.getSurfaceHeightAt(x, z) + this.flightHeight
+    );
   }
 
   protected isWalkableExtra(
@@ -87,7 +89,7 @@ export default class AirNavigator extends BaseNavigator {
     debug = false
   ) {
     const pos = this.toWorldPosition(x, y, grid);
-    pos.setY(this.map.modules.ground.getSeaLevel() + this.flightHeight);
+    pos.setY(this.map.modules.surface.getSeaLevel() + this.flightHeight);
     let walkable = true;
     let collisionType = COLLISION_TYPE.NONE;
     // Basis-Kollisionsprüfung

@@ -1,5 +1,6 @@
 <template>
   <div ref="rootEl" class="bm-app-layout">
+    <div id="layout-background"></div>
     <slot name="background"></slot>
     <bm-panel-group :id="PANEL.TOP_LEFT" position="top-left">
       <slot :name="PANEL.TOP_LEFT" />
@@ -26,6 +27,7 @@
       <slot :name="PANEL.BOTTOM_RIGHT" />
     </bm-panel-group>
     <slot name="foreground"></slot>
+    <div id="layout-foreground"></div>
   </div>
 </template>
 
@@ -56,6 +58,11 @@ export enum PANEL {
     pointer-events: none;
     content: '';
     border: solid 2px #000;
+  }
+
+  & #layout-background {
+    position: absolute;
+    inset: 0;
   }
 }
 </style>

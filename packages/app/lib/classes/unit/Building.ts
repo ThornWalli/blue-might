@@ -1,3 +1,4 @@
+import { UNIT_TYPE } from '../../types/unit';
 import { setDestroyedMaterials } from '../../utils/material';
 import Unit, {
   GROUND_ADJUSTMENT_MODE,
@@ -26,6 +27,7 @@ export default class BuildingUnit<
   Options extends BuildingUnitOptions = BuildingUnitOptions,
   Observables extends BuildingUnitObservables = BuildingUnitObservables
 > extends Unit<Modules, ModuleList, Options, Observables> {
+  static override TYPE = UNIT_TYPE.BUILDING;
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList: unknown[] = []

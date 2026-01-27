@@ -26,7 +26,6 @@ import {
 } from 'three';
 import { onMounted, onUnmounted, ref } from 'vue';
 
-import type App from '../lib/classes/App';
 import type { ROTATION } from '../lib/utils/rotation';
 import { disposeObject3D } from '../lib/utils/object';
 import type { AnimationLoopValue } from '../lib/classes/Renderer';
@@ -36,6 +35,7 @@ import {
   createScene,
   updateOrthoCameraForObject
 } from '../utils/unitPreview';
+import type { App } from '../lib/types';
 
 const rootEl = ref<HTMLDivElement | null>(null);
 const previewSrc = ref<string | null>(null);

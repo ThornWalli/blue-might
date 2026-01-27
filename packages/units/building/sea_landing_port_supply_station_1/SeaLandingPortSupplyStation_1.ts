@@ -11,7 +11,6 @@ import LandingPortUnit, {
   type LandingPortUnitOptions
 } from '@blue-might/app/lib/classes/unit/LandingPort';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { replaceColors } from '@blue-might/app/lib/utils/material';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
 
@@ -99,19 +98,6 @@ export default class SeaLandingPortSupplyStation_1 extends LandingPortUnit<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.receiveShadow = true;
         child.castShadow = true;
-        replaceColors(
-          [
-            [
-              'primary',
-              this.modules.faction.getFaction()?.colors[0] ?? 0xf2f2f2
-            ],
-            [
-              'secondary',
-              this.modules.faction.getFaction()?.colors[1] ?? 0xf2f2f2
-            ]
-          ],
-          child
-        );
       }
     });
 

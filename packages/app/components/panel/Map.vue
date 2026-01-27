@@ -3,9 +3,8 @@
     <bm-map :app="app" controls />
     <bm-button
       :icon="unitFocused ? ICON.UNLOCKED : ICON.LOCKED"
-      @click="onClickFocusUnit">
-      {{ unitFocused ? 'Unlock' : 'Lock' }}
-    </bm-button>
+      :label="unitFocused ? 'Unlock' : 'Lock'"
+      @click="onClickFocusUnit" />
   </bm-panel>
 </template>
 
@@ -15,9 +14,9 @@ import type Unit from '@blue-might/app/lib/classes/Unit';
 import { ICON } from '@blue-might/app/utils/icons';
 import { map, Subscription, switchMap } from 'rxjs';
 import type VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
+import type { App } from '@blue-might/app/lib/types';
 
 import BmPanel from '../Panel.vue';
-import type App from '../../lib/classes/App';
 import BmMap from '../Map.vue';
 import BmButton from '../Button.vue';
 
@@ -33,22 +32,24 @@ const subscription = new Subscription();
 onMounted(() => {
   const app = $props.app;
   const followedUnit$ = app.modules.unitFocus.observables.followedUnit$;
-  const vehicle$ = app.modules.player.observables.currentPlayer$.pipe(
-    switchMap(player => player.modules.vehicle.observables.unit$),
-    map(unit => unit as VehicleUnit | null)
-  );
 
-  //#region unit
+  if ('player' in app.modules) {
+    const vehicle$ = app.modules.player.observables.currentPlayer$.pipe(
+      switchMap(player => player.modules.vehicle.observables.unit$),
+      map(unit => unit as VehicleUnit | null)
+    );
+    //#region unit
 
-  subscription.add(
-    vehicle$.subscribe(
-      vehicle => (unit.value = vehicle ? markRaw(vehicle) : null)
-    )
-  );
-  subscription.add(
-    followedUnit$.subscribe(focusedUnit => (unitFocused.value = focusedUnit))
-  );
-  //#endregion
+    subscription.add(
+      vehicle$.subscribe(
+        vehicle => (unit.value = vehicle ? markRaw(vehicle) : null)
+      )
+    );
+    subscription.add(
+      followedUnit$.subscribe(focusedUnit => (unitFocused.value = focusedUnit))
+    );
+    //#endregion
+  }
 });
 
 onUnmounted(() => {

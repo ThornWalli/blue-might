@@ -1,17 +1,23 @@
 <template>
   <base-button
+    :disabled="disabled ? true : undefined"
+    :tag="tag"
     class="bm-button"
     :class="{
       selected,
       [`style-type-${styleType ?? 'primary'}`]: true,
       [`mode-${mode ?? 'normal'}`]: true
     }">
+    <slot name="before" :disabled="disabled" />
     <base-icon
       v-if="icon && (!iconAlign || iconAlign === 'left')"
       size="very-small"
       :name="icon" />
-    <slot>Button</slot>
+    <slot :label="label" :disabled="disabled">
+      <span v-if="!hideLabel">{{ label }}</span>
+    </slot>
     <base-icon v-if="icon && iconAlign === 'right'" :name="icon" />
+    <slot name="after" :disabled="disabled" />
   </base-button>
 </template>
 
@@ -25,9 +31,13 @@ import BaseButton from './base/Button.vue';
 import BaseIcon from './base/Icon.vue';
 
 defineProps<{
+  disabled?: boolean;
+  tag?: string;
   styleType?: 'primary' | 'secondary' | 'tertiary' | 'quaternary';
   mode?: 'normal';
   selected?: boolean;
+  label?: string;
+  hideLabel?: boolean;
   icon?: ICON | keyof typeof icons | FunctionalComponent;
   iconAlign?: 'left' | 'right';
 }>();
@@ -45,6 +55,7 @@ defineProps<{
   --indicator-foreground: var(--color-white);
   --indicator-background: var(--color-blue-7);
 
+  position: relative;
   display: inline-flex;
   gap: var(--bm-spacing-small);
   align-items: center;
@@ -83,6 +94,11 @@ defineProps<{
       --color-foreground: var(--color-white);
       --color-border: var(--color-gold);
     }
+  }
+
+  & span {
+    flex: 1;
+    text-align: center;
   }
 }
 </style>
