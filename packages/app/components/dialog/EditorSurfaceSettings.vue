@@ -13,7 +13,11 @@
             {{ texture.width }} / {{ texture.height }} Pixel
           </div>
           <div class="buttons">
-            <bm-button :icon="ICON.ARROW_UP_TRAY" hide-label label="Download" />
+            <bm-button
+              :icon="ICON.ARROW_UP_TRAY"
+              hide-label
+              label="Download"
+              @click="onClickDownload(key)" />
             <bm-button-upload
               :icon="ICON.ARROW_DOWN_TRAY"
               hide-label
@@ -99,6 +103,14 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
+async function onClickDownload(key: string) {
+  const item = previewItems.value.find(i => i.key === key);
+  if (item) {
+    const { saveAs } = await import('file-saver');
+    await saveAs(item.path, `${key}.png`);
+  }
+}
+
 function onFiles(key: string, files: FileList) {
   const file = files[0];
   if (file) {
@@ -173,20 +185,6 @@ async function onClickApply() {
       font-family: var(--font-base);
       font-size: 12px;
       text-align: center;
-    }
-
-    &:has(input) {
-      cursor: pointer;
-
-      & img {
-        border: solid #000 4px;
-      }
-
-      &:hover {
-        img {
-          border-color: #fff;
-        }
-      }
     }
   }
 
