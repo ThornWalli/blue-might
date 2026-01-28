@@ -33,7 +33,7 @@ import { Subscription } from 'rxjs';
 
 import BmPanel from '../Panel.vue';
 import BmSelect from '../Select.vue';
-import BmFormField from '../base/FormField.vue';
+import BmFormField from '../FormField.vue';
 import BmToggle from '../Toggle.vue';
 
 const $props = defineProps<{

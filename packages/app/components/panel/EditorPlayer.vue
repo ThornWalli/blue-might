@@ -33,7 +33,7 @@ import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';
 import BmPanel from '../Panel.vue';
 import BmButton from '../Button.vue';
 import BmSelect from '../Select.vue';
-import BmFormField from '../base/FormField.vue';
+import BmFormField from '../FormField.vue';
 
 const playerOptions = ref<Raw<PlayerOptions>>({} as Raw<PlayerOptions>);
 

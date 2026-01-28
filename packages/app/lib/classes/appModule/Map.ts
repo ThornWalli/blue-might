@@ -41,6 +41,7 @@ export default class MapAppModule extends AppModule<State, Observables> {
   }
 
   async setMap(map: Map) {
+    this.state.descriptionStash = null;
     const renderer = this.app.renderer;
     await map.setup();
     renderer.addToScene(map.root);
@@ -82,6 +83,10 @@ export default class MapAppModule extends AppModule<State, Observables> {
 
   fromDescription(description: MapDescription) {
     return new Map(description, this.app);
+  }
+
+  hasStashedDescription() {
+    return this.state.descriptionStash !== null;
   }
 
   async stashDescription(force?: boolean) {

@@ -21,11 +21,12 @@
         label="Revert"
         @click="onClickRevert" />
     </div>
-    <bm-button label="Player" @click="onClickPlayer" />
-    <bm-button label="Surface" @click="onClickSurface" />
-    <bm-button label="Units" @click="onClickUnits" />
-    <bm-button label="Factions" @click="onClickFactions" />
-    <bm-button label="Export" @click="onClickExport" />
+    <bm-button :disabled="played" label="Player" @click="onClickPlayer" />
+    <bm-button :disabled="played" label="Surface" @click="onClickSurface" />
+    <bm-button :disabled="played" label="Units" @click="onClickUnits" />
+    <bm-button :disabled="played" label="Factions" @click="onClickFactions" />
+    <bm-button :disabled="played" label="Export" @click="onClickExport" />
+    <bm-button :disabled="played" label="New" @click="onClickNew" />
     <teleport to="body">
       <bm-dialog ref="surfaceDialog">
         <template #header>Surface Settings</template>
@@ -37,6 +38,12 @@
         <template #header>Faction Settings</template>
         <template #default>
           <bm-dialog-editor-faction-settings :app="$props.app" />
+        </template>
+      </bm-dialog>
+      <bm-dialog ref="newDialog">
+        <template #header>New Map</template>
+        <template #default>
+          <bm-dialog-editor-new :app="$props.app" />
         </template>
       </bm-dialog>
     </teleport>
@@ -56,6 +63,7 @@ import BmButton from '../Button.vue';
 import BmDialog from '../Dialog.vue';
 import BmDialogEditorFactionSettings from '../dialog/EditorFactionSettings.vue';
 import BmDialogEditorSurfaceSettings from '../dialog/EditorSurfaceSettings.vue';
+import BmDialogEditorNew from '../dialog/EditorNew.vue';
 
 const isPlaying = ref(false);
 const isPlayed = ref(false);
@@ -71,6 +79,11 @@ const $props = defineProps<{
 
 const subscription = new Subscription();
 onMounted(() => {
+  subscription.add(
+    $props.app.modules.map.observables.map$.subscribe(() => {
+      reset();
+    })
+  );
   subscription.add(
     $props.app.modules.time.observables.mapTime$.subscribe(t => {
       time.value = String(Math.round(t)).padStart(3, '0');
@@ -90,24 +103,30 @@ onUnmounted(() => {
 
 const factionsDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 const surfaceDialog = ref<InstanceType<typeof BmDialog> | null>(null);
+const newDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 
-function onClickUnits() {
+async function onClickUnits() {
+  await reset();
   $props.app.setMode(EDITOR_MODE.UNITS);
 }
 
-function onClickSurface() {
+async function onClickSurface() {
+  await reset();
   surfaceDialog.value?.context?.open();
 }
 
-function onClickFactions() {
+async function onClickFactions() {
+  await reset();
   factionsDialog.value?.context?.open();
 }
 
-function onClickPlayer() {
+async function onClickPlayer() {
+  await reset();
   $props.app.setMode(EDITOR_MODE.PLAYER);
 }
 
 async function onClickExport() {
+  await reset();
   const app = $props.app;
   const description = await app.modules.map.getMap()?.toDescription();
   if (description) {
@@ -116,17 +135,30 @@ async function onClickExport() {
   }
 }
 
+async function onClickNew() {
+  await reset();
+  newDialog.value?.context?.open();
+}
+
+const played = ref(false);
 async function onClickPlay() {
+  played.value = true;
   await $props.app.modules.map.stashDescription();
   $props.app.setUpdateActive(true);
 }
 function onClickPause() {
   $props.app.setUpdateActive(false);
 }
-function onClickRevert() {
+
+async function reset() {
+  if (!played.value) return;
   $props.app.setUpdateActive(false);
-  $props.app.modules.map.unstashDescription();
+  await $props.app.modules.map.unstashDescription();
   $props.app.modules.time.reset();
+  played.value = false;
+}
+function onClickRevert() {
+  reset();
 }
 </script>
 

@@ -558,8 +558,8 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     // Pathfinder cells
     const cellSize = 3;
     let tileMap: (TILE_TYPE | undefined)[][] = Array.from(
-      { length: height / cellSize },
-      () => Array.from({ length: width / cellSize }, () => undefined)
+      { length: height * cellSize },
+      () => Array.from({ length: width / (1 / cellSize) }, () => undefined)
     );
 
     tileMap = await getCostsFromImage(

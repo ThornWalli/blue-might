@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bm-base-form-field"
+    class="bm-form-field"
     :class="{
       'label-top': labelTop,
       [`mode-${mode}`]: mode,
@@ -35,7 +35,7 @@ const preparedId = computed(() => $props.id || defaultId);
 </script>
 
 <style lang="postcss" scoped>
-.bm-base-form-field {
+.bm-form-field {
   display: flex;
   flex-direction: column;
   gap: var(--bm-spacing-medium);

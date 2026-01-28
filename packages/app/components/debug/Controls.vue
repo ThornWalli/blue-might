@@ -34,7 +34,7 @@ import type DebugAppModule from '@blue-might/app/lib/classes/appModule/Debug';
 import BmButton from '../Button.vue';
 import BmDetails from '../Details.vue';
 import BmSelect from '../Select.vue';
-import BaseFormField from '../base/FormField.vue';
+import BaseFormField from '../FormField.vue';
 
 const subscription = new Subscription();
 const currentPosition = ref<Vector2>(new Vector2(0, 0));

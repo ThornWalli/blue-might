@@ -64,7 +64,7 @@ export default abstract class BaseNavigator {
 
   setup() {
     this.grid = new Grid(
-      this.size.clone().divideScalar(this.gridSize).floor(),
+      this.size.clone().divideScalar(this.gridSize).round(),
       this.gridSize,
       (options, debug) => this.isWalkable(options, debug),
       node => {

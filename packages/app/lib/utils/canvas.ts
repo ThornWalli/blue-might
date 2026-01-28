@@ -38,9 +38,9 @@ export function resizeCanvas(
   height?: number
 ) {
   if (!width && height) {
-    width = height * (canvas.width / canvas.height);
+    width = Math.round(height * (canvas.width / canvas.height));
   } else if (!height) {
-    height = width * (canvas.height / canvas.width);
+    height = Math.round(width * (canvas.height / canvas.width));
   }
 
   const resizedCanvas = document.createElement('canvas');

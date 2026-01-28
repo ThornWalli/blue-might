@@ -4,13 +4,10 @@
     class="bm-panel-editor-units"
     title="Editor Units">
     <bm-select
-      v-model="selectedUnit"
+      :model-value="selectedUnit"
       :options="unitOptions"
-      :attrs="{ size: 10 }" />
-    <bm-button
-      :disabled="!selectedUnit"
-      label="Add Unit"
-      @click="onClickAddUnit" />
+      :attrs="{ size: 10 }"
+      @update:model-value="onUpdateSelectedUnit" />
     <bm-button label="Close" @click="onClickClose" />
   </bm-panel>
   <teleport to="#layout-background">
@@ -85,6 +82,17 @@ const unitOptions = computed(() => {
   ];
 });
 
+async function onUpdateSelectedUnit(value: string | null) {
+  if (selectedUnit.value) {
+    editorUnitsModule.abort();
+  }
+  selectedUnit.value = value;
+  if (value) {
+    console.log(`Adding unit: ${value}`);
+    await editorUnitsModule.createUnit(value);
+  }
+}
+
 onMounted(() => {
   subscription.add(
     editorUnitsModule.observables.unit$.subscribe(u => {
@@ -107,14 +115,8 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
-async function onClickAddUnit() {
-  if (!editorUnitsModule || !selectedUnit.value) return;
-  // Emit an event or call a method to add the unit to the editor
-  console.log(`Adding unit: ${selectedUnit.value}`);
-  await editorUnitsModule.createUnit(selectedUnit.value);
-}
-
 function onClickClose() {
+  editorUnitsModule.abort();
   if ('setMode' in $props.app) {
     $props.app.setMode(EDITOR_MODE.DEFAULT);
   }

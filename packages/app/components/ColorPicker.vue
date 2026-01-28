@@ -30,7 +30,8 @@ defineEmits<{
 
   & .preview {
     box-sizing: border-box;
-    width: 24px;
+    width: 100%;
+    min-width: 24px;
     height: 24px;
     background-color: var(--color);
     border: solid #fff 2px;

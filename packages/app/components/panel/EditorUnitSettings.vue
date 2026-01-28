@@ -38,7 +38,7 @@ import { EDITOR_MODE } from '@blue-might/app/lib/classes/app/AppEditor';
 
 import BmPanel from '../Panel.vue';
 import BmSelect from '../Select.vue';
-import BmFormField from '../base/FormField.vue';
+import BmFormField from '../FormField.vue';
 import BmTextfield from '../Textfield.vue';
 import BmButton from '../Button.vue';
 

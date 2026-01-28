@@ -10,6 +10,7 @@ import type { Textures } from '../Map';
 
 interface Observables extends AppModuleObservables {
   textures$: ReplaySubject<TextureDescription[]>;
+  noiseMonochrome$: ReplaySubject<boolean>;
 }
 
 export interface TextureDescription {
@@ -19,6 +20,7 @@ export interface TextureDescription {
 
 interface State extends AppModuleState {
   textures: TextureDescription[];
+  noiseMonochrome: boolean;
 }
 export default class EditorSurfaceAppModule extends AppModule<
   State,
@@ -26,13 +28,15 @@ export default class EditorSurfaceAppModule extends AppModule<
 > {
   static override TYPE = 'editorSurface';
   override state: State = {
-    textures: []
+    textures: [],
+    noiseMonochrome: false
   };
 
   constructor(app: App) {
     super(app, {} as State);
     //#region observables
     this.observables.textures$ = new ReplaySubject<TextureDescription[]>(1);
+    this.observables.noiseMonochrome$ = new ReplaySubject<boolean>(1);
     //#endregion
   }
 
@@ -47,6 +51,9 @@ export default class EditorSurfaceAppModule extends AppModule<
             };
           })
         );
+        this.setNoiseMonochrome(
+          map.description.surface.noiseMonochrome ?? false
+        );
       })
     );
   }
@@ -60,6 +67,15 @@ export default class EditorSurfaceAppModule extends AppModule<
     this.observables.textures$.next(this.state.textures);
   }
 
+  getNoiseMonochrome() {
+    return this.state.noiseMonochrome;
+  }
+
+  setNoiseMonochrome(noiseMonochrome: boolean) {
+    this.state.noiseMonochrome = noiseMonochrome;
+    this.observables.noiseMonochrome$.next(this.state.noiseMonochrome);
+  }
+
   async apply() {
     const map = this.app.modules.map.getMap()!;
     map.setTextures(
@@ -69,17 +85,7 @@ export default class EditorSurfaceAppModule extends AppModule<
       }, {} as Textures)
     );
 
-    // map?.description.surface = Object.fromEntries(
-    //   Object.entries(map?.description.surface).map([
-    //     key,
-    //     texture => {
-    //       return [key, URL.createObjectURL(createBlob)];
-    //     }
-    //   ])
-    // ) = this.state.textures.reduce((acc, cur) => {
-    //   acc[cur.key as keyof Textures] = cur.texture;
-    //   return acc;
-    // }, {} as Textures);
+    map.description.surface.noiseMonochrome = this.getNoiseMonochrome();
 
     await this.app.modules.map.restartMap(await map.toDescription());
   }

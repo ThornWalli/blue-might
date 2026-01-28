@@ -1,43 +1,53 @@
 <template>
   <div class="bm-dialog-editor-surface-settings">
-    <div class="textures">
-      <figure
-        v-for="{ key, path, texture } in previewItems"
-        :key="`${key}_${texture.id}`">
-        <div>
-          <img :src="path" alt="Surface Texture" />
-        </div>
-        <figcaption>
+    <fieldset>
+      <legend>Texture</legend>
+      <div class="textures">
+        <figure
+          v-for="{ key, path, texture } in previewItems"
+          :key="`${key}_${texture.id}`">
           <div>
-            {{ key }}<br />
-            {{ texture.width }} / {{ texture.height }} Pixel
+            <img :src="path" alt="Surface Texture" />
           </div>
-          <div class="buttons">
-            <bm-button
-              :icon="ICON.ARROW_UP_TRAY"
-              hide-label
-              label="Download"
-              @click="onClickDownload(key)" />
-            <bm-button-upload
-              :icon="ICON.ARROW_DOWN_TRAY"
-              hide-label
-              label="Upload"
-              @files="onFiles(key, $event)" />
+          <figcaption>
+            <div>
+              {{ key }}<br />
+              {{ texture.width }} / {{ texture.height }} Pixel
+            </div>
+            <div class="buttons">
+              <bm-button
+                :icon="ICON.ARROW_UP_TRAY"
+                hide-label
+                label="Download"
+                @click="onClickDownload(key)" />
+              <bm-button-upload
+                :icon="ICON.ARROW_DOWN_TRAY"
+                hide-label
+                label="Upload"
+                @files="onFiles(key, $event)" />
+            </div>
+          </figcaption>
+        </figure>
+        <figure>
+          <div>
+            <img
+              v-for="{ key, path } in previewItems"
+              :key="key"
+              :class="{ 'height-map': key === 'heightMap' }"
+              :src="path"
+              :alt="`Surface Texture (${key})`" />
           </div>
-        </figcaption>
-      </figure>
-      <figure>
-        <div>
-          <img
-            v-for="{ key, path } in previewItems"
-            :key="key"
-            :class="{ 'height-map': key === 'heightMap' }"
-            :src="path"
-            :alt="`Surface Texture (${key})`" />
-        </div>
-        <figcaption>Preview</figcaption>
-      </figure>
-    </div>
+          <figcaption>Preview</figcaption>
+        </figure>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Settings</legend>
+      <bm-toggle
+        :model-value="noiseMonochrome"
+        label="Enable Noise Monochrome"
+        @update:model-value="editorSurfaceModule.setNoiseMonochrome($event)" />
+    </fieldset>
     <div class="buttons">
       <bm-button label="Abort" @click="onClickAbort" />
       <bm-button label="Apply" @click="onClickApply" />
@@ -56,11 +66,13 @@ import { imageBitmapToBlob } from '@blue-might/app/utils/blob';
 
 import BmButton from '../Button.vue';
 import BmButtonUpload from '../button/Upload.vue';
+import BmToggle from '../Toggle.vue';
 import type { DialogContext } from '../base/Dialog.vue';
 
 const dialog = inject<DialogContext>('dialog')!;
 
 const textures = ref<TextureDescription[]>([]);
+const noiseMonochrome = ref<boolean>(false);
 
 const $props = defineProps<{
   app: AppEditor;
@@ -68,11 +80,18 @@ const $props = defineProps<{
 
 const subscription = new Subscription();
 
+const editorSurfaceModule = $props.app.modules.editorSurface;
+
 onMounted(() => {
   subscription.add(
-    $props.app.modules.editorSurface.observables.textures$.subscribe(v => {
+    editorSurfaceModule.observables.textures$.subscribe(v => {
       textures.value = v;
       refreshTexturePreview();
+    })
+  );
+  subscription.add(
+    editorSurfaceModule.observables.noiseMonochrome$.subscribe(v => {
+      noiseMonochrome.value = v;
     })
   );
 });
@@ -155,7 +174,7 @@ async function onClickApply() {
 
   & .textures {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: row;
     gap: var(--bm-spacing-small);
 
     & > figure {
