@@ -1,5 +1,13 @@
 # Project Changelog
 
+# [1.0.0-beta.48](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.47...v1.0.0-beta.48) (2026-01-28)
+
+
+### Bug Fixes
+
+* **instructions:** update control labels for clarity ([ee075bc](https://github.com/ThornWalli/blue-might/commit/ee075bc1aeb3b547fa205b82fcd0dc327403db32))
+* **update:** many updates ([f824afb](https://github.com/ThornWalli/blue-might/commit/f824afbd0fbfb358b79cfeafca864dc45e241c96))
+
 # [1.0.0-beta.47](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.46...v1.0.0-beta.47) (2026-01-27)
 
 
