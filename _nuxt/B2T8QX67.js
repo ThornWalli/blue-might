@@ -1,1 +1,0 @@
-import{o,c as t,a as r}from"./DngS1iKM.js";const l={xmlns:"http://www.w3.org/2000/svg",fill:"currentColor",viewBox:"0 0 16 16"};function a(n,e){return o(),t("svg",l,[...e[0]||(e[0]=[r("path",{d:"M3 3.732a1.5 1.5 0 0 1 2.305-1.265l6.706 4.267a1.5 1.5 0 0 1 0 2.531l-6.706 4.268A1.5 1.5 0 0 1 3 12.267z"},null,-1)])])}const c={render:a};export{c as default,a as render};

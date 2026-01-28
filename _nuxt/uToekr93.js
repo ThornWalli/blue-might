@@ -1,0 +1,1 @@
+class m{active;index;weapon;ammunition;maxAmmunition;parallel;revert;constructor({active:t,index:i,weapon:a,ammunition:e,maxAmmunition:n,parallel:s,revert:o}){this.active=t??!0,this.index=i,this.weapon=a,this.ammunition=e??100,this.maxAmmunition=n??100,this.parallel=s??!1,this.revert=o??!1}}export{m as W};
