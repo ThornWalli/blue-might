@@ -2,6 +2,7 @@ import type { UnitConstructorOptions } from '@blue-might/app/lib/classes/Unit';
 import LandingPortUnitModule from '@blue-might/app/lib/classes/unitModule/LandingPort';
 
 import { UNIT_TYPE } from '../../types/unit';
+import { addModules } from '../Module';
 
 import BuildingUnit, {
   type BuildingUnitModuleList,
@@ -26,9 +27,10 @@ export default class LandingPortUnit<
   static override TYPE = UNIT_TYPE.LANDING_PORT;
   constructor(
     options: UnitConstructorOptions<Options>,
-    moduleList: ModuleList = [] as unknown as ModuleList
+    moduleList?: ModuleList
   ) {
-    moduleList.push(LandingPortUnitModule);
+    moduleList = (moduleList || []) as ModuleList;
+    moduleList = addModules(moduleList, [LandingPortUnitModule]);
     super(options, moduleList);
   }
 }

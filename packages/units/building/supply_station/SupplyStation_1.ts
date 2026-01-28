@@ -13,6 +13,7 @@ import BuildingUnit, {
 } from '@blue-might/app/lib/classes/unit/Building';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
+import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/supply_station.glb?url';
 // import baseTexture from './texture.png?url';
@@ -32,9 +33,9 @@ export default class SupplyStation_1 extends BuildingUnit {
   static override KEY = 'supply_station_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: ModuleList = [] as unknown as ModuleList
+    moduleList?: ModuleList
   ) {
-    moduleList.push(SupplyUnitModule);
+    moduleList = addModules(moduleList, [SupplyUnitModule]);
     super(
       {
         ...options,
@@ -55,7 +56,7 @@ export default class SupplyStation_1 extends BuildingUnit {
           }
         }
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

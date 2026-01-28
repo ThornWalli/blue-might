@@ -13,6 +13,7 @@ import LandingPortUnit, {
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
+import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/sea_landing_port_supply_station.glb?url';
 
@@ -36,9 +37,9 @@ export default class SeaLandingPortSupplyStation_1 extends LandingPortUnit<
   static override KEY = 'sea_landing_port_supply_station_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
-    moduleList.push(SupplyUnitModule);
+    moduleList = addModules(moduleList, [SupplyUnitModule]);
     super(
       {
         ...options,
@@ -70,7 +71,7 @@ export default class SeaLandingPortSupplyStation_1 extends LandingPortUnit<
           }
         }
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

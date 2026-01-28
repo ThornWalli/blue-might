@@ -1,12 +1,15 @@
-import { UNIT_TYPE } from '../../types/unit';
-import { GROUND_ADJUSTMENT_MODE, type UnitConstructorOptions } from '../Unit';
-import SeaVehicleUnitModule from '../unitModule/movable/SeaVehicle';
-
+import { UNIT_TYPE } from '../../../types/unit';
+import { addModules } from '../../Module';
+import {
+  GROUND_ADJUSTMENT_MODE,
+  type UnitConstructorOptions
+} from '../../Unit';
+import SeaVehicleUnitModule from '../../unitModule/movable/SeaVehicle';
 import VehicleUnit, {
   type VehicleUnitModuleList,
   type VehicleUnitModules,
   type VehicleUnitOptions
-} from './Vehicle';
+} from '../Vehicle';
 
 export type SeaVehicleUnitOptions = VehicleUnitOptions;
 
@@ -24,15 +27,10 @@ export default class SeaVehicleUnit<
   static override TYPE = UNIT_TYPE.SEA_VEHICLE;
   constructor(
     options: UnitConstructorOptions<Options>,
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
-    if (
-      !(moduleList as ModuleList).find(test =>
-        test.TYPES.includes(SeaVehicleUnitModule.TYPE)
-      )
-    ) {
-      moduleList.push(SeaVehicleUnitModule);
-    }
+    moduleList = (moduleList || []) as ModuleList;
+    moduleList = addModules(moduleList, [SeaVehicleUnitModule]);
     super(options, moduleList);
     this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.SEA);
   }

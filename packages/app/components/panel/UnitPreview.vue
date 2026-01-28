@@ -72,7 +72,6 @@ import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import { EMPTY, map, Subscription, switchMap } from 'rxjs';
 import type { Vector3 } from 'three';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
-import type MovableUnit from '@blue-might/app/lib/classes/unit/Movable';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 import type { App } from '@blue-might/app/lib/types';
 
@@ -182,7 +181,7 @@ function onClickUseVehicle() {
     const player = app.modules.player.getCurrentPlayer();
 
     if (!player) return;
-    player.modules.vehicle.setUnit(u as MovableUnit);
+    player.modules.vehicle.setVehicleUnit(u);
     u.getModuleByType(PlayerUnitModule)?.setPlayer(player);
     unit.value = u;
   }

@@ -10,7 +10,7 @@ import SeaVehicleUnit, {
   type SeaVehicleUnitModuleList,
   type SeaVehicleUnitModules,
   type SeaVehicleUnitOptions
-} from '@blue-might/app/lib/classes/unit/SeaVehicle';
+} from '@blue-might/app/lib/classes/unit/vehicle/SeaVehicle';
 import {
   autoAimFunction,
   createBarrelTargetShoot,
@@ -29,6 +29,7 @@ import type {
   WeaponSupportState
 } from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
+import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/combat_ship_1.glb?url';
 
@@ -78,9 +79,13 @@ export default class CombatShip_1
 
   constructor(
     options: Omit<UnitConstructorOptions<CombatShipOptions>, 'name'> = {},
-    moduleList: Partial<CombatShipModuleList> = []
+    moduleList?: CombatShipModuleList
   ) {
-    moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
+    moduleList = addModules(moduleList, [
+      AttackUnitModule,
+      WeaponUnitModule,
+      PlayerUnitModule
+    ]);
     super(
       {
         ...options,

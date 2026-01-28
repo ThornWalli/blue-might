@@ -13,6 +13,7 @@ import BuildingUnit, {
   type BuildingUnitModules,
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
+import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/sea_supply_station.glb?url';
 
@@ -35,9 +36,9 @@ export default class SeaSupplyStation_1 extends BuildingUnit<
   static override KEY = 'sea_supply_station_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
-    moduleList.push(SupplyUnitModule);
+    moduleList = addModules(moduleList, [SupplyUnitModule]);
     super(
       {
         ...options,
@@ -60,7 +61,7 @@ export default class SeaSupplyStation_1 extends BuildingUnit<
           }
         }
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

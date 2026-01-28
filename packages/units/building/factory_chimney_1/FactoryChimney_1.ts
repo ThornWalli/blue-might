@@ -29,14 +29,14 @@ export default class FactoryChimney_1<
   static override KEY = 'factory_chimney_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
     super(
       {
         ...options,
         name: 'Factory Chimney 1'
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

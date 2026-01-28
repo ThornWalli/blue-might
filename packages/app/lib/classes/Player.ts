@@ -2,23 +2,24 @@
 import type { SubscriptionLike } from 'rxjs';
 import { Subscription } from 'rxjs';
 
-import MovablePlayerModule from './playerModule/Movable';
-import type MovableUnit from './unit/Movable';
+import type { App } from '../types';
+
+import VehiclePlayerModule from './playerModule/Vehicle';
 import ControlsPlayerModule from './playerModule/Controls';
 import FactionPlayerModule from './playerModule/Faction';
 import LifePlayerModule from './playerModule/Life';
 import type { ModuleOptions, ModuleStates } from './Unit';
-import type BaseApp from './BaseApp';
+import type VehicleUnit from './unit/Vehicle';
 
 export type PlayerModuleList = (
-  | typeof MovablePlayerModule
+  | typeof VehiclePlayerModule
   | typeof ControlsPlayerModule
   | typeof FactionPlayerModule
   | typeof LifePlayerModule
 )[];
 
 export interface PlayerModules {
-  vehicle: MovablePlayerModule;
+  vehicle: VehiclePlayerModule;
   controls: ControlsPlayerModule;
   faction: FactionPlayerModule;
   life: LifePlayerModule;
@@ -51,13 +52,13 @@ export default class Player<
   subscription = new Subscription();
 
   constructor(
-    public app: BaseApp,
+    public app: App,
     { id, name, moduleStates, moduleOptions }: PlayerConstructorOptions,
     protected moduleList: unknown[] = []
   ) {
     moduleList.push(
       ControlsPlayerModule,
-      MovablePlayerModule,
+      VehiclePlayerModule,
       FactionPlayerModule,
       LifePlayerModule
     );
@@ -130,10 +131,10 @@ export default class Player<
     return this.id === player.id;
   }
 
-  setVehicle(unit: MovableUnit | null) {
+  setVehicle(unit: VehicleUnit | null) {
     if (this.modules.vehicle.hasVehicle()) {
-      this.modules.vehicle.getUnit()?.modules.player.setPlayer(null);
+      this.modules.vehicle.getActiveUnit()?.modules.player.setPlayer(null);
     }
-    this.modules.vehicle.setUnit(unit);
+    this.modules.vehicle.setVehicleUnit(unit);
   }
 }

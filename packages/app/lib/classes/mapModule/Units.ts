@@ -188,23 +188,29 @@ export default class UnitsModule extends MapModule<State, Observables> {
       unit,
       map: this.map
     };
-    await unit.setup(context);
-    await unit.afterSetup(context);
 
-    unit.subscription.add(
-      unit.observables.position$
-        .pipe(
-          map(pos => pos.clone().floor()),
-          distinctUntilChanged((prev, next) => prev.equals(next))
-        )
-        .subscribe(() => {
-          this.chunkManager.assignToChunk(unit);
-          this.updateVisibility();
-        })
-    );
-    unit.subscription.add(
-      unit.observables.destroyed$.subscribe(() => this.remove(unit))
-    );
+    if (!unit.ready) {
+      await unit.setup(context);
+      await unit.afterSetup(context);
+
+      unit.ready = true;
+
+      unit.subscription.add(
+        unit.observables.position$
+          .pipe(
+            map(pos => pos.clone().floor()),
+            distinctUntilChanged((prev, next) => prev.equals(next))
+          )
+          .subscribe(() => {
+            this.chunkManager.assignToChunk(unit);
+            this.updateVisibility();
+          })
+      );
+      unit.subscription.add(
+        unit.observables.destroyed$.subscribe(() => this.remove(unit))
+      );
+    }
+
     this.state.units.set(unit.id, unit);
     this.root.add(unit.root);
 

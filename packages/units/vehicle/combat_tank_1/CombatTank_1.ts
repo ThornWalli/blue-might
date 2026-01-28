@@ -28,6 +28,7 @@ import {
   createBarrelTargetShoot,
   updateControls
 } from '@blue-might/app/lib/utils/unit/weapon';
+import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/combat_tank_1.glb?url';
 
@@ -75,9 +76,13 @@ export default class CombatTank_1
 
   constructor(
     options: Omit<UnitConstructorOptions<CombatTankOptions>, 'name'> = {},
-    moduleList: Partial<CombatTankModuleList> = []
+    moduleList?: CombatTankModuleList
   ) {
-    moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
+    moduleList = addModules(moduleList, [
+      AttackUnitModule,
+      WeaponUnitModule,
+      PlayerUnitModule
+    ]);
 
     super(
       {
@@ -128,7 +133,7 @@ export default class CombatTank_1
           }
         }
       },
-      moduleList as CombatTankModuleList
+      moduleList
     );
   }
 

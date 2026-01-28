@@ -273,7 +273,7 @@ function renderUnits() {
   units.forEach(unit => {
     if (
       unit.modules.damage.isDestroyed() ||
-      currentPlayer.value?.modules.vehicle.getUnit() === unit
+      currentPlayer.value?.modules.vehicle.getActiveUnit() === unit
     ) {
       return;
     }

@@ -130,7 +130,9 @@
                         .toString()
                         .padStart(padLength, '\u00A0')
                     " />
+
                   <bm-control-item
+                    v-if="unitGears.has"
                     :button="unitGears.canUse"
                     indicator
                     label="Gears"
@@ -236,8 +238,8 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
-import AirVehicleUnit from '@blue-might/app/lib/classes/unit/AirVehicle';
+import { computed, watch } from 'vue';
+import AirVehicleUnit from '@blue-might/app/lib/classes/unit/vehicle/AirVehicle';
 import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 import { MAX_AIR_VEHICLE_ALTITUDE } from '@blue-might/app/lib/classes/unitModule/movable/AirVehicle';
@@ -280,6 +282,13 @@ const {
   playerLifes
 } = usePlayerUnitInterface($props.app);
 
+watch(
+  () => weaponSlots.value,
+  newSlots => {
+    console.log('weaponSlots updated:', newSlots);
+  }
+);
+
 const previewOptions = computed(() => {
   if (!unit.value) return null;
   return {
@@ -299,7 +308,7 @@ function onClickUnitActive(e: Event) {
   (e.target as HTMLButtonElement).blur();
   const vehicle = player.value?.modules.vehicle;
   if (!vehicle) return;
-  const movableModule = vehicle.getUnit()?.modules.movable;
+  const movableModule = vehicle.getActiveUnit()?.modules.movable;
 
   if (movableModule) {
     if (movableModule.isTurnOn()) {
@@ -315,7 +324,7 @@ function onClickAimActive(e: Event) {
   autoAimActive.value = !autoAimActive.value;
   const vehicle = player.value?.modules.vehicle;
   if (!vehicle) return;
-  const gunModule = vehicle.getUnit()!.getModuleByType(WeaponUnitModule);
+  const gunModule = vehicle.getActiveUnit()!.getModuleByType(WeaponUnitModule);
 
   if (gunModule) {
     gunModule.setAutoAimActive(autoAimActive.value);
@@ -323,7 +332,8 @@ function onClickAimActive(e: Event) {
 }
 
 function onClickGears() {
-  const vehicleUnit = player.value?.modules.vehicle.getUnit() as AirVehicleUnit;
+  const vehicleUnit =
+    player.value?.modules.vehicle.getActiveUnit() as AirVehicleUnit;
   if (!(vehicleUnit instanceof AirVehicleUnit)) return;
 
   const airVehicleModule = vehicleUnit.modules.airVehicle;

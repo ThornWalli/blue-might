@@ -171,7 +171,7 @@ export default class UnitChunkManager {
   // }
 
   getUnitsInRadius(position: Vector3, radius: number): Unit[] {
-    const unitsInRadius: Unit[] = [];
+    const unitsInRadius: { unit: Unit; distance: number }[] = [];
     const chunkSize = this.size;
 
     // Berechne die Chunk-Koordinaten des Zentrums (verwende getChunkKey für Konsistenz)
@@ -210,7 +210,7 @@ export default class UnitChunkManager {
               const unitPos = unit.getPosition();
               const distance = position.distanceTo(unitPos);
               if (distance <= radius) {
-                unitsInRadius.push(unit);
+                unitsInRadius.push({ unit, distance });
               }
             });
           }
@@ -218,6 +218,7 @@ export default class UnitChunkManager {
       }
     }
 
-    return unitsInRadius;
+    unitsInRadius.sort((a, b) => a.distance - b.distance);
+    return unitsInRadius.map(entry => entry.unit);
   }
 }

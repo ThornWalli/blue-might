@@ -7,7 +7,7 @@ import MovableUnitModule, {
   type MovableUnitModuleState
 } from '../Movable';
 import type LandingPortUnit from '../../unit/LandingPort';
-import type AirVehicleUnit from '../../unit/AirVehicle';
+import type AirVehicleUnit from '../../unit/vehicle/AirVehicle';
 
 import { FLIGHT_STATUS } from './airVehicle/Helicopter';
 

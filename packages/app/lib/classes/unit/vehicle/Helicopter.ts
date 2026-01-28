@@ -5,11 +5,13 @@ import {
   type UnitConstructorOptions
 } from '../../Unit';
 import HelicopterUnitModule from '../../unitModule/movable/airVehicle/Helicopter';
+import { addModules } from '../../Module';
+
 import AirVehicleUnit, {
   type AirVehicleUnitModuleList,
   type AirVehicleUnitModules,
   type AirVehicleUnitOptions
-} from '../AirVehicle';
+} from './AirVehicle';
 
 export type HelicopterUnitOptions = AirVehicleUnitOptions;
 
@@ -27,9 +29,10 @@ export default class HelicopterUnit<
   static override TYPE = UNIT_TYPE.HELICOPTER;
   constructor(
     options: UnitConstructorOptions<Options>,
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
-    moduleList.push(HelicopterUnitModule);
+    moduleList = (moduleList || []) as ModuleList;
+    moduleList = addModules(moduleList, [HelicopterUnitModule]);
     super(options, moduleList);
     this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.FLIGHT);
   }

@@ -13,7 +13,7 @@ import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import type MovableUnit from '../unit/Movable';
 import type { NAVIGATOR_TYPE } from '../mapModule/Pathfinding';
-import type SeaVehicleUnit from '../unit/SeaVehicle';
+import type SeaVehicleUnit from '../unit/vehicle/SeaVehicle';
 
 import FigureUnitModule from './movable/Figure';
 import HelicopterUnitModule from './movable/airVehicle/Helicopter';
@@ -310,7 +310,7 @@ export default class PathfindingUnitModule extends UnitModule<
         ascend,
         descend,
 
-        gear: shouldToggleGears,
+        landing_gear: shouldToggleGears,
 
         rotateLeft: turnLeft,
         rotateRight: turnRight,
@@ -440,7 +440,7 @@ export default class PathfindingUnitModule extends UnitModule<
 
           heli2.setAutopilotControls({
             landing: shouldLand,
-            gear: shouldToggleGearsForLanding // Befehl zum Ausfahren der Gears geben
+            landing_gear: shouldToggleGearsForLanding // Befehl zum Ausfahren der Gears geben
           });
         }
         this.state.currentPath = null;

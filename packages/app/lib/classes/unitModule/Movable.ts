@@ -324,7 +324,8 @@ export default class MovableUnitModule<
 
       [ControlAction.SPACE]: ai?.space ?? human?.space ?? false,
       [ControlAction.POWER]: ai?.power ?? human?.power ?? false,
-      [ControlAction.GEAR]: ai?.gear ?? human?.gear ?? false,
+      [ControlAction.LANDING_GEAR]:
+        ai?.landing_gear ?? human?.landing_gear ?? false,
       [ControlAction.SWITCH_WEAPON]:
         ai?.switchWeapon ?? human?.switchWeapon ?? false,
       [ControlAction.LANDING]: ai?.landing ?? human?.landing ?? false,
@@ -337,7 +338,9 @@ export default class MovableUnitModule<
       [ControlAction.PITCH_DOWN]: ai?.pitchDown ?? human?.pitchDown ?? false,
       [ControlAction.PITCH_UP]: ai?.pitchUp ?? human?.pitchUp ?? false,
       [ControlAction.ROLL_LEFT]: ai?.rollLeft ?? human?.rollLeft ?? false,
-      [ControlAction.ROLL_RIGHT]: ai?.rollRight ?? human?.rollRight ?? false
+      [ControlAction.ROLL_RIGHT]: ai?.rollRight ?? human?.rollRight ?? false,
+      [ControlAction.VEHICLE_SWITCH]:
+        ai?.vehicle_switch ?? human?.vehicle_switch ?? false
     };
   }
 

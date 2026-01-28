@@ -5,7 +5,7 @@
     class="bm-panel-gun-screen"
     :class="{ fullscreen }"
     title="Gun Screen">
-    <teleport to="#testtt" :disabled="!fullscreen">
+    <teleport to="#layout-background" :disabled="!fullscreen">
       <bm-gun-screen
         :app="$props.app"
         :unit="unit"

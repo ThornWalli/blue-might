@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { SubscriptionLike } from 'rxjs';
 import { Subscription } from 'rxjs';
 
@@ -79,4 +80,21 @@ export default class Module<
   isForceUpdate() {
     return false;
   }
+}
+
+export function hasModule(
+  moduleList: (any & { TYPES: string; TYPE: string })[],
+  module: any & { TYPES: string; TYPE: string }
+) {
+  return moduleList.find(test => test.TYPES.includes(module.TYPE));
+}
+
+export function addModules<T>(moduleList: T, modules: any[]): T {
+  moduleList = moduleList || ([] as T);
+  modules.forEach(module => {
+    if (!hasModule(moduleList as { TYPES: string[]; TYPE: string }[], module)) {
+      (moduleList as { TYPES: string[]; TYPE: string }[]).push(module);
+    }
+  });
+  return moduleList as T;
 }

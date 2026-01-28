@@ -17,7 +17,7 @@ import SeaVehicleUnit, {
   type SeaVehicleUnitModuleList,
   type SeaVehicleUnitModules,
   type SeaVehicleUnitOptions
-} from '@blue-might/app/lib/classes/unit/SeaVehicle';
+} from '@blue-might/app/lib/classes/unit/vehicle/SeaVehicle';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import {
   autoAimFunction,
@@ -37,6 +37,7 @@ import type {
   WeaponSupportOptions,
   WeaponSupportState
 } from '@blue-might/app/lib/types/unit';
+import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/combat_fregatte_1.glb?url';
 
@@ -86,9 +87,13 @@ export default class CombatFregatte_1
 
   constructor(
     options: Omit<UnitConstructorOptions<CombatFregatteOptions>, 'name'> = {},
-    moduleList: Partial<CombatFregatteModuleList> = []
+    moduleList?: CombatFregatteModuleList
   ) {
-    moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
+    moduleList = addModules(moduleList, [
+      AttackUnitModule,
+      WeaponUnitModule,
+      PlayerUnitModule
+    ]);
     super(
       {
         ...options,

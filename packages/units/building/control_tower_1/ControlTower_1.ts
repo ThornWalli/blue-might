@@ -29,14 +29,14 @@ export default class ControlTower_1<
   static override KEY = 'control_tower_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
     super(
       {
         ...options,
         name: 'ControlTower 1'
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

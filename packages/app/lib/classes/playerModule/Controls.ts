@@ -11,7 +11,8 @@ import type Player from '../Player';
 export enum ControlAction {
   SPACE = 'space',
   POWER = 'power',
-  GEAR = 'gear',
+  VEHICLE_SWITCH = 'vehicle_switch',
+  LANDING_GEAR = 'landing_gear',
   SWITCH_WEAPON = 'switchWeapon',
   LANDING = 'landing',
   MODIFIER = 'modifier',
@@ -49,8 +50,11 @@ const actionBindings: KeyBindings = {
   [ControlAction.POWER]: {
     keyCode: ['KeyP']
   },
-  [ControlAction.GEAR]: {
+  [ControlAction.VEHICLE_SWITCH]: {
     keyCode: ['KeyG']
+  },
+  [ControlAction.LANDING_GEAR]: {
+    keyCode: ['KeyL']
   },
   [ControlAction.SWITCH_WEAPON]: {
     keyCode: ['KeyX']
@@ -162,7 +166,9 @@ export function getDefaultControls<
     [ControlAction.FIRE_PRIMARY]: false,
     [ControlAction.FIRE_SECONDARY]: false,
     [ControlAction.SPACE]: false,
-    [ControlAction.GEAR]: false,
+    [ControlAction.POWER]: false,
+    [ControlAction.VEHICLE_SWITCH]: false,
+    [ControlAction.LANDING_GEAR]: false,
     [ControlAction.LANDING]: false,
     [ControlAction.MODIFIER]: false,
     [ControlAction.ROTATE_LEFT]: false,
@@ -192,12 +198,13 @@ export default class ControlsPlayerModule extends PlayerModule<
 > {
   static override TYPE = 'controls';
 
-  override state: State = {
-    controls: getDefaultControls()
-  };
-
   constructor(player: Player, options: Options, state: State, debug?: boolean) {
-    super(player, options, state, debug);
+    super(
+      player,
+      options,
+      { ...state, controls: state.controls ?? getDefaultControls() },
+      debug
+    );
 
     //#region observables
     this.observables.controls$ = new Subject<ControlState>();
@@ -225,7 +232,7 @@ export default class ControlsPlayerModule extends PlayerModule<
   }
 
   private handleKeyEvent(event: KeyboardEvent, isKeyDown: boolean) {
-    const vehicle = this.player.modules.vehicle.getUnit();
+    const vehicle = this.player.modules.vehicle.getActiveUnit();
     if (!vehicle) return;
 
     const controls: ControlState = this.state.controls;
@@ -252,7 +259,8 @@ export interface ControlState {
 
   [ControlAction.SPACE]: boolean;
   [ControlAction.POWER]: boolean;
-  [ControlAction.GEAR]: boolean;
+  [ControlAction.VEHICLE_SWITCH]: boolean;
+  [ControlAction.LANDING_GEAR]: boolean;
   [ControlAction.SWITCH_WEAPON]: boolean;
   [ControlAction.LANDING]: boolean;
   [ControlAction.MODIFIER]: boolean;

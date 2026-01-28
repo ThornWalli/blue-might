@@ -28,14 +28,14 @@ export default class Windsock_1<
   static override KEY = 'windsock_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
     super(
       {
         ...options,
         name: 'Windsock 1'
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

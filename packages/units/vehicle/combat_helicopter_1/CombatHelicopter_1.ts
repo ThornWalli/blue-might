@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import { combineLatest, filter } from 'rxjs';
 import type {
   RawUnitDescription,
@@ -39,6 +38,7 @@ import type {
   WeaponSupportState
 } from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
+import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/combat_helicopter_1.glb?url';
 
@@ -99,9 +99,9 @@ export default class CombatHelicopter_1
 
   constructor(
     options: Omit<UnitConstructorOptions<CombatHelicopterOptions>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: CombatHelicopterModuleList
   ) {
-    moduleList.push(AttackUnitModule, WeaponUnitModule);
+    moduleList = addModules(moduleList, [AttackUnitModule, WeaponUnitModule]);
     super(
       {
         ...options,

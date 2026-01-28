@@ -14,12 +14,12 @@ import UnitModule, {
   type UnitModuleOptions,
   type UnitModuleState
 } from '../UnitModule';
-import AirVehicleUnit from '../unit/AirVehicle';
+import AirVehicleUnit from '../unit/vehicle/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
 import VehicleUnit, { type VehicleUnitModules } from '../unit/Vehicle';
 import type Unit from '../Unit';
 import { disposeObject3D } from '../../utils/object';
-import SeaVehicleUnit from '../unit/SeaVehicle';
+import SeaVehicleUnit from '../unit/vehicle/SeaVehicle';
 
 import type WeaponUnitModule from './Weapon';
 import GroundVehicleUnitModule from './movable/GroundVehicle';

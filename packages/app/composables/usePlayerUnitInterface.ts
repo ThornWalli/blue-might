@@ -17,7 +17,7 @@ import { Euler, MathUtils } from 'three';
 
 import type VehicleUnit from '../lib/classes/unit/Vehicle';
 import WeaponUnitModule from '../lib/classes/unitModule/Weapon';
-import type AirVehicleUnit from '../lib/classes/unit/AirVehicle';
+import type AirVehicleUnit from '../lib/classes/unit/vehicle/AirVehicle';
 import type { FLIGHT_STATUS } from '../lib/classes/unitModule/movable/airVehicle/Helicopter';
 import type { PowerInfo } from '../lib/classes/unitModule/Movable';
 import { DAMAGE_LEVEL } from '../lib/classes/unitModule/Damage';
@@ -172,13 +172,15 @@ export default function usePlayerUnitInterface(app: App) {
     subscription.add(
       vehicle$
         .pipe(
-          map(
+          switchMap(
             vehicle =>
-              vehicle?.getModuleByType(WeaponUnitModule)?.getSlots() ?? []
+              vehicle?.getModuleByType(WeaponUnitModule)?.observables.slots$ ??
+              EMPTY
           )
         )
-        .subscribe(slots => (weaponSlots.value = slots))
+        .subscribe(slots => (weaponSlots.value = markRaw([...slots])))
     );
+
     subscription.add(
       vehicle$
         .pipe(
@@ -230,7 +232,7 @@ export default function usePlayerUnitInterface(app: App) {
             )
           )
         )
-        .subscribe(slots => (weaponSlots.value = slots))
+        .subscribe(slots => (weaponSlots.value = markRaw([...slots])))
     );
 
     subscription.add(

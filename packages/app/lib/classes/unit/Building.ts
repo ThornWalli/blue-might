@@ -1,5 +1,6 @@
 import { UNIT_TYPE } from '../../types/unit';
 import { setDestroyedMaterials } from '../../utils/material';
+import { addModules } from '../Module';
 import Unit, {
   GROUND_ADJUSTMENT_MODE,
   type SetupContext,
@@ -30,15 +31,10 @@ export default class BuildingUnit<
   static override TYPE = UNIT_TYPE.BUILDING;
   constructor(
     options: UnitConstructorOptions<Options>,
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
-    if (
-      !(moduleList as ModuleList).find(
-        test => test.TYPE === BuildingUnitModule.TYPE
-      )
-    ) {
-      moduleList.push(BuildingUnitModule);
-    }
+    moduleList = (moduleList || []) as ModuleList;
+    moduleList = addModules(moduleList, [BuildingUnitModule]);
     super(options, moduleList);
     this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.MIN_HEIGHT);
   }

@@ -7,11 +7,6 @@ import {
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Vector2, Mesh, SkinnedMesh, Object3D } from 'three';
-import BuildingUnit, {
-  type BuildingUnitModuleList,
-  type BuildingUnitModules,
-  type BuildingUnitOptions
-} from '@blue-might/app/lib/classes/unit/Building';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import WeaponUnitModule, {
@@ -35,6 +30,13 @@ import type {
 } from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import { OBJECT_USER_DATA } from '@blue-might/app/lib/utils/object';
+import type {
+  TurretBuildingUnitModuleList,
+  TurretBuildingUnitModules,
+  TurretBuildingUnitOptions
+} from '@blue-might/app/lib/classes/unit/building/Turret';
+import TurretBuildingUnit from '@blue-might/app/lib/classes/unit/building/Turret';
+import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/turret_1.glb?url';
 
@@ -42,17 +44,17 @@ import baseGlb from './assets/turret_1.glb?url';
 interface State extends WeaponSupportState {}
 
 export interface TurretOptions
-  extends BuildingUnitOptions, WeaponSupportOptions {
+  extends TurretBuildingUnitOptions, WeaponSupportOptions {
   rotationSpeed: number;
 }
 
-export interface TurretModules extends BuildingUnitModules {
+export interface TurretModules extends TurretBuildingUnitModules {
   attack: AttackUnitModule;
   weapon: WeaponUnitModule;
   player: PlayerUnitModule;
 }
 
-export type TurretModuleList = BuildingUnitModuleList &
+export type TurretModuleList = TurretBuildingUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
 export interface RawUnitDescription_Turret_1<
@@ -62,7 +64,7 @@ export interface RawUnitDescription_Turret_1<
 }
 
 export default class Turret_1
-  extends BuildingUnit<TurretModules, TurretModuleList, TurretOptions>
+  extends TurretBuildingUnit<TurretModules, TurretModuleList, TurretOptions>
   implements WeaponUnitInterface<State>
 {
   static override KEY = 'turret_1';
@@ -82,9 +84,13 @@ export default class Turret_1
 
   constructor(
     options: Omit<UnitConstructorOptions<TurretOptions>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: TurretModuleList
   ) {
-    moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
+    moduleList = addModules(moduleList, [
+      AttackUnitModule,
+      WeaponUnitModule,
+      PlayerUnitModule
+    ]);
     super(
       {
         ...options,

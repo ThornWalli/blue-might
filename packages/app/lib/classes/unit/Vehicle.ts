@@ -2,6 +2,7 @@ import type { SetupContext, UnitConstructorOptions } from '../Unit';
 import PatrolUnitModule from '../unitModule/Patrol';
 import PlayerUnitModule from '../unitModule/Player';
 import { setDestroyedMaterials } from '../../utils/material';
+import { addModules } from '../Module';
 
 import MovableUnit, {
   type MovableUnitModuleList,
@@ -29,9 +30,10 @@ export default class VehicleUnit<
 > extends MovableUnit<Modules, ModuleList, Options> {
   constructor(
     options: UnitConstructorOptions<Options>,
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
-    moduleList.push(PatrolUnitModule, PlayerUnitModule);
+    moduleList = (moduleList || []) as ModuleList;
+    moduleList = addModules(moduleList, [PatrolUnitModule, PlayerUnitModule]);
     super(options, moduleList);
   }
   override async setup(context: SetupContext) {

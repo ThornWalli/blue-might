@@ -34,6 +34,7 @@ declare module '../Unit' {
 
 export interface WeaponUnitModuleObservables extends UnitModuleObservables {
   active$: Subject<boolean>;
+  slots$: ReplaySubject<WeaponSlot[]>;
   shoot$: Subject<{
     index: number;
     slot: WeaponSlot;
@@ -129,6 +130,10 @@ export default class WeaponUnitModule<
     //#region observables
     this.observables.active$ = new Subject<boolean>();
     this.observables.active$.next(this.state.active);
+
+    this.observables.slots$ = new ReplaySubject<WeaponSlot[]>(1);
+    this.observables.slots$.next(this.getSlots());
+
     this.observables.shoot$ = new Subject<{
       index: number;
       slot: WeaponSlot;
@@ -211,6 +216,8 @@ export default class WeaponUnitModule<
     if (slots[this.state.currentSlot]) {
       slots[this.state.currentSlot]!.active = true;
     }
+
+    this.observables.slots$.next(slots);
   }
 
   override async addToScene() {

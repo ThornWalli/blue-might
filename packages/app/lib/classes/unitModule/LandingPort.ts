@@ -5,7 +5,7 @@ import UnitModule, {
   type UnitModuleOptions,
   type UnitModuleState
 } from '../UnitModule';
-import type AirVehicleUnit from '../unit/AirVehicle';
+import type AirVehicleUnit from '../unit/vehicle/AirVehicle';
 import type LandingPortUnit from '../unit/LandingPort';
 
 declare module '../Unit' {

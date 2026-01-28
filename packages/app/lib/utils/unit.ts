@@ -1,6 +1,6 @@
 import type { UnitModules } from '../classes/Unit';
 import type Unit from '../classes/Unit';
-import type AirVehicleUnit from '../classes/unit/AirVehicle';
+import type AirVehicleUnit from '../classes/unit/vehicle/AirVehicle';
 import type BuildingUnitModule from '../classes/unitModule/Building';
 import type AirVehicleUnitModule from '../classes/unitModule/movable/AirVehicle';
 import type GroundVehicleUnitModule from '../classes/unitModule/movable/GroundVehicle';
@@ -11,7 +11,11 @@ export function isUnitDestroyed(unit: Unit): boolean {
 }
 
 export function isVehicle(unit?: Unit | null): boolean {
-  return (unit && 'movable' in unit.modules) ?? false;
+  return (unit && 'vehicle' in unit.modules) ?? false;
+}
+
+export function isFigure(unit?: Unit | null): boolean {
+  return (unit && 'figure' in unit.modules) ?? false;
 }
 
 export function isSeaVehicle(unit?: Unit | null): boolean {

@@ -3,12 +3,14 @@ import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';
 import type { UnitConstructorOptions } from '../../Unit';
 import GroundVehicleUnitModule from '../../unitModule/movable/GroundVehicle';
 import type PlayerUnitModule from '../../unitModule/Player';
+import { addModules } from '../../Module';
+
 import type {
   GroundVehicleUnitModuleList,
   GroundVehicleUnitModules,
   GroundVehicleUnitOptions
-} from '../GroundVehicle';
-import GroundVehicleUnit from '../GroundVehicle';
+} from './GroundVehicle';
+import GroundVehicleUnit from './GroundVehicle';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface CarUnitOptions extends GroundVehicleUnitOptions {}
@@ -31,15 +33,10 @@ export default class CarUnit<
   static override TYPE = UNIT_TYPE.CAR;
   constructor(
     options: UnitConstructorOptions<Options>,
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
-    if (
-      !(moduleList as ModuleList).find(
-        ({ TYPE }) => TYPE === GroundVehicleUnitModule.TYPE
-      )
-    ) {
-      moduleList.push(GroundVehicleUnitModule);
-    }
+    moduleList = (moduleList || []) as ModuleList;
+    moduleList = addModules(moduleList, [GroundVehicleUnitModule]);
     super(options, moduleList);
   }
 }

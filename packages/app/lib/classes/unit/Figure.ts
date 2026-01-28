@@ -7,6 +7,8 @@ import FigureUnitModule from '../unitModule/movable/Figure';
 import PatrolUnitModule from '../unitModule/Patrol';
 import { COLLISION_TYPE } from '../unitModule/Collision';
 import { UNIT_TYPE } from '../../types/unit';
+import PlayerUnitModule from '../unitModule/Player';
+import { addModules } from '../Module';
 
 import MovableUnit, {
   type MovableUnitModuleList,
@@ -17,7 +19,7 @@ import MovableUnit, {
 export interface FigureUnitOptions extends UnitOptions {}
 
 export type FigureUnitModules = MovableUnitModules & {
-  movable: FigureUnitModule;
+  figure: FigureUnitModule;
   patrol: PatrolUnitModule;
 };
 
@@ -34,16 +36,15 @@ export default class FigureUnit<
   static override TYPE = UNIT_TYPE.FIGURE;
   constructor(
     options: UnitConstructorOptions<Options>,
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
-    moduleList.push(PatrolUnitModule);
-    if (
-      !(moduleList as ModuleList).find(
-        ({ TYPE }) => TYPE === FigureUnitModule.TYPE
-      )
-    ) {
-      moduleList.push(FigureUnitModule);
-    }
+    moduleList = (moduleList || []) as ModuleList;
+    moduleList = addModules(moduleList, [
+      FigureUnitModule,
+      PatrolUnitModule,
+      PlayerUnitModule
+    ]);
+
     super(
       {
         ...options,

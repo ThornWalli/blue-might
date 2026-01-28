@@ -30,14 +30,14 @@ export default class Flag_1<
   static override KEY = 'flag_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
     super(
       {
         ...options,
         name: 'Flag 1'
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

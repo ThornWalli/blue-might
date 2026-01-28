@@ -1,4 +1,3 @@
-/* eslint-disable complexity */
 import {
   GROUND_ADJUSTMENT_MODE,
   type RawUnitDescription,
@@ -38,6 +37,7 @@ import type {
   WeaponSupportState
 } from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
+import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/missle_launcher_1.glb?url';
 
@@ -103,9 +103,13 @@ export default class MissleLauncher_1
 
   constructor(
     options: Omit<UnitConstructorOptions<MissleLauncherOptions>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: MissleLauncherModuleList
   ) {
-    moduleList.push(AttackUnitModule, WeaponUnitModule, PlayerUnitModule);
+    moduleList = addModules(moduleList, [
+      AttackUnitModule,
+      WeaponUnitModule,
+      PlayerUnitModule
+    ]);
     super(
       {
         ...options,

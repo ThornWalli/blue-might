@@ -28,14 +28,14 @@ export default class Barrack_1<
   static override KEY = 'barrack_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
     super(
       {
         ...options,
         name: 'Barrack 1'
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

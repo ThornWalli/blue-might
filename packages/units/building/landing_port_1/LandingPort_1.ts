@@ -31,7 +31,7 @@ export default class LandingPort_1 extends LandingPortUnit<
   static override KEY = 'landing_port_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: ModuleList = [] as unknown as ModuleList
+    moduleList?: ModuleList
   ) {
     super(
       {
@@ -53,7 +53,7 @@ export default class LandingPort_1 extends LandingPortUnit<
           }
         }
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

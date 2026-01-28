@@ -112,7 +112,7 @@ function setupMessages(app: AppPlayground) {
       )
       .subscribe(() => {
         const player = app.modules.player.getCurrentPlayer();
-        const unit = player.modules.vehicle.getUnit();
+        const unit = player.modules.vehicle.getActiveUnit();
 
         if (unit?.modules.damage.isDestroyed()) {
           if (player.modules.life.isGameOver()) {

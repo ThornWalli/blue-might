@@ -20,6 +20,7 @@ import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import type { ControlState } from '@blue-might/app/lib/classes/playerModule/Controls';
 import { playSound } from '@blue-might/weapon/utils';
 import { createBarrelTargetShoot } from '@blue-might/app/lib/utils/unit/weapon';
+import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/stationary_gun_2.glb?url';
 
@@ -84,14 +85,14 @@ export default class StationaryGun_2 extends BuildingUnit<
 
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
-    moduleList.push(
+    moduleList = addModules(moduleList, [
       AttackUnitModule,
       WeaponUnitModule,
       PlayerUnitModule,
       MovableUnitModule
-    );
+    ]);
     super(
       {
         ...options,
@@ -117,7 +118,7 @@ export default class StationaryGun_2 extends BuildingUnit<
           }
         }
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

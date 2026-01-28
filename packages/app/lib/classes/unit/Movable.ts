@@ -1,3 +1,4 @@
+import { addModules } from '../Module';
 import Unit, {
   type UnitConstructorOptions,
   type UnitModuleList,
@@ -12,8 +13,8 @@ export interface MovableUnitOptions extends UnitOptions {
 }
 
 export type MovableUnitModules = UnitModules & {
-  player: PlayerUnitModule;
   movable: MovableUnitModule;
+  player: PlayerUnitModule;
 };
 
 export type MovableUnitModuleList = (
@@ -28,16 +29,10 @@ export default class MovableUnit<
 > extends Unit<Modules, ModuleList, Options> {
   constructor(
     options: UnitConstructorOptions<Options>,
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
-    if (
-      !(moduleList as ModuleList).find(test =>
-        test.TYPES.includes(MovableUnitModule.TYPE)
-      )
-    ) {
-      moduleList.push(MovableUnitModule);
-    }
-    moduleList.push(PlayerUnitModule);
+    moduleList = (moduleList || []) as ModuleList;
+    moduleList = addModules(moduleList, [MovableUnitModule, PlayerUnitModule]);
     super(options, moduleList);
   }
 }

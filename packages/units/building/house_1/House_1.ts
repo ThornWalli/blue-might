@@ -29,14 +29,14 @@ export default class House_1<
   static override KEY = 'house_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
     super(
       {
         ...options,
         name: 'House 1'
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

@@ -92,7 +92,7 @@ export default class HelicopterUnitModule<
       [ControlAction.ASCEND]: ai.ascend ?? human.ascend,
       [ControlAction.DESCEND]: ai.descend ?? human.descend,
 
-      [ControlAction.GEAR]: ai.gear ?? human.gear,
+      [ControlAction.LANDING_GEAR]: ai.landing_gear ?? human.landing_gear,
       [ControlAction.LANDING]: ai.landing ?? human.landing,
       [ControlAction.ROTATE_LEFT]: ai.rotateLeft ?? human.rotateLeft,
       [ControlAction.ROTATE_RIGHT]: ai.rotateRight ?? human.rotateRight,
@@ -145,7 +145,7 @@ export default class HelicopterUnitModule<
           )
         )
         .subscribe(controls => {
-          if (controls.gear && this.canToggleGears()) {
+          if (controls.landing_gear && this.canToggleGears()) {
             this.toggleGears();
           }
         })

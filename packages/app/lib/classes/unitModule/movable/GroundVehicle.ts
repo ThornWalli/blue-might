@@ -101,7 +101,8 @@ export default class GroundVehicleUnitModule<
         ai[ControlAction.MOVE_RIGHT] ?? human[ControlAction.MOVE_RIGHT],
       [ControlAction.SPACE]:
         ai[ControlAction.SPACE] ?? human[ControlAction.SPACE],
-      [ControlAction.GEAR]: ai[ControlAction.GEAR] ?? human[ControlAction.GEAR],
+      [ControlAction.LANDING_GEAR]:
+        ai[ControlAction.LANDING_GEAR] ?? human[ControlAction.LANDING_GEAR],
       [ControlAction.LANDING]:
         ai[ControlAction.LANDING] ?? human[ControlAction.LANDING],
       [ControlAction.MODIFIER]:

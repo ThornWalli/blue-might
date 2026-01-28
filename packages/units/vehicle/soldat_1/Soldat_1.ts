@@ -30,14 +30,14 @@ export default class Soldat_1<
 
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
     super(
       {
         ...options,
         name: 'Soldat 1'
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

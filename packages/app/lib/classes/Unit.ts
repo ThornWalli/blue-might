@@ -157,6 +157,7 @@ export default class Unit<
   options: Options = {} as Options;
   root: Group;
   visible: boolean = true;
+  ready: boolean = false;
   moduleDebug: Partial<ModuleDebug> = {};
 
   getRoot() {
@@ -525,7 +526,7 @@ export default class Unit<
 
     if (
       this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.GROUND &&
-      desired.y - from.y < 1 / 3
+      Math.abs(desired.y - from.y) > 1 / 3
     ) {
       this.position.copy(this.lastPosition);
       this.root.position.copy(this.lastPosition);

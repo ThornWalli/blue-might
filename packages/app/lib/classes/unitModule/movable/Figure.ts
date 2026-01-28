@@ -44,6 +44,7 @@ export default class FigureUnitModule extends MovableUnitModule<
   FigureUnitObservables,
   FigureUnit
 > {
+  static override TYPE = 'figure';
   private moveState = getDefaultMoveState();
 
   constructor(

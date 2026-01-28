@@ -17,9 +17,9 @@ import AppModule, {
 import type Player from '../Player';
 import { HumanPlayer } from '../player/Human';
 import { isAirVehicle, isGroundVehicle } from '../../utils/unit';
-import type MovableUnit from '../unit/Movable';
 import type { UnitDescription } from '../Unit';
 import type BaseApp from '../BaseApp';
+import type VehicleUnit from '../unit/Vehicle';
 
 const unitMap = new Map(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -52,43 +52,6 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
     this.state.players.forEach(player => player.destroy());
 
     super.destroy();
-  }
-
-  getPlayerById(id: string) {
-    return this.state.players.find(player => player.id === id);
-  }
-
-  getCurrentPlayer() {
-    if (!this.state.currentPlayer) {
-      throw new Error('Current player is not set');
-    }
-    return this.state.currentPlayer;
-  }
-
-  setCurrentPlayer(player: Player) {
-    if (this.state.currentPlayer === player) return;
-    this.state.currentPlayer = player;
-    this.observables.currentPlayer$.next(player);
-  }
-
-  getPlayers() {
-    return this.state.players;
-  }
-
-  async addPlayer(player: Player) {
-    this.state.players.push(player);
-    if (player instanceof HumanPlayer) {
-      this.setCurrentPlayer(player);
-    }
-    await player.setup();
-    this.observables.addPlayer$.next(player);
-    return player;
-  }
-
-  removePlayer(player: Player) {
-    this.state.players = this.state.players.filter(p => p.id !== player.id);
-    this.observables.removePlayer$.next(player);
-    player.destroy();
   }
 
   override async setup() {
@@ -132,12 +95,49 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
     );
   }
 
+  getPlayerById(id: string) {
+    return this.state.players.find(player => player.id === id);
+  }
+
+  getCurrentPlayer() {
+    if (!this.state.currentPlayer) {
+      throw new Error('Current player is not set');
+    }
+    return this.state.currentPlayer;
+  }
+
+  setCurrentPlayer(player: Player) {
+    if (this.state.currentPlayer === player) return;
+    this.state.currentPlayer = player;
+    this.observables.currentPlayer$.next(player);
+  }
+
+  getPlayers() {
+    return this.state.players;
+  }
+
+  async addPlayer(player: Player) {
+    this.state.players.push(player);
+    if (player instanceof HumanPlayer) {
+      this.setCurrentPlayer(player);
+    }
+    await player.setup();
+    this.observables.addPlayer$.next(player);
+    return player;
+  }
+
+  removePlayer(player: Player) {
+    this.state.players = this.state.players.filter(p => p.id !== player.id);
+    this.observables.removePlayer$.next(player);
+    player.destroy();
+  }
+
   private async setupPlayerUnit() {
     const player = this.getCurrentPlayer();
     const map = this.app.modules.map.getMap()!;
     const playerOptions = map.getPlayerOptions();
     const description = playerOptions.unit as unknown as UnitDescription;
-    const unit = new (await getUnitClass<typeof MovableUnit>(
+    const unit = new (await getUnitClass<typeof VehicleUnit>(
       playerOptions.unit.key
     ))({
       ...description,
@@ -149,7 +149,7 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
         }
       }
     });
-    player.modules.vehicle.setUnit(unit);
+    player.modules.vehicle.setVehicleUnit(unit);
     map.modules.units.add(unit);
 
     return unit;
@@ -171,7 +171,7 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
     unitsByRadius
       .filter(
         unit =>
-          player.modules.vehicle.getUnit() === unit ||
+          player.modules.vehicle.getActiveUnit() === unit ||
           isGroundVehicle(unit) ||
           isAirVehicle(unit)
       )

@@ -2,11 +2,13 @@ import type { UnitConstructorOptions } from '@blue-might/app/lib/classes/Unit';
 import TankUnitModule from '@blue-might/app/lib/classes/unitModule/Tank';
 import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';
 
+import { addModules } from '../../Module';
+
 import GroundVehicleUnit, {
   type GroundVehicleUnitModuleList,
   type GroundVehicleUnitModules,
   type GroundVehicleUnitOptions
-} from '../GroundVehicle';
+} from './GroundVehicle';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface TankUnitOptions extends GroundVehicleUnitOptions {}
@@ -25,9 +27,10 @@ export default class TankUnit<
   static override TYPE = UNIT_TYPE.TANK;
   constructor(
     options: UnitConstructorOptions<Options>,
-    moduleList: ModuleList = [] as unknown as ModuleList
+    moduleList?: ModuleList
   ) {
-    moduleList.push(TankUnitModule);
+    moduleList = (moduleList || []) as ModuleList;
+    moduleList = addModules(moduleList, [TankUnitModule]);
     super(options, moduleList);
   }
 }

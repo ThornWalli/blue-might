@@ -30,14 +30,14 @@ export default class Lighthouse_1<
   static override KEY = 'lighthouse_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
     super(
       {
         ...options,
         name: 'Lighthouse 1'
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

@@ -28,7 +28,7 @@ import BuildingUnit from '../unit/Building';
 import { generateNoiseTexture } from '../../utils/texture';
 import { resizeCanvas } from '../../utils/canvas';
 import { FLIGHT_STATUS } from '../unitModule/movable/airVehicle/Helicopter';
-import type AirVehicleUnit from '../unit/AirVehicle';
+import type AirVehicleUnit from '../unit/vehicle/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
 import type { IntersectionListener } from '../rendererModule/Intersection';
 import type { Textures } from '../Map';

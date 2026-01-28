@@ -10,13 +10,13 @@ import type Player from '../Player';
 import type Faction from '../Faction';
 
 interface Observables extends PlayerModuleObservables {
-  faction$: ReplaySubject<Faction>;
+  faction$: ReplaySubject<Faction | null>;
 }
 
 type Options = PlayerModuleOptions;
 
 interface State extends PlayerModuleState {
-  faction: Faction;
+  faction: Faction | null;
 }
 
 export default class FactionPlayerModule extends PlayerModule<
@@ -30,7 +30,7 @@ export default class FactionPlayerModule extends PlayerModule<
     super(player, options, state, debug);
 
     //#region observables
-    this.observables.faction$ = new ReplaySubject<Faction>();
+    this.observables.faction$ = new ReplaySubject<Faction | null>();
     this.observables.faction$.next(this.state.faction);
     //#endregion
   }

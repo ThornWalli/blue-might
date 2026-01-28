@@ -30,7 +30,7 @@ export default class Tree_1<
 
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
     super(
       {
@@ -42,7 +42,7 @@ export default class Tree_1<
           }
         }
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

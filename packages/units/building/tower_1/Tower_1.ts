@@ -30,14 +30,14 @@ export default class Tower_1<
   static override KEY = 'tower_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
     super(
       {
         ...options,
         name: 'Tower 1'
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 

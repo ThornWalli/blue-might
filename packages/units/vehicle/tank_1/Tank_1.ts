@@ -31,7 +31,7 @@ export default class Tank_1<
   static override KEY = 'tank_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
-    moduleList: unknown[] = []
+    moduleList?: ModuleList
   ) {
     super(
       {
@@ -49,7 +49,7 @@ export default class Tank_1<
           }
         }
       },
-      moduleList as ModuleList
+      moduleList
     );
   }
 
