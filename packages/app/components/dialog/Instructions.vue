@@ -17,7 +17,9 @@
         <div>Space</div>
         <div>Switch Weapon</div>
         <div>X</div>
-        <div>Gears</div>
+        <div>Landing Gears</div>
+        <div>L</div>
+        <div>Get in/out</div>
         <div>G</div>
         <div>Up / Down</div>
         <div>R/F</div>
