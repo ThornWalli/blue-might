@@ -41,17 +41,67 @@
         </figure>
       </div>
     </fieldset>
-    <fieldset>
-      <legend>Settings</legend>
-      <bm-toggle
-        :model-value="noiseMonochrome"
-        label="Enable Noise Monochrome"
-        @update:model-value="editorSurfaceModule.setNoiseMonochrome($event)" />
-    </fieldset>
-    <div class="buttons">
-      <bm-button label="Abort" @click="onClickAbort" />
-      <bm-button label="Apply" @click="onClickApply" />
-    </div>
+    <form @submit="onSubmit">
+      <fieldset>
+        <legend>Background</legend>
+        <div class="controls">
+          <bm-toggle
+            :model-value="heightMapInclude"
+            label="HeightMap in Background"
+            @update:model-value="
+              editorSurfaceModule.setHeightMapInclude($event)
+            " />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Noise</legend>
+        <div class="controls">
+          <bm-toggle
+            :model-value="noise.active"
+            label="Enable Noise"
+            @update:model-value="
+              editorSurfaceModule.setNoise({ active: $event })
+            " />
+          <bm-toggle
+            :model-value="noise.monochrome"
+            label="Enable Noise Monochrome"
+            @update:model-value="
+              editorSurfaceModule.setNoise({ monochrome: $event })
+            " />
+          <bm-form-field label="Noise Size">
+            <bm-textfield
+              :input-attrs="{ type: 'number', step: '1' }"
+              :model-value="noise.size"
+              @update:model-value="
+                editorSurfaceModule.setNoise({ size: $event })
+              " />
+          </bm-form-field>
+
+          <bm-form-field label="Noise Intensity">
+            <bm-textfield
+              :input-attrs="{ type: 'number', step: '0.01' }"
+              :model-value="noise.intensity"
+              @update:model-value="
+                editorSurfaceModule.setNoise({ intensity: $event })
+              " />
+          </bm-form-field>
+
+          <bm-form-field label="Noise Opacity">
+            <bm-textfield
+              :input-attrs="{ type: 'number', step: '0.01' }"
+              :model-value="noise.opacity"
+              @update:model-value="
+                editorSurfaceModule.setNoise({ opacity: $event })
+              " />
+          </bm-form-field>
+        </div>
+      </fieldset>
+      <div class="buttons">
+        <bm-button label="Abort" @click="onClickAbort" />
+        <bm-button label="Apply" type="submit" />
+      </div>
+    </form>
   </div>
 </template>
 
@@ -63,16 +113,23 @@ import { Texture } from 'three';
 import type { TextureDescription } from '@blue-might/app/lib/classes/appModule/EditorSurface';
 import { ICON } from '@blue-might/app/utils/icons';
 import { imageBitmapToBlob } from '@blue-might/app/utils/blob';
+import {
+  DEFAULT_MAP_NOISE,
+  type MapNoise
+} from '@blue-might/app/lib/classes/Map';
 
 import BmButton from '../Button.vue';
 import BmButtonUpload from '../button/Upload.vue';
 import BmToggle from '../Toggle.vue';
+import BmTextfield from '../Textfield.vue';
+import BmFormField from '../FormField.vue';
 import type { DialogContext } from '../base/Dialog.vue';
 
 const dialog = inject<DialogContext>('dialog')!;
 
 const textures = ref<TextureDescription[]>([]);
-const noiseMonochrome = ref<boolean>(false);
+const heightMapInclude = ref<boolean>(true);
+const noise = ref<MapNoise>(DEFAULT_MAP_NOISE);
 
 const $props = defineProps<{
   app: AppEditor;
@@ -90,8 +147,13 @@ onMounted(() => {
     })
   );
   subscription.add(
-    editorSurfaceModule.observables.noiseMonochrome$.subscribe(v => {
-      noiseMonochrome.value = v;
+    editorSurfaceModule.observables.heightMapInclude$.subscribe(v => {
+      heightMapInclude.value = v;
+    })
+  );
+  subscription.add(
+    editorSurfaceModule.observables.noise$.subscribe(v => {
+      noise.value = v;
     })
   );
 });
@@ -160,7 +222,8 @@ function onClickAbort() {
   dialog.close();
 }
 
-async function onClickApply() {
+async function onSubmit(e: Event) {
+  e.preventDefault();
   await $props.app.modules.editorSurface.apply();
   dialog.close();
 }
@@ -168,9 +231,12 @@ async function onClickApply() {
 
 <style lang="postcss" scoped>
 .bm-dialog-editor-surface-settings {
-  display: flex;
-  flex-direction: column;
-  gap: var(--bm-spacing-medium);
+  &,
+  & form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--bm-spacing-medium);
+  }
 
   & .textures {
     display: flex;
@@ -201,7 +267,7 @@ async function onClickApply() {
       display: flex;
       flex-direction: column;
       gap: var(--bm-spacing-small);
-      font-family: var(--font-base);
+      font-family: var(--font-family-base);
       font-size: 12px;
       text-align: center;
     }
@@ -243,6 +309,12 @@ async function onClickApply() {
     figure & {
       gap: 0;
     }
+  }
+
+  & .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--bm-spacing-medium);
   }
 }
 </style>

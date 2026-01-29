@@ -288,7 +288,7 @@ function onUpdatePatrolActive(active: boolean) {
     gap: var(--bm-spacing-small);
     align-items: center;
     min-width: 80px;
-    font-family: var(--font-base);
+    font-family: var(--font-family-base);
     font-size: 12px;
     font-weight: bold;
     cursor: pointer;

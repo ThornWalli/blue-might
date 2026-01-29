@@ -82,9 +82,9 @@ export enum PANEL_POSITION {
     width: calc(20 * 8px);
     overflow: hidden;
     text-overflow: ellipsis;
-    font-family: var(--font-bit-font-family);
-    font-size: var(--font-bit-font-size);
-    line-height: var(--font-bit-line-height);
+    font-family: var(--font-family-bit-font);
+    font-size: var(--font-size-bit-font);
+    line-height: var(--line-height-bit-font);
     color: var(--bm-panel-title);
     text-align: center;
     white-space: nowrap;
@@ -169,9 +169,9 @@ export enum PANEL_POSITION {
     align-items: center;
     width: 100%;
     margin-bottom: var(--bm-spacing-medium);
-    font-family: var(--font-bit-font-family);
-    font-size: var(--font-bit-font-size);
-    line-height: var(--font-bit-line-height);
+    font-family: var(--font-family-bit-font);
+    font-size: var(--font-size-bit-font);
+    line-height: var(--line-height-bit-font);
     color: var(--bm-fieldset-foreground);
 
     &::after {

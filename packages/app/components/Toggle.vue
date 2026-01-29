@@ -52,7 +52,7 @@ defineEmits<{
   }
 
   & label {
-    font-family: var(--font-base);
+    font-family: var(--font-family-base);
     font-size: 12px;
     font-weight: bold;
     cursor: pointer;

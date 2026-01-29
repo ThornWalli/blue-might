@@ -176,12 +176,10 @@ export default class EditorGridAppModule extends AppModule<State, Observables> {
       sizeByGridSize.x * sizeByGridSize.y
     );
 
-    console.log(size, sizeByGridSize, gridSize);
-
     for (let i = 0; i < sizeByGridSize.x * sizeByGridSize.y; i++) {
       const matrix = this.root!.matrix.clone();
       const x = i % sizeByGridSize.x;
-      const y = Math.floor(i / sizeByGridSize.y);
+      const y = Math.floor(i / sizeByGridSize.x);
 
       const x_ = -offset.x + x * gridSize + gridSize / 2;
       const y_ = -offset.y + y * gridSize + gridSize / 2;
@@ -278,10 +276,24 @@ function snapToGrid(state: { gridSize: number; snapPosition: boolean }) {
       rxjsMap(({ map, position }) => {
         const { gridSize, snapPosition } = state;
         if (snapPosition) {
-          position.x =
-            Math.ceil(position.x / gridSize) * gridSize - gridSize / 2;
-          position.y =
-            Math.ceil(position.y / gridSize) * gridSize - gridSize / 2;
+          const size = new Vector2(
+            map.modules.surface.state.terrainWidth,
+            map.modules.surface.state.terrainHeight
+          );
+          const offset = size.clone().divideScalar(2);
+          const i_x = Math.round(
+            (position.x + offset.x - gridSize / 2) / gridSize
+          );
+          const i_y = Math.round(
+            (position.y + offset.y - gridSize / 2) / gridSize
+          );
+          const sizeByGridSize = size.clone().divideScalar(gridSize);
+          const clamped_i_x = Math.max(0, Math.min(i_x, sizeByGridSize.x - 1));
+          const clamped_i_y = Math.max(0, Math.min(i_y, sizeByGridSize.y - 1));
+
+          position.x = -offset.x + (clamped_i_x + 0.5) * gridSize;
+          position.y = -offset.y + (clamped_i_y + 0.5) * gridSize;
+
           return {
             map,
             position

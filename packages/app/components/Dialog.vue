@@ -101,9 +101,11 @@ function onClickFullscreen() {
     & header {
       display: flex;
       align-items: center;
-      padding-right: 5px;
-      font-size: 14px;
-      line-height: 24px;
+      padding-right: var(--bm-spacing-small);
+      padding-left: var(--bm-spacing-small);
+      font-family: var(--font-family-bit-font);
+      font-size: var(--font-size-bit-font);
+      line-height: var(--line-height-bit-font);
     }
   }
 
@@ -187,9 +189,9 @@ function onClickFullscreen() {
     align-items: center;
     width: 100%;
     margin-bottom: var(--bm-spacing-medium);
-    font-family: var(--font-bit-font-family);
-    font-size: var(--font-bit-font-size);
-    line-height: var(--font-bit-line-height);
+    font-family: var(--font-family-bit-font);
+    font-size: var(--font-size-bit-font);
+    line-height: var(--line-height-bit-font);
     opacity: 0.6;
 
     &::after {

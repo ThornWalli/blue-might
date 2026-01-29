@@ -74,9 +74,9 @@ export enum CONTROL_ITEM_STATUS {
   & > div {
     box-sizing: border-box;
     display: flex;
-    font-family: var(--font-bit-font-family);
-    font-size: var(--font-bit-font-size);
-    line-height: var(--font-bit-line-height);
+    font-family: var(--font-family-bit-font);
+    font-size: var(--font-size-bit-font);
+    line-height: var(--line-height-bit-font);
     white-space: nowrap;
     border: solid 2px transparent;
   }

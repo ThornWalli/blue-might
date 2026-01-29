@@ -115,9 +115,9 @@ function setMode(m: EDITOR_MODE) {
     top: var(--bm-spacing-medium);
     left: 50%;
     padding: var(--bm-spacing-medium);
-    font-family: var(--font-bit-font-family);
-    font-size: var(--font-bit-font-size);
-    line-height: var(--font-bit-line-height);
+    font-family: var(--font-family-bit-font);
+    font-size: var(--font-size-bit-font);
+    line-height: var(--line-height-bit-font);
     color: #fd2;
     text-transform: uppercase;
     background: #000;

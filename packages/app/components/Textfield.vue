@@ -38,7 +38,7 @@ function onInput(e: InputEvent) {
     box-sizing: border-box;
     width: 100%;
     padding: var(--bm-spacing-medium);
-    font-family: var(--font-base);
+    font-family: var(--font-family-base);
     font-size: 12px;
     color: currentColor;
     appearance: none;
@@ -50,7 +50,7 @@ function onInput(e: InputEvent) {
 
 /* input[type='text'] {
   padding: var(--bm-spacing-medium);
-  font-family: var(--font-base);
+  font-family: var(--font-family-base);
   font-size: 12px;
   color: currentColor;
   appearance: none;

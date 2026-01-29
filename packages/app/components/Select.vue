@@ -56,7 +56,7 @@ defineEmits<{
     display: block;
     width: 100%;
     padding: var(--bm-spacing-small);
-    font-family: var(--font-base);
+    font-family: var(--font-family-base);
     font-size: 12px;
     color: var(--color-foreground);
     appearance: none;

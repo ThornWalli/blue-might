@@ -16,7 +16,7 @@ button {
   padding: 0;
   margin: 0;
   font: initial;
-  font-family: var(--font-base);
+  font-family: var(--font-family-base);
   cursor: pointer;
   background: none;
   border: none;

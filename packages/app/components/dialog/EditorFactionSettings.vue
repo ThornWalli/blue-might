@@ -120,13 +120,13 @@ function prepareFactions(factions: FactionDescription[]): FactionDescription[] {
 
     & > .head {
       margin-bottom: var(--bm-spacing-small);
-      font-family: var(--font-base);
+      font-family: var(--font-family-base);
       font-size: 12px;
       font-weight: bold;
 
-      /* font-family: var(--font-bit-font-family);
-      font-size: var(--font-bit-font-size);
-      line-height: var(--font-bit-line-height); */
+      /* font-family: var(--font-family-bit-font);
+      font-size: var(--font-size-bit-font);
+      line-height: var(--line-height-bit-font); */
     }
 
     & > div {

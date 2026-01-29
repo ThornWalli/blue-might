@@ -114,7 +114,7 @@ function onUpdateDamage(damage: number) {
 
     & span {
       flex: 0;
-      font-family: var(--font-base);
+      font-family: var(--font-family-base);
       font-size: 12px;
       white-space: nowrap;
     }

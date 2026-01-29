@@ -399,9 +399,9 @@ function onClickGears() {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-bit-font-family);
-  font-size: var(--font-bit-font-size);
-  line-height: var(--font-bit-line-height);
+  font-family: var(--font-family-bit-font);
+  font-size: var(--font-size-bit-font);
+  line-height: var(--line-height-bit-font);
 }
 
 .preview {
@@ -453,9 +453,9 @@ function onClickGears() {
   left: 0;
   box-sizing: border-box;
   width: 100%;
-  font-family: var(--font-bit-font-family);
-  font-size: var(--font-bit-font-size);
-  line-height: var(--font-bit-line-height);
+  font-family: var(--font-family-bit-font);
+  font-size: var(--font-size-bit-font);
+  line-height: var(--line-height-bit-font);
 
   & span {
     box-sizing: border-box;

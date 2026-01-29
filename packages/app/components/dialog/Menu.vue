@@ -19,11 +19,12 @@
       <li>
         <nuxt-link
           target="_blank"
-          href="https://github.com/ThornWalli/blue-might"
-          >Github</nuxt-link
-        >
+          href="https://github.com/ThornWalli/blue-might">
+          Github
+        </nuxt-link>
       </li>
     </ul>
+    <div class="version">{{ version }}</div>
   </div>
 </template>
 
@@ -33,6 +34,12 @@ import type { App } from '@blue-might/app/lib/types';
 
 import type { DialogContext } from '../base/Dialog.vue';
 import BmDetails from '../Details.vue';
+
+import { useRuntimeConfig } from '#imports';
+
+const runtimeConfig = useRuntimeConfig();
+
+const version = ref(runtimeConfig.public.version);
 
 inject<DialogContext>('dialog')!;
 
@@ -88,6 +95,14 @@ const debugLinks = ref([
     & li {
       text-align: center;
     }
+  }
+
+  & .version {
+    font-family: var(--font-family-base);
+    font-size: 12px;
+    font-style: italic;
+    text-align: center;
+    opacity: 0.6;
   }
 }
 </style>

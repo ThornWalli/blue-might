@@ -147,9 +147,9 @@ function onFocus() {
   & .position {
     display: flex;
     justify-content: space-between;
-    font-family: var(--font-bit-font-family);
-    font-size: var(--font-bit-font-size);
-    line-height: var(--font-bit-line-height);
+    font-family: var(--font-family-bit-font);
+    font-size: var(--font-size-bit-font);
+    line-height: var(--line-height-bit-font);
     text-align: center;
   }
 }

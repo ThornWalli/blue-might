@@ -31,7 +31,7 @@ import { FLIGHT_STATUS } from '../unitModule/movable/airVehicle/Helicopter';
 import type AirVehicleUnit from '../unit/vehicle/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
 import type { IntersectionListener } from '../rendererModule/Intersection';
-import type { Textures } from '../Map';
+import type { MapNoise, Textures } from '../Map';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -193,22 +193,6 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     return directions.reduce((acc, [dx, dz]) => {
       return Math.max(acc, func(Math.round(x + dx!), Math.round(z + dz!)));
     }, -Infinity);
-  }
-  getMinHeightAt(
-    x: number,
-    z: number,
-    sampleDistance = 1,
-    func = this.getHeightAt.bind(this)
-  ): number {
-    const directions = [
-      [0, 0],
-      [0, sampleDistance],
-      [sampleDistance, sampleDistance],
-      [sampleDistance, 0]
-    ];
-    return directions.reduce((acc, [dx, dz]) => {
-      return Math.min(acc, func(Math.round(x + dx!), Math.round(z + dz!)));
-    }, Infinity);
   }
 
   private cachePrecision = 5;
@@ -417,23 +401,35 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     this.state.heights = heights;
 
     const foregroundTexture = textures.foregroundTexture!;
-    const noiseTexture = new CanvasTexture(
-      resizeCanvas(
-        generateNoiseTexture({
-          width: dimension.x * 2,
-          height: dimension.y * 2,
-          intensity: 0.25,
-          opacity: 1,
-          monochrome: this.map.description.surface.noiseMonochrome ?? false
-        }),
-        foregroundTexture.image.width
-      )
-    );
 
+    let noiseTexture: CanvasTexture | null = null;
+    if (this.map.description.surface.noise?.active) {
+      const { size, intensity, opacity, monochrome } =
+        this.map.description.surface.noise;
+      console.log('XXXX', {
+        width: dimension.x * size,
+        height: dimension.y * size,
+        intensity,
+        opacity,
+        monochrome: monochrome
+      });
+      noiseTexture = new CanvasTexture(
+        resizeCanvas(
+          generateNoiseTexture({
+            width: dimension.x * size,
+            height: dimension.y * size,
+            intensity,
+            opacity,
+            monochrome: monochrome
+          }),
+          foregroundTexture.image.width
+        )
+      );
+    }
     const combinedTexture = combineTerrainTextures(
       {
-        noise: true,
-        heightMap: true
+        heightMap: this.map.description.surface.heightMapInclude ?? false,
+        noise: this.map.description.surface.noise ?? null
       },
       {
         ...textures,
@@ -661,10 +657,10 @@ function getPixelsFromTexture(texture: Texture<ImageBitmap>) {
 function combineTerrainTextures(
   combine: {
     heightMap: boolean;
-    noise: boolean;
+    noise: MapNoise | null;
   },
   textures: Textures & {
-    noiseTexture: CanvasTexture<HTMLCanvasElement>;
+    noiseTexture?: CanvasTexture<HTMLCanvasElement> | null;
   },
   dimension: Vector2
 ): CanvasTexture {
@@ -675,8 +671,6 @@ function combineTerrainTextures(
   let ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D =
     canvas.getContext('2d')!;
 
-  ctx.fillStyle = 'yellow';
-  ctx.fillRect(0, 0, dimension.x, dimension.y);
   ctx.drawImage(
     textures.backgroundTexture.image,
     0,
@@ -702,9 +696,9 @@ function combineTerrainTextures(
 
   ctx = canvas.getContext('2d')!;
 
-  if (combine.noise) {
+  if (textures.noiseTexture) {
     ctx.globalCompositeOperation = 'multiply';
-    ctx.globalAlpha = 0.5;
+    // ctx.globalAlpha = 0.5;
     ctx.drawImage(
       textures.noiseTexture.image,
       0,

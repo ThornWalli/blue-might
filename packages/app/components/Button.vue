@@ -69,7 +69,7 @@ defineProps<{
 
   &.mode-normal {
     padding: var(--bm-spacing-small) var(--bm-spacing-medium);
-    font-family: var(--font-base);
+    font-family: var(--font-family-base);
     font-size: 12px;
     font-weight: bold;
     color: var(--color-foreground);

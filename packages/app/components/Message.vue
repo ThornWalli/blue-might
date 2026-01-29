@@ -47,9 +47,9 @@ export enum MESSAGE_TYPE {
     flex-direction: column;
     gap: var(--bm-spacing-very-large);
     padding: calc(var(--bm-spacing-large) * 2);
-    font-family: var(--font-bit-font-family);
-    font-size: var(--font-bit-font-size);
-    line-height: var(--font-bit-line-height);
+    font-family: var(--font-family-bit-font);
+    font-size: var(--font-size-bit-font);
+    line-height: var(--line-height-bit-font);
     color: white;
     text-align: center;
     background-color: #1c1f1c;
@@ -61,8 +61,8 @@ export enum MESSAGE_TYPE {
       gap: var(--bm-spacing-large);
 
       &:first-child {
-        font-size: calc(var(--font-bit-font-size) * 2);
-        line-height: calc(var(--font-bit-line-height) * 2);
+        font-size: calc(var(--font-size-bit-font) * 2);
+        line-height: calc(var(--line-height-bit-font) * 2);
       }
 
       & span {

@@ -250,7 +250,14 @@ export default class Map<
       playerOptions: this.playerStartPosition,
       surface: {
         textures: textures,
-        noiseMonochrome: this.description.surface.noiseMonochrome ?? false
+        heightMapInclude: this.description.surface.heightMapInclude ?? false,
+        noise: this.description.surface.noise ?? {
+          active: false,
+          size: 2,
+          intensity: 0.25,
+          opacity: 0.5,
+          monochrome: false
+        }
       },
       units: Object.values(this.modules.units.getUnits()).map(unit =>
         unit.toDescription()
@@ -286,8 +293,25 @@ export interface MapDescription {
       backgroundTexture: string;
       foregroundTexture: string;
     };
-    noiseMonochrome?: boolean;
+    heightMapInclude?: boolean;
+    noise?: MapNoise;
   };
   units: RawUnitDescription[];
   factions: FactionDescription[];
 }
+
+export interface MapNoise {
+  active: boolean;
+  size: number;
+  intensity: number;
+  opacity: number;
+  monochrome: boolean;
+}
+
+export const DEFAULT_MAP_NOISE = Object.freeze<MapNoise>({
+  active: false,
+  size: 2,
+  intensity: 0.25,
+  opacity: 0.5,
+  monochrome: false
+});

@@ -6,10 +6,12 @@ import AppModule, {
   type AppModuleState
 } from '../AppModule';
 import type { App } from '../../types';
-import type { Textures } from '../Map';
+import { DEFAULT_MAP_NOISE, type MapNoise, type Textures } from '../Map';
 
 interface Observables extends AppModuleObservables {
   textures$: ReplaySubject<TextureDescription[]>;
+  heightMapInclude$: ReplaySubject<boolean>;
+  noise$: ReplaySubject<MapNoise>;
   noiseMonochrome$: ReplaySubject<boolean>;
 }
 
@@ -20,6 +22,8 @@ export interface TextureDescription {
 
 interface State extends AppModuleState {
   textures: TextureDescription[];
+  heightMapInclude: boolean;
+  noise: MapNoise;
   noiseMonochrome: boolean;
 }
 export default class EditorSurfaceAppModule extends AppModule<
@@ -29,6 +33,10 @@ export default class EditorSurfaceAppModule extends AppModule<
   static override TYPE = 'editorSurface';
   override state: State = {
     textures: [],
+    heightMapInclude: false,
+    noise: {
+      ...DEFAULT_MAP_NOISE
+    },
     noiseMonochrome: false
   };
 
@@ -36,7 +44,12 @@ export default class EditorSurfaceAppModule extends AppModule<
     super(app, {} as State);
     //#region observables
     this.observables.textures$ = new ReplaySubject<TextureDescription[]>(1);
+    this.observables.heightMapInclude$ = new ReplaySubject<boolean>(1);
+    this.observables.heightMapInclude$.next(this.state.heightMapInclude);
+    this.observables.noise$ = new ReplaySubject<MapNoise>(1);
+    this.observables.noise$.next(this.state.noise);
     this.observables.noiseMonochrome$ = new ReplaySubject<boolean>(1);
+    this.observables.noiseMonochrome$.next(this.state.noiseMonochrome);
     //#endregion
   }
 
@@ -51,9 +64,10 @@ export default class EditorSurfaceAppModule extends AppModule<
             };
           })
         );
-        this.setNoiseMonochrome(
-          map.description.surface.noiseMonochrome ?? false
+        this.setHeightMapInclude(
+          map.description.surface.heightMapInclude ?? false
         );
+        this.setNoise(map.description.surface.noise ?? DEFAULT_MAP_NOISE);
       })
     );
   }
@@ -67,13 +81,23 @@ export default class EditorSurfaceAppModule extends AppModule<
     this.observables.textures$.next(this.state.textures);
   }
 
-  getNoiseMonochrome() {
-    return this.state.noiseMonochrome;
+  getHeightMapInclude() {
+    return this.state.heightMapInclude;
   }
 
-  setNoiseMonochrome(noiseMonochrome: boolean) {
-    this.state.noiseMonochrome = noiseMonochrome;
-    this.observables.noiseMonochrome$.next(this.state.noiseMonochrome);
+  setHeightMapInclude(heightMapInclude: boolean) {
+    if (this.state.heightMapInclude === heightMapInclude) return;
+    this.state.heightMapInclude = heightMapInclude;
+    this.observables.heightMapInclude$.next(this.state.heightMapInclude);
+  }
+
+  getNoise() {
+    return this.state.noise;
+  }
+
+  setNoise(noise: Partial<MapNoise>) {
+    this.state.noise = { ...this.state.noise, ...noise };
+    this.observables.noise$.next(this.state.noise);
   }
 
   async apply() {
@@ -85,7 +109,8 @@ export default class EditorSurfaceAppModule extends AppModule<
       }, {} as Textures)
     );
 
-    map.description.surface.noiseMonochrome = this.getNoiseMonochrome();
+    map.description.surface.heightMapInclude = this.getHeightMapInclude();
+    map.description.surface.noise = this.getNoise();
 
     await this.app.modules.map.restartMap(await map.toDescription());
   }
