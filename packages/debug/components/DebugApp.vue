@@ -6,7 +6,10 @@
 
 <script setup lang="ts">
 import type { AppConfig } from '@blue-might/app/lib/classes/BaseApp';
-import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import {
+  DEFAULT_MAP_NOISE,
+  type MapDescription
+} from '@blue-might/app/lib/classes/Map';
 import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import type { UnitIdentifier } from '@blue-might/app/lib/types/unit';
 import { debugGroundMap, debugSeaMap } from '@blue-might/maps';
@@ -35,8 +38,27 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 const map_ = $props.mapType === 'sea' ? debugSeaMap() : debugGroundMap();
+console.log({
+  ...map_,
+  surface: {
+    ...map_.surface,
+    noise: {
+      ...(map_.surface.noise || DEFAULT_MAP_NOISE),
+      active: true
+    }
+  },
+  factions: [...map_.factions],
+  units: [...map_.units]
+});
 const map: MapDescription = defu($props.map ?? {}, {
   ...map_,
+  surface: {
+    ...map_.surface,
+    noise: {
+      ...(map_.surface.noise || DEFAULT_MAP_NOISE),
+      active: true
+    }
+  },
   factions: [...map_.factions],
   units: [...map_.units]
 }) as MapDescription;

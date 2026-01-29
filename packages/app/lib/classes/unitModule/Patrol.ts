@@ -224,7 +224,6 @@ export default class PatrolUnitModule extends UnitModule<
   }
 
   async setActive(active: boolean) {
-    debugger;
     if (this.state.active === active) return;
     if (!active) {
       await this.stopPatrol();

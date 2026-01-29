@@ -406,13 +406,6 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     if (this.map.description.surface.noise?.active) {
       const { size, intensity, opacity, monochrome } =
         this.map.description.surface.noise;
-      console.log('XXXX', {
-        width: dimension.x * size,
-        height: dimension.y * size,
-        intensity,
-        opacity,
-        monochrome: monochrome
-      });
       noiseTexture = new CanvasTexture(
         resizeCanvas(
           generateNoiseTexture({

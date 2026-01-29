@@ -28,34 +28,6 @@ export default class SeaNavigator extends BaseNavigator {
     return { value: true, collisionType: COLLISION_TYPE.NONE };
   }
 
-  // protected getHeightAt(x: number, z: number): number {
-  //   console.log(
-  //     'xxxxx',
-  //     this.map.modules.ground.getMinHeightAt(
-  //       x,
-  //       z,
-  //       10,
-  //       this.map.modules.ground.getSurfaceHeightAt.bind(this.map.modules.ground)
-  //     ),
-
-  //     this.map.modules.ground.getMaxHeightAt(
-  //       x,
-  //       z,
-  //       10,
-  //       this.map.modules.ground.getSurfaceHeightAt.bind(this.map.modules.ground)
-  //     )
-  //   );
-  //   return Math.max(
-  //     this.map.modules.ground.getSeaLevel(),
-  //     this.map.modules.ground.getMinHeightAt(
-  //       x,
-  //       z,
-  //       10,
-  //       this.map.modules.ground.getSurfaceHeightAt.bind(this.map.modules.ground)
-  //     )
-  //   );
-  // }
-
   override isWalkable(
     {
       grid,

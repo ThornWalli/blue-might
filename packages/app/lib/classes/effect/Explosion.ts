@@ -45,8 +45,6 @@ export default class Explosion extends Particle {
     this.fadeOutDuration = options?.fadeOutDuration ?? 900;
     this.fadeInEase = options?.fadeInEase ?? easeExpoOut;
     this.fadeOutEase = options?.fadeOutEase ?? easeExpoIn;
-
-    console.log(this.radius);
   }
 
   override update({ time }: AnimationLoopValue) {

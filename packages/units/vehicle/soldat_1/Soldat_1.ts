@@ -59,7 +59,6 @@ export default class Soldat_1<
     );
     this.subscription.add(
       this.modules.damage.observables.destroyed$.subscribe(() => {
-        console.log('XXXXXX');
         this.setDead();
       })
     );
