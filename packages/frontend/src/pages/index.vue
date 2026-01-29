@@ -2,8 +2,9 @@
   <div>
     <client-only>
       <app-component
+        v-if="description"
         :config="config"
-        :map="extendedMap()"
+        :map="description"
         :on-setup="onSetup" />
     </client-only>
   </div>
@@ -18,7 +19,6 @@ import {
   ref,
   onMounted
 } from 'vue';
-import { extendedMap } from '@blue-might/maps';
 import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import { Subscription } from 'rxjs';
 import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/BaseApp';

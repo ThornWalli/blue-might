@@ -224,6 +224,7 @@ export default class PatrolUnitModule extends UnitModule<
   }
 
   async setActive(active: boolean) {
+    debugger;
     if (this.state.active === active) return;
     if (!active) {
       await this.stopPatrol();
@@ -330,6 +331,7 @@ export default class PatrolUnitModule extends UnitModule<
 
   override getOptions() {
     return {
+      active: this.state.active,
       path: this.getPath()
     };
   }
