@@ -1,5 +1,13 @@
 # Project Changelog
 
+# [1.0.0-beta.51](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.50...v1.0.0-beta.51) (2026-01-29)
+
+
+### Bug Fixes
+
+* **app:** add debugger statement and update getOptions to include active state ([e6416e8](https://github.com/ThornWalli/blue-might/commit/e6416e8b4f2c693b8271e6a2533e873f1ff777c8))
+* **update:** many updates ([b3d9fd8](https://github.com/ThornWalli/blue-might/commit/b3d9fd874aeaaf7e195b051de85f2c39bd831527))
+
 # [1.0.0-beta.50](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.49...v1.0.0-beta.50) (2026-01-29)
 
 
