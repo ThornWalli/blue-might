@@ -41,7 +41,6 @@
     "stats.js": "0.17.0",
     "tsx": "catalog:",
     "ufo": "catalog:",
-    "vite-plugin-checker": "catalog:",
     "vite-plugin-eslint2": "catalog:",
     "vite-plugin-markdown": "catalog:",
     "vite-plugin-mkcert": "catalog:",

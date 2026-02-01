@@ -7,7 +7,9 @@ import heightMap from './heightMap.png';
 
 export default function (): MapDescription {
   return {
-    name: 'Default Map',
+    meta: {
+      name: 'Default Map'
+    },
     playerOptions: {
       position: [9.5, 0, 5.5],
       rotation: [0, Math.PI, 0],

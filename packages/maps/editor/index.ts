@@ -8,7 +8,9 @@ import heightMap from './heightMap.png';
 export const playerFaction = FACTION.BLUE;
 export default function (): MapDescription {
   return {
-    name: 'Editor Map',
+    meta: {
+      name: 'Editor Map'
+    },
 
     playerOptions: {
       position: [43.5, 0, -26.5],

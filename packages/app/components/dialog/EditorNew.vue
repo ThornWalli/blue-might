@@ -97,7 +97,7 @@ async function createMap({
   //#endregion
 
   const mapDescription: MapDescription = {
-    name,
+    meta: { name },
     playerOptions: {
       unit: {
         key: 'combat_helicopter_1'

@@ -6,7 +6,7 @@ import foregroundTexture from './texture_fg.png';
 
 export default function (): Omit<MapDescription, 'playerOptions'> {
   return {
-    name: 'Default Map',
+    meta: { name: 'Default Map' },
     surface: {
       textures: {
         heightMap,

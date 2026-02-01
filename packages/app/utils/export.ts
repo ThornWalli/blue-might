@@ -56,7 +56,7 @@ export async function createExport(description: MapDescription) {
   );
 
   const zipContent = await zip.generateAsync({ type: 'blob' });
-  saveAs(zipContent, `${snakeCase(description.name)}.zip`);
+  saveAs(zipContent, `${snakeCase(description.meta.name)}.zip`);
 
   //#endregion
 }
