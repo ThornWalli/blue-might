@@ -9,6 +9,7 @@ import {
 } from 'rxjs';
 import { Vector3 } from 'three';
 import * as units from '@blue-might/units';
+import type { VehicleUnits } from '@blue-might/units';
 
 import AppModule, {
   type AppModuleObservables,
@@ -149,7 +150,7 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
         }
       }
     });
-    player.modules.vehicle.setVehicleUnit(unit);
+    player.modules.vehicle.setVehicleUnit(unit as VehicleUnits);
     map.modules.units.add(unit);
 
     return unit;

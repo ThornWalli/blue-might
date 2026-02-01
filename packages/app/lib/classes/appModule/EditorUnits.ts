@@ -1,6 +1,7 @@
 import type { MeshStandardMaterial, Object3D } from 'three';
 import { Mesh, SkinnedMesh, Vector3 } from 'three';
 import { distinctUntilChanged, ReplaySubject } from 'rxjs';
+import type { Units } from '@blue-might/units';
 
 import type { App } from '../../types';
 import type { AppModuleObservables, AppModuleState } from '../AppModule';
@@ -9,7 +10,7 @@ import type Unit from '../Unit';
 import { EDITOR_MODE } from '../app/AppEditor';
 
 interface Observables extends AppModuleObservables {
-  unit$: ReplaySubject<Unit | null>;
+  unit$: ReplaySubject<Units | null>;
   creating$: ReplaySubject<boolean>;
   moving$: ReplaySubject<boolean>;
 }

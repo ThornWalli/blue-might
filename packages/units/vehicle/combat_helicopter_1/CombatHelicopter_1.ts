@@ -39,6 +39,7 @@ import type {
 } from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
+import TransportUnitModule from '@blue-might/app/lib/classes/unitModule/Transport';
 
 import baseGlb from './assets/combat_helicopter_1.glb?url';
 
@@ -58,9 +59,14 @@ export interface CombatHelicopterOptions
 export interface CombatHelicopterModules extends HelicopterUnitModules {
   attack: AttackUnitModule;
   weapon: WeaponUnitModule;
+  transport: TransportUnitModule;
 }
 export type CombatHelicopterModuleList = HelicopterUnitModuleList &
-  [typeof AttackUnitModule | typeof WeaponUnitModule];
+  [
+    | typeof AttackUnitModule
+    | typeof WeaponUnitModule
+    | typeof TransportUnitModule
+  ];
 
 export interface RawUnitDescription_CombatHelicopter_1<
   O extends UnitOptions = CombatHelicopterOptions
@@ -101,7 +107,11 @@ export default class CombatHelicopter_1
     options: Omit<UnitConstructorOptions<CombatHelicopterOptions>, 'name'> = {},
     moduleList?: CombatHelicopterModuleList
   ) {
-    moduleList = addModules(moduleList, [AttackUnitModule, WeaponUnitModule]);
+    moduleList = addModules(moduleList, [
+      AttackUnitModule,
+      WeaponUnitModule,
+      TransportUnitModule
+    ]);
     super(
       {
         ...options,
@@ -127,6 +137,9 @@ export default class CombatHelicopter_1
           movable: {
             ...options.moduleOptions?.movable,
             maxFuel: 100
+          },
+          transport: {
+            entryPosition: new Vector2(0.25, 0.25)
           },
           weapon: {
             ...options.moduleOptions?.weapon,

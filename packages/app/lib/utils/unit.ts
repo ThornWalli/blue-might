@@ -11,7 +11,7 @@ export function isUnitDestroyed(unit: Unit): boolean {
 }
 
 export function isVehicle(unit?: Unit | null): boolean {
-  return (unit && 'vehicle' in unit.modules) ?? false;
+  return isAirVehicle(unit) || isGroundVehicle(unit) || isSeaVehicle(unit);
 }
 
 export function isFigure(unit?: Unit | null): boolean {
@@ -24,6 +24,14 @@ export function isSeaVehicle(unit?: Unit | null): boolean {
 
 export function isAirVehicle(unit?: Unit | null): boolean {
   return (unit && 'airVehicle' in unit.modules) ?? false;
+}
+
+export function isTransport(unit?: Unit | null): boolean {
+  return (unit && 'transport' in unit.modules) ?? false;
+}
+
+export function isRescue(unit?: Unit | null): boolean {
+  return (unit && 'rescue' in unit.modules) ?? false;
 }
 
 export function getAirVehicle(unit: Unit | null): AirVehicleUnit | null {
@@ -58,4 +66,8 @@ export function ignoreByUnitByType(filter: {
     if (filter.groundVehicle && u.modules.groundVehicle) return false;
     return true;
   };
+}
+
+export function getUnitDistance(unitA: Unit, unitB: Unit): number {
+  return unitA.getPosition().distanceTo(unitB.getPosition());
 }

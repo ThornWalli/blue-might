@@ -75,6 +75,7 @@ export default class Map<
     this.moduleDebug = { ...this.moduleDebug, ...debug };
   }
   //#endregion
+
   private destroyed = false;
   subscription = new Subscription();
   state: MapState;
@@ -106,6 +107,7 @@ export default class Map<
     this.root.name = 'map';
 
     this.description = description;
+
     this.state = {
       playerOptions: {
         ...description.playerOptions,
@@ -218,14 +220,17 @@ export default class Map<
     this.root.remove(...object);
   }
 
+  getMeta(): Meta {
+    return this.description.meta;
+  }
+  setMeta(meta: Meta) {
+    this.description.meta = meta;
+  }
+
   update(value: AnimationLoopValue) {
     Object.values(this.modules).forEach(module => {
       module.update(value);
     });
-  }
-
-  get name() {
-    return this.description.name;
   }
 
   get playerStartPosition() {
@@ -246,8 +251,14 @@ export default class Map<
 
     return {
       debug: this.moduleDebug,
-      name: this.name,
-      playerOptions: this.playerStartPosition,
+      meta: {
+        ...this.description.meta
+      },
+      playerOptions: {
+        ...this.state.playerOptions,
+        position: this.state.playerOptions.position.toArray(),
+        rotation: this.state.playerOptions.rotation?.toArray()
+      },
       surface: {
         textures: textures,
         heightMapInclude: this.description.surface.heightMapInclude ?? false,
@@ -283,9 +294,14 @@ export interface RawPlayerOptions<
 export type PlayerOptions<UD extends UnitDescriptions = UnitDescriptions> =
   RawPlayerOptions<UD, Vector3, Euler>;
 
+export interface Meta {
+  name: string;
+  description?: string | null;
+}
+
 export interface MapDescription {
   debug?: Partial<ModuleDebug>;
-  name: string;
+  meta: Meta;
   playerOptions: RawPlayerOptions;
   surface: {
     textures: {

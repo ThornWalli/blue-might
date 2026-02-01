@@ -17,9 +17,9 @@
         :options="navigatorOptions">
       </bm-select>
     </base-form-field>
-    <bm-button @click="onClickLockGrid">
-      {{ lockGrid ? 'Unlock Grid' : 'Lock Grid' }}
-    </bm-button>
+    <bm-button
+      :label="lockGrid ? 'Unlock Grid' : 'Lock Grid'"
+      @click="onClickLockGrid" />
   </bm-details>
 </template>
 

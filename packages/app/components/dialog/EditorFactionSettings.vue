@@ -27,6 +27,8 @@
     </div>
     <div class="controls">
       <bm-button label="New" @click="onClickNew" />
+      <bm-button label="Copy Factions" @click="onClickCopy" />
+      <bm-button label="Paste Factions" @click="onClickPaste" />
       <div class="spacer"></div>
       <bm-button label="Abort" @click="() => dialog.close()" />
       <bm-button
@@ -84,6 +86,19 @@ function onClickNew() {
     mapColor: 0xffffff
   };
   factions.value.push(description);
+}
+
+function onClickCopy() {
+  navigator.clipboard.writeText(JSON.stringify(factions.value));
+}
+async function onClickPaste() {
+  try {
+    const text = await navigator.clipboard.readText();
+    factions.value = JSON.parse(text);
+  } catch (error) {
+    console.error(error);
+    alert('Failed to paste factions');
+  }
 }
 
 function onClickDelete(factionId: string) {

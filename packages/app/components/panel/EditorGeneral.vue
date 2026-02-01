@@ -21,6 +21,12 @@
         label="Revert"
         @click="onClickRevert" />
     </div>
+    <hr />
+    <bm-button
+      :disabled="played"
+      label="Settings"
+      @click="onClickMapSettings" />
+    <bm-button label="Missions" disabled />
     <bm-button :disabled="played" label="Player" @click="onClickPlayer" />
     <bm-button :disabled="played" label="Surface" @click="onClickSurface" />
     <bm-button :disabled="played" label="Units" @click="onClickUnits" />
@@ -28,6 +34,12 @@
     <bm-button :disabled="played" label="Export" @click="onClickExport" />
     <bm-button :disabled="played" label="New" @click="onClickNew" />
     <teleport to="body">
+      <bm-dialog ref="mapSettingsDialog">
+        <template #header>Map Settings</template>
+        <template #default>
+          <bm-dialog-editor-map-settings :app="$props.app" />
+        </template>
+      </bm-dialog>
       <bm-dialog ref="surfaceDialog">
         <template #header>Surface Settings</template>
         <template #default>
@@ -61,6 +73,7 @@ import { Subscription } from 'rxjs';
 import BmPanel from '../Panel.vue';
 import BmButton from '../Button.vue';
 import BmDialog from '../Dialog.vue';
+import BmDialogEditorMapSettings from '../dialog/EditorMapSettings.vue';
 import BmDialogEditorFactionSettings from '../dialog/EditorFactionSettings.vue';
 import BmDialogEditorSurfaceSettings from '../dialog/EditorSurfaceSettings.vue';
 import BmDialogEditorNew from '../dialog/EditorNew.vue';
@@ -101,6 +114,7 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
+const mapSettingsDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 const factionsDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 const surfaceDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 const newDialog = ref<InstanceType<typeof BmDialog> | null>(null);
@@ -108,6 +122,11 @@ const newDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 async function onClickUnits() {
   await reset();
   $props.app.setMode(EDITOR_MODE.UNITS);
+}
+
+async function onClickMapSettings() {
+  await reset();
+  mapSettingsDialog.value?.context?.open();
 }
 
 async function onClickSurface() {

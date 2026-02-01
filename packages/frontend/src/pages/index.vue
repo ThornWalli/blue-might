@@ -27,7 +27,7 @@ import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { joinURL } from 'ufo';
 import { getMapDescriptionFromArrayBuffer } from '@blue-might/app/utils/export';
 
-import { useRuntimeConfig } from '#imports';
+import { useRoute, useRuntimeConfig } from '#imports';
 
 const subscription = new Subscription();
 
@@ -41,24 +41,29 @@ const config = ref<AppConfig>({
     fog: true,
     pixelated: true,
     controls: true
-  },
-  debug: {
-    map: {
-      pathfinding: false
-    }
   }
 });
 
-const runtimeConfig = useRuntimeConfig();
+const $route = useRoute();
+const $runtimeConfig = useRuntimeConfig();
 const description = ref<Raw<MapDescription>>();
 onMounted(async () => {
-  description.value = markRaw(
-    await getMapDescriptionFromArrayBuffer(
-      await fetch(
-        joinURL('/', runtimeConfig.app.baseURL, 'extended_map.zip')
-      ).then(res => res.arrayBuffer())
-    )
-  );
+  const desc = await getMapDescriptionFromArrayBuffer(
+    await fetch(
+      joinURL(
+        '/',
+        $runtimeConfig.app.baseURL,
+        String($route.query.map ?? 'extended_map.zip')
+      )
+    ).then(res => res.arrayBuffer())
+  ).then(map => {
+    map.debug = {
+      // surface: true,
+      // pathfinding: true
+    };
+    return map;
+  });
+  description.value = markRaw(desc);
 });
 
 async function onSetup(app: App) {

@@ -3,15 +3,13 @@
     v-if="unit && patrolModule"
     class="bm-panel-editor-unit-patrol"
     title="Editor Unit Patrol">
-    <fieldset>
-      <legend>Settings</legend>
+    <bm-fieldset label="Settings">
       <bm-toggle
         :model-value="patrolActive"
         label="Patrol Active"
         @update:model-value="onUpdatePatrolActive" />
-    </fieldset>
-    <fieldset>
-      <legend>Path</legend>
+    </bm-fieldset>
+    <bm-fieldset label="Path">
       <div class="items">
         <template v-for="(p, index) in path" :key="index">
           <div v-if="currentIndex === index">
@@ -70,11 +68,16 @@
           label="Add"
           hide-label
           @click="onClickAdd" />
+        <hr />
         <div class="controls">
+          <div>
+            <bm-button label="Copy to clipboard" @click="onClickCopy" />
+            <bm-button label="Paste from clipboard" @click="onClickPaste" />
+          </div>
           <bm-button label="Close" @click="onClickClose" />
         </div>
       </div>
-    </fieldset>
+    </bm-fieldset>
   </bm-panel>
 </template>
 
@@ -90,6 +93,7 @@ import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
 import type { UnitModules } from '@blue-might/app/lib/classes/Unit';
 
 import BmPanel from '../Panel.vue';
+import BmFieldset from '../Fieldset.vue';
 import BmButton from '../Button.vue';
 import BmToggle from '../Toggle.vue';
 
@@ -123,6 +127,11 @@ onMounted(() => {
   subscription.add(
     editorPatrolModule.observables.index$.subscribe(index => {
       currentIndex.value = index;
+    })
+  );
+  subscription.add(
+    editorPatrolModule.observables.path$.subscribe(p => {
+      path.value = p;
     })
   );
   subscription.add(
@@ -244,6 +253,29 @@ function onClickClose() {
   $emit('close');
 }
 
+function onClickCopy() {
+  if (editorPatrolModule) {
+    const path = editorPatrolModule.getPath();
+    navigator.clipboard.writeText(JSON.stringify(path));
+  }
+}
+
+async function onClickPaste() {
+  if (editorPatrolModule) {
+    const text = await navigator.clipboard.readText();
+    try {
+      const path = JSON.parse(text);
+      if (Array.isArray(path) === false || path[0].length !== 2) {
+        throw new Error('Invalid path data');
+      }
+      editorPatrolModule.setPath(path);
+    } catch (error) {
+      console.error('Failed to parse clipboard text:', error);
+      alert('Failed to paste patrol path');
+    }
+  }
+}
+
 function onUpdatePatrolActive(active: boolean) {
   if (unit.value) {
     (unit.value.modules as U).patrol.setActive(active);
@@ -263,6 +295,19 @@ function onUpdatePatrolActive(active: boolean) {
 
   & .controls {
     display: flex;
+    flex-direction: column;
+    gap: var(--bm-spacing-small);
+
+    & button {
+      flex: 1;
+    }
+
+    & > div {
+      display: flex;
+      flex-direction: row;
+      gap: var(--bm-spacing-small);
+      width: 100%;
+    }
   }
 }
 

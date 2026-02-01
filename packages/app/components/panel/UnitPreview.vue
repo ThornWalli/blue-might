@@ -32,12 +32,11 @@
       </div>
     </div>
 
-    <fieldset>
-      <legend>General</legend>
+    <bm-fieldset label="General">
       <bm-control-item
         indicator
         label="Damage"
-        :status="
+        :indicator-status="
           unitDamage.level >= DAMAGE_LEVEL.DESTROYED
             ? CONTROL_ITEM_STATUS.DANGER
             : unitDamage.level >= DAMAGE_LEVEL.DAMAGED
@@ -57,13 +56,15 @@
             '\u00A0'
           )
         " /> -->
-    </fieldset>
-    <bm-button v-if="canFocusUnit" @click="onClickFocusUnit">
-      Focus Unit
-    </bm-button>
-    <bm-button v-if="canUseVehicle" @click="onClickUseVehicle">
-      Use Vehicle
-    </bm-button>
+    </bm-fieldset>
+    <bm-button
+      v-if="canFocusUnit"
+      label="Focus Unit"
+      @click="onClickFocusUnit" />
+    <bm-button
+      v-if="canUseVehicle"
+      label="Use Vehicle"
+      @click="onClickUseVehicle" />
   </bm-panel>
 </template>
 
@@ -74,18 +75,19 @@ import type { Vector3 } from 'three';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 import type { App } from '@blue-might/app/lib/types';
+import type { Units, VehicleUnits } from '@blue-might/units';
 
 import BmControlItem, { CONTROL_ITEM_STATUS } from '../element/ControlItem.vue';
 import BmButton from '../Button.vue';
 import BmPanel from '../Panel.vue';
+import BmFieldset from '../Fieldset.vue';
 import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
-import type Unit from '../../lib/classes/Unit';
 
 const $props = defineProps<{
   app: App;
 }>();
 
-const unit = ref<Raw<Unit> | null>(null);
+const unit = ref<Raw<Units> | null>(null);
 const unitDamage = ref<{
   value: number;
   level: number;
@@ -175,7 +177,7 @@ function onClickUseVehicle() {
   const app = $props.app;
   if (!('player' in app.modules)) return;
 
-  const u = unit.value;
+  const u = unit.value as VehicleUnits;
   if (!u) return;
   if (canUseVehicle.value) {
     const player = app.modules.player.getCurrentPlayer();

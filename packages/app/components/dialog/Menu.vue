@@ -35,7 +35,7 @@ import type { App } from '@blue-might/app/lib/types';
 import type { DialogContext } from '../base/Dialog.vue';
 import BmDetails from '../Details.vue';
 
-import { useRuntimeConfig } from '#imports';
+import { useRoute, useRuntimeConfig } from '#imports';
 
 const runtimeConfig = useRuntimeConfig();
 
@@ -47,18 +47,47 @@ defineProps<{
   app: App;
 }>();
 
+const $route = useRoute();
 const links = ref([
-  { title: 'Default', href: '/' },
-  { title: 'Editor', href: '/editor' }
+  {
+    title: 'Default',
+    href: {
+      name: 'index',
+      query: {
+        ...$route.query
+      }
+    }
+  },
+  {
+    title: 'Editor',
+    href: {
+      path: '/editor',
+      query: {
+        ...$route.query
+      }
+    }
+  }
 ]);
 const debugLinks = ref([
-  { title: 'Attack', href: '/debug/attack' },
-  { title: 'Patrol', href: '/debug/patrol' },
-  { title: 'Helicopter', href: '/debug/helicopter' },
-  { title: 'Tank', href: '/debug/tank' },
-  { title: 'Pathfinding', href: '/debug/pathfinding' },
-  { title: 'Building', href: '/debug/building' },
-  { title: 'Sea', href: '/debug/sea' }
+  {
+    title: 'Default',
+    href: {
+      path: '/debug'
+    }
+  },
+  {
+    title: 'Helicopter',
+    href: {
+      path: '/debug',
+      query: { map: 'debug/helicopter.zip' }
+    }
+  },
+  { title: 'Attack (Legacy)', href: '/debug/attack' },
+  { title: 'Patrol (Legacy)', href: '/debug/patrol' },
+  { title: 'Tank (Legacy)', href: '/debug/tank' },
+  { title: 'Pathfinding (Legacy)', href: '/debug/pathfinding' },
+  { title: 'Building (Legacy)', href: '/debug/building' },
+  { title: 'Sea (Legacy)', href: '/debug/sea' }
 ]);
 </script>
 

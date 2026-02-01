@@ -12,16 +12,16 @@
               .join(' / ')
           }}
         </span>
-        <bm-button @click="onClickMarkerUp(marker)">Top</bm-button>
-        <bm-button @click="onClickMarkerDown(marker)">Bottom</bm-button>
-        <bm-button @click="onClickMarkerRemove(marker)">X</bm-button>
+        <bm-button label="Top" @click="onClickMarkerUp(marker)" />
+        <bm-button label="Bottom" @click="onClickMarkerDown(marker)" />
+        <bm-button label="X" @click="onClickMarkerRemove(marker)" />
       </div>
     </div>
     <div class="actions">
-      <bm-button @click="onClickAddMarker">
-        {{ startAddMarker ? 'Abort' : 'Add' }}
-      </bm-button>
-      <bm-button @click="onClickCopyPositions"> JSON </bm-button>
+      <bm-button
+        :label="startAddMarker ? 'Abort' : 'Add'"
+        @click="onClickAddMarker" />
+      <bm-button label="JSON" @click="onClickCopyPositions" />
     </div>
   </bm-details>
 </template>

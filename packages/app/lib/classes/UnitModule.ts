@@ -1,7 +1,7 @@
 import type { Object3D, Scene } from 'three';
 import type { SubscriptionLike } from 'rxjs';
+import type { Units } from '@blue-might/units';
 
-import type Unit from './Unit';
 import type { SetupContext } from './Unit';
 import Module, { type ModuleObservables, type ModuleState } from './Module';
 
@@ -26,7 +26,7 @@ export default abstract class UnitModule<
   Options extends UnitModuleOptions = UnitModuleOptions,
   State extends UnitModuleState = UnitModuleState,
   Obervables extends UnitModuleObservables = UnitModuleObservables,
-  U extends Unit = Unit
+  U extends Units = Units
 > extends Module<State, Obervables> {
   static PREVIEW = true;
 

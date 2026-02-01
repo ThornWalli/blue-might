@@ -1,6 +1,6 @@
 import { EMPTY, filter, map, switchMap } from 'rxjs';
 
-import type PlayerAppModule from '../appModule/Player';
+import PlayerAppModule from '../appModule/Player';
 import BaseApp, {
   type AppConfig,
   type AppModuleList,
@@ -16,22 +16,28 @@ interface AppDebugObservables extends AppObservables {}
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface AppDebugState extends AppState {}
 
-interface AppPlaygroundModules extends AppModules {
+interface AppDebugModules extends AppModules {
   player: PlayerAppModule;
 }
+
+type AppDebugModuleList = AppModuleList & (typeof PlayerAppModule)[];
 
 export default class AppDebug extends BaseApp<
   AppDebugState,
   AppDebugObservables,
-  AppPlaygroundModules
+  AppDebugModules
 > {
   constructor(
     config: AppConfig,
     renderer: Renderer,
     state: Partial<AppDebugState> = {},
-    modules: AppModuleList = []
+    modules: AppDebugModuleList = []
   ) {
+    modules.push(PlayerAppModule);
     super(config, renderer, state, modules);
+  }
+  override async setup() {
+    await super.setup();
 
     this.subscription.add(
       this.modules.player.observables.currentPlayer$

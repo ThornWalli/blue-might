@@ -155,7 +155,7 @@ export default class WeaponUnitModule<
 
     if (attackModule) {
       this.subscription.add(
-        attackModule.observables.target$.subscribe(target => {
+        attackModule.observables.targetUnit$.subscribe(target => {
           this.setAutoAimTarget(target ?? null);
         })
       );

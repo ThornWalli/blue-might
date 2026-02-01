@@ -3,12 +3,12 @@ import {
   type UnitConstructorOptions,
   type UnitOptions
 } from '../Unit';
-import FigureUnitModule from '../unitModule/movable/Figure';
 import PatrolUnitModule from '../unitModule/Patrol';
 import { COLLISION_TYPE } from '../unitModule/Collision';
 import { UNIT_TYPE } from '../../types/unit';
-import PlayerUnitModule from '../unitModule/Player';
 import { addModules } from '../Module';
+import FigureMovableUnitModule from '../unitModule/movable/FigureMovable';
+import FigureUnitModule from '../unitModule/Figure';
 
 import MovableUnit, {
   type MovableUnitModuleList,
@@ -19,11 +19,13 @@ import MovableUnit, {
 export interface FigureUnitOptions extends UnitOptions {}
 
 export type FigureUnitModules = MovableUnitModules & {
+  figureMovable: FigureMovableUnitModule;
   figure: FigureUnitModule;
   patrol: PatrolUnitModule;
 };
 
 export type FigureUnitModuleList = (
+  | typeof FigureMovableUnitModule
   | typeof FigureUnitModule
   | typeof PatrolUnitModule
 )[] &
@@ -40,9 +42,9 @@ export default class FigureUnit<
   ) {
     moduleList = (moduleList || []) as ModuleList;
     moduleList = addModules(moduleList, [
+      FigureMovableUnitModule,
       FigureUnitModule,
-      PatrolUnitModule,
-      PlayerUnitModule
+      PatrolUnitModule
     ]);
 
     super(
@@ -69,6 +71,6 @@ export default class FigureUnit<
       },
       moduleList
     );
-    this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.GROUND);
+    this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.FIGURE);
   }
 }

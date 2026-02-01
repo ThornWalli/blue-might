@@ -162,12 +162,12 @@ export default class UnitsModule extends MapModule<State, Observables> {
 
   override update(v: AnimationLoopValue) {
     this.getUnits().forEach(unit => {
-      if (!unit.isDestroyed()) {
-        if (this.state.visibleUnits.includes(unit)) {
-          unit.renderUpdate(v);
-        }
-        unit.update(v);
+      // if (!unit.isDestroyed()) {
+      if (this.state.visibleUnits.includes(unit)) {
+        unit.renderUpdate(v);
       }
+      unit.update(v);
+      // }
     });
   }
 
@@ -222,6 +222,8 @@ export default class UnitsModule extends MapModule<State, Observables> {
 
     this.observables.addUnit$.next(unit);
 
+    unit.setActive(true);
+
     return unit;
   }
 
@@ -238,6 +240,8 @@ export default class UnitsModule extends MapModule<State, Observables> {
     this.state.units.delete(unit.id);
     this.chunkManager.removeFromChunk(unit);
     this.root.remove(unit.root);
+    unit.setActive(false);
+    this.observables.removeUnit$.next(unit);
   }
 
   getById<U extends Unit = Unit>(id: string): U | undefined {

@@ -15,6 +15,8 @@ import BaseApp from '../BaseApp';
 import type Renderer from '../Renderer';
 import EditorPlayerAppModule from '../appModule/EditorPlayer';
 import EditorSurfaceAppModule from '../appModule/EditorSurface';
+import EditorUnitSettingsAppModule from '../appModule/EditorUnitSettings';
+import EditorMapSettingsAppModule from '../appModule/EditorMapSettings';
 
 interface AppEditorObservables extends AppObservables {
   mode$: ReplaySubject<EDITOR_MODE>;
@@ -25,22 +27,26 @@ interface AppEditorState extends AppState {
 }
 
 interface AppEditorModules extends AppModules {
+  editorMapSettings: EditorMapSettingsAppModule;
   editorGrid: EditorGridAppModule;
   editorSurface: EditorSurfaceAppModule;
   editorUnits: EditorUnitsAppModule;
   editorPatrol: EditorPatrolAppModule;
   editorFaction: EditorFactionAppModule;
   editorPlayer: EditorPlayerAppModule;
+  editorUnitSettings: EditorUnitSettingsAppModule;
 }
 
 type AppEditorModuleList = AppModuleList &
   (
+    | typeof EditorMapSettingsAppModule
     | typeof EditorGridAppModule
     | typeof EditorSurfaceAppModule
     | typeof EditorUnitsAppModule
     | typeof EditorPatrolAppModule
     | typeof EditorFactionAppModule
     | typeof EditorPlayerAppModule
+    | typeof EditorUnitSettingsAppModule
   )[];
 
 export enum EDITOR_MODE {
@@ -62,12 +68,14 @@ export default class AppEditor extends BaseApp<
     modules: AppEditorModuleList = []
   ) {
     modules.push(
+      EditorMapSettingsAppModule,
       EditorGridAppModule,
       EditorSurfaceAppModule,
       EditorUnitsAppModule,
       EditorPatrolAppModule,
       EditorFactionAppModule,
-      EditorPlayerAppModule
+      EditorPlayerAppModule,
+      EditorUnitSettingsAppModule
     );
     super(
       config,

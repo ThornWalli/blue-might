@@ -1,14 +1,12 @@
 import { ReplaySubject } from 'rxjs';
 import { BoxGeometry, Mesh, MeshBasicMaterial, Object3D } from 'three';
+import type { Units } from '@blue-might/units';
 
 import AppModule, {
   type AppModuleObservables,
   type AppModuleState
 } from '../AppModule';
 import type { App } from '../../types';
-import type Unit from '../Unit';
-import type { UnitModules } from '../Unit';
-import type PatrolUnitModule from '../unitModule/Patrol';
 import {
   createLine,
   getWorldPath,
@@ -16,17 +14,15 @@ import {
 } from '../unitModule/Patrol';
 import { disposeObject3D } from '../../utils/object';
 
-type U = Unit<UnitModules & { patrol: PatrolUnitModule }>;
-
 interface Observables extends AppModuleObservables {
-  unit$: ReplaySubject<U | null>;
+  unit$: ReplaySubject<Units | null>;
   index$: ReplaySubject<number>;
   path$: ReplaySubject<PatrolPath>;
   active$: ReplaySubject<boolean>;
 }
 
 interface State extends AppModuleState {
-  unit: U | null;
+  unit: Units | null;
   index: number;
 }
 export default class EditorPatrolAppModule extends AppModule<
@@ -42,7 +38,7 @@ export default class EditorPatrolAppModule extends AppModule<
   constructor(app: App) {
     super(app, {} as State);
     //#region observables
-    this.observables.unit$ = new ReplaySubject<U | null>(1);
+    this.observables.unit$ = new ReplaySubject<Units | null>(1);
     this.observables.index$ = new ReplaySubject<number>(1);
     this.observables.path$ = new ReplaySubject<PatrolPath>(1);
     this.observables.active$ = new ReplaySubject<boolean>(1);
@@ -62,7 +58,7 @@ export default class EditorPatrolAppModule extends AppModule<
       const unit$ = this.app.modules.editorUnits.observables.unit$;
       this.subscription.add(
         unit$.subscribe(u => {
-          this.setUnit(u as U | null);
+          this.setUnit(u ?? null);
         })
       );
     }
@@ -116,9 +112,9 @@ export default class EditorPatrolAppModule extends AppModule<
       this.app.getScene().add(obj);
     }
   }
-  setUnit(unit: U | null) {
+  setUnit(unit: Units | null) {
     if (this.state.unit === unit) return;
-    if (!unit?.modules.patrol) unit = null;
+    if (unit && !('patrol' in unit.modules)) unit = null;
 
     this.state.unit = unit;
     this.observables.unit$.next(this.state.unit);
@@ -126,11 +122,14 @@ export default class EditorPatrolAppModule extends AppModule<
   }
 
   getPath() {
-    return this.state.unit?.modules.patrol.getPath() ?? [];
+    if (this.state.unit && 'patrol' in this.state.unit.modules) {
+      return this.state.unit.modules.patrol.getPath();
+    }
+    return [];
   }
 
   setPath(path: PatrolPath) {
-    if (this.state.unit) {
+    if (this.state.unit && 'patrol' in this.state.unit.modules) {
       this.state.unit.modules.patrol.setPath(path);
       this.observables.path$.next(this.getPath());
     }

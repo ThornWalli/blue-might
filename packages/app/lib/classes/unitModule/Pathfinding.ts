@@ -1,7 +1,7 @@
+import { Subject } from 'rxjs';
 /* eslint-disable complexity */
 import type { Object3D } from 'three';
 import { BufferGeometry, Line, LineBasicMaterial, Vector3 } from 'three';
-import { Subject } from 'rxjs';
 
 import UnitModule, {
   type UnitModuleObservables,
@@ -15,11 +15,12 @@ import type MovableUnit from '../unit/Movable';
 import type { NAVIGATOR_TYPE } from '../mapModule/Pathfinding';
 import type SeaVehicleUnit from '../unit/vehicle/SeaVehicle';
 
-import FigureUnitModule from './movable/Figure';
+import FigureUnitModule from './movable/FigureMovable';
 import HelicopterUnitModule from './movable/airVehicle/Helicopter';
 import GroundVehicleUnitModule from './movable/GroundVehicle';
 import SeaVehicleUnitModule from './movable/SeaVehicle';
 import type MovableUnitModule from './Movable';
+import type FigureMovableUnitModule from './movable/FigureMovable';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -119,9 +120,9 @@ export default class PathfindingUnitModule extends UnitModule<
     }
 
     // Abbrechen, wenn force=true (z.B. für Attack)
-    if (this.isMoving()) {
-      await this.abortMovement();
-    }
+    // if (this.isMoving()) {
+    //   await this.abortMovement();
+    // }
 
     // Führe den Move aus (wie bisher)
     const result = (await this.executeMove(targetPosition)) ?? false;
@@ -422,8 +423,8 @@ export default class PathfindingUnitModule extends UnitModule<
             ? (unit.modules.groundVehicle as GroundVehicleUnitModule)
             : undefined;
         const fig2 =
-          'figure' in unit.modules
-            ? (unit.modules.figure as FigureUnitModule)
+          'figureMovable' in unit.modules
+            ? (unit.modules.figureMovable as FigureMovableUnitModule)
             : undefined;
         const heli2 =
           'helicopter' in unit.modules
@@ -522,6 +523,10 @@ export default class PathfindingUnitModule extends UnitModule<
         subscription.unsubscribe();
         resolve(true);
       });
+      if (path.length < 1) {
+        this.state.currentPath = null;
+        this.observables.moveComplete$.next();
+      }
     });
   }
 
@@ -623,10 +628,13 @@ export default class PathfindingUnitModule extends UnitModule<
     });
   }
 
+  private isAborting = false;
   abortMovement() {
+    if (this.isAborting) return Promise.resolve(false);
+    this.isAborting = true;
     this.state.pendingMove = null;
     this.state.currentPath = null;
-    return new Promise(resolve => {
+    return new Promise<boolean>(resolve => {
       if (this.state.complete || !this.state.currentPath) {
         resolve(true);
         return;
@@ -635,6 +643,9 @@ export default class PathfindingUnitModule extends UnitModule<
         subscription.unsubscribe();
         resolve(true);
       });
+    }).then(v => {
+      this.isAborting = false;
+      return v;
     });
   }
 

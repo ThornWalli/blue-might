@@ -23,7 +23,12 @@ export enum ICON {
   PLAY = 'play',
   ARROW_UTURN_LEFT = 'arrow-uturn-left',
   ARROW_DOWN_TRAY = 'arrow-down-tray',
-  ARROW_UP_TRAY = 'arrow-up-tray'
+  ARROW_UP_TRAY = 'arrow-up-tray',
+  ARROW_LEFT_START_ON_RECTANGLE = 'arrow-left-start-on-rectangle',
+  RESCUE = 'rescue',
+  USER_GROUP = 'user-group',
+  MAP_PIN = 'map-pin',
+  FLAG = 'flag'
 }
 
 export default {
@@ -136,6 +141,32 @@ export default {
   [ICON.ARROW_UP_TRAY]: markRaw(
     defineAsyncComponent(
       () => import('../assets/icons/micro/arrow-up-tray.svg?component')
+    )
+  ),
+  [ICON.ARROW_LEFT_START_ON_RECTANGLE]: markRaw(
+    defineAsyncComponent(
+      () =>
+        import('../assets/icons/micro/arrow-left-start-on-rectangle.svg?component')
+    )
+  ),
+  [ICON.RESCUE]: markRaw(
+    defineAsyncComponent(
+      () => import('../assets/icons/micro/rescue.svg?component')
+    )
+  ),
+  [ICON.USER_GROUP]: markRaw(
+    defineAsyncComponent(
+      () => import('../assets/icons/micro/user-group.svg?component')
+    )
+  ),
+  [ICON.MAP_PIN]: markRaw(
+    defineAsyncComponent(
+      () => import('../assets/icons/micro/map-pin.svg?component')
+    )
+  ),
+  [ICON.FLAG]: markRaw(
+    defineAsyncComponent(
+      () => import('../assets/icons/micro/flag.svg?component')
     )
   )
 };

@@ -4,6 +4,7 @@ export type * from './types';
 export { default as ControlTower_1 } from './building/control_tower_1/ControlTower_1';
 export { default as LandingPort_1 } from './building/landing_port_1/LandingPort_1';
 export { default as Barrack_1 } from './building/barrack_1/Barrack_1';
+export { default as BarrackRescue_1 } from './building/barrack_rescue_1/BarrackRescue_1';
 //#endregion
 
 //#region other buildings
@@ -20,10 +21,14 @@ export { default as FactoryChimney_1 } from './building/factory_chimney_1/Factor
 //#endregion
 
 //#region supply
-export { default as SeaSupplyStation } from './building/sea_supply_station_1/SeaSupplyStation_1';
-export { default as LandingPortSupplyStation } from './building/landing_port_supply_station/LandingPortSupplyStation';
-export { default as SeaLandingPortSupplyStation } from './building/sea_landing_port_supply_station_1/SeaLandingPortSupplyStation_1';
-export { default as SupplyStation } from './building/supply_station/SupplyStation_1';
+export { default as SeaSupplyStation_1 } from './building/sea_supply_station_1/SeaSupplyStation_1';
+export { default as LandingPortSupplyStation_1 } from './building/landing_port_supply_station_1/LandingPortSupplyStation_1';
+export { default as SeaLandingPortSupplyStation_1 } from './building/sea_landing_port_supply_station_1/SeaLandingPortSupplyStation_1';
+export { default as SupplyStation_1 } from './building/supply_station_1/SupplyStation_1';
+//#endregion
+
+//#region rescue
+export { default as LandingPortRescue_1 } from './building/landing_port_rescue_1/LandingPortRescue_1';
 //#endregion
 
 //#region vehicles

@@ -92,6 +92,18 @@ export default class AirVehicleUnitModule<
     //#endregion
   }
 
+  override async setup() {
+    await super.setup();
+
+    this.subscription.add(
+      this.observables.flightStatus$.subscribe(flightStatus =>
+        this.getUnit().modules.player.setCanLeave(
+          flightStatus === FLIGHT_STATUS.LANDED
+        )
+      )
+    );
+  }
+
   canToggleGears() {
     const unit = this.getUnit();
     const position = unit.getPosition();

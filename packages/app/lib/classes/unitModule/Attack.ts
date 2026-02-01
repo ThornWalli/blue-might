@@ -7,6 +7,7 @@ import {
   Vector3
 } from 'three';
 import { ReplaySubject, Subscription } from 'rxjs';
+import type { Units } from '@blue-might/units';
 
 import UnitModule, {
   type UnitModuleObservables,
@@ -16,7 +17,7 @@ import UnitModule, {
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D } from '../../utils/object';
-import { isUnitDestroyed, isVehicle } from '../../utils/unit';
+import { getUnitDistance, isUnitDestroyed, isVehicle } from '../../utils/unit';
 import type { UnitModules } from '../Unit';
 
 import type PatrolUnitModule from './Patrol';
@@ -45,7 +46,7 @@ export enum ATTACK_TYPE {
 }
 
 export interface AttackUnitModuleObservables extends UnitModuleObservables {
-  target$: ReplaySubject<Unit | null>;
+  targetUnit$: ReplaySubject<Unit | null>;
 }
 
 export interface AttackUnitModuleOptions extends UnitModuleOptions {
@@ -53,14 +54,19 @@ export interface AttackUnitModuleOptions extends UnitModuleOptions {
    * The radius of the attack range. Defaults to 4.
    */
   radius: number;
+  /**
+   * Wenn nicht gesetzt, wird 1/2 vom Radius verwendet.
+   */
+  attackRadius?: number;
   changeByDistance: boolean;
   followTarget: boolean;
   attackTypes: ATTACK_TYPE[];
 }
 
 export interface AttackUnitModuleState extends UnitModuleState {
-  target: Unit | null;
+  targetUnit: Unit | null;
   followStartPosition: Vector3 | null;
+  targetYaw: number | null; // Neu: Speichere den Ziel-Yaw für Interpolation
 }
 
 export default class AttackUnitModule extends UnitModule<
@@ -78,7 +84,10 @@ export default class AttackUnitModule extends UnitModule<
   static override TYPE = 'attack';
 
   private sphere: Sphere;
-  private debugSphere: Mesh | null = null;
+  private debugObjects?: {
+    radiusSphere: Mesh;
+    attackRadiusSphere: Mesh;
+  } | null;
   private resumeTimeout: NodeJS.Timeout | null = null; // Neuer Timeout für Patrol-Resume mit Delay
 
   setFollowTarget(enabled: boolean) {
@@ -105,12 +114,12 @@ export default class AttackUnitModule extends UnitModule<
         followTarget: options.followTarget ?? false,
         attackTypes: options.attackTypes ?? []
       },
-      { ...state, followStartPosition: null },
+      { ...state, followStartPosition: null, targetYaw: null },
       debug
     );
 
     //#region observables
-    this.observables.target$ = new ReplaySubject<Unit | null>(1);
+    this.observables.targetUnit$ = new ReplaySubject<Unit | null>(1);
     //#endregion
 
     this.sphere = new Sphere(new Vector3(), this.options.radius);
@@ -131,7 +140,9 @@ export default class AttackUnitModule extends UnitModule<
     this.subscription.add(
       unit.observables.position$.subscribe(position => {
         this.sphere.center.copy(position);
-        this.debugSphere?.position.copy(position);
+        Object.values(this.debugObjects ?? {}).forEach(debugObject =>
+          debugObject?.position.copy(position)
+        );
       })
     );
 
@@ -156,10 +167,14 @@ export default class AttackUnitModule extends UnitModule<
       this.resumeTimeout = null;
     }
 
-    if (this.debugSphere) {
-      this.debugSphere.removeFromParent();
-      disposeObject3D(this.debugSphere);
-      this.debugSphere = null;
+    if (this.debugObjects) {
+      Object.values(this.debugObjects)
+        .filter(v => v !== null)
+        .forEach(debugObject => {
+          debugObject.removeFromParent();
+          disposeObject3D(debugObject);
+        });
+      this.debugObjects = null;
     }
 
     super.destroy();
@@ -181,7 +196,7 @@ export default class AttackUnitModule extends UnitModule<
     this.lastUpdateTime = time;
 
     // Wenn bereits ein Ziel vorhanden und die Option "changeByDistance" deaktiviert ist wird nicht automatisch ein neues Ziel gesucht.
-    if (this.options.changeByDistance || !this.state.target) {
+    if (this.options.changeByDistance || !this.state.targetUnit) {
       const unitsInRadius = (
         unit
           .getMap()
@@ -204,57 +219,79 @@ export default class AttackUnitModule extends UnitModule<
         }
       }
 
-      (this.debugSphere?.material as MeshLambertMaterial)?.color.set(0x00ff00);
-      if (intersectingUnits.length) {
-        if (this.state.target !== intersectingUnits[0]) {
-          this.setTarget(intersectingUnits[0]);
-        }
-        (this.debugSphere?.material as MeshLambertMaterial)?.color.set(
-          0xff0000
-        );
+      const result = intersectingUnits.shift();
+      if (result && this.state.targetUnit !== result) {
+        this.setTargetUnit(result);
       }
+
+      this.updateRadiusDebug(intersectingUnits);
     }
 
-    if (this.options.followTarget && this.state.target) {
+    if (this.options.followTarget && this.state.targetUnit) {
       const pathfinding = unit.modules.pathfinding;
-      const attackRadius = this.options.radius / 2;
-
-      // Patrol-bezogene Logik entfernt
+      const attackRadius = this.options.attackRadius ?? this.options.radius / 2;
 
       this.state.followStartPosition =
         this.state.followStartPosition || unit.getPosition().clone();
 
       // Berechne Distanz zum Ziel
-      const distance = unit
-        .getPosition()
-        .distanceTo(this.state.target.getPosition());
+      const distance = getUnitDistance(unit, this.state.targetUnit);
 
-      // Neue Prüfung: Stoppe Bewegung, wenn bereits in Reichweite (z.B. distance <= attackRadius)
-      if (distance <= attackRadius) {
-        // Unit ist nah genug – stoppe Bewegung und richte aus
+      // Neue Prüfung: Stoppe Bewegung, wenn bereits in Reichweite
+
+      const intersect = distance <= attackRadius;
+      this.updateAttackRadiusDebug(intersect);
+
+      if (intersect) {
+        // Unit ist nah genug – stoppe Bewegung
         if (pathfinding.isMoving()) {
           pathfinding.abortMovement();
         }
-        // Richte die Unit zum Ziel aus (angenommen, es gibt ein rotation-Modul; passe an)
-        // const direction = new Vector3()
-        //   .subVectors(this.state.target.getPosition(), unit.getPosition())
-        //   .normalize();
-        // Beispiel: Setze Rotation basierend auf Richtung (passe an dein Unit-System an)
-        // unit.modules.rotation?.setRotation(direction); // Oder ähnlich, falls verfügbar
-        // Falls kein separates Modul: unit.setRotation(Math.atan2(direction.x, direction.z)); // Beispiel für Yaw
-        // unit.setYaw(Math.atan2(direction.x, direction.z));
 
-        // console.log('Unit in range, aiming at target');
+        // Richte die Unit animiert zum Ziel aus (nur wenn stillstehend)
+        if (!pathfinding.isMoving()) {
+          const direction = new Vector3()
+            .subVectors(this.state.targetUnit.getPosition(), unit.getPosition())
+            .normalize();
+          const targetYaw = Math.atan2(direction.x, direction.z);
+
+          // Setze targetYaw, falls noch nicht gesetzt
+          if (this.state.targetYaw === null) {
+            this.state.targetYaw = targetYaw;
+          }
+
+          // Interpoliere den aktuellen Yaw zum Ziel-Yaw (animierte Ausrichtung)
+          const currentYaw = unit.getYaw();
+          let deltaYaw = targetYaw - currentYaw;
+
+          // Normalisiere den Winkelunterschied auf -PI bis PI (verhindert Springen bei 360°-Übergängen)
+          deltaYaw = ((deltaYaw + Math.PI) % (2 * Math.PI)) - Math.PI;
+
+          const rotationSpeed = 0.1; // Passe an: 0.1 = 10% pro Frame; höher = schneller, niedriger = langsamer
+          const interpolatedYaw = currentYaw + deltaYaw * rotationSpeed;
+
+          unit.setYaw(interpolatedYaw);
+
+          // Stoppe Interpolation, wenn nah genug am Ziel (verhindert Endlosschleifen)
+          if (Math.abs(deltaYaw) < 0.01) {
+            // Toleranz: 0.01 Radiant ≈ 0.57°
+            this.state.targetYaw = null; // Reset für nächstes Ziel
+          }
+        }
+
         return; // Keine weitere Bewegung
       }
+
+      // Reset targetYaw, wenn nicht mehr in Reichweite
+      this.state.targetYaw = null;
 
       // Nur bewegen, wenn nicht in Reichweite und nicht bereits bewegend
       if (!pathfinding.isMoving()) {
         // Zielposition: Auf der Linie zum Ziel, in attackRadius Entfernung (erhöhe Abstand, um Schleifen zu vermeiden)
         const direction = new Vector3()
-          .subVectors(this.state.target.getPosition(), unit.getPosition())
+          .subVectors(this.state.targetUnit.getPosition(), unit.getPosition())
           .normalize();
-        const targetPosition = this.state.target
+        const targetPosition = this.state.targetUnit
           .getPosition()
           .clone()
           .sub(direction.multiplyScalar(attackRadius)); // Erhöht auf attackRadius statt *0.5, um weiter weg zu bleiben
@@ -280,9 +317,7 @@ export default class AttackUnitModule extends UnitModule<
       }
     } else {
       // Fallback: Prüfe Distanz zur Position, wenn kein Kollisionsmodul vorhanden
-      const distance = this.getUnit()
-        .getPosition()
-        .distanceTo(unit.getPosition());
+      const distance = getUnitDistance(this.getUnit(), unit);
       if (distance <= this.options.radius) {
         return unit;
       }
@@ -290,28 +325,28 @@ export default class AttackUnitModule extends UnitModule<
   }
 
   isTargetOuterRange() {
-    if (!this.state.target || !this.state.followStartPosition) return false;
+    if (!this.state.targetUnit || !this.state.followStartPosition) return false;
     const distance = this.state.followStartPosition.distanceTo(
-      this.state.target.getPosition()
+      this.state.targetUnit.getPosition()
     );
     return distance > this.options.radius;
   }
 
   hasTarget() {
-    return !!this.state.target;
+    return !!this.state.targetUnit;
   }
 
   getTarget() {
-    return this.state.target;
+    return this.state.targetUnit;
   }
 
   private unitSubscription: Subscription | null = null;
-  private setTarget(target?: Unit | null) {
-    if (this.state.target === target) return;
+  private setTargetUnit(target?: Unit | null) {
+    if (this.state.targetUnit === target) return;
 
     const unit = this.getUnit();
-    const patrolModule = unit.modules.patrol as PatrolUnitModule | undefined;
-    this.state.target = target ?? null;
+    const patrolModule = unit.modules.patrol;
+    this.state.targetUnit = target ?? null;
 
     if (target) {
       // Clear any existing resume timeout when setting a new target
@@ -332,7 +367,7 @@ export default class AttackUnitModule extends UnitModule<
           const outerDistance = this.isTargetOuterRange();
           if (outerDistance || !stillInRange) {
             // console.log('Target out of range or lost');
-            this.setTarget(undefined);
+            this.setTargetUnit(undefined);
             this.unitSubscription?.unsubscribe();
             this.subscription.remove(this.unitSubscription!);
             if (this.state.followStartPosition) {
@@ -369,7 +404,7 @@ export default class AttackUnitModule extends UnitModule<
       );
       this.unitSubscription.add(
         target.modules.damage.observables.destroyed$.subscribe(() => {
-          this.setTarget(undefined);
+          this.setTargetUnit(undefined);
           this.unitSubscription?.unsubscribe();
           this.subscription.remove(this.unitSubscription!);
         })
@@ -395,7 +430,7 @@ export default class AttackUnitModule extends UnitModule<
       }
     }
 
-    this.observables.target$.next(this.state.target);
+    this.observables.targetUnit$.next(this.state.targetUnit);
     console.log('New attack target:', target);
   }
 
@@ -437,11 +472,46 @@ export default class AttackUnitModule extends UnitModule<
   }
 
   private setupDebug() {
-    const debugSphere = new Mesh(
-      new SphereGeometry(this.sphere.radius, 16, 16),
-      new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
-    );
-    this.debugSphere = debugSphere;
-    this.getUnit().getMap()?.app.getScene().add(this.debugSphere);
+    this.debugObjects = {
+      radiusSphere: new Mesh(
+        new SphereGeometry(this.sphere.radius, 16, 16),
+        new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
+      ),
+      attackRadiusSphere: new Mesh(
+        new SphereGeometry(
+          this.options.attackRadius ?? this.options.radius / 2,
+          16,
+          16
+        ),
+        new MeshLambertMaterial({ color: 0xff0000, wireframe: true })
+      )
+    };
+    this.getUnit()
+      .getMap()
+      ?.app.getScene()
+      .add(...Object.values(this.debugObjects));
+  }
+
+  updateRadiusDebug(units: Units[]) {
+    const radiusSphere = this.debugObjects?.radiusSphere;
+    if (radiusSphere) {
+      const color = (radiusSphere.material as MeshLambertMaterial)?.color;
+      color.set(0x00ff00);
+      if (units.length) {
+        color.set(0xff0000);
+      }
+    }
+  }
+
+  updateAttackRadiusDebug(intersect: boolean) {
+    const attackRadiusSphere = this.debugObjects?.attackRadiusSphere;
+    if (attackRadiusSphere) {
+      const color = (attackRadiusSphere.material as MeshLambertMaterial)?.color;
+      color.set(0x00ff00);
+
+      if (intersect) {
+        color.set(0xff0000);
+      }
+    }
   }
 }

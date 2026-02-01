@@ -1,5 +1,5 @@
 <template>
-  <i class="base-icon" :class="{ [`size-${size ?? IconSize.SMALL}`]: true }">
+  <i class="bm-base-icon" :class="{ [`size-${size ?? IconSize.SMALL}`]: true }">
     <component :is="icon" />
   </i>
 </template>
@@ -26,7 +26,7 @@ const icon = computed(() => {
 </script>
 
 <style lang="postcss" scoped>
-.base-icon {
+.bm-base-icon {
   &.size-very-small {
     --size: 16;
   }

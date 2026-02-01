@@ -5,12 +5,14 @@ import type {
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { Mesh, SkinnedMesh } from 'three';
+import { LoopOnce, LoopRepeat, Mesh, SkinnedMesh } from 'three';
 import FigureUnit, {
   type FigureUnitModuleList,
   type FigureUnitModules,
   type FigureUnitOptions
 } from '@blue-might/app/lib/classes/unit/Figure';
+import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/Animation';
+import { FIGURE_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/FigureMovable';
 
 import baseGlb from './assets/soldat_1.glb?url';
 
@@ -28,6 +30,14 @@ export default class Soldat_1<
 > extends FigureUnit<Modules, ModuleList, Options> {
   static override KEY = 'soldat_1';
 
+  animationSettings: Record<string, AnimationSetting> = {
+    idle: { clampWhenFinished: false, loop: LoopRepeat, duration: 8 },
+    walk: { clampWhenFinished: false, loop: LoopRepeat, duration: 0.5 },
+    run: { clampWhenFinished: false, loop: LoopRepeat, duration: 0.25 },
+    swim: { clampWhenFinished: false, loop: LoopRepeat, duration: 0.5 },
+    dead: { clampWhenFinished: true, loop: LoopOnce, duration: 0.25 }
+  };
+
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList?: ModuleList
@@ -43,29 +53,34 @@ export default class Soldat_1<
 
   override async afterSetup(_context: SetupContext) {
     await super.afterSetup(_context);
-    this.setMaterialReady();
-    this.modules.animation.playAction('idle');
-    this.subscription.add(
-      (this as FigureUnit).modules.movable.observables.move$.subscribe(() => {
-        this.modules.animation.stopAction('idle');
-        this.modules.animation.playAction('walk');
-      })
-    );
-    this.subscription.add(
-      (this as FigureUnit).modules.movable.observables.stop$.subscribe(() => {
-        this.modules.animation.stopAction('walk');
-        this.modules.animation.playAction('idle');
-      })
-    );
-    this.subscription.add(
-      this.modules.damage.observables.destroyed$.subscribe(() => {
-        this.setDead();
-      })
-    );
-  }
 
-  setDead() {
-    this.root.rotation.x += Math.PI / 2;
+    this.modules.animation.applySettings(this.animationSettings);
+
+    this.setMaterialReady();
+    this.subscription.add(
+      this.modules.figureMovable.observables.status$.subscribe(status => {
+        this.modules.animation.stopActions();
+        switch (status) {
+          case FIGURE_STATUS.WALKING:
+            this.modules.animation.playAction('walk');
+            break;
+          case FIGURE_STATUS.RUNNING:
+            this.modules.animation.playAction('run');
+            break;
+          case FIGURE_STATUS.IDLE:
+            this.modules.animation.playAction('idle');
+            break;
+          case FIGURE_STATUS.SWIMMING:
+            this.modules.animation.playAction('swim');
+            break;
+          case FIGURE_STATUS.DEAD:
+            this.modules.animation.playAction('dead');
+            break;
+          default:
+            this.modules.animation.playAction('idle');
+        }
+      })
+    );
   }
 
   override async createMesh(_context: SetupContext) {

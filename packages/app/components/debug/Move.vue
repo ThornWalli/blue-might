@@ -7,13 +7,12 @@
         !unit ||
         !(unit instanceof MovableUnit)
       "
-      @click="onClickMoveUnit">
-      Move Unit
-    </bm-button>
+      label="Move Unit"
+      @click="onClickMoveUnit" />
     <bm-button
       :disabled="!isVehicle || !unit || !(unit instanceof MovableUnit)"
+      :label="unitActive ? 'Vehicle Off' : 'Vehicle On'"
       @click="onClickUnitActive">
-      {{ unitActive ? 'Vehicle Off' : 'Vehicle On' }}
     </bm-button>
   </bm-details>
 </template>

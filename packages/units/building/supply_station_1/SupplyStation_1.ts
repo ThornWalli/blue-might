@@ -16,7 +16,6 @@ import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pat
 import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/supply_station.glb?url';
-// import baseTexture from './texture.png?url';
 
 export type Options = BuildingUnitOptions;
 export interface Modules extends BuildingUnitModules {

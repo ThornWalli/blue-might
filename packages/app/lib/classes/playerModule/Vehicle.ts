@@ -1,5 +1,5 @@
 import { filter, ReplaySubject } from 'rxjs';
-import { Soldat_1 } from '@blue-might/units';
+import { Soldat_1, type VehicleUnits } from '@blue-might/units';
 import { Vector3 } from 'three';
 
 import type {
@@ -9,23 +9,18 @@ import type {
 } from '../PlayerModule';
 import PlayerModule from '../PlayerModule';
 import type Player from '../Player';
-import type Unit from '../Unit';
 import type FigureUnit from '../unit/Figure';
-import type VehicleUnit from '../unit/Vehicle';
-import type GroundVehicleUnit from '../unit/vehicle/GroundVehicle';
-import type SeaVehicleUnit from '../unit/vehicle/SeaVehicle';
-import type AirVehicleUnit from '../unit/vehicle/AirVehicle';
 import { isFigure } from '../../utils/unit';
 
 import { ControlAction } from './Controls';
 
 interface Observables extends PlayerModuleObservables {
-  unit$: ReplaySubject<Unit | null>;
+  unit$: ReplaySubject<VehicleUnits | null>;
 }
 
 type Options = PlayerModuleOptions;
 
-type U = VehicleUnit | GroundVehicleUnit | SeaVehicleUnit | AirVehicleUnit;
+type U = VehicleUnits;
 
 interface State extends PlayerModuleState {
   unit: U | null;
@@ -55,7 +50,7 @@ export default class VehiclePlayerModule extends PlayerModule<
     );
 
     //#region observables
-    this.observables.unit$ = new ReplaySubject<Unit | null>();
+    this.observables.unit$ = new ReplaySubject<VehicleUnits | null>();
     //#endregion
   }
 
@@ -123,6 +118,10 @@ export default class VehiclePlayerModule extends PlayerModule<
 
   async leaveUnit() {
     if (!this.state.unit) throw new Error('No vehicle unit to exit from');
+
+    // can leave?
+    if (!this.state.unit.modules.player.canLeave()) return;
+
     const map = this.player.app.modules.map.getMap()!;
     // Neben unit positionieren, gefühlt ausstieg. Leiht versetzt.
     const t = this.state.figureUnit!;
@@ -134,7 +133,7 @@ export default class VehiclePlayerModule extends PlayerModule<
     );
     const unit = await map.modules.units.add(t)!;
     this.state.figureUnit = unit;
-    this.setVehicleUnit(unit);
+    this.setVehicleUnit(null);
   }
 
   getActiveUnit() {
@@ -149,7 +148,7 @@ export default class VehiclePlayerModule extends PlayerModule<
     return this.state.unit;
   }
 
-  setVehicleUnit(vehicle: U | Unit | null) {
+  setVehicleUnit(vehicle: U | VehicleUnits | null) {
     if (this.state.unit === vehicle) return;
 
     if (vehicle?.modules && 'player' in vehicle.modules) {
@@ -162,6 +161,10 @@ export default class VehiclePlayerModule extends PlayerModule<
 
       this.observables.unit$.next(vehicle);
     } else {
+      console.log(
+        'Vehicle is null or has no player module, setting to null',
+        vehicle
+      );
       throw new Error('Unit is not controllable');
     }
   }

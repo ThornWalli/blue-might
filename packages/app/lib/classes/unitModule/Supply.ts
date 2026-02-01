@@ -20,6 +20,7 @@ import VehicleUnit, { type VehicleUnitModules } from '../unit/Vehicle';
 import type Unit from '../Unit';
 import { disposeObject3D } from '../../utils/object';
 import SeaVehicleUnit from '../unit/vehicle/SeaVehicle';
+import { intersect } from '../../utils/intersect';
 
 import type WeaponUnitModule from './Weapon';
 import GroundVehicleUnitModule from './movable/GroundVehicle';
@@ -142,12 +143,14 @@ export default class SupplyUnitModule extends UnitModule<
     if (this.debug) {
       this.setupDebug();
     }
+
     if (this.options.sphereTarget) {
       unit.root.updateMatrixWorld(true);
       sphereTargetObj = unit.root.getObjectByName(
         this.options.sphereTarget.name
       );
     }
+
     this.subscription.add(
       unit.observables.position$.subscribe(position => {
         sphereTargetObj?.updateMatrixWorld(true);
@@ -204,7 +207,11 @@ export default class SupplyUnitModule extends UnitModule<
 
     const intersectingUnits: VehicleUnit[] = [];
     for (const targetUnit of unitsInRadius) {
-      const intersected = this.intersect(targetUnit);
+      const intersected = intersect({
+        unit: targetUnit,
+        sphere: this.sphere,
+        radius: this.options.radius
+      });
       if (intersected) {
         intersectingUnits.push(intersected);
         break;
@@ -263,32 +270,19 @@ export default class SupplyUnitModule extends UnitModule<
     this.getUnit().getMap()?.app.getScene().add(this.debugSphere);
   }
 
-  private intersect(unit: VehicleUnit) {
-    const collisionModule = unit.modules.collision;
-    if (collisionModule) {
-      // Hole die Welt-Bounding Box der Ziel-Unit
-      const targetBox = collisionModule.getWorldOBB();
-      if (targetBox.intersectsSphere(this.sphere)) {
-        return unit;
-      }
-    } else {
-      // Fallback: Prüfe Distanz zur Position, wenn kein Kollisionsmodul vorhanden
-      const distance = this.getUnit()
-        .getPosition()
-        .distanceTo(unit.getPosition());
-      if (distance <= this.options.radius) {
-        return unit;
-      }
-    }
-  }
-
   private setTarget(target?: VehicleUnit | null) {
     this.state.target = target ?? null;
     if (target) {
       const unitSubscription = new Subscription();
       unitSubscription.add(
         target.observables.position$.subscribe(() => {
-          if (!this.intersect(target)) {
+          if (
+            !intersect({
+              unit: target,
+              sphere: this.sphere,
+              radius: this.options.radius
+            })
+          ) {
             this.setTarget(undefined);
             unitSubscription?.unsubscribe();
           }

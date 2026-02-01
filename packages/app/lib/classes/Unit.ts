@@ -49,7 +49,8 @@ export enum GROUND_ADJUSTMENT_MODE {
   GROUND = 'ground',
   FLIGHT = 'flight',
   NONE = 'none',
-  SEA = 'sea'
+  SEA = 'sea',
+  FIGURE = 'figure'
 }
 
 type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
@@ -115,6 +116,7 @@ export interface UnitObservables {
   ready$: ReplaySubject<void>;
   materialReady$: ReplaySubject<void>;
   visible$: ReplaySubject<boolean>;
+  active$: ReplaySubject<boolean>;
   map$: ReplaySubject<Map | null>;
 }
 
@@ -145,6 +147,8 @@ export default class Unit<
 
     return types;
   }
+
+  private active: boolean = false;
 
   debug: boolean;
   preview: boolean;
@@ -212,6 +216,8 @@ export default class Unit<
     this.observables.rotation$.next(this.rotation.clone());
     this.observables.visible$ = new ReplaySubject<boolean>(1);
     this.observables.visible$.next(this.visible);
+    this.observables.active$ = new ReplaySubject<boolean>(1);
+    this.observables.active$.next(this.active);
     this.observables.map$ = new ReplaySubject<Map | null>(1);
     //#endregion
 
@@ -401,6 +407,15 @@ export default class Unit<
     return this.destroyed;
   }
 
+  getActive() {
+    return this.active;
+  }
+  setActive(active: boolean) {
+    if (this.active === active) return;
+    this.active = active;
+    this.observables.active$.next(active);
+  }
+
   getMap() {
     return this.map;
   }
@@ -472,7 +487,7 @@ export default class Unit<
 
   lastPosition: Vector3 = new Vector3();
 
-  setPosition(position: Vector3) {
+  setPosition(position: Vector3, options?: { force?: boolean }) {
     let desired = position.clone();
     const from = this.lastPosition.clone();
 
@@ -513,6 +528,14 @@ export default class Unit<
 
     // Schritt 2: Prüfe, ob die neue Position eine Kollision verursacht
     this.position.copy(desired);
+
+    if (options?.force) {
+      this.lastPosition.copy(desired);
+      this.observables.position$.next(desired);
+      this.updateMeshTransform();
+      return true;
+    }
+
     const collisionType = this.modules.collision.checkCollision();
 
     // Fall A: Keine blockierende Kollision
@@ -525,7 +548,8 @@ export default class Unit<
     }
 
     if (
-      this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.GROUND &&
+      (this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FIGURE ||
+        this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.GROUND) &&
       Math.abs(desired.y - from.y) > 1 / 3
     ) {
       this.position.copy(this.lastPosition);
@@ -698,6 +722,27 @@ export default class Unit<
         this.position.setY(info.position.y);
         break;
 
+      case GROUND_ADJUSTMENT_MODE.FIGURE:
+        {
+          info = groundModule.getTerrainInfoAt(
+            position.x,
+            position.z,
+            ignoredUnits
+          );
+
+          const seaLevel = this.map?.modules.surface.getSeaLevel() ?? 0;
+          const water = info.position.y <= seaLevel;
+
+          info.position.setY(Math.max(info.position.y, seaLevel));
+
+          this.position.setY(info.position.y);
+
+          if (!water && groundNormals) {
+            this.calculateGroundNormal();
+          }
+        }
+        break;
+
       case GROUND_ADJUSTMENT_MODE.GROUND:
         {
           info = groundModule.getTerrainInfoAt(
@@ -772,7 +817,10 @@ export default class Unit<
       this.rotation.y = lastYaw;
     }
 
-    if (this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.GROUND) {
+    if (
+      this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.GROUND ||
+      this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FIGURE
+    ) {
       this.calculateGroundNormal();
     }
 

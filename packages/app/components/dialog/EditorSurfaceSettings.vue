@@ -1,7 +1,6 @@
 <template>
   <div class="bm-dialog-editor-surface-settings">
-    <fieldset>
-      <legend>Texture</legend>
+    <bm-fieldset label="Texture">
       <div class="textures">
         <figure
           v-for="{ key, path, texture } in previewItems"
@@ -40,10 +39,9 @@
           <figcaption>Preview</figcaption>
         </figure>
       </div>
-    </fieldset>
+    </bm-fieldset>
     <form @submit="onSubmit">
-      <fieldset>
-        <legend>Background</legend>
+      <bm-fieldset label="Background">
         <div class="controls">
           <bm-toggle
             :model-value="heightMapInclude"
@@ -52,10 +50,9 @@
               editorSurfaceModule.setHeightMapInclude($event)
             " />
         </div>
-      </fieldset>
+      </bm-fieldset>
 
-      <fieldset>
-        <legend>Noise</legend>
+      <bm-fieldset label="Noise">
         <div class="controls">
           <bm-toggle
             :model-value="noise.active"
@@ -96,7 +93,7 @@
               " />
           </bm-form-field>
         </div>
-      </fieldset>
+      </bm-fieldset>
       <div class="buttons">
         <bm-button label="Abort" @click="onClickAbort" />
         <bm-button label="Apply" type="submit" />
@@ -118,6 +115,7 @@ import {
   type MapNoise
 } from '@blue-might/app/lib/classes/Map';
 
+import BmFieldset from '../Fieldset.vue';
 import BmButton from '../Button.vue';
 import BmButtonUpload from '../button/Upload.vue';
 import BmToggle from '../Toggle.vue';

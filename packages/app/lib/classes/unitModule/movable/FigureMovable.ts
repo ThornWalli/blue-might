@@ -1,5 +1,6 @@
 /* eslint-disable complexity */
-import { Euler, Vector3 } from 'three';
+import { Vector3 } from 'three';
+import { ReplaySubject } from 'rxjs';
 
 import type { AnimationLoopValue } from '../../Renderer';
 import MovableUnitModule, {
@@ -7,50 +8,64 @@ import MovableUnitModule, {
   type MovableUnitModuleOptions,
   type MovableUnitModuleState
 } from '../Movable';
-import type FigureUnit from '../../unit/Figure'; // Annahme: Es gibt eine FigureUnit-Klasse
+import type FigureMovableUnit from '../../unit/Figure'; // Annahme: Es gibt eine FigureMovableUnit-Klasse
 import { ControlAction } from '../../playerModule/Controls';
 
 declare module '../../Unit' {
   interface ModuleStates {
-    figure: Partial<FigureUnitModuleState>;
+    figureMovable: Partial<FigureMovableUnitModuleState>;
   }
   interface ModuleOptions {
-    figure: Partial<FigureUnitModuleOptions>;
+    figureMovable: Partial<FigureMovableUnitModuleOptions>;
   }
   interface ModuleDebug {
-    figure: boolean;
+    figureMovable: boolean;
   }
 }
 
-export type FigureUnitObservables = MovableUnitModuleObservables;
+export enum FIGURE_STATUS {
+  IDLE = 'idle',
+  WALKING = 'walking',
+  RUNNING = 'running',
+  JUMPING = 'jumping',
+  FALLING = 'falling',
+  SWIMMING = 'swimming',
+  DEAD = 'dead'
+}
 
-export interface FigureUnitModuleOptions extends MovableUnitModuleOptions {
+export interface FigureMovableUnitObservables extends MovableUnitModuleObservables {
+  status$: ReplaySubject<FIGURE_STATUS>;
+}
+
+export interface FigureMovableUnitModuleOptions extends MovableUnitModuleOptions {
   maxSpeed: number;
   acceleration: number;
   turnSpeed: number;
   friction: number;
   jumpPower: number;
   gravity: number;
+  status: FIGURE_STATUS;
 }
 
-export interface FigureUnitModuleState extends MovableUnitModuleState {
+export interface FigureMovableUnitModuleState extends MovableUnitModuleState {
   isGrounded: boolean;
   jumpCooldown: number;
+  status: FIGURE_STATUS;
 }
 
-export default class FigureUnitModule extends MovableUnitModule<
-  FigureUnitModuleOptions,
-  FigureUnitModuleState,
-  FigureUnitObservables,
-  FigureUnit
+export default class FigureMovableUnitModule extends MovableUnitModule<
+  FigureMovableUnitModuleOptions,
+  FigureMovableUnitModuleState,
+  FigureMovableUnitObservables,
+  FigureMovableUnit
 > {
-  static override TYPE = 'figure';
+  static override TYPE = 'figureMovable';
   private moveState = getDefaultMoveState();
 
   constructor(
-    unit: FigureUnit,
-    options: FigureUnitModuleOptions,
-    state: FigureUnitModuleState,
+    unit: FigureMovableUnit,
+    options: FigureMovableUnitModuleOptions,
+    state: FigureMovableUnitModuleState,
     debug: boolean
   ) {
     super(
@@ -67,10 +82,15 @@ export default class FigureUnitModule extends MovableUnitModule<
       {
         ...state,
         isGrounded: state.isGrounded ?? true,
-        jumpCooldown: state.jumpCooldown ?? 0
+        jumpCooldown: state.jumpCooldown ?? 0,
+        status: state.status ?? FIGURE_STATUS.IDLE
       },
       debug
     );
+    //#region observables
+    this.observables.status$ = new ReplaySubject<FIGURE_STATUS>(1);
+    this.observables.status$.next(this.state.status);
+    //#endregion
   }
 
   override update(v: AnimationLoopValue): void {
@@ -92,13 +112,8 @@ export default class FigureUnitModule extends MovableUnitModule<
     const eps = 1e-4;
 
     if (unit.modules.damage.isDestroyed()) {
-      unit.setRotation(
-        new Euler(
-          unit.getRotation().x - Math.PI / 2,
-          unit.getRotation().y,
-          unit.getRotation().z
-        )
-      );
+      this.setStatus(FIGURE_STATUS.DEAD);
+      return;
     }
 
     // Frühzeitiger Abbruch bei keinen Inputs und niedriger Geschwindigkeit
@@ -139,8 +154,10 @@ export default class FigureUnitModule extends MovableUnitModule<
     }
 
     // 4. Velocity aktualisieren (XZ)
-    this.state.velocity.x += accelX * delta;
-    this.state.velocity.z += accelZ * delta;
+    this.state.velocity.x +=
+      accelX * delta * (controls[ControlAction.MODIFIER] ? 3 : 1);
+    this.state.velocity.z +=
+      accelZ * delta * (controls[ControlAction.MODIFIER] ? 3 : 1);
     this.state.velocity.x *= friction;
     this.state.velocity.z *= friction;
 
@@ -150,6 +167,7 @@ export default class FigureUnitModule extends MovableUnitModule<
       0,
       this.state.velocity.z
     );
+
     const speed = horizontalVel.length();
     if (speed > maxSpeed) {
       horizontalVel.setLength(maxSpeed);
@@ -194,7 +212,8 @@ export default class FigureUnitModule extends MovableUnitModule<
           u => !u.equals(unit)
         ) ?? 0;
 
-    if (pos.y <= groundHeight) {
+    const epsilon = 0.01; // Kleiner Toleranzwert für Fließkommafehler
+    if (pos.y <= groundHeight + epsilon) {
       pos.y = groundHeight;
       this.state.velocity.y = 0;
       this.state.isGrounded = true;
@@ -202,8 +221,27 @@ export default class FigureUnitModule extends MovableUnitModule<
       this.state.isGrounded = false;
     }
 
-    // Position setzen
     unit.setPosition(pos);
+
+    const seaLevel = unit.getMap()?.modules.surface.getSeaLevel() ?? 0;
+
+    if (pos.y <= seaLevel) {
+      this.setStatus(FIGURE_STATUS.SWIMMING);
+    } else if (!this.state.isGrounded) {
+      if (this.state.velocity.y > 0) {
+        this.setStatus(FIGURE_STATUS.JUMPING);
+      } else {
+        this.setStatus(FIGURE_STATUS.FALLING);
+      }
+    } else if (this.state.velocity.lengthSq() > 0.01) {
+      if (controls[ControlAction.MODIFIER]) {
+        this.setStatus(FIGURE_STATUS.RUNNING);
+      } else {
+        this.setStatus(FIGURE_STATUS.WALKING);
+      }
+    } else {
+      this.setStatus(FIGURE_STATUS.IDLE);
+    }
 
     if (
       controls[ControlAction.MOVE_FORWARD] ||
@@ -221,6 +259,15 @@ export default class FigureUnitModule extends MovableUnitModule<
       this.observables.stop$.next();
       this.moveState = getDefaultMoveState();
     }
+  }
+
+  getStatus() {
+    return this.state.status;
+  }
+  setStatus(status: FIGURE_STATUS) {
+    if (this.state.status === status) return;
+    this.state.status = status;
+    this.observables.status$.next(status);
   }
 }
 

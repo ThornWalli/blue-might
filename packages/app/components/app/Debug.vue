@@ -1,8 +1,9 @@
 <template>
   <bm-app-layout class="bm-app-debug">
     <template #[PANEL.BOTTOM_LEFT]>
-      <div class="panel-row">
-        <bm-panel-debug key="general" :app="app" />
+      <div class="panel-column">
+        <bm-panel-debug key="debug" :app="app" />
+        <bm-panel-general key="general" :app="app" />
       </div>
     </template>
     <template #[PANEL.TOP_RIGHT]>
@@ -19,6 +20,7 @@ import type { App } from '@blue-might/app/lib/types';
 
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
 import BmPanelDebug from '../panel/Debug.vue';
+import BmPanelGeneral from '../panel/General.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
 

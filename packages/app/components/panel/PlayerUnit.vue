@@ -9,8 +9,7 @@
       <div class="info weapon">
         <div>
           <!-- weapons -->
-          <fieldset v-if="weaponSlots.length > 0">
-            <legend>Weapons</legend>
+          <bm-fieldset v-if="weaponSlots.length > 0" label="Weapons">
             <bm-control-item
               button
               indicator
@@ -18,7 +17,7 @@
               :value="
                 (autoAimActive ? 'On' : 'Off').padStart(padLength, '\u00A0')
               "
-              :status="
+              :indicator-status="
                 autoAimActive
                   ? CONTROL_ITEM_STATUS.NORMAL
                   : CONTROL_ITEM_STATUS.INACTIVE
@@ -28,7 +27,7 @@
               v-for="(slot, index) in weaponSlots"
               :key="index"
               indicator
-              :status="
+              :indicator-status="
                 slot.active
                   ? slot.ammunition / slot.maxAmmunition < 0.5
                     ? slot.ammunition <= 0
@@ -41,15 +40,17 @@
                 slot.weapon.projectile.shortName ?? `Weapon #${index + 1}`
               "
               :value="
-                `${slot.ammunition}/${slot.maxAmmunition}`
-                  .toString()
-                  .padStart(padLength, '\u00A0')
+                slot.ammunition === Infinity && slot.ammunition === Infinity
+                  ? `x`.padStart(padLength, '\u00A0')
+                  : `${slot.ammunition}/${slot.maxAmmunition}`
+                      .toString()
+                      .padStart(padLength, '\u00A0')
               " />
             <bm-control-item
               v-if="weaponSlots.length === 1"
               label="(none)"
               :value="'-'.padStart(padLength, '\u00A0')" />
-          </fieldset>
+          </bm-fieldset>
         </div>
       </div>
       <div class="grid-col grid-col-end grid-col-full">
@@ -57,13 +58,11 @@
           <div>
             <div class="grid-row">
               <div class="grid-col">
-                <fieldset>
-                  <legend>General</legend>
-
+                <bm-fieldset label="General">
                   <bm-control-item
                     indicator
                     label="Lives"
-                    :status="
+                    :indicator-status="
                       playerLifes > 1
                         ? CONTROL_ITEM_STATUS.NORMAL
                         : CONTROL_ITEM_STATUS.DANGER
@@ -79,7 +78,7 @@
                   <bm-control-item
                     indicator
                     label="Damage"
-                    :status="
+                    :indicator-status="
                       unitDamage.level >= DAMAGE_LEVEL.DESTROYED
                         ? CONTROL_ITEM_STATUS.DANGER
                         : unitDamage.level >= DAMAGE_LEVEL.DAMAGED
@@ -97,7 +96,7 @@
                     :disabled="!isVehicle"
                     indicator
                     label="Power"
-                    :status="
+                    :indicator-status="
                       unitActive
                         ? powerInfo.currentPower >= powerInfo.idlePower
                           ? powerInfo.currentPower >= powerInfo.minPower
@@ -118,7 +117,7 @@
                   <bm-control-item
                     indicator
                     label="Fuel"
-                    :status="
+                    :indicator-status="
                       fuelInfo.fuel <= 0
                         ? CONTROL_ITEM_STATUS.DANGER
                         : hasFuelWarning
@@ -136,7 +135,7 @@
                     :button="unitGears.canUse"
                     indicator
                     label="Gears"
-                    :status="
+                    :indicator-status="
                       unitGears.active
                         ? CONTROL_ITEM_STATUS.WARNING
                         : unitGears.opened
@@ -152,7 +151,28 @@
                       ).padStart(padLength, '\u00A0')
                     "
                     @click="onClickGears" />
-                </fieldset>
+                </bm-fieldset>
+                <bm-fieldset v-if="hasTransport" label="Transport">
+                  <bm-control-item
+                    label="Slots"
+                    indicator
+                    :indicator-status="
+                      transportSlotInfo.used >= transportSlotInfo.max
+                        ? CONTROL_ITEM_STATUS.DANGER
+                        : CONTROL_ITEM_STATUS.NORMAL
+                    "
+                    :value="
+                      `${transportSlotInfo.used}/${transportSlotInfo.max}`.padStart(
+                        padLength,
+                        '\u00A0'
+                      )
+                    " />
+                  <bm-button
+                    :disabled="transportSlotInfo.used === 0"
+                    :icon="ICON.ARROW_LEFT_START_ON_RECTANGLE"
+                    label="Unload"
+                    @click="onClickUnload" />
+                </bm-fieldset>
               </div>
               <div class="col">
                 <div class="compass">{{ compassValue }}</div>
@@ -188,8 +208,7 @@
         </div>
         <div class="grid-col grid-col-full grid-col-end">
           <div v-if="isAirVehicle" class="info air">
-            <fieldset>
-              <legend>Air Control</legend>
+            <bm-fieldset label="Air Control">
               <div class="grid-row">
                 <div class="grid-col grid-col-full grid-col-v">
                   <div class="attitude-indicator">
@@ -200,7 +219,7 @@
                   <bm-control-item
                     indicator
                     label="Altitude"
-                    :status="
+                    :indicator-status="
                       currentHeight > seaHeight
                         ? CONTROL_ITEM_STATUS.NORMAL
                         : currentHeight < seaHeight
@@ -213,14 +232,14 @@
                   <bm-control-item
                     indicator
                     label="Min.Alti."
-                    :status="CONTROL_ITEM_STATUS.NORMAL"
+                    :indicator-status="CONTROL_ITEM_STATUS.NORMAL"
                     :value="
                       groundHeight.toFixed(2).padStart(padLength, '\u00A0')
                     " />
                   <bm-control-item
                     indicator
                     label="Max.Alti."
-                    :status="CONTROL_ITEM_STATUS.NORMAL"
+                    :indicator-status="CONTROL_ITEM_STATUS.NORMAL"
                     :value="
                       MAX_AIR_VEHICLE_ALTITUDE.toFixed(2).padStart(
                         padLength,
@@ -229,7 +248,7 @@
                     " />
                 </div>
               </div>
-            </fieldset>
+            </bm-fieldset>
           </div>
         </div>
       </div>
@@ -245,9 +264,12 @@ import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 import { MAX_AIR_VEHICLE_ALTITUDE } from '@blue-might/app/lib/classes/unitModule/movable/AirVehicle';
 import usePlayerUnitInterface from '@blue-might/app/composables/usePlayerUnitInterface';
 import type { App } from '@blue-might/app/lib/types';
+import { ICON } from '@blue-might/app/utils/icons';
 
 import BmControlItem, { CONTROL_ITEM_STATUS } from '../element/ControlItem.vue';
 import BmPanel from '../Panel.vue';
+import BmFieldset from '../Fieldset.vue';
+import BmButton from '../Button.vue';
 import BmAttitudeIndicator from '../AttitudeIndicator.vue';
 import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
 import SvgIconHeart from '../../assets/icons/heart.svg?component';
@@ -279,7 +301,8 @@ const {
   currentHeight,
   seaHeight,
   groundHeight,
-  playerLifes
+  playerLifes,
+  transportSlotInfo
 } = usePlayerUnitInterface($props.app);
 
 watch(
@@ -296,6 +319,11 @@ const previewOptions = computed(() => {
     faction: unit.value.modules.faction.getFactionId(),
     action: 'idle'
   };
+});
+
+const hasTransport = computed(() => {
+  if (!unit.value) return false;
+  return 'transport' in unit.value.modules;
 });
 
 const player = computed(() => unit.value?.modules.player?.getPlayer());
@@ -340,6 +368,12 @@ function onClickGears() {
   if (!airVehicleModule) return;
 
   airVehicleModule.toggleGears();
+}
+
+async function onClickUnload() {
+  if (unit.value && 'transport' in unit.value.modules) {
+    await unit.value.modules.transport.unloadAll();
+  }
 }
 //#endregion
 </script>

@@ -392,7 +392,11 @@ export default class HelicopterUnitModule<
         targetAltitude = this.options.fixedAltitude!;
       }
     } else {
-      if ((controls.ascend || controls.descend) && active) {
+      if (
+        controls.ascend !== controls.descend &&
+        (controls.ascend || controls.descend) &&
+        active
+      ) {
         if (controls.descend) {
           velocity.y -= liftPower * 1.2 * delta;
           status = FLIGHT_STATUS.LANDING;

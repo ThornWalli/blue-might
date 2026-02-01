@@ -24,15 +24,21 @@ declare module '../Unit' {
 
 interface Observables extends UnitModuleObservables {
   player$: ReplaySubject<Player | null>;
+  canLeave$: ReplaySubject<boolean>;
 }
 export type PlayerUnitModuleOptions = UnitModuleOptions;
-export type PlayerUnitModuleState = UnitModuleState;
+export interface PlayerUnitModuleState extends UnitModuleState {
+  canLeave: boolean;
+}
 
 export default class PlayerUnitModule extends UnitModule<
   PlayerUnitModuleOptions,
   PlayerUnitModuleState,
   Observables
 > {
+  canLeave() {
+    return this.state.canLeave;
+  }
   hasPlayer() {
     return this._player !== null;
   }
@@ -47,11 +53,13 @@ export default class PlayerUnitModule extends UnitModule<
     state: PlayerUnitModuleState,
     debug: boolean
   ) {
-    super(unit, options, state, debug);
+    super(unit, options, { ...state, canLeave: state.canLeave ?? true }, debug);
 
     //#region observables
     this.observables.player$ = new ReplaySubject<Player | null>(1);
     this.observables.player$.next(this._player);
+    this.observables.canLeave$ = new ReplaySubject<boolean>(1);
+    this.observables.canLeave$.next(this.state.canLeave);
     //#endregion
 
     this.root = new Object3D();
@@ -76,5 +84,15 @@ export default class PlayerUnitModule extends UnitModule<
     const app = this.getUnit()?.getMap()?.app;
     if (!app || !('player' in app.modules)) return;
     return this._player?.equal(app.modules.player.getCurrentPlayer());
+  }
+
+  getCanLeave() {
+    return this.state.canLeave;
+  }
+
+  setCanLeave(canLeave: boolean) {
+    console.log('Setting canLeave to:', canLeave);
+    this.state.canLeave = canLeave;
+    this.observables.canLeave$.next(canLeave);
   }
 }

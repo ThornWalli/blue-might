@@ -174,36 +174,4 @@ function onClickFullscreen() {
     }
   }
 }
-
-:deep(fieldset) {
-  display: flex;
-  flex-direction: column;
-  gap: var(--bm-spacing-small);
-  padding: 0;
-  margin: 0;
-  border: none;
-
-  & legend {
-    display: flex;
-    gap: var(--bm-spacing-medium);
-    align-items: center;
-    width: 100%;
-    margin-bottom: var(--bm-spacing-medium);
-    font-family: var(--font-family-bit-font);
-    font-size: var(--font-size-bit-font);
-    line-height: var(--line-height-bit-font);
-    opacity: 0.6;
-
-    &::after {
-      flex: 1;
-      content: '';
-      border-top: solid white 2px;
-    }
-  }
-
-  & > div {
-    display: flex;
-    flex-direction: column;
-  }
-}
 </style>

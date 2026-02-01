@@ -1,6 +1,6 @@
 <template>
   <bm-details label="Controls" class="bm-debug-effect">
-    <bm-button @click="onClickLockAddExplosion"> Add Explosion </bm-button>
+    <bm-button label="Add Explosion" @click="onClickLockAddExplosion" />
   </bm-details>
 </template>
 

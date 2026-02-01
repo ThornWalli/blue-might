@@ -1,6 +1,5 @@
 <template>
   <div class="bm-debug">
-    <bm-debug-pages />
     <bm-debug-controls :app="app" />
     <bm-debug-markers :app="app" />
     <bm-debug-move :app="app" />
@@ -11,7 +10,6 @@
 <script lang="ts" setup>
 import type { App } from '../lib/types';
 
-import BmDebugPages from './debug/Pages.vue';
 import BmDebugControls from './debug/Controls.vue';
 import BmDebugMarkers from './debug/Markers.vue';
 import BmDebugMove from './debug/Move.vue';

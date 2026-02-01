@@ -5,20 +5,20 @@
       <canvas ref="unitCanvasEl"> </canvas>
     </div>
     <div v-if="controls" class="controls">
-      <bm-button @click="onClickMove(-2, 0)">←</bm-button>
-      <bm-button @click="onClickMove(2, 0)">→</bm-button>
-      <bm-button @click="onClickMove(0, -2)">↑</bm-button>
-      <bm-button @click="onClickMove(0, 2)">↓</bm-button>
+      <bm-button label="←" @click="onClickMove(-2, 0)" />
+      <bm-button label="→" @click="onClickMove(2, 0)" />
+      <bm-button label="↑" @click="onClickMove(0, -2)" />
+      <bm-button label="↓" @click="onClickMove(0, 2)" />
       <span class="spacer"></span>
-      <bm-button @click="onClickZoom(0.1)">+</bm-button>
-      <bm-button @click="onClickZoom(-0.1)">-</bm-button>
+      <bm-button label="+" @click="onClickZoom(0.1)" />
+      <bm-button label="-" @click="onClickZoom(-0.1)" />
     </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted, ref, watchEffect } from 'vue';
-import { EMPTY, of, Subscription, switchMap } from 'rxjs';
+import { EMPTY, merge, of, Subscription, switchMap } from 'rxjs';
 import { Color, Vector2, Vector3 } from 'three';
 
 import type Map from '../lib/classes/Map';
@@ -83,10 +83,18 @@ onMounted(() => {
       })
     );
   }
+
   subscription.add(
     $props.app.modules.map.observables.map$
       .pipe(
-        switchMap(map => (map ? map.modules.units.observables.addUnit$ : EMPTY))
+        switchMap(map =>
+          map
+            ? merge(
+                map.modules.units.observables.addUnit$,
+                map.modules.units.observables.removeUnit$
+              )
+            : EMPTY
+        )
       )
       .subscribe(() => {
         units = $props.app.modules.map.getMap()?.modules.units.getUnits() ?? [];
@@ -201,47 +209,6 @@ function renderBackground() {
     );
   });
 
-  // const backgroundTextureScale = backgroundTexture.image.width / mapSize.x;
-  // ctx.drawImage(
-  //   backgroundTexture.image,
-  //   pan.x * backgroundTextureScale,
-  //   pan.y * backgroundTextureScale,
-  //   scaledMapSize.x * backgroundTextureScale,
-  //   scaledMapSize.y * backgroundTextureScale,
-  //   0,
-  //   0,
-  //   canvas.width,
-  //   canvas.height
-  // );
-
-  // const heightMapScale = heightMap.image.width / mapSize.x;
-  // ctx.globalCompositeOperation = 'multiply';
-  // ctx.drawImage(
-  //   heightMap.image,
-  //   pan.x * heightMapScale,
-  //   pan.y * heightMapScale,
-  //   scaledMapSize.x * heightMapScale,
-  //   scaledMapSize.y * heightMapScale,
-  //   0,
-  //   0,
-  //   canvas.width,
-  //   canvas.height
-  // );
-
-  // ctx.globalCompositeOperation = 'source-over';
-  // ctx.globalAlpha = 0.2;
-  // const foregroundTextureScale = foregroundTexture.image.width / mapSize.x;
-  // ctx.drawImage(
-  //   foregroundTexture.image,
-  //   pan.x * foregroundTextureScale,
-  //   pan.y * foregroundTextureScale,
-  //   scaledMapSize.x * foregroundTextureScale,
-  //   scaledMapSize.y * foregroundTextureScale,
-  //   0,
-  //   0,
-  //   canvas.width,
-  //   canvas.height
-  // );
   ctx.globalAlpha = 1;
 
   ctx.globalCompositeOperation = 'color';

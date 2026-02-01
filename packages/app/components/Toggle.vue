@@ -2,7 +2,7 @@
   <div class="bm-toggle">
     <div class="track">
       <input
-        :id="id"
+        :id="$id"
         type="checkbox"
         :checked="modelValue"
         @input="
@@ -13,16 +13,23 @@
         " />
       <div class="thumb"></div>
     </div>
-    <label :for="id">{{ label }}</label>
+    <bm-base-icon v-if="icon" size="very-small" :name="icon" />
+    <label :for="$id">{{ label }}</label>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useId } from 'vue';
+import { useId, type FunctionalComponent } from 'vue';
 
-const id = useId();
+import type { ICON } from '../utils/icons';
+import type icons from '../utils/icons';
+
+import BmBaseIcon from './base/Icon.vue';
+
+const $id = useId();
 
 defineProps<{
+  icon?: ICON | keyof typeof icons | FunctionalComponent;
   label: string;
   modelValue: boolean;
 }>();

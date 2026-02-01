@@ -4,16 +4,17 @@
     class="bm-control-item"
     :class="{
       blinking,
-      [`status-${status}`]: status
+      [`status-${indicatorStatus}`]: indicatorStatus
     }">
     <div>
       <div>
-        <slot name="indicator">
-          <span v-if="indicator" class="indicator-lamp"></span>
-          <span v-else></span>
+        <slot v-if="indicator" name="indicator">
+          <span class="indicator-lamp"></span>
         </slot>
 
-        <slot name="label">{{ label.padStart(10, '\u00A0') }}</slot>
+        <div class="label">
+          <slot name="label">{{ label.padStart(10, '\u00A0') }}</slot>
+        </div>
       </div>
       <div v-html="value"></div>
     </div>
@@ -26,14 +27,14 @@ import { computed } from 'vue';
 const $props = defineProps<{
   indicator?: boolean;
   button?: boolean;
-  status?: CONTROL_ITEM_STATUS;
+  indicatorStatus?: CONTROL_ITEM_STATUS;
   label: string;
   value: string;
   blink?: boolean;
 }>();
 
 const blinking = computed(
-  () => $props.blink || $props.status === CONTROL_ITEM_STATUS.WARNING
+  () => $props.blink || $props.indicatorStatus === CONTROL_ITEM_STATUS.WARNING
 );
 </script>
 
@@ -69,6 +70,11 @@ export enum CONTROL_ITEM_STATUS {
       width: 100%;
       border: solid 2px #555;
     }
+  }
+
+  & .label {
+    flex: 1;
+    text-align: right;
   }
 
   & > div {

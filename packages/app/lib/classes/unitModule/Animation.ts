@@ -244,4 +244,9 @@ export class AnimationUnitModule extends UnitModule<
 
     action.stop();
   }
+
+  stopActions() {
+    this.runningAnimations.forEach(({ action }) => action.stop());
+    this.runningAnimations.clear();
+  }
 }

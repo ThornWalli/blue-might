@@ -14,19 +14,25 @@ import type { MapDescription } from '@blue-might/app/lib/classes/Map';
 import { getMapDescriptionFromArrayBuffer } from '@blue-might/app/utils/export';
 import { joinURL } from 'ufo';
 
-import { useRuntimeConfig } from '#imports';
+import { useRoute, useRuntimeConfig } from '#imports';
+
+const $route = useRoute();
 
 const AppComponent = defineAsyncComponent(
   () => import('@blue-might/app/components/App.vue')
 );
 
-const runtimeConfig = useRuntimeConfig();
+const $runtimeConfig = useRuntimeConfig();
 const description = ref<Raw<MapDescription>>();
 onMounted(async () => {
   description.value = markRaw(
     await getMapDescriptionFromArrayBuffer(
       await fetch(
-        joinURL('/', runtimeConfig.app.baseURL, 'editor_map.zip')
+        joinURL(
+          '/',
+          $runtimeConfig.app.baseURL,
+          String($route.query.map ?? 'editor_map.zip')
+        )
       ).then(res => res.arrayBuffer())
     )
   );

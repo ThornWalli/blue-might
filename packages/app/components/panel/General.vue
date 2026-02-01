@@ -2,10 +2,10 @@
   <bm-panel class="bm-panel-general" hide-title title="General">
     <div class="controls">
       <bm-button-upload
-        v-if="!hideImport"
+        v-if="showImport"
         label="Use local Map"
         @files="onFiles" />
-      <hr />
+      <hr v-if="showImport" />
       <bm-button label="Instructions" @click="onClickInstructions" />
       <bm-button label="Menu" @click="onClickMenu" />
     </div>
@@ -43,7 +43,7 @@ const menuDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 
 const $props = defineProps<{
   app: App;
-  hideImport?: boolean;
+  showImport?: boolean;
 }>();
 
 function onClickInstructions() {

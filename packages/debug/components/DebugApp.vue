@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import type { AppConfig } from '@blue-might/app/lib/classes/BaseApp';
+import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/BaseApp';
 import {
   DEFAULT_MAP_NOISE,
   type MapDescription
@@ -28,6 +28,7 @@ const $props = defineProps<{
 }>();
 
 const appConfig = defu($props.config ?? {}, {
+  mode: APP_MODE.DEBUG,
   rendererOptions: {
     fog: false,
     pixelated: false,

@@ -9,14 +9,12 @@
       [`mode-${mode ?? 'normal'}`]: true
     }">
     <slot name="before" :disabled="disabled" />
-    <base-icon
+    <bm-base-icon
       v-if="icon && (!iconAlign || iconAlign === 'left')"
       size="very-small"
       :name="icon" />
-    <slot :label="label" :disabled="disabled">
-      <span v-if="!hideLabel">{{ label }}</span>
-    </slot>
-    <base-icon v-if="icon && iconAlign === 'right'" :name="icon" />
+    <span v-if="!hideLabel">{{ label }}</span>
+    <bm-base-icon v-if="icon && iconAlign === 'right'" :name="icon" />
     <slot name="after" :disabled="disabled" />
   </base-button>
 </template>
@@ -28,7 +26,7 @@ import type icons from '../utils/icons';
 import type { ICON } from '../utils/icons';
 
 import BaseButton from './base/Button.vue';
-import BaseIcon from './base/Icon.vue';
+import BmBaseIcon from './base/Icon.vue';
 
 defineProps<{
   disabled?: boolean;
@@ -98,7 +96,16 @@ defineProps<{
 
   & span {
     flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
     text-align: center;
+    white-space: nowrap;
+  }
+
+  &:has(.bm-base-icon) {
+    & span {
+      margin-right: 16px;
+    }
   }
 }
 </style>

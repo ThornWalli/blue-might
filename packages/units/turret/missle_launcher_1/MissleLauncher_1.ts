@@ -231,7 +231,7 @@ export default class MissleLauncher_1
     );
 
     this.subscription.add(
-      this.modules.attack.observables.target$.subscribe(target => {
+      this.modules.attack.observables.targetUnit$.subscribe(target => {
         if (target) {
           this.openWeapon(true);
         } else {

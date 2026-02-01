@@ -3,11 +3,19 @@
     v-if="mode === EDITOR_MODE.UNITS"
     class="bm-panel-editor-units"
     title="Editor Units">
-    <bm-select
-      :model-value="selectedUnit"
-      :options="unitOptions"
-      :attrs="{ size: 10 }"
-      @update:model-value="onUpdateSelectedUnit" />
+    <div class="units">
+      <bm-fieldset
+        v-for="itemGroup in itemGroups"
+        :key="itemGroup.label"
+        :label="itemGroup.label">
+        <bm-button
+          v-for="item in itemGroup.items"
+          :key="item.value"
+          :label="item.label"
+          @click="onUpdateSelectedUnit(item.value)">
+        </bm-button>
+      </bm-fieldset>
+    </div>
     <bm-button label="Close" @click="onClickClose" />
   </bm-panel>
   <teleport to="#layout-background">
@@ -39,8 +47,8 @@ import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
 import { EDITOR_MODE } from '@blue-might/app/lib/classes/app/AppEditor';
 
 import BmPanel from '../Panel.vue';
-import BmSelect from '../Select.vue';
 import BmButton from '../Button.vue';
+import BmFieldset from '../Fieldset.vue';
 import BmEditorUnitsControls from '../editorUnits/Controls.vue';
 
 const subscription = new Subscription();
@@ -56,7 +64,7 @@ const editorUnitsModule = $props.app.modules.editorUnits;
 
 const isMove = ref(false);
 const selectedUnit = ref<string | null>('');
-const unitOptions = computed(() => {
+const itemGroups = computed(() => {
   const groupedUnits = Object.entries(units).reduce(
     (result, [key, unit]) => {
       if (!result[unit.TYPE]) {
@@ -71,15 +79,12 @@ const unitOptions = computed(() => {
     {} as Record<string, { label: string; value: string }[]>
   );
 
-  return [
-    { label: 'Select Unit…', value: '' },
-    ...Object.entries(groupedUnits).map(([group, options]) => {
-      return {
-        label: group,
-        options
-      };
-    })
-  ];
+  return Object.entries(groupedUnits).map(([group, items]) => {
+    return {
+      label: group,
+      items
+    };
+  });
 });
 
 async function onUpdateSelectedUnit(value: string | null) {
@@ -143,14 +148,19 @@ function onFocus() {
 }
 </script>
 <style lang="postcss" scoped>
-.bm-panel-editor-grid {
-  & .position {
+.bm-panel-editor-units {
+  --count: 10;
+  --item-height: 24.5px;
+
+  & .units {
     display: flex;
-    justify-content: space-between;
-    font-family: var(--font-family-bit-font);
-    font-size: var(--font-size-bit-font);
-    line-height: var(--line-height-bit-font);
-    text-align: center;
+    flex-direction: column;
+    gap: var(--bm-spacing-medium);
+    height: calc(
+      var(--count) * var(--item-height) + var(--bm-spacing-small) *
+        (var(--count) - 1) + var(--item-height) / 2
+    );
+    overflow: auto;
   }
 }
 </style>

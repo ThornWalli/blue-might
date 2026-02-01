@@ -14,7 +14,7 @@
     </bm-form-field>
     <bm-button label="Set start position" @click="onClickSetStartPosition" />
     <bm-button
-      :label="`Set rotation (${MathUtils.radToDeg(playerOptions.rotation?.y ?? 0)}deg)`"
+      :label="`Set rotation (${getCompassDisplayValue(playerOptions.rotation?.y ?? 0)})`"
       @click="onClickSetRotation" />
     <bm-button label="Close" @click="onClickClose" />
   </bm-panel>
@@ -26,9 +26,11 @@ import type { FactionIdentifier } from '@blue-might/app/lib/classes/Faction';
 import { Subscription } from 'rxjs';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
 import type { PlayerOptions } from '@blue-might/app/lib/classes/Map';
-import { Euler, MathUtils, Vector3 } from 'three';
+import { Euler, Vector3 } from 'three';
 import * as units from '@blue-might/units';
 import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';
+import { getCompassDisplayValue } from '@blue-might/app/lib/utils/compas';
+import type Faction from '@blue-might/app/lib/classes/Faction';
 
 import BmPanel from '../Panel.vue';
 import BmButton from '../Button.vue';
@@ -49,14 +51,16 @@ const neutralFaction = $props.app.modules.editorFaction.neutralFaction;
 const playerFaction = computed(() => {
   return playerOptions.value?.faction ?? neutralFaction.id;
 });
+
+//#region factions
+const factions = ref<Faction[]>([]);
 const factionOptions = computed(() => {
-  return (
-    $props.app.modules.map.getMap()?.modules.faction.getFactions() ?? []
-  ).map(f => ({
-    label: f.name,
-    value: f.id
+  return factions.value.map(faction => ({
+    label: faction.name,
+    value: faction.id
   }));
 });
+//#endregion
 
 const unitOptions = computed(() => {
   return (
@@ -78,6 +82,13 @@ const unitOptions = computed(() => {
 const subscription = new Subscription();
 
 onMounted(() => {
+  subscription.add(
+    $props.app.modules.map
+      .getMap()
+      ?.modules.faction.observables.factions$.subscribe(factionList => {
+        factions.value = factionList;
+      })
+  );
   subscription.add(
     $props.app.modules.editorPlayer.observables.playerOptions$.subscribe(o => {
       playerOptions.value = markRaw(o);

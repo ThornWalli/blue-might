@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { SubscriptionLike } from 'rxjs';
 import { Subscription } from 'rxjs';
+import type { VehicleUnits } from '@blue-might/units';
 
 import type { App } from '../types';
 
@@ -9,7 +10,6 @@ import ControlsPlayerModule from './playerModule/Controls';
 import FactionPlayerModule from './playerModule/Faction';
 import LifePlayerModule from './playerModule/Life';
 import type { ModuleOptions, ModuleStates } from './Unit';
-import type VehicleUnit from './unit/Vehicle';
 
 export type PlayerModuleList = (
   | typeof VehiclePlayerModule
@@ -131,7 +131,7 @@ export default class Player<
     return this.id === player.id;
   }
 
-  setVehicle(unit: VehicleUnit | null) {
+  setVehicle(unit: VehicleUnits | null) {
     if (this.modules.vehicle.hasVehicle()) {
       this.modules.vehicle.getActiveUnit()?.modules.player.setPlayer(null);
     }

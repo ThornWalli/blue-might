@@ -13,9 +13,9 @@ import {
 } from 'rxjs';
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import type { Vector3 } from 'three';
-import { Euler, MathUtils } from 'three';
+import { Euler } from 'three';
+import type { VehicleUnits } from '@blue-might/units';
 
-import type VehicleUnit from '../lib/classes/unit/Vehicle';
 import WeaponUnitModule from '../lib/classes/unitModule/Weapon';
 import type AirVehicleUnit from '../lib/classes/unit/vehicle/AirVehicle';
 import type { FLIGHT_STATUS } from '../lib/classes/unitModule/movable/airVehicle/Helicopter';
@@ -31,7 +31,8 @@ import {
   isVehicle
 } from '../lib/utils/unit';
 import type { App } from '../lib/types';
-import type PlayerUnitModule from '../lib/classes/unitModule/Player';
+import { getCompassDisplayValue } from '../lib/utils/compas';
+import type TransportUnitModule from '../lib/classes/unitModule/Transport';
 
 export default function usePlayerUnitInterface(app: App) {
   const subscription = new Subscription();
@@ -42,13 +43,7 @@ export default function usePlayerUnitInterface(app: App) {
 
   const playerModule = app.modules.player;
 
-  const unit = ref<Raw<
-    Unit<
-      UnitModules & {
-        player: PlayerUnitModule;
-      }
-    >
-  > | null>(null);
+  const unit = ref<Raw<VehicleUnits> | null>(null);
 
   const unitDamage = ref<{
     max: number;
@@ -97,6 +92,13 @@ export default function usePlayerUnitInterface(app: App) {
     fuelMax: 0
   });
   const playerLifes = ref<number>(3);
+  const transportSlotInfo = ref<{
+    used: number;
+    max: number;
+  }>({
+    used: 0,
+    max: 0
+  });
 
   const seaHeight = computed(
     () => app.modules.map.getMap()?.modules.surface.getSeaLevel() ?? 0
@@ -124,28 +126,34 @@ export default function usePlayerUnitInterface(app: App) {
   });
 
   const compassValue = computed(() => {
-    const deg =
-      (-MathUtils.radToDeg(-Math.PI / 2 + unitRotation.value.y) + 360) % 360;
-    if (deg >= 337.5 || deg < 22.5) return 'E'; // return 'N';
-    if (deg < 67.5) return 'SE'; // return 'NE';
-    if (deg < 112.5) return 'S'; // return 'E';
-    if (deg < 157.5) return 'SW'; // return 'SE';
-    if (deg < 202.5) return 'W'; // return 'S';
-    if (deg < 247.5) return 'NW'; // return 'SW';
-    if (deg < 292.5) return 'N'; // return 'W';
-    return 'NE';
+    return getCompassDisplayValue(unitRotation.value.y);
   });
 
   onMounted(() => {
-    const vehicle$ = playerModule.observables.currentPlayer$.pipe(
-      switchMap(player => player.modules.vehicle.observables.unit$),
-      map(unit => unit as VehicleUnit | null)
+    const unit$ = playerModule.observables.currentPlayer$.pipe(
+      switchMap(player => player.modules.vehicle.observables.unit$)
     );
+    const vehicle$ = unit$.pipe(map(unit => unit as VehicleUnits | null));
 
     const vehicleModule$ = vehicle$.pipe(
       filter(vehicle => !!vehicle?.modules.movable),
       switchMap(vehicle => of(vehicle?.modules.movable) ?? EMPTY),
       filter(Boolean)
+    );
+    const transportModule$ = unit$.pipe(
+      filter(unit => !!unit && 'transport' in unit.modules),
+      switchMap(
+        unit =>
+          of(
+            (
+              unit as Unit<
+                UnitModules & {
+                  transport: TransportUnitModule;
+                }
+              >
+            ).modules.transport
+          ) ?? EMPTY
+      )
     );
     const weaponModule$ = vehicle$.pipe(
       filter(vehicle => vehicle?.hasModuleType(WeaponUnitModule) ?? false),
@@ -217,6 +225,29 @@ export default function usePlayerUnitInterface(app: App) {
       vehicleModule$
         .pipe(switchMap(({ observables }) => observables.active$))
         .subscribe(v => (unitActive.value = v))
+    );
+
+    //#endregion
+
+    //#region transport
+    subscription.add(
+      transportModule$
+        .pipe(
+          switchMap(v => {
+            return v
+              ? of(v).pipe(
+                  switchMap(v => v.observables.slots$),
+                  map(slots => ({ used: slots.length, max: v.getMaxSlots() }))
+                )
+              : EMPTY;
+          })
+        )
+        .subscribe(({ used, max }) => {
+          transportSlotInfo.value = {
+            used,
+            max
+          };
+        })
     );
 
     //#endregion
@@ -363,6 +394,7 @@ export default function usePlayerUnitInterface(app: App) {
     groundHeight,
     currentHeight,
     playerLifes,
+    transportSlotInfo,
     isVehicle: computed(() => isVehicle(unit.value)),
     isAirVehicle: computed(() => isAirVehicle(unit.value)),
     isSeaVehicle: computed(() => isSeaVehicle(unit.value)),

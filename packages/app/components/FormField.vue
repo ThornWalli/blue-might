@@ -10,18 +10,27 @@
       v-if="!hideLabel || $slots.label"
       :for="preparedId"
       :class="{ colon: !hideColon }">
-      <slot name="label" :label="label">{{ label }}</slot>
+      <bm-base-icon v-if="!hideLabel && icon" size="very-small" :name="icon" />
+      <span>
+        <slot name="label" :label="label">{{ label }}</slot>
+      </span>
     </label>
     <slot :id="preparedId"></slot>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { computed, useId } from 'vue';
+import { computed, useId, type FunctionalComponent } from 'vue';
+
+import type { ICON } from '../utils/icons';
+import type icons from '../utils/icons';
+
+import BmBaseIcon from './base/Icon.vue';
 
 const defaultId = useId();
 
 const $props = defineProps<{
+  icon?: ICON | keyof typeof icons | FunctionalComponent;
   id?: string;
   label?: string;
   labelTop?: boolean;
@@ -46,7 +55,16 @@ const preparedId = computed(() => $props.id || defaultId);
     align-items: center;
   }
 
+  &:has(.bm-textarea) {
+    &:not(.label-top) {
+      align-items: baseline;
+    }
+  }
+
   & label {
+    display: flex;
+    gap: var(--bm-spacing-small);
+    align-items: center;
     font-family: var(--font-family-base);
     font-size: 12px;
     font-weight: bold;

@@ -5,6 +5,7 @@
       :value="modelValue"
       v-bind="inputAttrs"
       @input="onInput" />
+    <span v-if="unit">{{ unit }}</span>
   </div>
 </template>
 
@@ -14,6 +15,7 @@ import type { InputHTMLAttributes } from 'vue';
 const $props = defineProps<{
   modelValue: T;
   inputAttrs?: InputHTMLAttributes;
+  unit?: string;
 }>();
 
 const $emit = defineEmits<{
@@ -29,15 +31,21 @@ function onInput(e: InputEvent) {
 
 <style lang="postcss" scoped>
 .bm-textfield {
+  display: flex;
+  gap: calc(var(--bm-spacing-medium) / 2);
+  align-items: baseline;
+  padding-right: calc(var(--bm-spacing-medium) / 2);
+
   &:has(input:focus),
   .bm-form-field:hover & {
     background-color: var(--color-gray-very-dark);
   }
 
-  input {
+  & input {
     box-sizing: border-box;
     width: 100%;
     padding: var(--bm-spacing-medium);
+    padding-right: calc(var(--bm-spacing-medium) / 2);
     font-family: var(--font-family-base);
     font-size: 12px;
     color: currentColor;
@@ -45,6 +53,11 @@ function onInput(e: InputEvent) {
     outline: none;
     background: none;
     border: none;
+  }
+
+  & span {
+    font-size: 12px;
+    color: var(--bm-fieldset-foreground);
   }
 }
 

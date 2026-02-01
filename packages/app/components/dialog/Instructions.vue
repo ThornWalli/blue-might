@@ -1,7 +1,6 @@
 <template>
   <div class="bm-dialog-instructions">
-    <fieldset>
-      <legend>Controls</legend>
+    <bm-fieldset label="Controls">
       <div class="controls-grid">
         <div>Power</div>
         <div>P</div>
@@ -24,7 +23,7 @@
         <div>Up / Down</div>
         <div>R/F</div>
       </div>
-    </fieldset>
+    </bm-fieldset>
   </div>
 </template>
 
@@ -33,6 +32,7 @@ import { inject } from 'vue';
 import type { App } from '@blue-might/app/lib/types';
 
 import type { DialogContext } from '../base/Dialog.vue';
+import BmFieldset from '../Fieldset.vue';
 
 inject<DialogContext>('dialog')!;
 
