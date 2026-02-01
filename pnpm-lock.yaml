@@ -255,7 +255,7 @@ importers:
         specifier: 2.0.5
         version: 2.0.5
       jszip:
-        specifier: ^3.10.1
+        specifier: 3.10.1
         version: 3.10.1
       rxjs:
         specifier: 'catalog:'
@@ -267,7 +267,7 @@ importers:
         specifier: 0.9.8
         version: 0.9.8(three@0.182.0)
       ts-seedrandom:
-        specifier: ^1.4.0
+        specifier: 1.4.0
         version: 1.4.0
     devDependencies:
       '@types/concaveman':
