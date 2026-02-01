@@ -19,7 +19,7 @@
     "jszip": "^3.10.1",
     "rxjs": "catalog:",
     "three": "catalog:",
-    "three-mesh-bvh": "0.9.7",
+    "three-mesh-bvh": "0.9.8",
     "ts-seedrandom": "^1.4.0"
   },
   "devDependencies": {
