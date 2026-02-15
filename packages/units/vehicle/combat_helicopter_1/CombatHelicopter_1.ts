@@ -136,7 +136,7 @@ export default class CombatHelicopter_1
           ...options.moduleOptions,
           movable: {
             ...options.moduleOptions?.movable,
-            maxFuel: 100
+            maxFuel: 200
           },
           transport: {
             entryPosition: new Vector2(0.25, 0.25)
@@ -186,11 +186,7 @@ export default class CombatHelicopter_1
           }
         },
         moduleStates: {
-          ...options.moduleStates,
-          movable: {
-            ...options.moduleStates?.movable,
-            fuel: 100
-          }
+          ...options.moduleStates
         }
       },
       moduleList

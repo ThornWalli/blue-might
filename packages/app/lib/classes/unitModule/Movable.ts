@@ -76,6 +76,7 @@ export default class MovableUnitModule<
   private _aiControls?: ControlState;
 
   constructor(unit: U, options: Options, state: State, debug: boolean) {
+    const maxFuel = options.maxFuel ?? 100;
     super(
       unit,
       {
@@ -88,7 +89,7 @@ export default class MovableUnitModule<
         //#endregion
 
         //#region full
-        maxFuel: options.maxFuel ?? 100,
+        maxFuel,
         fuelConsumption: options.fuelConsumption ?? 1,
         idleFuelConsumption: options.idleFuelConsumption ?? 0.01
         //#endregion
@@ -103,7 +104,7 @@ export default class MovableUnitModule<
         //#endregion
 
         //#region fuel
-        fuel: state.fuel ?? 100
+        fuel: Math.min(state.fuel ?? maxFuel, maxFuel)
         //#endregion
       },
       debug

@@ -148,7 +148,6 @@ export default class DamageUnitModule extends UnitModule<
 
   takeMaxDamage() {
     this.setDamage(this.options.maxDamage);
-    debugger;
   }
 
   setDamage(value: number, force?: boolean) {

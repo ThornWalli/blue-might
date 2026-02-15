@@ -2,6 +2,7 @@ import EasyStar from 'easystarjs';
 import { Vector3, Vector2 } from 'three';
 import { Subscription } from 'rxjs';
 
+import pathfindinWorkerUrl from '../../workers/pathfinding.worker.ts?worker&url';
 import type Map from '../Map';
 import type Grid from '../pathfinding/Grid';
 import type { GridNode } from '../pathfinding/Grid';
@@ -47,7 +48,7 @@ export default abstract class BaseNavigator {
   async setup() {
     if (this.useWorker && typeof window !== 'undefined') {
       this.workerPool = new WorkerPool(
-        new URL('../../workers/pathfinding.worker.ts', import.meta.url),
+        new URL(pathfindinWorkerUrl, import.meta.url),
         6 // Pool-Größe
       );
     }
