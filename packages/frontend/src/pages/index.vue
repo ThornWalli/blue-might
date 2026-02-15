@@ -23,7 +23,7 @@ import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import { Subscription } from 'rxjs';
 import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/BaseApp';
 import type { App } from '@blue-might/app/lib/types';
-import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import type { MapDescription } from '@blue-might/app/lib/types/map';
 import { joinURL } from 'ufo';
 import { getMapDescriptionFromArrayBuffer } from '@blue-might/app/utils/export';
 
@@ -38,7 +38,7 @@ const AppComponent = defineAsyncComponent(
 const config = ref<AppConfig>({
   mode: APP_MODE.PLAYGROUND,
   rendererOptions: {
-    fog: true,
+    fog: false,
     pixelated: true,
     controls: true
   }
@@ -56,14 +56,10 @@ onMounted(async () => {
         String($route.query.map ?? 'extended_map.zip')
       )
     ).then(res => res.arrayBuffer())
-  ).then(map => {
-    map.debug = {
-      // surface: true,
-      // pathfinding: true
-    };
-    return map;
-  });
-  description.value = markRaw(desc);
+  );
+  description.value = markRaw({
+    ...desc
+  } as MapDescription);
 });
 
 async function onSetup(app: App) {

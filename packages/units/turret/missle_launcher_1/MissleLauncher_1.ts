@@ -1,11 +1,15 @@
-import {
-  GROUND_ADJUSTMENT_MODE,
-  type RawUnitDescription,
-  type SetupContext,
-  type UnitConstructorOptions,
-  type UnitObservables,
-  type UnitOptions
+import type {
+  RawUnitDescription,
+  UnitConstructorOptions,
+  UnitObservables,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import {
+  type SetupContext,
+  GROUND_ADJUSTMENT_MODE,
+  type WeaponSupportOptions,
+  type WeaponSupportState
+} from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import type { Object3D } from 'three';
 import { Vector2, Mesh, SkinnedMesh, LoopOnce } from 'three';
@@ -32,10 +36,6 @@ import { ReplaySubject, Subject } from 'rxjs';
 import { playSound } from '@blue-might/weapon/utils';
 import { lerp } from 'three/src/math/MathUtils.js';
 import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
-import type {
-  WeaponSupportOptions,
-  WeaponSupportState
-} from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 

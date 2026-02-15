@@ -6,7 +6,11 @@ import AppModule, {
   type AppModuleState
 } from '../AppModule';
 import type { App } from '../../types';
-import { DEFAULT_MAP_NOISE, type MapNoise, type Textures } from '../Map';
+import {
+  DEFAULT_MAP_NOISE,
+  type MapNoise,
+  type Textures
+} from '../../types/map';
 
 interface Observables extends AppModuleObservables {
   textures$: ReplaySubject<TextureDescription[]>;

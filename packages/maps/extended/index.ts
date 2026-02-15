@@ -1,4 +1,4 @@
-import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import type { MapDescription } from '@blue-might/app/lib/types/map';
 import factions, { FACTION } from '@blue-might/app/lib/utils/factions';
 import type { UnitDescriptions } from '@blue-might/units';
 

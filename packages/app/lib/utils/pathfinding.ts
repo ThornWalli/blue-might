@@ -3,43 +3,71 @@ import { Raycaster, Vector2 } from 'three';
 
 import { resizeCanvas } from './canvas';
 
+export type TileType = number;
+
 export enum TILE_TYPE {
+  // General
   BLOCKED = 0,
   SOFT = 1,
-  DRY_ROAD = 2,
-  BETON_ROAD = 3,
-  GRASS = 4,
-  WATER = 5
+
+  // Ground 100-199
+  WATER = 100,
+  GRASS = 101,
+  // Road 200-299
+  DRY_ROAD = 200,
+  BETON_ROAD = 201,
+  // Units 300-399
+  UNIT = 300,
+  UNIT_GROUND = 301,
+  UNIT_AIR = 302,
+  UNIT_SEA = 303,
+  UNIT_BUILDING = 304,
+  UNIT_HIGH_BUILDING = 305,
+  UNIT_PLATFORM = 306
 }
 
-export const TILE_INDEX: { [key: number]: TILE_TYPE } = {
+export type TILE_TYPE_COSTS = {
+  [key: number]: number;
+  [TILE_TYPE.BLOCKED]: number;
+  [TILE_TYPE.SOFT]: number;
+  [TILE_TYPE.GRASS]: number;
+  [TILE_TYPE.DRY_ROAD]: number;
+  [TILE_TYPE.BETON_ROAD]: number;
+  [TILE_TYPE.WATER]: number;
+};
+
+export const TILE_INDEX = Object.freeze({
   [TILE_TYPE.BLOCKED]: TILE_TYPE.BLOCKED,
+  [TILE_TYPE.SOFT]: TILE_TYPE.SOFT,
   [TILE_TYPE.DRY_ROAD]: TILE_TYPE.DRY_ROAD,
   [TILE_TYPE.BETON_ROAD]: TILE_TYPE.BETON_ROAD,
   [TILE_TYPE.GRASS]: TILE_TYPE.GRASS,
-  [TILE_TYPE.WATER]: TILE_TYPE.WATER
-};
-const TILE_COSTS_GROUND: { [key: number]: number } = {
-  [TILE_TYPE.BLOCKED]: Infinity,
-  [TILE_TYPE.SOFT]: 9999,
-  [TILE_TYPE.GRASS]: 1000,
-  [TILE_TYPE.DRY_ROAD]: 200,
-  [TILE_TYPE.BETON_ROAD]: 50,
-  [TILE_TYPE.WATER]: 2000
-};
-const TILE_COSTS_SEA: { [key: number]: number } = {
-  [TILE_TYPE.BLOCKED]: Infinity,
-  [TILE_TYPE.SOFT]: Infinity,
-  [TILE_TYPE.GRASS]: Infinity,
-  [TILE_TYPE.DRY_ROAD]: Infinity,
-  [TILE_TYPE.BETON_ROAD]: Infinity,
-  [TILE_TYPE.WATER]: 50
-};
+  [TILE_TYPE.WATER]: TILE_TYPE.WATER,
+  // Units
+  [TILE_TYPE.UNIT]: TILE_TYPE.UNIT,
+  [TILE_TYPE.UNIT_GROUND]: TILE_TYPE.UNIT_GROUND,
+  [TILE_TYPE.UNIT_AIR]: TILE_TYPE.UNIT_AIR,
+  [TILE_TYPE.UNIT_SEA]: TILE_TYPE.UNIT_SEA,
+  [TILE_TYPE.UNIT_BUILDING]: TILE_TYPE.UNIT_BUILDING,
+  [TILE_TYPE.UNIT_HIGH_BUILDING]: TILE_TYPE.UNIT_HIGH_BUILDING,
+  [TILE_TYPE.UNIT_PLATFORM]: TILE_TYPE.UNIT_PLATFORM
+});
 
-export type TileCostsType = 'ground' | 'sea';
-export function getTileCosts(type: TileCostsType = 'ground') {
-  return type === 'ground' ? TILE_COSTS_GROUND : TILE_COSTS_SEA;
-}
+export const TILE_TYPES = [
+  TILE_TYPE.BLOCKED,
+  TILE_TYPE.SOFT,
+  TILE_TYPE.DRY_ROAD,
+  TILE_TYPE.BETON_ROAD,
+  TILE_TYPE.GRASS,
+  TILE_TYPE.WATER,
+  TILE_TYPE.UNIT,
+  TILE_TYPE.UNIT_GROUND,
+  TILE_TYPE.UNIT_AIR,
+  TILE_TYPE.UNIT_SEA,
+  TILE_TYPE.UNIT_BUILDING,
+  TILE_TYPE.UNIT_HIGH_BUILDING,
+  TILE_TYPE.UNIT_PLATFORM
+];
 
 export function lineOfSight(a: Vector3, b: Vector3, colliders: Object3D[]) {
   const dir = b.clone().sub(a).normalize();
@@ -92,7 +120,6 @@ export function getCostsFromImage(
       const a = data[index + 3] ?? 0;
 
       if (!tileMap[y]) tileMap[y] = existsTileMap[y] ?? [];
-
       tileMap[y]![x] = tileTypeByColor(r, g, b, a) ?? existsTileMap[y]?.[x];
     }
   }

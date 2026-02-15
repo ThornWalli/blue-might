@@ -1,5 +1,5 @@
 import { filter, ReplaySubject } from 'rxjs';
-import { Soldat_1, type VehicleUnits } from '@blue-might/units';
+import { Soldat_1, type Units } from '@blue-might/units';
 import { Vector3 } from 'three';
 
 import type {
@@ -15,15 +15,14 @@ import { isFigure } from '../../utils/unit';
 import { ControlAction } from './Controls';
 
 interface Observables extends PlayerModuleObservables {
-  unit$: ReplaySubject<VehicleUnits | null>;
+  unit$: ReplaySubject<Units | null>;
+  currentUnit$: ReplaySubject<Units>;
 }
 
 type Options = PlayerModuleOptions;
 
-type U = VehicleUnits;
-
 interface State extends PlayerModuleState {
-  unit: U | null;
+  unit: Units | null;
   figureUnit: FigureUnit | null;
 }
 
@@ -50,7 +49,8 @@ export default class VehiclePlayerModule extends PlayerModule<
     );
 
     //#region observables
-    this.observables.unit$ = new ReplaySubject<VehicleUnits | null>();
+    this.observables.unit$ = new ReplaySubject<Units | null>();
+    this.observables.currentUnit$ = new ReplaySubject<Units>(1);
     //#endregion
   }
 
@@ -96,12 +96,12 @@ export default class VehiclePlayerModule extends PlayerModule<
               !isFigure(unit) &&
               unit !== this.state.figureUnit
           )
-          .shift() as U) ?? null;
+          .shift() as Units) ?? null;
       this.enterUnit(unit);
     }
   }
 
-  enterUnit(unit: U) {
+  enterUnit(unit: Units) {
     if (this.state.unit !== this.state.figureUnit)
       throw new Error('Already in a vehicle unit');
 
@@ -120,7 +120,11 @@ export default class VehiclePlayerModule extends PlayerModule<
     if (!this.state.unit) throw new Error('No vehicle unit to exit from');
 
     // can leave?
-    if (!this.state.unit.modules.player.canLeave()) return;
+    if (
+      'player' in this.state.unit.modules &&
+      !this.state.unit.modules.player.canLeave()
+    )
+      return;
 
     const map = this.player.app.modules.map.getMap()!;
     // Neben unit positionieren, gefühlt ausstieg. Leiht versetzt.
@@ -136,8 +140,8 @@ export default class VehiclePlayerModule extends PlayerModule<
     this.setVehicleUnit(null);
   }
 
-  getActiveUnit() {
-    return this.state.unit || this.state.figureUnit;
+  getCurrentUnit() {
+    return this.state.unit || (this.state.figureUnit as Units);
   }
 
   getFigureUnit() {
@@ -148,18 +152,24 @@ export default class VehiclePlayerModule extends PlayerModule<
     return this.state.unit;
   }
 
-  setVehicleUnit(vehicle: U | VehicleUnits | null) {
+  setVehicleUnit(vehicle: Units | null) {
     if (this.state.unit === vehicle) return;
 
     if (vehicle?.modules && 'player' in vehicle.modules) {
       const last = this.state.unit;
-      last?.modules.player.setPlayer(null);
+      if (last && 'player' in last.modules) {
+        last.modules.player.setPlayer(null);
+      }
 
-      this.state.unit = vehicle as U;
+      this.state.unit = vehicle;
 
       vehicle?.modules.player.setPlayer(this.player);
 
       this.observables.unit$.next(vehicle);
+      const currentUnit = this.getCurrentUnit();
+      if (currentUnit) {
+        this.observables.currentUnit$.next(currentUnit);
+      }
     } else {
       console.log(
         'Vehicle is null or has no player module, setting to null',

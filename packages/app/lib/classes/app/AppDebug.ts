@@ -9,6 +9,7 @@ import BaseApp, {
   type AppState
 } from '../BaseApp';
 import type Renderer from '../Renderer';
+import DebugAppModule from '../appModule/Debug';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface AppDebugObservables extends AppObservables {}
@@ -18,9 +19,11 @@ interface AppDebugState extends AppState {}
 
 interface AppDebugModules extends AppModules {
   player: PlayerAppModule;
+  debug: DebugAppModule;
 }
 
-type AppDebugModuleList = AppModuleList & (typeof PlayerAppModule)[];
+type AppDebugModuleList = AppModuleList &
+  (typeof PlayerAppModule | typeof DebugAppModule)[];
 
 export default class AppDebug extends BaseApp<
   AppDebugState,
@@ -33,7 +36,7 @@ export default class AppDebug extends BaseApp<
     state: Partial<AppDebugState> = {},
     modules: AppDebugModuleList = []
   ) {
-    modules.push(PlayerAppModule);
+    modules.push(PlayerAppModule, DebugAppModule);
     super(config, renderer, state, modules);
   }
   override async setup() {

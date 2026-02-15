@@ -1,9 +1,6 @@
-import { UNIT_TYPE } from '../../../types/unit';
+import { GROUND_ADJUSTMENT_MODE, UNIT_TYPE } from '../../../types/unit';
 import { addModules } from '../../Module';
-import {
-  GROUND_ADJUSTMENT_MODE,
-  type UnitConstructorOptions
-} from '../../Unit';
+import type { UnitConstructorOptions } from '../../Unit';
 import SeaVehicleUnitModule from '../../unitModule/movable/SeaVehicle';
 import VehicleUnit, {
   type VehicleUnitModuleList,

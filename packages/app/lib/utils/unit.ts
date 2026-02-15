@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { UnitModules } from '../classes/Unit';
 import type Unit from '../classes/Unit';
 import type AirVehicleUnit from '../classes/unit/vehicle/AirVehicle';
@@ -32,6 +33,10 @@ export function isTransport(unit?: Unit | null): boolean {
 
 export function isRescue(unit?: Unit | null): boolean {
   return (unit && 'rescue' in unit.modules) ?? false;
+}
+
+export function isBuilding(unit?: Unit | null): boolean {
+  return (unit && 'building' in unit.modules) ?? false;
 }
 
 export function getAirVehicle(unit: Unit | null): AirVehicleUnit | null {
@@ -70,4 +75,17 @@ export function ignoreByUnitByType(filter: {
 
 export function getUnitDistance(unitA: Unit, unitB: Unit): number {
   return unitA.getPosition().distanceTo(unitB.getPosition());
+}
+
+export function getUnitMap(units: any): Map<string, typeof Unit> {
+  const unitMap = new globalThis.Map(
+    Object.values(units).map(
+      unit =>
+        [(unit as any).KEY, unit as unknown as typeof Unit] as [
+          string,
+          typeof Unit
+        ]
+    )
+  );
+  return unitMap;
 }

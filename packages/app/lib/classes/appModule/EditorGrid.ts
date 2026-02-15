@@ -247,7 +247,7 @@ export default class EditorGridAppModule extends AppModule<State, Observables> {
 
     const y = Math.max(
       map.modules.surface.getSeaLevel(),
-      map.modules.surface.getTerrainHeightAt(position.x, position.y)
+      map.modules.surface.getSurfaceHeightAt(position.x, position.y)
     );
     helper.position.set(position.x, y, position.y);
   }

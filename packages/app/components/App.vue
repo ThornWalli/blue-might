@@ -29,7 +29,7 @@ import { Vector2 } from 'three';
 
 import type Renderer from '../lib/classes/Renderer';
 import type { Cursor } from '../lib/classes/appModule/Cursor';
-import type { MapDescription } from '../lib/classes/Map';
+import type { MapDescription } from '../lib/types/map';
 import AppEditor from '../lib/classes/app/AppEditor';
 import AppDebug from '../lib/classes/app/AppDebug';
 import AppPlayground from '../lib/classes/app/AppPlayground';
@@ -51,7 +51,8 @@ const rendererEl = ref<InstanceType<typeof BmRenderer> | null>(null);
 const rootEl = ref<HTMLElement>();
 const dimension = ref<Vector2>();
 const subscription = new Subscription();
-const app = ref<App>();
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const app = ref<App & any>();
 const ready = ref(false);
 
 const currentComponent = computed(() => {
@@ -72,7 +73,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  // app.value?.destroy();
+  app.value?.destroy();
   subscription.unsubscribe();
 });
 
@@ -106,7 +107,10 @@ async function setupApp(renderer: Renderer) {
   app.value = markRaw(
     new appDefinitions[$props.config.mode ?? APP_MODE.PLAYGROUND](
       $props.config,
-      renderer
+      renderer,
+      {
+        updateActive: $props.config.mode !== APP_MODE.EDITOR
+      }
     )
   );
 

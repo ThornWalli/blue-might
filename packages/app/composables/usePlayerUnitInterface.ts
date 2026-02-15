@@ -72,7 +72,7 @@ export default function usePlayerUnitInterface(app: App) {
   const unitSpeed = ref<string>('0');
   const unitRotation = ref<Euler>(new Euler(0, 0, 0));
   const position = ref<Vector3 | null>(null);
-  const status = ref<FLIGHT_STATUS | null>(null);
+  const flightStatus = ref<FLIGHT_STATUS | null>(null);
   const powerInfo = ref<PowerInfo>({
     flightPower: 0,
     currentPower: 0,
@@ -334,7 +334,7 @@ export default function usePlayerUnitInterface(app: App) {
           filter(Boolean),
           switchMap(({ observables }) => observables.flightStatus$ ?? EMPTY)
         )
-        .subscribe(s => (status.value = s))
+        .subscribe(s => (flightStatus.value = s))
     );
     subscription.add(
       helicopterModule$
@@ -382,7 +382,7 @@ export default function usePlayerUnitInterface(app: App) {
     unitSpeed,
     unitRotation,
     position,
-    status,
+    flightStatus,
     powerInfo,
     autoAimActive,
     unitActive,

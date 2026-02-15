@@ -330,7 +330,7 @@ export default class PatrolUnitModule extends UnitModule<
 
   override getOptions() {
     return {
-      active: this.state.active,
+      active: this.options.active,
       path: this.getPath()
     };
   }
@@ -340,7 +340,7 @@ export function getWorldPath(groundModule: SurfaceModule, path: PatrolPath) {
   return path.map(point => {
     const y = Math.max(
       groundModule.getSeaLevel(),
-      groundModule.getTerrainHeightAt(point[0], point[1])
+      groundModule.getSurfaceHeightAt(point[0], point[1])
     );
     return new Vector3(point[0], y, point[1]);
   });

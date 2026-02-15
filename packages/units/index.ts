@@ -5,6 +5,8 @@ export { default as ControlTower_1 } from './building/control_tower_1/ControlTow
 export { default as LandingPort_1 } from './building/landing_port_1/LandingPort_1';
 export { default as Barrack_1 } from './building/barrack_1/Barrack_1';
 export { default as BarrackRescue_1 } from './building/barrack_rescue_1/BarrackRescue_1';
+export { default as WindTurbine_1 } from './building/wind_turbine_1/WindTurbine_1';
+export { default as Signal_1 } from './building/signal_1/Signal_1';
 //#endregion
 
 //#region other buildings

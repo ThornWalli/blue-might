@@ -1,4 +1,5 @@
 import {
+  Box3,
   CanvasTexture,
   LinearSRGBColorSpace,
   Raycaster,
@@ -15,6 +16,7 @@ import {
   PlaneGeometry
 } from 'three';
 import { filter, map, Subject } from 'rxjs';
+import type { Units } from '@blue-might/units';
 
 import MapModule, {
   type MapModuleObservables,
@@ -31,7 +33,8 @@ import { FLIGHT_STATUS } from '../unitModule/movable/airVehicle/Helicopter';
 import type AirVehicleUnit from '../unit/vehicle/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
 import type { IntersectionListener } from '../rendererModule/Intersection';
-import type { MapNoise, Textures } from '../Map';
+import type { MapNoise, Textures } from '../../types/map';
+import { isBuilding } from '../../utils/unit';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -68,6 +71,9 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     direction: new Vector3(0, -1, 0)
   };
   private pathfinderTileTypes: (TILE_TYPE | undefined)[][] = [];
+
+  private heightMap = new globalThis.Map<string, number>();
+  private surfaceHeightMap = new globalThis.Map<string, number>();
 
   constructor(map: Map, debug: boolean) {
     super(map, debug);
@@ -147,18 +153,6 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     return height;
   }
 
-  /**
-   * Gibt die tatsächliche Y-Position für ein Objekt zurück
-   * @param x X-Koordinate (oder Vector2)
-   * @param z Z-Koordinate
-   * @returns Y-Position in World-Space
-   */
-  getHeightAt(x: number | Vector2, z?: number): number {
-    const depth = this.getDepthAt(x, z);
-    // gleiche Transformation wie im Mesh: vertices Y = depth * -10; object.position.y = 9
-    return depth * -10 + this.state.origin.y;
-  }
-
   getAvgHeightAt(
     x: number,
     z: number,
@@ -201,11 +195,20 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     this.heightCache = {};
   }
 
+  public resetHeightCacheAt(x: number, z: number) {
+    const x_ = x.toPrecision(this.cachePrecision);
+    const z_ = z.toPrecision(this.cachePrecision);
+    if (this.heightCache[x_]) {
+      // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+      delete this.heightCache[x_][z_];
+    }
+  }
+
   private getHeightFromRaycast(
     x: number,
     z: number,
     unitFilter?: (unit: Unit) => boolean,
-    maxDistance = 100
+    maxDistance = 50
   ): number {
     const x_ = x.toPrecision(this.cachePrecision);
     const z_ = z.toPrecision(this.cachePrecision);
@@ -238,24 +241,30 @@ export default class SurfaceModule extends MapModule<State, Observables> {
         .getScene()
         .getObjectById(
           intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
-        )?.userData.unit as Unit
+        )?.userData.unit as Units
     }));
-    const groundHeight = this.getHeightAt(x, z);
+    let groundHeight = this.getHeightAt(x, z);
 
     if (unitIntersections.length > 0) {
-      const airModule = (unitIntersections[0]?.unit as AirVehicleUnit)?.modules
-        .airVehicle;
+      const { intersection, unit } = unitIntersections[0]!;
 
-      const isFlying =
-        airModule &&
-        airModule.getFlightStatus() === FLIGHT_STATUS.FLYING &&
-        unitIntersections[0]!.intersection.point.y - groundHeight > 1;
+      if ('airVehicle' in unit.modules) {
+        const airModule = (unitIntersections[0]?.unit as AirVehicleUnit)
+          ?.modules.airVehicle;
+        const isFlying =
+          airModule &&
+          airModule.getFlightStatus() === FLIGHT_STATUS.FLYING &&
+          unitIntersections[0]!.intersection.point.y - groundHeight > 1;
 
-      if (isFlying) {
-        return groundHeight;
+        if (isFlying) {
+          return groundHeight;
+        }
+        // debugger;
+        groundHeight = intersection.point.y;
+        // groundHeight -= unit.modules.airVehicle.getGearsHeight();
+      } else {
+        groundHeight = intersection.point.y;
       }
-
-      return unitIntersections[0]!.intersection.point.y;
     }
 
     this.heightCache[x_] = this.heightCache[x_] || {};
@@ -264,25 +273,11 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     return groundHeight;
   }
 
-  getSurfaceHeightAt(
-    x: number | Vector2,
-    z: number | undefined = undefined,
-    unitFilter: (unit: Unit) => boolean = () => true,
-    maxDistance = 100
-  ): number {
-    if (x instanceof Vector2) {
-      z = x.y;
-      x = x.x;
-    }
-    const height = this.getHeightFromRaycast(x, z!, unitFilter, maxDistance);
-    return height;
-  }
-
   getTerrainHeightAt(
     x: number | Vector2,
     z?: number,
     _ignoredUnits: Unit[] = [],
-    maxDistance = 100
+    maxDistance?: number
   ): number {
     if (x instanceof Vector2) {
       z = x.y;
@@ -300,9 +295,9 @@ export default class SurfaceModule extends MapModule<State, Observables> {
 
   getTerrainInfoAt(
     x: number | Vector2,
-    z?: number,
+    z: number,
     ignoredUnits: Unit[] = [],
-    maxDistance = 100
+    maxDistance = 10
   ): {
     position: Vector3;
     unit?: Unit;
@@ -399,6 +394,22 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     const segments = this.state.segments;
     const heights = this.getGroundHeights(segments);
     this.state.heights = heights;
+
+    for (let i = 0; i < heights.length; i++) {
+      const vx = i % (segments + 1); // Vertex-X (0 bis segments)
+      const vz = Math.floor(i / (segments + 1)); // Vertex-Z (0 bis segments)
+
+      // Weltkoordinaten berechnen (Terrain zentriert um (0,0))
+      const worldX =
+        (vx / segments) * this.state.terrainWidth - this.state.terrainWidth / 2;
+      const worldZ =
+        (vz / segments) * this.state.terrainHeight -
+        this.state.terrainHeight / 2;
+
+      // Schlüssel runden wie in getHeightAt
+      const key = `${Math.round(worldX * 1000) / 1000}_${Math.round(worldZ * 1000) / 1000}`;
+      this.heightMap.set(key, heights[i]! - 0.9);
+    }
 
     const foregroundTexture = textures.foregroundTexture!;
 
@@ -536,7 +547,7 @@ export default class SurfaceModule extends MapModule<State, Observables> {
       a: number
     ): TILE_TYPE | undefined {
       if (a > 128) {
-        if (r === 166 && g === 166 && b === 166) return TILE_TYPE.BETON_ROAD; // D9D9D9
+        if (r === 166 && g === 166 && b === 166) return TILE_TYPE.BETON_ROAD; // A6A6A6
       }
 
       return undefined;
@@ -555,7 +566,6 @@ export default class SurfaceModule extends MapModule<State, Observables> {
       textures.heightMap!,
       (r, g, b) => {
         const maxSeaLevel = 255 * 0.9;
-
         if (r > maxSeaLevel && g > maxSeaLevel && b > maxSeaLevel) {
           return TILE_TYPE.WATER;
         } else {
@@ -594,6 +604,93 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     const v2 = new Vector3(0, h2 - h0, sampleDistance);
 
     return v1.cross(v2).normalize();
+  }
+
+  updateHeightAt(x: number, z: number, newHeight: number) {
+    const key = `${x}_${z}`;
+    this.heightMap.set(key, newHeight);
+    this.surfaceHeightMap.set(key, newHeight + this.getSeaLevel()); // Passe an
+  }
+
+  // Optimierte getHeightAt: Cache prüfen, sonst Raycast und speichern
+  getHeightAt(x: number, z: number): number {
+    const key = `${Math.round(x * 1000) / 1000}_${Math.round(z * 1000) / 1000}`; // Runde für Konsistenz
+    if (this.heightMap.has(key)) {
+      return this.heightMap.get(key)!;
+    }
+    // Fallback: Raycast (dein bestehender Code)
+    const height = this.performRaycastForHeight(x, z);
+    this.heightMap.set(key, height);
+    return height;
+  }
+
+  // Ähnlich für getSurfaceHeightAt
+  getSurfaceHeightAt(
+    x: number,
+    z: number,
+    unitFilter: (unit: Unit) => boolean = () => true,
+    options?: { raycaster?: boolean; raycasterDistance?: number }
+  ): number {
+    if (options?.raycaster) {
+      return this.performRaycastForSurfaceHeight(
+        x,
+        z,
+        unitFilter,
+        options?.raycasterDistance
+      );
+    }
+
+    const testUnits = this.map.modules.units
+      .getUnitsInRadius(new Vector3(x, 0, z), 0.1)
+      .filter(u => isBuilding(u) && unitFilter(u));
+
+    testUnits.sort((a, b) => a.getPosition().y - b.getPosition().y);
+
+    if (testUnits.length > 0) {
+      // Bounding-Box der ersten Unit berechnen und minY abrufen
+      const unit = testUnits[0]!;
+      const box = new Box3().setFromObject(
+        unit.modules.collision.getDefaultCollisionObject() ?? unit.root
+      );
+
+      const minY = box.max.y;
+      return minY;
+    }
+    return this.getHeightByHeightMapTexture(x, z);
+    // return this.performRaycastForSurfaceHeight(x, z, unitFilter);
+  }
+
+  private getHeightByHeightMapTexture(x: number, z: number): number {
+    // Interpolierte Höhe aus der Heightmap (normalisiert 0-1)
+    const depth = this.getDepthAt(x, z);
+    // Transformation in Welt-Höhe: gleiche wie im Mesh (vertices Y = depth * -10; object.position.y = 9)
+    return depth * -10 + this.state.origin.y;
+  }
+
+  // Hilfsmethoden für Raycast (dein bestehender Code)
+  private performRaycastForHeight(x: number, z?: number): number {
+    const depth = this.getDepthAt(x, z);
+    // gleiche Transformation wie im Mesh: vertices Y = depth * -10; object.position.y = 9
+    return depth * -10 + this.state.origin.y;
+  }
+
+  performRaycastForSurfaceHeight(
+    x: number | Vector2,
+    z: number | undefined = undefined,
+    unitFilter: (unit: Unit) => boolean = () => true,
+    maxDistance?: number
+  ): number {
+    if (x instanceof Vector2) {
+      z = x.y;
+      x = x.x;
+    }
+    const height = this.getHeightFromRaycast(
+      x,
+      z!,
+      unitFilter,
+      maxDistance ?? 50
+    );
+    return height;
   }
 }
 

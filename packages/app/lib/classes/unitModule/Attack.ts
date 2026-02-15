@@ -86,7 +86,7 @@ export default class AttackUnitModule extends UnitModule<
   private sphere: Sphere;
   private debugObjects?: {
     radiusSphere: Mesh;
-    attackRadiusSphere: Mesh;
+    attackRadiusSphere: Mesh | null;
   } | null;
   private resumeTimeout: NodeJS.Timeout | null = null; // Neuer Timeout für Patrol-Resume mit Delay
 
@@ -141,7 +141,7 @@ export default class AttackUnitModule extends UnitModule<
       unit.observables.position$.subscribe(position => {
         this.sphere.center.copy(position);
         Object.values(this.debugObjects ?? {}).forEach(debugObject =>
-          debugObject?.position.copy(position)
+          debugObject?.position.copy(this.sphere.center)
         );
       })
     );
@@ -204,27 +204,23 @@ export default class AttackUnitModule extends UnitModule<
             unit.getPosition(),
             this.options.radius
           ) ?? []
-      ).filter(u => this.isAttackAllowed(u));
+      ).filter(u => u !== unit && this.isAttackAllowed(u));
 
       const intersectingUnits: Unit[] = [];
 
       for (const targetUnit of unitsInRadius) {
-        if (targetUnit === unit) continue;
-        if (!this.isAttackAllowed(targetUnit)) {
-          continue;
-        }
         const intersected = this.intersect(targetUnit);
         if (intersected) {
           intersectingUnits.push(intersected);
         }
       }
 
+      this.updateRadiusDebug(intersectingUnits);
+
       const result = intersectingUnits.shift();
       if (result && this.state.targetUnit !== result) {
         this.setTargetUnit(result);
       }
-
-      this.updateRadiusDebug(intersectingUnits);
     }
 
     if (this.options.followTarget && this.state.targetUnit) {
@@ -311,6 +307,7 @@ export default class AttackUnitModule extends UnitModule<
     const collisionModule = unit.modules.collision;
     if (collisionModule) {
       // Hole die Welt-Bounding Box der Ziel-Unit
+      collisionModule.refreshWorldOBBs();
       const targetBox = collisionModule.getWorldOBB();
       if (targetBox.intersectsSphere(this.sphere)) {
         return unit;
@@ -436,6 +433,7 @@ export default class AttackUnitModule extends UnitModule<
 
   private isAttackAllowed(target: Unit): boolean {
     const unit = this.getUnit();
+
     const isDestroyed = target.modules.damage?.isDestroyed();
     const isFriend = unit.modules.faction.isFriendlyFaction(
       target.modules.faction.getFaction()
@@ -477,19 +475,22 @@ export default class AttackUnitModule extends UnitModule<
         new SphereGeometry(this.sphere.radius, 16, 16),
         new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
       ),
-      attackRadiusSphere: new Mesh(
-        new SphereGeometry(
-          this.options.attackRadius ?? this.options.radius / 2,
-          16,
-          16
-        ),
-        new MeshLambertMaterial({ color: 0xff0000, wireframe: true })
-      )
+      attackRadiusSphere:
+        this.options.followTarget && this.state.targetUnit
+          ? new Mesh(
+              new SphereGeometry(
+                this.options.attackRadius ?? this.options.radius / 2,
+                16,
+                16
+              ),
+              new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
+            )
+          : null
     };
     this.getUnit()
       .getMap()
       ?.app.getScene()
-      .add(...Object.values(this.debugObjects));
+      .add(...Object.values(this.debugObjects).filter(o => o !== null));
   }
 
   updateRadiusDebug(units: Units[]) {
@@ -508,7 +509,6 @@ export default class AttackUnitModule extends UnitModule<
     if (attackRadiusSphere) {
       const color = (attackRadiusSphere.material as MeshLambertMaterial)?.color;
       color.set(0x00ff00);
-
       if (intersect) {
         color.set(0xff0000);
       }

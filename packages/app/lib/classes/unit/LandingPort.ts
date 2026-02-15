@@ -3,6 +3,7 @@ import LandingPortUnitModule from '@blue-might/app/lib/classes/unitModule/Landin
 
 import { UNIT_TYPE } from '../../types/unit';
 import { addModules } from '../Module';
+import { TILE_TYPE } from '../../utils/pathfinding';
 
 import BuildingUnit, {
   type BuildingUnitModuleList,
@@ -32,5 +33,9 @@ export default class LandingPortUnit<
     moduleList = (moduleList || []) as ModuleList;
     moduleList = addModules(moduleList, [LandingPortUnitModule]);
     super(options, moduleList);
+  }
+
+  override getTileType() {
+    return TILE_TYPE.UNIT_PLATFORM;
   }
 }

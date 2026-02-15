@@ -374,6 +374,10 @@ export default class MovableUnitModule<
     return this.state.active;
   }
 
+  isActive(): boolean {
+    return this.state.active;
+  }
+
   setActive(value: boolean) {
     if (this.state.active === value) return;
     this.state.active = value;

@@ -84,20 +84,20 @@
 <script lang="ts" setup>
 import type Unit from '@blue-might/app/lib/classes/Unit';
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
-import { EMPTY, Subscription, switchMap } from 'rxjs';
+import { Subscription } from 'rxjs';
 import type PatrolUnitModule from '@blue-might/app/lib/classes/unitModule/Patrol';
 import { ICON } from '@blue-might/app/utils/icons';
 import { Vector2 } from 'three';
 import type { PatrolPath } from '@blue-might/app/lib/classes/unitModule/Patrol';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
-import type { UnitModules } from '@blue-might/app/lib/classes/Unit';
+// import type { UnitModules } from '@blue-might/app/lib/classes/Unit';
 
 import BmPanel from '../Panel.vue';
 import BmFieldset from '../Fieldset.vue';
 import BmButton from '../Button.vue';
 import BmToggle from '../Toggle.vue';
 
-type U = UnitModules & { patrol: PatrolUnitModule };
+// type U = UnitModules & { patrol: PatrolUnitModule };
 const unit = ref<Raw<Unit> | null>(null);
 const patrolActive = ref(false);
 
@@ -140,13 +140,9 @@ onMounted(() => {
     })
   );
   subscription.add(
-    $props.app.modules.editorUnits.observables.unit$
-      .pipe(
-        switchMap(u => (u?.modules as U)?.patrol?.observables.active$ ?? EMPTY)
-      )
-      .subscribe(v => {
-        patrolActive.value = v;
-      })
+    editorPatrolModule.observables.active$.subscribe(v => {
+      patrolActive.value = v;
+    })
   );
 });
 
@@ -277,9 +273,7 @@ async function onClickPaste() {
 }
 
 function onUpdatePatrolActive(active: boolean) {
-  if (unit.value) {
-    (unit.value.modules as U).patrol.setActive(active);
-  }
+  editorPatrolModule.setActive(active);
 }
 </script>
 

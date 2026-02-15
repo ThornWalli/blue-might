@@ -23,7 +23,7 @@ import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import { Subscription } from 'rxjs';
 import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/BaseApp';
 import type { App } from '@blue-might/app/lib/types';
-import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import type { MapDescription } from '@blue-might/app/lib/types/map';
 import { joinURL } from 'ufo';
 import { getMapDescriptionFromArrayBuffer } from '@blue-might/app/utils/export';
 

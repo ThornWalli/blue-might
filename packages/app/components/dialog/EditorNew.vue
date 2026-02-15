@@ -29,7 +29,7 @@
 <script lang="ts" setup>
 import { inject, ref } from 'vue';
 import type { App } from '@blue-might/app/lib/types';
-import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import type { MapDescription } from '@blue-might/app/lib/types/map';
 import factions from '@blue-might/app/lib/utils/factions';
 
 import type { DialogContext } from '../base/Dialog.vue';

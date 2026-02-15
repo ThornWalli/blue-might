@@ -482,7 +482,8 @@ export default class HelicopterUnitModule<
           ?.modules.surface.getSurfaceHeightAt(
             unitPosition.x,
             unitPosition.z,
-            u => !u.equals(unit)
+            u => !u.equals(unit),
+            { raycaster: true }
           ) ?? 0;
 
       if (unitPosition.y <= groundHeight) {
@@ -509,7 +510,8 @@ export default class HelicopterUnitModule<
         groundModule.getSurfaceHeightAt(
           unitPosition.x,
           unitPosition.z,
-          u => !u.equals(unit)
+          u => !u.equals(unit),
+          { raycaster: true }
         ) ?? 0;
 
       if (!isDestroyed && this.state.gearsOpened) {
@@ -548,7 +550,8 @@ export default class HelicopterUnitModule<
             groundModule.getSurfaceHeightAt(
               position.x,
               position.z,
-              u => !u.equals(unit)
+              u => !u.equals(unit),
+              { raycaster: true }
             ) ?? 0;
           if (!isDestroyed && this.state.gearsOpened) {
             minY += this.options.gearsHeight;
@@ -557,7 +560,9 @@ export default class HelicopterUnitModule<
         }
 
         if (position.clone().sub(unit.getPosition()).length() < 0.001) return;
-        unit.setPosition(position);
+        unit.setPosition(position, {
+          raycaster: true
+        });
         console.log('Helicopter landed at y=', position.toArray());
 
         if (targetUnit) {
@@ -599,7 +604,8 @@ export default class HelicopterUnitModule<
       unitPosition.x += dx;
       unitPosition.y += dy;
       unitPosition.z += dz;
-      unit.setPosition(unitPosition);
+
+      unit.setPosition(unitPosition, { raycaster: true });
     }
 
     this.setFlightStatus(status);

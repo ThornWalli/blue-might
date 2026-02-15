@@ -3,7 +3,7 @@ import { Vector2 } from 'three';
 import { createDustCone } from '../../utils/dustCone';
 import type { AnimationLoopValue } from '../Renderer';
 import Particle from '../Particle';
-import type { ParticleOptions } from '../Particle';
+import type { ParticleConstructorOptions, ParticleOptions } from '../Particle';
 
 export interface DustConeOptions extends ParticleOptions {
   scale: number;
@@ -24,22 +24,18 @@ export default class DustCone extends Particle {
   private circleOpacity: number;
   private color: number;
   private groundShader: boolean;
-
-  // eslint-disable-next-line complexity
-  constructor(options?: Partial<DustConeOptions>) {
+  constructor(options: ParticleConstructorOptions & Partial<DustConeOptions>) {
     super({
-      position: options?.position,
-      fade: options?.fade,
-      life: options?.life ?? 0.5,
-      velocity: options?.velocity
+      ...options,
+      life: options.life ?? 0.5
     });
-    this.ditherThreshold = options?.ditherThreshold ?? 0.1;
-    this.size = options?.size ?? new Vector2(0.2, 1);
-    this.circleSize = options?.circleSize ?? 0.2;
-    this.circleOpacity = options?.circleOpacity ?? 0.4;
-    this.scaleSpeed = options?.scaleSpeed ?? 0.025;
-    this.color = options?.color ?? 0x333333;
-    this.groundShader = options?.groundShader ?? false;
+    this.ditherThreshold = options.ditherThreshold ?? 0.1;
+    this.size = options.size ?? new Vector2(0.2, 1);
+    this.circleSize = options.circleSize ?? 0.2;
+    this.circleOpacity = options.circleOpacity ?? 0.4;
+    this.scaleSpeed = options.scaleSpeed ?? 0.025;
+    this.color = options.color ?? 0x333333;
+    this.groundShader = options.groundShader ?? false;
   }
 
   override update(v: AnimationLoopValue) {

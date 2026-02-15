@@ -5,7 +5,6 @@
       :key="String(option.value)"
       :label="option.label"
       :value="option.value"
-      :selected="modelValue === option.value"
       :options="option.options"
       :disabled="option.disabled" />
   </select>

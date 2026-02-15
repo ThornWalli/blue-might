@@ -481,9 +481,8 @@ export default class PathfindingUnitModule extends UnitModule<
   }
 
   private async moveGroundVehicle(unit: Unit, target: Vector3) {
-    const groundNavigator = unit
-      .getMap()
-      ?.modules.pathfinding.getGroundNavigatorForUnit(unit);
+    const pathfindingModule = unit.getMap()?.modules.pathfinding;
+    const groundNavigator = pathfindingModule?.getGroundNavigatorForUnit(unit);
 
     if (!groundNavigator) throw new Error('GroundNavigator not initialized');
 
@@ -500,7 +499,7 @@ export default class PathfindingUnitModule extends UnitModule<
     const path = await groundNavigator.findPath(
       unit.getPosition(),
       target,
-      unit.modules.collision.getCollisionObjects()
+      pathfindingModule?.getGridNodesByUnit(unit)
     );
 
     if (!path) return false;
@@ -531,9 +530,10 @@ export default class PathfindingUnitModule extends UnitModule<
   }
 
   private async moveAirVehicle(unit: Unit, target: Vector3) {
-    this.state.currentPath = null;
+    const pathfindingModule = unit.getMap()?.modules.pathfinding;
+    const airNavigator = pathfindingModule?.getAirNavigator();
 
-    const airNavigator = unit.getMap()?.modules.pathfinding.getAirNavigator();
+    this.state.currentPath = null;
 
     if (!airNavigator) throw new Error('AirNavigator not initialized');
 
@@ -550,7 +550,7 @@ export default class PathfindingUnitModule extends UnitModule<
     const path = await airNavigator.findPath(
       unit.getPosition(),
       target,
-      unit.modules.collision.getCollisionObjects()
+      pathfindingModule?.getGridNodesByUnit(unit)
     );
 
     if (!path || path.length <= 1) return;
@@ -581,7 +581,8 @@ export default class PathfindingUnitModule extends UnitModule<
   }
 
   private async moveSeaVehicle(unit: SeaVehicleUnit, target: Vector3) {
-    const seaNavigator = unit.getMap()?.modules.pathfinding.getSeaNavigator();
+    const pathfindingModule = unit.getMap()?.modules.pathfinding;
+    const seaNavigator = pathfindingModule?.getSeaNavigator();
 
     if (!seaNavigator) throw new Error('SeaNavigator not initialized');
 
@@ -600,7 +601,7 @@ export default class PathfindingUnitModule extends UnitModule<
     const path = await seaNavigator.findPath(
       unit.getPosition().setY(0),
       target.clone().setY(0),
-      unit.modules.collision.getCollisionObjects()
+      pathfindingModule?.getGridNodesByUnit(unit)
     );
 
     if (!path?.length) return false;

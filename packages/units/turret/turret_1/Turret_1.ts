@@ -1,12 +1,17 @@
-import {
-  GROUND_ADJUSTMENT_MODE,
-  type RawUnitDescription,
-  type SetupContext,
-  type UnitConstructorOptions,
-  type UnitOptions
+import type {
+  RawUnitDescription,
+  UnitConstructorOptions,
+  UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import {
+  type WeaponSupportOptions,
+  type WeaponSupportState,
+  GROUND_ADJUSTMENT_MODE,
+  type SetupContext
+} from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { Vector2, Mesh, SkinnedMesh, Object3D } from 'three';
+import type { Object3D } from 'three';
+import { Vector2, Mesh, SkinnedMesh } from 'three';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import WeaponUnitModule, {
@@ -24,12 +29,11 @@ import {
   PROJECTILE_TYPE,
   WEAPON_SHOOT_TYPE
 } from '@blue-might/app/lib/types/weapon';
-import type {
-  WeaponSupportOptions,
-  WeaponSupportState
-} from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
-import { OBJECT_USER_DATA } from '@blue-might/app/lib/utils/object';
+import {
+  disablePathfinding,
+  disableRaycaster
+} from '@blue-might/app/lib/utils/object';
 import type {
   TurretBuildingUnitModuleList,
   TurretBuildingUnitModules,
@@ -145,8 +149,11 @@ export default class Turret_1
             ...options.moduleOptions?.collision,
             targets: [
               {
-                name: 'head',
-                childIndex: 1
+                name: 'head_base'
+              },
+              {
+                name: 'body',
+                default: true
               }
             ]
           }
@@ -193,19 +200,19 @@ export default class Turret_1
     const barrelObj = object.getObjectByName('barrel')!;
     const barrelTargetObj = object.getObjectByName('barrel_target')!;
 
-    const barrelWrapper = new Object3D();
+    // const barrelWrapper = new Object3D();
 
-    barrelObj.position.set(0, -0.55, 0);
-    barrelWrapper.position.set(0, 0.55, 0.1);
-    barrelWrapper.add(barrelObj);
-    headObj.add(barrelWrapper);
+    // // barrelObj.position.set(0, -0.55, 0);
+    // // barrelWrapper.position.set(0, 0.55, 0.1);
+    // barrelWrapper.add(barrelObj);
+    // headObj.add(barrelWrapper);
 
     const barrelTargetShoot = createBarrelTargetShoot();
     barrelTargetObj.add(barrelTargetShoot);
 
     this.objects.push({
       head: headObj,
-      barrels: [barrelWrapper],
+      barrels: [barrelObj],
       barrelTargets: [barrelTargetObj],
       barrelTargetShoots: [barrelTargetShoot]
     });
@@ -221,9 +228,8 @@ export default class Turret_1
       }
     });
 
-    object.getObjectByName('barrel')?.traverse(obj => {
-      obj.userData[OBJECT_USER_DATA.IGNORE_RAYCASTER] = true;
-    });
+    disableRaycaster(barrelObj);
+    disablePathfinding(barrelObj);
 
     return object;
   }

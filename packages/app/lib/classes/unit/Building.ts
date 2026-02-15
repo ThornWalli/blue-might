@@ -1,9 +1,11 @@
-import { UNIT_TYPE } from '../../types/unit';
+import {
+  GROUND_ADJUSTMENT_MODE,
+  UNIT_TYPE,
+  type SetupContext
+} from '../../types/unit';
 import { setDestroyedMaterials } from '../../utils/material';
 import { addModules } from '../Module';
 import Unit, {
-  GROUND_ADJUSTMENT_MODE,
-  type SetupContext,
   type UnitConstructorOptions,
   type UnitModuleList,
   type UnitModules,

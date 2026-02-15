@@ -1,9 +1,13 @@
 import type {
   RawUnitDescription,
-  SetupContext,
   UnitConstructorOptions,
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import type {
+  SetupContext,
+  WeaponSupportOptions,
+  WeaponSupportState
+} from '@blue-might/app/lib/types/unit';
 import TankUnit, {
   type TankUnitModuleList,
   type TankUnitModules,
@@ -18,10 +22,6 @@ import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/We
 import { weapons } from '@blue-might/weapon';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { playSound } from '@blue-might/weapon/utils';
-import type {
-  WeaponSupportOptions,
-  WeaponSupportState
-} from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import {
   autoAimFunction,

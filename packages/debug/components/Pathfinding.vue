@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import type { MapDescription } from '@blue-might/app/lib/types/map';
 import { FACTION } from '@blue-might/app/lib/utils/factions';
 import { Subscription } from 'rxjs';
 import { onUnmounted, defineAsyncComponent } from 'vue';

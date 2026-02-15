@@ -7,7 +7,13 @@
     </template>
     <template #[PANEL.BOTTOM_LEFT]>
       <div class="panel-column">
-        <bm-panel-editor-units key="editor-units" :mode="mode" :app="app" />
+        <div class="panel-row panel-row-end">
+          <bm-panel-editor-units key="editor-units" :mode="mode" :app="app" />
+          <bm-panel-editor-units-controls
+            key="editor-units-controls"
+            :mode="mode"
+            :app="app" />
+        </div>
         <bm-panel-editor-player
           v-if="isMode(EDITOR_MODE.PLAYER)"
           key="editor-player"
@@ -21,6 +27,7 @@
         <bm-panel-general
           v-if="isMode(EDITOR_MODE.DEFAULT)"
           key="general"
+          show-import
           :app="app" />
       </div>
     </template>
@@ -53,14 +60,15 @@ import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
 import { EDITOR_MODE } from '@blue-might/app/lib/classes/app/AppEditor';
 
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
-import BmPanelEditorUnitSettings from '../panel/EditorUnitSettings.vue';
 import BmPanelMap from '../panel/Map.vue';
 import BmPanelGeneral from '../panel/General.vue';
 import BmPanelEditorGrid from '../panel/EditorGrid.vue';
 import BmPanelEditorUnits from '../panel/EditorUnits.vue';
+import BmPanelEditorUnitsControls from '../panel/EditorUnitsControls.vue';
 import BmPanelEditorGeneral from '../panel/EditorGeneral.vue';
 import BmPanelEditorUnitPatrol from '../panel/EditorUnitPatrol.vue';
 import BmPanelEditorPlayer from '../panel/EditorPlayer.vue';
+import BmPanelEditorUnitSettings from '../panel/EditorUnitSettings.vue';
 
 const mode = ref<EDITOR_MODE>(EDITOR_MODE.DEFAULT);
 

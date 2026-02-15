@@ -11,8 +11,17 @@
     <div class="controls">
       <bm-button label="Abort" @click="onClickAbort" />
       <div class="spacer"></div>
+      <bm-button label="Debug" type="button" @click="onClickDebug" />
       <bm-button label="Apply" type="submit" />
     </div>
+    <teleport to="body">
+      <bm-dialog ref="unitDebugDialog">
+        <template #header>Unit Debug</template>
+        <template #default>
+          <bm-dialog-editor-map-debug :app="$props.app" />
+        </template>
+      </bm-dialog>
+    </teleport>
   </form>
 </template>
 
@@ -20,7 +29,7 @@
 import { inject, onMounted, onUnmounted, ref } from 'vue';
 import { Subscription } from 'rxjs';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
-import type { Meta } from '@blue-might/app/lib/classes/Map';
+import type { Meta } from '@blue-might/app/lib/types/map';
 
 import type { DialogContext } from '../base/Dialog.vue';
 import BmTextfield from '../Textfield.vue';
@@ -28,6 +37,8 @@ import BmTextarea from '../Textarea.vue';
 import BmFormField from '../FormField.vue';
 import BmButton from '../Button.vue';
 import BmFieldset from '../Fieldset.vue';
+import BmDialog from '../Dialog.vue';
+import BmDialogEditorMapDebug from '../dialog/EditorMapDebug.vue';
 
 const dialog = inject<DialogContext>('dialog')!;
 
@@ -67,6 +78,10 @@ function onSubmit(e: Event) {
     editorMapSettingsModule.setMeta(meta.value);
     dialog.close();
   }
+}
+const unitDebugDialog = ref<InstanceType<typeof BmDialog> | null>(null);
+function onClickDebug() {
+  unitDebugDialog.value?.context?.open();
 }
 
 function onClickAbort() {

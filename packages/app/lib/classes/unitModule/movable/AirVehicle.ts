@@ -132,6 +132,10 @@ export default class AirVehicleUnitModule<
     return this.state.gearsOpened;
   }
 
+  getGearsHeight() {
+    return this.options.gearsHeight;
+  }
+
   protected setGearsOpened(opened: boolean) {
     this.state.gearsActive = false;
     this.state.gearsOpened = opened;

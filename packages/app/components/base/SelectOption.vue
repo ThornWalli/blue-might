@@ -8,7 +8,8 @@
       :key="String(option.value ?? option.label)"
       :label="option.label"
       :value="option.value"
-      :disabled="option.disabled">
+      :disabled="option.disabled"
+      :selected="option.value === value">
       {{ option.label }}
     </bm-select-option>
   </optgroup>

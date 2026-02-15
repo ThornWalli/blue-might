@@ -221,7 +221,9 @@ export default class FigureMovableUnitModule extends MovableUnitModule<
       this.state.isGrounded = false;
     }
 
-    unit.setPosition(pos);
+    unit.setPosition(pos, {
+      raycaster: true
+    });
 
     const seaLevel = unit.getMap()?.modules.surface.getSeaLevel() ?? 0;
 

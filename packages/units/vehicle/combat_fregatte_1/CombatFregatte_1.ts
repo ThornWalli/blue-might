@@ -1,9 +1,13 @@
 import type {
   RawUnitDescription,
-  SetupContext,
   UnitConstructorOptions,
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import type {
+  SetupContext,
+  WeaponSupportOptions,
+  WeaponSupportState
+} from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import {
   Object3D,
@@ -33,10 +37,6 @@ import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
 import { playSound } from '@blue-might/weapon/utils';
 import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
-import type {
-  WeaponSupportOptions,
-  WeaponSupportState
-} from '@blue-might/app/lib/types/unit';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/combat_fregatte_1.glb?url';

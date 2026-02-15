@@ -17,6 +17,7 @@ import EditorPlayerAppModule from '../appModule/EditorPlayer';
 import EditorSurfaceAppModule from '../appModule/EditorSurface';
 import EditorUnitSettingsAppModule from '../appModule/EditorUnitSettings';
 import EditorMapSettingsAppModule from '../appModule/EditorMapSettings';
+import EditorUnitDebugAppModule from '../appModule/EditorUnitDebug';
 
 interface AppEditorObservables extends AppObservables {
   mode$: ReplaySubject<EDITOR_MODE>;
@@ -35,6 +36,7 @@ interface AppEditorModules extends AppModules {
   editorFaction: EditorFactionAppModule;
   editorPlayer: EditorPlayerAppModule;
   editorUnitSettings: EditorUnitSettingsAppModule;
+  editorUnitDebug: EditorUnitDebugAppModule;
 }
 
 type AppEditorModuleList = AppModuleList &
@@ -47,6 +49,7 @@ type AppEditorModuleList = AppModuleList &
     | typeof EditorFactionAppModule
     | typeof EditorPlayerAppModule
     | typeof EditorUnitSettingsAppModule
+    | typeof EditorUnitDebugAppModule
   )[];
 
 export enum EDITOR_MODE {
@@ -75,7 +78,8 @@ export default class AppEditor extends BaseApp<
       EditorPatrolAppModule,
       EditorFactionAppModule,
       EditorPlayerAppModule,
-      EditorUnitSettingsAppModule
+      EditorUnitSettingsAppModule,
+      EditorUnitDebugAppModule
     );
     super(
       config,
@@ -93,8 +97,6 @@ export default class AppEditor extends BaseApp<
 
   override async setup() {
     await super.setup();
-
-    this.setUpdateActive(false);
   }
 
   getMode() {

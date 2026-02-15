@@ -1,7 +1,7 @@
 import { snakeCase } from 'change-case';
 import { Color, Vector2, Vector3 } from 'three';
+import type { MapDescription } from '@blue-might/app/lib/types/map';
 
-import type { MapDescription } from '../lib/classes/Map';
 import Unit from '../lib/classes/Unit';
 
 export async function createExport(description: MapDescription) {

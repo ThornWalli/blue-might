@@ -10,7 +10,7 @@
 import type { Raw } from 'vue';
 import { defineAsyncComponent, markRaw, onMounted, ref } from 'vue';
 import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/BaseApp';
-import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import type { MapDescription } from '@blue-might/app/lib/types/map';
 import { getMapDescriptionFromArrayBuffer } from '@blue-might/app/utils/export';
 import { joinURL } from 'ufo';
 
@@ -25,7 +25,7 @@ const AppComponent = defineAsyncComponent(
 const $runtimeConfig = useRuntimeConfig();
 const description = ref<Raw<MapDescription>>();
 onMounted(async () => {
-  description.value = markRaw(
+  const desc = markRaw(
     await getMapDescriptionFromArrayBuffer(
       await fetch(
         joinURL(
@@ -36,6 +36,7 @@ onMounted(async () => {
       ).then(res => res.arrayBuffer())
     )
   );
+  description.value = desc;
 });
 
 const config = ref<AppConfig>({

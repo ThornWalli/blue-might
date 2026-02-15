@@ -5,6 +5,10 @@ export enum ICON {
   UNLOCKED = 'unlocked',
   PLUS = 'plus',
   MINUS = 'minus',
+  ARROW_DOWN = 'arrow-down',
+  ARROW_UP = 'arrow-up',
+  ARROW_LEFT = 'arrow-left',
+  ARROW_RIGHT = 'arrow-right',
   ARROWS_POINTING_IN = 'arrows-pointing-in',
   ARROWS_POINTING_OUT = 'arrows-pointing-out',
   ARROW_PATH = 'arrow-path',
@@ -46,6 +50,27 @@ export default {
   [ICON.MINUS]: markRaw(
     defineAsyncComponent(
       () => import('../assets/icons/micro/minus.svg?component')
+    )
+  ),
+  [ICON.ARROW_DOWN]: markRaw(
+    defineAsyncComponent(
+      () => import('../assets/icons/micro/arrow-down.svg?component')
+    )
+  ),
+  [ICON.ARROW_UP]: markRaw(
+    defineAsyncComponent(
+      () => import('../assets/icons/micro/arrow-up.svg?component')
+    )
+  ),
+
+  [ICON.ARROW_LEFT]: markRaw(
+    defineAsyncComponent(
+      () => import('../assets/icons/micro/arrow-left.svg?component')
+    )
+  ),
+  [ICON.ARROW_RIGHT]: markRaw(
+    defineAsyncComponent(
+      () => import('../assets/icons/micro/arrow-right.svg?component')
     )
   ),
   [ICON.ARROWS_POINTING_IN]: markRaw(

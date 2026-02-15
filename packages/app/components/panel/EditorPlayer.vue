@@ -25,7 +25,7 @@ import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import type { FactionIdentifier } from '@blue-might/app/lib/classes/Faction';
 import { Subscription } from 'rxjs';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
-import type { PlayerOptions } from '@blue-might/app/lib/classes/Map';
+import type { PlayerOptions } from '@blue-might/app/lib/types/map';
 import { Euler, Vector3 } from 'three';
 import * as units from '@blue-might/units';
 import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';

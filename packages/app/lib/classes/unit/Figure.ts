@@ -1,11 +1,7 @@
-import {
-  GROUND_ADJUSTMENT_MODE,
-  type UnitConstructorOptions,
-  type UnitOptions
-} from '../Unit';
+import type { UnitConstructorOptions, UnitOptions } from '../Unit';
 import PatrolUnitModule from '../unitModule/Patrol';
 import { COLLISION_TYPE } from '../unitModule/Collision';
-import { UNIT_TYPE } from '../../types/unit';
+import { GROUND_ADJUSTMENT_MODE, UNIT_TYPE } from '../../types/unit';
 import { addModules } from '../Module';
 import FigureMovableUnitModule from '../unitModule/movable/FigureMovable';
 import FigureUnitModule from '../unitModule/Figure';

@@ -6,7 +6,10 @@ import test1 from '../../../assets/explosion/1.png?url';
 import test2 from '../../../assets/explosion/2.png?url';
 import test3 from '../../../assets/explosion/3.png?url';
 import { LOADER } from '../AssetLoader';
-import Particle, { type ParticleOptions } from '../Particle';
+import Particle, {
+  type ParticleConstructorOptions,
+  type ParticleOptions
+} from '../Particle';
 import type { AnimationLoopValue } from '../Renderer';
 
 function easeExpoOut(t: number) {
@@ -34,17 +37,17 @@ export default class Explosion extends Particle {
   private fadeOutEase = easeExpoIn;
   private steps = 32;
   private radius = 1.2;
-  constructor(options?: Partial<ExplosionOptions>) {
+  constructor(options: ParticleConstructorOptions & Partial<ExplosionOptions>) {
     super({
       ...options,
-      life: options?.life
+      life: options.life
     });
-    this.radius = options?.radius ?? 1.2;
-    this.steps = options?.steps ?? 32;
-    this.fadeInDuration = options?.fadeInDuration ?? 900;
-    this.fadeOutDuration = options?.fadeOutDuration ?? 900;
-    this.fadeInEase = options?.fadeInEase ?? easeExpoOut;
-    this.fadeOutEase = options?.fadeOutEase ?? easeExpoIn;
+    this.radius = options.radius ?? 1.2;
+    this.steps = options.steps ?? 32;
+    this.fadeInDuration = options.fadeInDuration ?? 900;
+    this.fadeOutDuration = options.fadeOutDuration ?? 900;
+    this.fadeInEase = options.fadeInEase ?? easeExpoOut;
+    this.fadeOutEase = options.fadeOutEase ?? easeExpoIn;
   }
 
   override update({ time }: AnimationLoopValue) {

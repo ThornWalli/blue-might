@@ -1,10 +1,10 @@
 import { LoopRepeat, Mesh, SkinnedMesh } from 'three';
 import type {
   RawUnitDescription,
-  SetupContext,
   UnitConstructorOptions,
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import type { SetupContext } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';

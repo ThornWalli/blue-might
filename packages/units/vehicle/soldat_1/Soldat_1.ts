@@ -1,9 +1,9 @@
 import type {
   RawUnitDescription,
-  SetupContext,
   UnitConstructorOptions,
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import type { SetupContext } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { LoopOnce, LoopRepeat, Mesh, SkinnedMesh } from 'three';
 import FigureUnit, {

@@ -1,10 +1,15 @@
 import {
   ReplaySubject,
   Subject,
+  bufferCount,
+  concatMap,
   distinctUntilChanged,
+  from,
+  lastValueFrom,
   map,
   merge,
-  throttleTime
+  throttleTime,
+  toArray
 } from 'rxjs';
 import type { Object3D, Vector3Tuple } from 'three';
 import { Euler, Group, Mesh, SkinnedMesh, Vector3 } from 'three';
@@ -22,6 +27,7 @@ import type { IntersectionListener } from '../rendererModule/Intersection';
 import { OBJECT_USER_DATA } from '../../utils/object';
 import BuildingUnit from '../unit/Building';
 import type { UnitDescription } from '../Unit';
+import { getUnitMap } from '../../utils/unit';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -37,6 +43,7 @@ interface Observables extends MapModuleObservables {
 }
 
 interface State extends MapModuleState {
+  ready: boolean;
   visibleUnits: Unit[];
   units: globalThis.Map<string, Unit>;
 }
@@ -47,6 +54,7 @@ export default class UnitsModule extends MapModule<State, Observables> {
   chunkManager: UnitChunkManager = new UnitChunkManager();
 
   override state: State = {
+    ready: false,
     visibleUnits: [],
     units: new globalThis.Map<string, Unit>()
   };
@@ -149,13 +157,25 @@ export default class UnitsModule extends MapModule<State, Observables> {
       }
     );
 
-    await Promise.all(buildings.map(unit => this.add(unit)));
-    window.setTimeout(async () => {
-      window.requestAnimationFrame(async () => {
-        await Promise.all(others.map(unit => this.add(unit)));
-        this.observables.ready$.next();
-      });
-    }, 0);
+    const addUnits = async (units: Unit[]) =>
+      await lastValueFrom(
+        from(units).pipe(
+          bufferCount(20),
+          concatMap(batch => Promise.all(batch.map(unit => this.add(unit)))),
+          toArray()
+        )
+      );
+
+    await addUnits(buildings);
+    await addUnits(others);
+
+    this.setReady();
+  }
+
+  setReady() {
+    if (this.state.ready) return;
+    this.observables.ready$.next();
+    this.state.ready = true;
   }
 
   //#region methods
@@ -262,11 +282,7 @@ function getMeshes(obj: Object3D): Mesh[] {
   });
   return meshes;
 }
-const unitMap = new globalThis.Map(
-  Object.values(units).map(
-    unit => [unit.KEY, unit as unknown as typeof Unit] as [string, typeof Unit]
-  )
-);
+const unitMap = getUnitMap(units);
 
 function resolveUnits(units: UnitDescription[]): Unit[] {
   return units.map(unit => {

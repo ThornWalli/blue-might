@@ -31,6 +31,7 @@ import Explosion from '../effect/Explosion';
 import Fire from '../effect/Fire';
 import Smoke from '../effect/Smoke';
 import WaterCone from '../effect/WaterCone';
+import SignalSmoke from '../effect/SignalSmoke';
 declare module '../Map' {
   interface ModuleDebug {
     effect: boolean;
@@ -59,13 +60,14 @@ export default class EffectModule extends MapModule<State, Observables> {
   } | null = null;
 
   private root: Group;
+  constructor(map: Map, debug: boolean) {
+    super(map, debug);
+    this.root = new Group();
+    this.addToScene(this.root);
+  }
 
   override async setup() {
     this.textures = await loadTextures();
-  }
-
-  getRoot() {
-    return this.root;
   }
 
   override destroy() {
@@ -82,11 +84,6 @@ export default class EffectModule extends MapModule<State, Observables> {
     super.destroy();
   }
 
-  constructor(map: Map, debug: boolean) {
-    super(map, debug);
-    this.root = new Group();
-    this.addToScene(this.root);
-  }
   override update({ time, delta }: AnimationLoopValue): void {
     // const dt = 0.016;
 
@@ -102,7 +99,8 @@ export default class EffectModule extends MapModule<State, Observables> {
 
   async addExplosion(position: Vector3, strength: number = 1) {
     const explosion = new Explosion({
-      radius: strength
+      radius: strength,
+      airFlow: this.map.modules.airFlow
     });
     await explosion.setup();
     explosion.getRoot().position.copy(position);
@@ -116,7 +114,9 @@ export default class EffectModule extends MapModule<State, Observables> {
     normal?: Vector3,
     hitObject?: Object3D
   ) {
-    const waterCone = new WaterCone();
+    const waterCone = new WaterCone({
+      airFlow: this.map.modules.airFlow
+    });
     await waterCone.setup();
     const root = waterCone.getRoot();
     root.position.copy(position);
@@ -138,7 +138,10 @@ export default class EffectModule extends MapModule<State, Observables> {
     hitObject?: Object3D,
     options: Partial<DustConeOptions> = {}
   ) {
-    const dustCone = new DustCone(options);
+    const dustCone = new DustCone({
+      ...options,
+      airFlow: this.map.modules.airFlow
+    });
     await dustCone.setup();
     const root = dustCone.getRoot();
     root.position.copy(position);
@@ -174,7 +177,8 @@ export default class EffectModule extends MapModule<State, Observables> {
         (Math.random() - 0.5) * 0.1,
         options?.static ? 0.05 : 0.6,
         (Math.random() - 0.5) * 0.1
-      )
+      ),
+      airFlow: this.map.modules.airFlow
     });
     await smoke.setup();
 
@@ -198,7 +202,8 @@ export default class EffectModule extends MapModule<State, Observables> {
         (Math.random() - 0.5) * 0.2,
         1.5 + Math.random(),
         (Math.random() - 0.5) * 0.2
-      )
+      ),
+      airFlow: this.map.modules.airFlow
     });
     await fire.setup();
 
@@ -208,6 +213,43 @@ export default class EffectModule extends MapModule<State, Observables> {
     disableRaycaster(root);
     this.state.particles.push(fire);
     this.root.add(root);
+  }
+
+  async addSignalSmoke(
+    position: Vector3,
+    options?: Partial<Exclude<ParticleOptions, 'texture'>> & {
+      type: SMOKE_TYPE;
+      static?: boolean;
+    }
+  ) {
+    if (!this.textures) return;
+    const smokeTextures =
+      this.textures.smoke[options?.type ?? SMOKE_TYPE.LIGHT];
+    const smokeIndex = Math.floor(Math.random() * smokeTextures.length);
+
+    const smoke = new SignalSmoke({
+      ...options,
+      texture: smokeTextures[smokeIndex],
+      life: options?.life ?? 0.8,
+      velocity: new Vector3(
+        (Math.random() - 0.5) * 0.1,
+        options?.static ? 0.05 : 0.6,
+        (Math.random() - 0.5) * 0.1
+      ),
+      airFlow: this.map.modules.airFlow
+    });
+    await smoke.setup();
+
+    const root = smoke.getRoot();
+    root.position.copy(position);
+
+    disableRaycaster(root);
+    this.state.particles.push(smoke);
+    this.root.add(root);
+  }
+
+  getRoot() {
+    return this.root;
   }
 }
 

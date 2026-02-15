@@ -32,7 +32,7 @@ defineProps<{
   disabled?: boolean;
   tag?: string;
   styleType?: 'primary' | 'secondary' | 'tertiary' | 'quaternary';
-  mode?: 'normal';
+  mode?: 'normal' | 'icon';
   selected?: boolean;
   label?: string;
   hideLabel?: boolean;
@@ -92,6 +92,11 @@ defineProps<{
       --color-foreground: var(--color-white);
       --color-border: var(--color-gold);
     }
+  }
+
+  &.mode-icon {
+    padding: var(--bm-spacing-medium);
+    color: var(--color-foreground);
   }
 
   & span {

@@ -1,10 +1,14 @@
 import { combineLatest, filter } from 'rxjs';
 import type {
   RawUnitDescription,
-  SetupContext,
   UnitConstructorOptions,
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import type {
+  SetupContext,
+  WeaponSupportOptions,
+  WeaponSupportState
+} from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import {
   Object3D,
@@ -33,10 +37,6 @@ import {
   updateControls
 } from '@blue-might/app/lib/utils/unit/weapon';
 import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/Animation';
-import type {
-  WeaponSupportOptions,
-  WeaponSupportState
-} from '@blue-might/app/lib/types/unit';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 import TransportUnitModule from '@blue-might/app/lib/classes/unitModule/Transport';

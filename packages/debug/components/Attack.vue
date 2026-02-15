@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import type { MapDescription } from '@blue-might/app/lib/types/map';
 import { WeaponSlot } from '@blue-might/app/lib/classes/WeaponSlot';
 import factions, { FACTION } from '@blue-might/app/lib/utils/factions';
 import { weapons } from '@blue-might/weapon';

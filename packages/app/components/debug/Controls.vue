@@ -77,10 +77,9 @@ onMounted(() => {
         currentPosition.value.copy(p);
         const map = app.modules.map.getMap()!;
         const navigator = map.modules.pathfinding.getGroundNavigatorLarge();
-        const grid = navigator.getGrid();
         const node = navigator.worldToNode(p.x, p.y);
 
-        tileType.value = (node && grid.getTileType?.(node).toString()) ?? '';
+        tileType.value = String(node?.type ?? '');
         surfaceHeight.value = map.modules.surface.getSurfaceHeightAt(p.x, p.y);
         terrainHeight.value = map.modules.surface.getHeightAt(p.x, p.y);
       })

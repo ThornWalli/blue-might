@@ -1,8 +1,9 @@
-import type { SetupContext, UnitConstructorOptions } from '../Unit';
+import type { UnitConstructorOptions } from '../Unit';
 import PatrolUnitModule from '../unitModule/Patrol';
 import PlayerUnitModule from '../unitModule/Player';
 import { setDestroyedMaterials } from '../../utils/material';
 import { addModules } from '../Module';
+import type { SetupContext } from '../../types/unit';
 
 import MovableUnit, {
   type MovableUnitModuleList,

@@ -1,6 +1,12 @@
 import type { Vector2 } from 'three';
 
+import type Map from '../classes/Map';
+
 export type UnitIdentifier = string;
+
+export interface SetupContext {
+  map?: Map;
+}
 
 export enum UNIT_TYPE {
   DEFAULT = 'default',
@@ -15,28 +21,14 @@ export enum UNIT_TYPE {
   TANK = 'tank'
 }
 
-// // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-// export interface UnitType {}
-
-// export const UNIT_TYPE: UnitType = {} as UnitType;
-
-// export interface RawUnitDescription<Rotation = string, Position = number[]> {
-//   id: string;
-//   unit: string;
-//   options: {
-//     skin: string;
-//     accessible?: boolean;
-//     position: Position;
-//     rotation: Rotation;
-//     // options: { [key: string]: unknown };
-//     moduleStates: { [key: string]: UnitModuleState };
-//     [key: string]: unknown;
-//   };
-// }
-// export type UnitDescription<
-//   Rotation = ROTATION,
-//   Position = Vector3
-// > = RawUnitDescription<Rotation, Position>;
+export enum GROUND_ADJUSTMENT_MODE {
+  MIN_HEIGHT = 'min-height',
+  GROUND = 'ground',
+  FLIGHT = 'flight',
+  NONE = 'none',
+  SEA = 'sea',
+  FIGURE = 'figure'
+}
 
 export interface WeaponSupportState {
   weaponActive: boolean;

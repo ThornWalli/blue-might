@@ -232,7 +232,7 @@ export default class ControlsPlayerModule extends PlayerModule<
   }
 
   private handleKeyEvent(event: KeyboardEvent, isKeyDown: boolean) {
-    const vehicle = this.player.modules.vehicle.getActiveUnit();
+    const vehicle = this.player.modules.vehicle.getCurrentUnit();
     if (!vehicle) return;
 
     const controls: ControlState = this.state.controls;

@@ -58,6 +58,10 @@ export enum PANEL_GROUP_DIRECTION {
     }
   }
 
+  & :deep(.panel-row-end) {
+    align-items: flex-end;
+  }
+
   & :deep(.panel-column) {
     display: flex;
     flex-direction: column;

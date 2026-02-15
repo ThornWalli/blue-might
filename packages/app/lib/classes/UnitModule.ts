@@ -2,7 +2,8 @@ import type { Object3D, Scene } from 'three';
 import type { SubscriptionLike } from 'rxjs';
 import type { Units } from '@blue-might/units';
 
-import type { SetupContext } from './Unit';
+import type { SetupContext } from '../types/unit';
+
 import Module, { type ModuleObservables, type ModuleState } from './Module';
 
 export interface UnitModuleObservables extends ModuleObservables {

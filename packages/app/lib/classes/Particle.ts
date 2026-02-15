@@ -4,6 +4,7 @@ import { Sprite, Texture, Vector3, SpriteMaterial } from 'three';
 import { disposeObject3D } from '../utils/object';
 
 import type { AnimationLoopValue } from './Renderer';
+import type AirFlowModule from './mapModule/AirFlow';
 
 export interface ParticleOptions {
   texture: Texture<ImageBitmap>;
@@ -14,26 +15,34 @@ export interface ParticleOptions {
   velocity: Vector3;
 }
 
+export type ParticleConstructorOptions<Options = ParticleOptions> =
+  Partial<Options> & {
+    airFlow: AirFlowModule;
+  };
+
 export default class Particle {
-  setVelocity(x: number, y: number, z: number) {
-    this.velocity.set(x, y, z);
-  }
   private root!: Object3D;
   private startTime?: number;
   private complete: boolean = false;
-
-  private texture: Texture<ImageBitmap>;
+  protected texture: Texture;
   private fade: boolean;
   private scale: number;
   private life: number = 1;
+  private maxLife: number = 1;
   private velocity: Vector3;
+  readonly airFlow: AirFlowModule;
 
-  constructor(options: Partial<ParticleOptions>) {
+  constructor(options: ParticleConstructorOptions) {
     this.texture = options.texture ?? new Texture();
     this.fade = options.fade ?? false;
     this.scale = options.scale ?? 1;
-    this.life = options.life ?? 1;
+    this.maxLife = this.life = options.life ?? 1;
     this.velocity = options.velocity ?? new Vector3();
+    this.airFlow = options.airFlow;
+  }
+
+  async setup() {
+    this.root = await this.createMesh();
   }
 
   destroy() {
@@ -41,6 +50,10 @@ export default class Particle {
 
     this.root.removeFromParent();
     disposeObject3D(this.root);
+  }
+
+  setVelocity(x: number, y: number, z: number) {
+    this.velocity.set(x, y, z);
   }
 
   getStartTime() {
@@ -53,6 +66,10 @@ export default class Particle {
     return this.life;
   }
 
+  getLifeProgress() {
+    return 1 - this.life / this.maxLife;
+  }
+
   setLife(life: number) {
     this.life = Math.max(0, life);
   }
@@ -62,10 +79,6 @@ export default class Particle {
   }
   setScale(scale: number) {
     this.scale = scale;
-  }
-
-  async setup() {
-    this.root = await this.createMesh();
   }
 
   update({ delta }: AnimationLoopValue) {

@@ -1,17 +1,16 @@
-import {
-  Euler,
-  Texture,
-  Vector3,
-  type EulerTuple,
-  type Vector3Tuple
-} from 'three';
-import { Object3D } from 'three';
+import { Euler, Texture, Vector3, Object3D } from 'three';
 import assetLoader from '@blue-might/app/services/assetLoader';
 import { ReplaySubject, Subscription } from 'rxjs';
 import type { UnitDescriptions } from '@blue-might/units';
 import { imageBitmapToBlob } from '@blue-might/app/utils/blob';
 
 import type { App } from '../types';
+import type {
+  MapDescription,
+  Meta,
+  PlayerOptions,
+  Textures
+} from '../types/map';
 
 import type { AnimationLoopValue } from './Renderer';
 import { LOADER } from './AssetLoader';
@@ -23,14 +22,7 @@ import ShootModule from './mapModule/Shoot';
 import EffectModule from './mapModule/Effect';
 import FactionModule from './mapModule/Faction';
 import AirFlowModule from './mapModule/AirFlow';
-import type { FactionDescription, FactionIdentifier } from './Faction';
-import type { RawUnitDescription } from './Unit';
-
-export interface Textures {
-  heightMap: Texture<ImageBitmap>;
-  backgroundTexture: Texture<ImageBitmap>;
-  foregroundTexture: Texture<ImageBitmap>;
-}
+import type Module from './Module';
 
 interface MapObservables {
   playerOptions$: ReplaySubject<PlayerOptions>;
@@ -71,6 +63,10 @@ export default class Map<
 > {
   //#region debug
   private moduleDebug: Partial<ModuleDebug> = {};
+
+  getModuleDebug() {
+    return this.moduleDebug;
+  }
   setModuleDebug(debug: Partial<ModuleDebug>) {
     this.moduleDebug = { ...this.moduleDebug, ...debug };
   }
@@ -208,7 +204,20 @@ export default class Map<
     this.subscription.unsubscribe();
     this.app.getScene().remove(this.root);
     this.root.remove();
-    Object.values(this.modules).forEach(module => module.destroy());
+
+    this.modules.surface.destroy();
+    this.modules.pathfinding.destroy();
+
+    Object.values<Module>({
+      ...(this.modules as unknown as (typeof Module)[]),
+      surface: undefined,
+      pathfinding: undefined
+    })
+      .filter(m => m !== undefined)
+      .forEach(module => {
+        module.destroy();
+      });
+
     this.destroyed = true;
   }
 
@@ -279,55 +288,3 @@ export default class Map<
     };
   }
 }
-
-export interface RawPlayerOptions<
-  UD extends UnitDescriptions = UnitDescriptions,
-  V3 = Vector3Tuple,
-  E = EulerTuple
-> {
-  unit: UD;
-  position: V3;
-  rotation?: E;
-  faction: FactionIdentifier;
-}
-
-export type PlayerOptions<UD extends UnitDescriptions = UnitDescriptions> =
-  RawPlayerOptions<UD, Vector3, Euler>;
-
-export interface Meta {
-  name: string;
-  description?: string | null;
-}
-
-export interface MapDescription {
-  debug?: Partial<ModuleDebug>;
-  meta: Meta;
-  playerOptions: RawPlayerOptions;
-  surface: {
-    textures: {
-      heightMap: string;
-      backgroundTexture: string;
-      foregroundTexture: string;
-    };
-    heightMapInclude?: boolean;
-    noise?: MapNoise;
-  };
-  units: RawUnitDescription[];
-  factions: FactionDescription[];
-}
-
-export interface MapNoise {
-  active: boolean;
-  size: number;
-  intensity: number;
-  opacity: number;
-  monochrome: boolean;
-}
-
-export const DEFAULT_MAP_NOISE = Object.freeze<MapNoise>({
-  active: false,
-  size: 2,
-  intensity: 0.25,
-  opacity: 0.5,
-  monochrome: false
-});

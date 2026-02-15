@@ -9,7 +9,7 @@ import { EDITOR_MODE } from '../app/AppEditor';
 import type { FactionIdentifier } from '../Faction';
 
 interface Observables extends AppModuleObservables {
-  unit$: ReplaySubject<Unit | null>;
+  unit$: ReplaySubject<Units | null>;
 }
 
 interface State extends AppModuleState {
@@ -57,7 +57,6 @@ export default class EditorUnitSettingsAppModule extends AppModule<
     }
   }
   setUnit(unit: Unit | null) {
-    console.log('EditorUnitSettingsAppModule setUnit', unit);
     if (this.state.unit === unit) return;
     this.state.unit = unit;
     this.observables.unit$.next(this.state.unit);
@@ -67,8 +66,9 @@ export default class EditorUnitSettingsAppModule extends AppModule<
     this.state.unit?.modules.faction.setFaction(factionId);
   }
 
-  setDamage(damage: number) {
-    this.state.unit?.modules.damage.setValue(damage);
+  setInitialDamage(damage: number) {
+    if (!this.state.unit) return;
+    this.state.unit.modules.damage.setInitialDamage(damage);
   }
 
   //#region figure

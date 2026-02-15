@@ -217,7 +217,6 @@ export default class UnitChunkManager {
         }
       }
     }
-
     unitsInRadius.sort((a, b) => a.distance - b.distance);
     return unitsInRadius.map(entry => entry.unit);
   }

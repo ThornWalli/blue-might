@@ -1,10 +1,10 @@
 import { Mesh, SkinnedMesh } from 'three';
 import type {
   RawUnitDescription,
-  SetupContext,
   UnitConstructorOptions,
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import type { SetupContext } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import BuildingUnit, {
   type BuildingUnitModuleList,
@@ -14,6 +14,7 @@ import BuildingUnit, {
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
 import { addModules } from '@blue-might/app/lib/classes/Module';
+import { TILE_TYPE } from '@blue-might/app/lib/utils/pathfinding';
 
 import baseGlb from './assets/supply_station.glb?url';
 
@@ -79,5 +80,9 @@ export default class SupplyStation_1 extends BuildingUnit {
     });
 
     return object;
+  }
+
+  override getTileType() {
+    return TILE_TYPE.UNIT_PLATFORM;
   }
 }

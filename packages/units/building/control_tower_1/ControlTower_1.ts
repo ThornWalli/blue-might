@@ -1,9 +1,9 @@
 import type {
   RawUnitDescription,
-  SetupContext,
   UnitConstructorOptions,
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import type { SetupContext } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, LoopRepeat, SkinnedMesh } from 'three';
 import BuildingUnit, {
@@ -34,7 +34,14 @@ export default class ControlTower_1<
     super(
       {
         ...options,
-        name: 'ControlTower 1'
+        name: 'ControlTower 1',
+        moduleOptions: {
+          ...options.moduleOptions,
+          collision: {
+            ...options.moduleOptions?.collision,
+            targets: [{ name: 'base', default: true }, { name: 'head' }]
+          }
+        }
       },
       moduleList
     );

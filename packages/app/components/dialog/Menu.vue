@@ -82,11 +82,24 @@ const debugLinks = ref([
       query: { map: 'debug/helicopter.zip' }
     }
   },
+  {
+    title: 'Rescue',
+    href: {
+      path: '/debug',
+      query: { map: 'debug/rescue.zip' }
+    }
+  },
+  {
+    title: 'Building',
+    href: {
+      path: '/debug',
+      query: { map: 'debug/building.zip' }
+    }
+  },
   { title: 'Attack (Legacy)', href: '/debug/attack' },
   { title: 'Patrol (Legacy)', href: '/debug/patrol' },
   { title: 'Tank (Legacy)', href: '/debug/tank' },
   { title: 'Pathfinding (Legacy)', href: '/debug/pathfinding' },
-  { title: 'Building (Legacy)', href: '/debug/building' },
   { title: 'Sea (Legacy)', href: '/debug/sea' }
 ]);
 </script>

@@ -9,7 +9,7 @@ import { APP_MODE, type AppConfig } from '@blue-might/app/lib/classes/BaseApp';
 import {
   DEFAULT_MAP_NOISE,
   type MapDescription
-} from '@blue-might/app/lib/classes/Map';
+} from '@blue-might/app/lib/types/map';
 import { HumanPlayer } from '@blue-might/app/lib/classes/player/Human';
 import type { UnitIdentifier } from '@blue-might/app/lib/types/unit';
 import { debugGroundMap, debugSeaMap } from '@blue-might/maps';

@@ -35,6 +35,7 @@ function onInput(e: InputEvent) {
   gap: calc(var(--bm-spacing-medium) / 2);
   align-items: baseline;
   padding-right: calc(var(--bm-spacing-medium) / 2);
+  background-color: var(--color-gray-very-very-dark);
 
   &:has(input:focus),
   .bm-form-field:hover & {

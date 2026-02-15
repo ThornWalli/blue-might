@@ -34,6 +34,15 @@
         label="Need Rescue"
         @update:model-value="onUpdateNeedRescue" />
     </bm-fieldset>
+    <bm-button label="Debug" @click="onClickDebug" />
+    <teleport to="body">
+      <bm-dialog ref="unitDebugDialog">
+        <template #header>Unit Debug</template>
+        <template #default>
+          <bm-dialog-editor-unit-debug :unit="unit" :app="$props.app" />
+        </template>
+      </bm-dialog>
+    </teleport>
   </bm-panel>
 </template>
 
@@ -41,16 +50,14 @@
 import type Unit from '@blue-might/app/lib/classes/Unit';
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import type { FactionIdentifier } from '@blue-might/app/lib/classes/Faction';
-import type { Observable } from 'rxjs';
 import { combineLatest, EMPTY, of, Subscription, switchMap } from 'rxjs';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
 import { EDITOR_MODE } from '@blue-might/app/lib/classes/app/AppEditor';
 import { isFigure as isFigureUnit } from '@blue-might/app/lib/utils/unit';
-import type { UnitModules } from '@blue-might/app/lib/classes/Unit';
-import type FigureUnitModule from '@blue-might/app/lib/classes/unitModule/Figure';
 import { ICON } from '@blue-might/app/utils/icons';
 import type Faction from '@blue-might/app/lib/classes/Faction';
 
+import BmDialogEditorUnitDebug from '../dialog/EditorUnitDebug.vue';
 import BmPanel from '../Panel.vue';
 import BmFieldset from '../Fieldset.vue';
 import BmSelect from '../Select.vue';
@@ -58,12 +65,15 @@ import BmFormField from '../FormField.vue';
 import BmTextfield from '../Textfield.vue';
 import BmButton from '../Button.vue';
 import BmToggle from '../Toggle.vue';
+import BmDialog from '../Dialog.vue';
 
 const unit = ref<Raw<Unit> | null>(null);
-const unitDamage = ref<number>(100);
-const maxDamage = ref<number>(100);
+const unitDamage = ref<number>(0);
+const maxDamage = ref<number>(1);
 const needRescue = ref<boolean>(false);
 const unitFaction = ref<FactionIdentifier | null>(null);
+
+const unitDebugDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 
 const $props = defineProps<{
   app: AppEditor;
@@ -98,9 +108,9 @@ const subscription = new Subscription();
 
 onMounted(() => {
   subscription.add(
-    $props.app.modules.map
-      .getMap()
-      ?.modules.faction.observables.factions$.subscribe(factionList => {
+    $props.app.modules.map.observables.map$
+      .pipe(switchMap(map => map.modules.faction.observables.factions$))
+      .subscribe(factionList => {
         factions.value = factionList;
       })
   );
@@ -110,27 +120,23 @@ onMounted(() => {
     })
   );
   subscription.add(
-    (
-      editorUnitSettingsModule.observables.unit$ as Observable<Unit<
-        UnitModules & {
-          figure: FigureUnitModule;
-        }
-      > | null>
-    )
+    editorUnitSettingsModule.observables.unit$
       .pipe(
         switchMap(u =>
           u
             ? combineLatest([
                 u.modules.damage.observables.damage$,
                 u.modules.faction.observables.faction$,
-                u.modules.figure?.observables.needRescue$ ?? of(false)
+                'figure' in u.modules
+                  ? (u.modules.figure?.observables.needRescue$ ?? of(false))
+                  : of(false)
               ])
             : EMPTY
         )
       )
       .subscribe(([d, f, nr]) => {
-        console.log('Unit settings updated:', { d, f, nr });
         unitDamage.value = d;
+        maxDamage.value = unit.value?.modules.damage.options.maxDamage ?? 1;
         unitFaction.value = f;
         needRescue.value = nr;
       })
@@ -146,11 +152,15 @@ function onUpdateFaction(factionId: FactionIdentifier | null) {
 }
 
 function onUpdateDamage(damage: number) {
-  editorUnitSettingsModule.setDamage(damage);
+  editorUnitSettingsModule.setInitialDamage(damage);
 }
 
 function onUpdateNeedRescue(needRescue: boolean) {
   editorUnitSettingsModule.setNeedRescue(needRescue);
+}
+
+function onClickDebug() {
+  unitDebugDialog.value?.context?.open();
 }
 </script>
 <style lang="postcss" scoped>

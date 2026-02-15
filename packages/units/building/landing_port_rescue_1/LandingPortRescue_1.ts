@@ -1,10 +1,10 @@
 import { Mesh, SkinnedMesh } from 'three';
 import type {
-  SetupContext,
   UnitConstructorOptions,
   RawUnitDescription,
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import type { SetupContext } from '@blue-might/app/lib/types/unit';
 import LandingPortUnit, {
   type LandingPortUnitModuleList,
   type LandingPortUnitModules,
@@ -12,16 +12,12 @@ import LandingPortUnit, {
 } from '@blue-might/app/lib/classes/unit/LandingPort';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
-import RescueUnitModule from '@blue-might/app/lib/classes/unitModule/Rescue';
-import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/landing_port_rescue_1.glb?url';
 
 export type Options = LandingPortUnitOptions;
-export interface Modules extends LandingPortUnitModules {
-  rescue: RescueUnitModule;
-}
-export type ModuleList = LandingPortUnitModuleList & [RescueUnitModule];
+export type Modules = LandingPortUnitModules;
+export type ModuleList = LandingPortUnitModuleList;
 export interface RawUnitDescription_LandingPortRescue_1<
   O extends UnitOptions = Options
 > extends RawUnitDescription<UnitConstructorOptions<O>> {
@@ -37,7 +33,6 @@ export default class LandingPortRescue_1 extends LandingPortUnit<
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList?: ModuleList
   ) {
-    moduleList = addModules(moduleList, [RescueUnitModule]) as ModuleList;
     super(
       {
         ...options,

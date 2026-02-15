@@ -113,7 +113,7 @@ import { imageBitmapToBlob } from '@blue-might/app/utils/blob';
 import {
   DEFAULT_MAP_NOISE,
   type MapNoise
-} from '@blue-might/app/lib/classes/Map';
+} from '@blue-might/app/lib/types/map';
 
 import BmFieldset from '../Fieldset.vue';
 import BmButton from '../Button.vue';

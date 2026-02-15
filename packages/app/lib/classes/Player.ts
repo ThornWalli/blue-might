@@ -115,6 +115,7 @@ export default class Player<
     Object.values(this.observables).forEach(o =>
       (o as SubscriptionLike).unsubscribe()
     );
+    Object.values(this.modules).forEach(m => m.destroy());
     this.subscription.unsubscribe();
   }
 
@@ -132,8 +133,9 @@ export default class Player<
   }
 
   setVehicle(unit: VehicleUnits | null) {
-    if (this.modules.vehicle.hasVehicle()) {
-      this.modules.vehicle.getActiveUnit()?.modules.player.setPlayer(null);
+    const currentUnit = this.modules.vehicle.getCurrentUnit();
+    if (this.modules.vehicle.hasVehicle() && 'player' in currentUnit.modules) {
+      currentUnit.modules.player.setPlayer(null);
     }
     this.modules.vehicle.setVehicleUnit(unit);
   }

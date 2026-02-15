@@ -1,9 +1,9 @@
 import type {
-  SetupContext,
   UnitConstructorOptions,
   RawUnitDescription,
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import type { SetupContext } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh } from 'three';
 import BuildingUnit, {

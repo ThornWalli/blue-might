@@ -24,6 +24,7 @@ interface Observables extends AppModuleObservables {
 interface State extends AppModuleState {
   unit: Units | null;
   index: number;
+  active: boolean;
 }
 export default class EditorPatrolAppModule extends AppModule<
   State,
@@ -32,7 +33,8 @@ export default class EditorPatrolAppModule extends AppModule<
   static override TYPE = 'editorPatrol';
   override state: State = {
     unit: null,
-    index: 0
+    index: 0,
+    active: false
   };
 
   constructor(app: App) {
@@ -56,6 +58,7 @@ export default class EditorPatrolAppModule extends AppModule<
     await super.setup();
     if ('editorUnits' in this.app.modules) {
       const unit$ = this.app.modules.editorUnits.observables.unit$;
+
       this.subscription.add(
         unit$.subscribe(u => {
           this.setUnit(u ?? null);
@@ -112,12 +115,28 @@ export default class EditorPatrolAppModule extends AppModule<
       this.app.getScene().add(obj);
     }
   }
+
+  setActive(active: boolean) {
+    if (this.state.unit && 'patrol' in this.state.unit.modules) {
+      this.state.unit.modules.patrol.options.active = active;
+      this.state.active = active;
+      this.observables.active$.next(active);
+    }
+  }
+
   setUnit(unit: Units | null) {
     if (this.state.unit === unit) return;
+
     if (unit && !('patrol' in unit.modules)) unit = null;
 
     this.state.unit = unit;
     this.observables.unit$.next(this.state.unit);
+
+    if (unit && 'patrol' in unit.modules) {
+      this.state.active = unit.modules.patrol.options.active ?? false;
+      this.observables.active$.next(this.state.active);
+    }
+
     this.updateLine(this.getPath());
   }
 

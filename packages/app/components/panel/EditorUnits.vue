@@ -45,6 +45,7 @@ import type Unit from '@blue-might/app/lib/classes/Unit';
 import { Subscription } from 'rxjs';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
 import { EDITOR_MODE } from '@blue-might/app/lib/classes/app/AppEditor';
+import { snakeCase } from 'change-case';
 
 import BmPanel from '../Panel.vue';
 import BmButton from '../Button.vue';
@@ -72,7 +73,7 @@ const itemGroups = computed(() => {
       }
       result[unit.TYPE]!.push({
         label: key,
-        value: key
+        value: snakeCase(key)
       });
       return result;
     },
@@ -94,7 +95,7 @@ async function onUpdateSelectedUnit(value: string | null) {
   selectedUnit.value = value;
   if (value) {
     console.log(`Adding unit: ${value}`);
-    await editorUnitsModule.createUnit(value);
+    await editorUnitsModule.setUnitKey(value);
   }
 }
 

@@ -1,10 +1,10 @@
 import { Mesh, SkinnedMesh } from 'three';
 import type {
   RawUnitDescription,
-  SetupContext,
   UnitConstructorOptions,
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
+import type { SetupContext } from '@blue-might/app/lib/types/unit';
 import LandingPortUnit, {
   type LandingPortUnitModuleList,
   type LandingPortUnitModules,
@@ -65,7 +65,7 @@ export default class SeaLandingPortSupplyStation_1 extends LandingPortUnit<
               { name: 'base' },
               { name: 'additional_1' },
               { name: 'additional_2' },
-              { name: 'plattform' },
+              { name: 'plattform', default: true },
               { name: 'stand' }
             ]
           }

@@ -1,11 +1,9 @@
 import { ReplaySubject } from 'rxjs';
-import { Object3D } from 'three';
 
 import type Projectile from '../Projectile';
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
-  type UnitModuleSetupContext,
   type UnitModuleState
 } from '../UnitModule';
 import type Unit from '../Unit';
@@ -35,6 +33,7 @@ interface Observables extends UnitModuleObservables {
 }
 export interface DamageUnitModuleOptions extends UnitModuleOptions {
   maxDamage: number;
+  initialDamage: number;
   fire: boolean;
   fireTime: number;
   enabled: boolean;
@@ -63,8 +62,6 @@ export default class DamageUnitModule extends UnitModule<
 > {
   static override TYPE = 'damage';
 
-  private root: Object3D | null = null;
-
   constructor(
     unit: Unit,
     options: DamageUnitModuleOptions,
@@ -76,29 +73,26 @@ export default class DamageUnitModule extends UnitModule<
       {
         ...options,
         maxDamage: options.maxDamage ?? 1,
+        initialDamage: options.initialDamage ?? 0,
         fire: options.fire ?? true,
         fireTime: options.fireTime ?? 5, // 60 Sekunden
         enabled: options.enabled ?? true // Standard: aktiviert
       },
       {
         ...state,
-        damage: state.damage ?? 0,
+        damage: state.damage ?? options.initialDamage ?? 0,
         burnTimeLeft: state.burnTimeLeft ?? 0
       },
       debug
     );
     //#region observables
-    this.observables.destroyed$ = new ReplaySubject<void>();
     this.observables.damage$ = new ReplaySubject<number>();
     this.observables.damage$.next(this.state.damage);
+    this.observables.destroyed$ = new ReplaySubject<void>();
+    if (this.isDestroyed()) {
+      this.observables.destroyed$.next();
+    }
     //#endregion
-  }
-
-  override async setupMesh(context: UnitModuleSetupContext) {
-    const root = new Object3D();
-    root.add(context.mesh);
-    this.root = root;
-    return root;
   }
 
   lastUpdateTime = 0;
@@ -149,14 +143,15 @@ export default class DamageUnitModule extends UnitModule<
 
   takeDamage(amount: number) {
     if (!this.options.enabled) return;
-    this.setValue(this.state.damage + amount);
+    this.setDamage(this.state.damage + amount);
   }
 
   takeMaxDamage() {
-    this.setValue(this.options.maxDamage);
+    this.setDamage(this.options.maxDamage);
+    debugger;
   }
 
-  setValue(value: number, force?: boolean) {
+  setDamage(value: number, force?: boolean) {
     if (!force && !this.canDamage()) return;
     this.state.damage = Math.min(this.options.maxDamage, Math.max(0, value));
     this.observables.damage$.next(this.state.damage);
@@ -164,6 +159,11 @@ export default class DamageUnitModule extends UnitModule<
       this.state.burnTimeLeft = this.options.fireTime;
       this.observables.destroyed$.next();
     }
+  }
+
+  setInitialDamage(damage: number) {
+    this.state.damage = damage;
+    this.setDamage(this.state.damage, true);
   }
 
   getDamageValue() {
@@ -214,6 +214,13 @@ export default class DamageUnitModule extends UnitModule<
   override getState() {
     return {
       damage: this.state.damage
+    };
+  }
+
+  override getOptions() {
+    return {
+      ...super.getOptions(),
+      initialDamage: this.options.initialDamage
     };
   }
 }

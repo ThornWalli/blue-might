@@ -1,4 +1,5 @@
-import type { Box3Helper, Object3D } from 'three';
+/* eslint-disable complexity */
+import type { Box3Helper, Object3D, Sphere } from 'three';
 import {
   Box3,
   BoxGeometry,
@@ -34,16 +35,19 @@ declare module '../Unit' {
 declare module '../../utils/object' {
   interface ObjectUserData {
     COLLISION_TYPE: string;
+    IGNORE_COLLISION: string;
   }
 }
 OBJECT_USER_DATA.COLLISION_TYPE = 'collisionType';
+OBJECT_USER_DATA.IGNORE_COLLISION = 'ignoreCollision';
 
 interface CollisionUnitModuleObservables extends UnitModuleObservables {
   collision$: ReplaySubject<{ type: COLLISION_TYPE; target: Unit }>;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface CollisionUnitModuleState extends UnitModuleState {}
+interface CollisionUnitModuleState extends UnitModuleState {
+  enabled: boolean;
+}
 
 export enum COLLISION_TYPE {
   NONE = 0,
@@ -55,6 +59,7 @@ export interface CollisionUnitModuleOptions extends UnitModuleOptions {
   disabled: boolean;
   type: COLLISION_TYPE;
   targets: {
+    default?: boolean;
     name: string;
     childIndex?: number;
     useChilds?: boolean; // Rekursiv Kinder einbeziehen
@@ -81,7 +86,8 @@ export default class CollisionUnitModule<
         targets: options.targets ?? []
       },
       {
-        ...state
+        ...state,
+        enabled: true
       },
       debug
     );
@@ -114,6 +120,15 @@ export default class CollisionUnitModule<
       this.createDebugHelpers();
       this.refreshDebugHelpers();
     }
+
+    this.subscription.add(
+      this.getUnit().observables.position$.subscribe(() => {
+        this.refreshWorldOBBs();
+        if (this.debug) {
+          this.refreshDebugHelpers();
+        }
+      })
+    );
   }
 
   getCollisionType() {
@@ -123,23 +138,25 @@ export default class CollisionUnitModule<
     return this.worldOBBs;
   }
 
+  isEnabled() {
+    return this.state.enabled;
+  }
+
   enableCollision() {
+    this.state.enabled = true;
     this.getCollisionObjects().forEach(object => {
-      if ('_ignorePathfinding' in object.userData) {
-        object.userData.ignorePathfinding = object.userData._ignorePathfinding;
-        delete object.userData._ignorePathfinding;
-      } else {
-        object.userData.ignorePathfinding = false;
-      }
+      object.traverse(child => {
+        child.userData[OBJECT_USER_DATA.IGNORE_COLLISION] = false;
+      });
     });
   }
 
   disableCollision() {
+    this.state.enabled = false;
     this.getCollisionObjects().forEach(object => {
-      if (!('_ignorePathfinding' in object.userData)) {
-        object.userData._ignorePathfinding = object.userData.ignorePathfinding;
-      }
-      object.userData.ignorePathfinding = true;
+      object.traverse(child => {
+        child.userData[OBJECT_USER_DATA.IGNORE_COLLISION] = true;
+      });
     });
   }
 
@@ -217,7 +234,7 @@ export default class CollisionUnitModule<
 
   lastCollision: { type: COLLISION_TYPE; target: Unit } | null = null;
 
-  checkCollision() {
+  checkCollision(box?: Box3 | Sphere) {
     const unit = this.getUnit();
     const cm1 = unit.modules.collision;
     if (!cm1) return COLLISION_TYPE.NONE;
@@ -225,36 +242,48 @@ export default class CollisionUnitModule<
     cm1.refreshWorldOBBs();
     cm1.refreshDebugHelpers();
 
-    const units = unit.getMap()?.modules.units.getUnits() ?? [];
-
-    for (let i = 0; i < units.length; i++) {
-      const target = units[i]!;
-      if (target === unit) continue;
-
-      const cm2 = target.modules.collision;
-      if (!cm2) continue;
-
-      cm2.refreshWorldOBBs();
-      cm2.refreshDebugHelpers();
-
-      // Prüfe alle OBBs von cm1 gegen alle OBBs von cm2
+    if (box) {
       for (const obb1 of cm1.worldOBBs) {
-        for (const obb2 of cm2.worldOBBs) {
-          if (obb1.intersectsOBB(obb2)) {
-            const type = cm2.getCollisionType();
-            if (
-              this.lastCollision?.target !== target &&
-              this.lastCollision?.type !== type
-            ) {
-              this.observables.collision$.next({ type, target });
+        let result = false;
+        if (box instanceof Box3) {
+          result = obb1.intersectsBox3(box);
+        } else {
+          result = obb1.intersectsSphere(box);
+        }
+        if (result) return COLLISION_TYPE.BLOCKED;
+      }
+    } else {
+      const units = unit.getMap()?.modules.units.getUnits() ?? [];
+
+      for (let i = 0; i < units.length; i++) {
+        const target = units[i]!;
+
+        if (target === unit || !target.modules.collision.isEnabled()) continue;
+
+        const cm2 = target.modules.collision;
+        if (!cm2) continue;
+
+        cm2.refreshWorldOBBs();
+        cm2.refreshDebugHelpers();
+
+        // Prüfe alle OBBs von cm1 gegen alle OBBs von cm2
+        for (const obb1 of cm1.worldOBBs) {
+          for (const obb2 of cm2.worldOBBs) {
+            if (obb1.intersectsOBB(obb2)) {
+              const type = cm2.getCollisionType();
+              if (
+                this.lastCollision?.target !== target &&
+                this.lastCollision?.type !== type
+              ) {
+                this.observables.collision$.next({ type, target });
+              }
+              this.lastCollision = { type, target };
+              return type;
             }
-            this.lastCollision = { type, target };
-            return type;
           }
         }
       }
     }
-
     return COLLISION_TYPE.NONE;
   }
 
@@ -305,5 +334,11 @@ export default class CollisionUnitModule<
       obj.userData[OBJECT_USER_DATA.COLLISION_TYPE] = this.options.type;
     });
     return objs;
+  }
+
+  getDefaultCollisionObject(): Object3D | undefined {
+    const target = this.options.targets.find(target => target.default);
+    if (!target) return;
+    return this.getUnit().root.getObjectByName(target?.name)!;
   }
 }

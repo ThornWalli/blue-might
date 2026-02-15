@@ -172,7 +172,7 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
     unitsByRadius
       .filter(
         unit =>
-          player.modules.vehicle.getActiveUnit() === unit ||
+          player.modules.vehicle.getCurrentUnit() === unit ||
           isGroundVehicle(unit) ||
           isAirVehicle(unit)
       )

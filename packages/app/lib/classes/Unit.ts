@@ -5,8 +5,14 @@ import type { Object3D, Scene, Vector3Tuple, EulerTuple } from 'three';
 import { Euler, Quaternion, Vector3, Group } from 'three';
 
 import { OBJECT_USER_DATA, setMainObjectRecursive } from '../utils/object';
-import { UNIT_TYPE, type UnitIdentifier } from '../types/unit';
+import {
+  GROUND_ADJUSTMENT_MODE,
+  UNIT_TYPE,
+  type SetupContext,
+  type UnitIdentifier
+} from '../types/unit';
 import { prepareForRaycast } from '../utils/raycast';
+import { TILE_TYPE } from '../utils/pathfinding';
 
 import type UnitModule from './UnitModule';
 import type { UnitModuleOptions, UnitModuleState } from './UnitModule';
@@ -20,6 +26,8 @@ import CollisionUnitModule, { COLLISION_TYPE } from './unitModule/Collision';
 import FactionUnitModule from './unitModule/Faction';
 import type MovableUnitModule from './unitModule/Movable';
 import type PatrolUnitModule from './unitModule/Patrol';
+
+type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
 
 export interface RawUnitDescription<
   Options = UnitOptions,
@@ -43,17 +51,6 @@ export type UnitDescription<Options = UnitOptions> = RawUnitDescription<
   Vector3,
   Euler
 >;
-
-export enum GROUND_ADJUSTMENT_MODE {
-  MIN_HEIGHT = 'min-height',
-  GROUND = 'ground',
-  FLIGHT = 'flight',
-  NONE = 'none',
-  SEA = 'sea',
-  FIGURE = 'figure'
-}
-
-type AbstractConstructor<T = any> = abstract new (...args: any[]) => T;
 
 declare module '../../lib/utils/object' {
   interface ObjectUserData {
@@ -105,10 +102,6 @@ export interface UnitModules {
   faction: FactionUnitModule;
 }
 
-export interface SetupContext {
-  map?: Map;
-}
-
 export interface UnitObservables {
   destroyed$: ReplaySubject<void>;
   position$: ReplaySubject<Vector3>;
@@ -126,6 +119,9 @@ export default class Unit<
   Options extends UnitOptions = UnitOptions,
   Observables extends UnitObservables = UnitObservables
 > implements UnitDescription<Options> {
+  getTileType() {
+    return TILE_TYPE.UNIT;
+  }
   static KEY = 'unit';
   static NAME = 'Unit';
   static TYPE: UNIT_TYPE = UNIT_TYPE.DEFAULT;
@@ -292,7 +288,7 @@ export default class Unit<
     this.root = this.setupRoot(this.name);
   }
 
-  setModuleDebug(debug: { [key: string]: boolean }) {
+  setModuleDebug(debug: Partial<ModuleDebug>) {
     this.moduleDebug = { ...this.moduleDebug, ...debug };
   }
 
@@ -487,9 +483,65 @@ export default class Unit<
 
   lastPosition: Vector3 = new Vector3();
 
-  setPosition(position: Vector3, options?: { force?: boolean }) {
+  checkPosition(position: Vector3, options?: { raycaster?: boolean }): boolean {
+    // Temporäre Kopie der aktuellen Position, um sie später zurückzusetzen
+    const originalPosition = this.position.clone();
+    const originalTilt = this._tilt.clone();
+
+    // Temporär die gewünschte Position setzen (für Kollisions- und Bodenausrichtungsprüfungen)
+    this.position.copy(position);
+
+    let valid = true;
+
+    // Schritt 1: Bodenausrichtung prüfen (falls nötig), aber ohne Position zu ändern
+    if (
+      this.map &&
+      this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.NONE &&
+      this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT
+    ) {
+      // Simuliere Bodenausrichtung (ohne this.position zu überschreiben)
+      const alignmentInfo = this.updateGroundAlignment(position, [], false);
+      this.position.copy(alignmentInfo.position); // Temporär für Kollisionsprüfung
+    } else if (this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FLIGHT) {
+      const seaLevel = this.map?.modules.surface.getSeaLevel() ?? 0;
+      this.position.y = Math.max(
+        this.map?.modules.surface.getSurfaceHeightAt(
+          position.x,
+          position.z,
+          u => !u.equals(this),
+          options
+        ) ?? 0,
+        Math.max(position.y, seaLevel)
+      );
+    }
+
+    // Schritt 2: Kollisionsprüfung
+    const collisionType = this.modules.collision.checkCollision();
+
+    if (collisionType >= COLLISION_TYPE.BLOCKED) {
+      valid = false;
+    } else {
+      // Schritt 3: Spezielle Fälle (z.B. vertikale Bewegungen erlauben, wenn keine horizontale Komponente)
+      const delta = position.clone().sub(originalPosition);
+      const isHorizontalMove = Math.abs(delta.x) + Math.abs(delta.z) > 0.01;
+      if (!isHorizontalMove && Math.abs(delta.y) >= 0.0) {
+        // Vertikale Platzierungen (z.B. auf Gebäude) immer erlauben, auch bei Kollision
+        valid = true;
+      }
+    }
+
+    // Zurücksetzen der temporären Änderungen
+    this.position.copy(originalPosition);
+    this._tilt.copy(originalTilt);
+
+    return valid;
+  }
+
+  setPosition(
+    position: Vector3,
+    options?: { force?: boolean; raycaster?: boolean }
+  ) {
     let desired = position.clone();
-    const from = this.lastPosition.clone();
 
     const unit = this as unknown as Unit<
       UnitModules & {
@@ -505,14 +557,18 @@ export default class Unit<
       this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT
     ) {
       desired =
-        this.updateGroundAlignment(desired, [unit], false).position ?? desired;
+        this.updateGroundAlignment(desired, [unit], true).position ?? desired;
     } else if (
       !this.map?.app.isUpdateActive() &&
       this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FLIGHT
     ) {
       desired.y =
-        (this.map?.modules.surface.getSurfaceHeightAt(desired.x, desired.z) ??
-          desired.y) + 1;
+        (this.map?.modules.surface.getSurfaceHeightAt(
+          desired.x,
+          desired.z,
+          undefined,
+          options
+        ) ?? desired.y) + 1;
     }
 
     const isAutopilot = unit.modules.movable?.hasAIControls() ?? false;
@@ -526,60 +582,21 @@ export default class Unit<
       return true;
     }
 
-    // Schritt 2: Prüfe, ob die neue Position eine Kollision verursacht
-    this.position.copy(desired);
-
-    if (options?.force) {
-      this.lastPosition.copy(desired);
-      this.observables.position$.next(desired);
-      this.updateMeshTransform();
-      return true;
-    }
-
-    const collisionType = this.modules.collision.checkCollision();
-
-    // Fall A: Keine blockierende Kollision
-    if (collisionType < COLLISION_TYPE.BLOCKED) {
-      this.position.copy(desired);
-      this.lastPosition.copy(desired);
-      this.observables.position$.next(desired);
-      this.updateMeshTransform();
-      return true;
-    }
-
-    if (
-      (this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FIGURE ||
-        this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.GROUND) &&
-      Math.abs(desired.y - from.y) > 1 / 3
-    ) {
+    // Schritt 2: Prüfe mit checkPosition, ob die Position gültig ist
+    if (!options?.force && !this.checkPosition(desired, options)) {
+      // Ungültig – zurücksetzen
       this.position.copy(this.lastPosition);
       this.root.position.copy(this.lastPosition);
       this.observables.position$.next(this.lastPosition.clone());
       this.updateMeshTransform();
       return false;
     }
-
-    // Fall B: Blockierende Kollision!
-    const delta = desired.clone().sub(from);
-    const isHorizontalMove = Math.abs(delta.x) + Math.abs(delta.z) > 0.01;
-
-    // Fall B.1: Es ist eine vertikale Landung/Platzierung (z.B. auf Gebäude). Kollision ist erwartet. Akzeptieren.
-    // Nur akzeptieren, wenn es tatsächlich eine vertikale Bewegung gibt (delta.y != 0) und keine horizontale.
-    if (Math.abs(delta.y) >= 0.0 && !isHorizontalMove) {
-      this.position.copy(desired);
-      this.lastPosition.copy(desired);
-      this.observables.position$.next(desired);
-      this.updateMeshTransform();
-
-      return true;
-    }
-
-    // Fall B.2: Blockierende Kollision bei horizontaler Bewegung oder ohne vertikale Komponente – zurücksetzen
-    this.position.copy(this.lastPosition);
-    this.root.position.copy(this.lastPosition);
-    this.observables.position$.next(this.lastPosition.clone());
+    // Schritt 3: Position setzen (falls gültig oder erzwungen)
+    this.position.copy(desired);
+    this.lastPosition.copy(desired);
+    this.observables.position$.next(desired);
     this.updateMeshTransform();
-    return false;
+    return true;
   }
 
   //#region visibility
@@ -719,23 +736,24 @@ export default class Unit<
     switch (this.groundAdjustmentMode) {
       case GROUND_ADJUSTMENT_MODE.MIN_HEIGHT:
         info = this.getMinGroundInfo();
+
         this.position.setY(info.position.y);
         break;
 
       case GROUND_ADJUSTMENT_MODE.FIGURE:
         {
-          info = groundModule.getTerrainInfoAt(
-            position.x,
-            position.z,
-            ignoredUnits
-          );
+          // info = groundModule.getTerrainInfoAt(
+          //   position.x,
+          //   position.z,
+          //   ignoredUnits
+          // );
 
           const seaLevel = this.map?.modules.surface.getSeaLevel() ?? 0;
-          const water = info.position.y <= seaLevel;
+          const water = this.position.y <= seaLevel;
 
-          info.position.setY(Math.max(info.position.y, seaLevel));
+          // info.position.setY(Math.max(info.position.y, seaLevel));
 
-          this.position.setY(info.position.y);
+          // this.position.setY(info.position.y);
 
           if (!water && groundNormals) {
             this.calculateGroundNormal();

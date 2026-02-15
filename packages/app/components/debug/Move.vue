@@ -18,9 +18,8 @@
 </template>
 
 <script lang="ts" setup>
-import type { PositionMarker } from '@blue-might/app/lib/classes/appModule/Debug';
-import { computed, markRaw, onMounted, ref } from 'vue';
-import { EMPTY, filter, merge, of, Subscription, switchMap } from 'rxjs';
+import { computed, markRaw, onMounted, onUnmounted, ref } from 'vue';
+import { EMPTY, filter, of, Subscription, switchMap } from 'rxjs';
 import VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
 import type Unit from '@blue-might/app/lib/classes/Unit';
 import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
@@ -32,9 +31,6 @@ import BmDetails from '../Details.vue';
 import BmButton from '../Button.vue';
 
 const subscription = new Subscription();
-
-const startAddMarker = ref<boolean>(false);
-const positionMarkers = ref<PositionMarker[]>([]);
 
 const unitActive = ref<boolean>(false);
 const unit = ref<Unit | null>(null);
@@ -58,26 +54,6 @@ const debugModule = computed(() => {
 onMounted(() => {
   const app = $props.app;
 
-  if (debugModule.value) {
-    subscription.add(
-      debugModule.value.observables.positionMarkers$.subscribe(positions => {
-        positionMarkers.value = positions;
-      })
-    );
-    subscription.add(
-      merge(
-        debugModule.value.observables.abortAddMarker$,
-        debugModule.value.observables.endAddMarker$
-      ).subscribe(() => {
-        startAddMarker.value = false;
-      })
-    );
-    subscription.add(
-      debugModule.value.observables.startAddMarker$.subscribe(() => {
-        startAddMarker.value = true;
-      })
-    );
-  }
   const vehicle$ = app.modules.selection.observables.selectUnit$;
 
   const vehicleModule$ = vehicle$.pipe(
@@ -97,6 +73,10 @@ onMounted(() => {
         unitActive.value = v;
       })
   );
+});
+
+onUnmounted(() => {
+  subscription.unsubscribe();
 });
 
 function onClickMoveUnit() {

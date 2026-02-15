@@ -6,7 +6,7 @@ import AppModule, {
   type AppModuleState
 } from '../AppModule';
 import type { App } from '../../types';
-import type { PlayerOptions } from '../Map';
+import type { PlayerOptions } from '../../types/map';
 import { disposeObject3D } from '../../utils/object';
 
 interface Observables extends AppModuleObservables {

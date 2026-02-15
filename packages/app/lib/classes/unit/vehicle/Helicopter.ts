@@ -1,9 +1,9 @@
-import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';
-
 import {
   GROUND_ADJUSTMENT_MODE,
-  type UnitConstructorOptions
-} from '../../Unit';
+  UNIT_TYPE
+} from '@blue-might/app/lib/types/unit';
+
+import type { UnitConstructorOptions } from '../../Unit';
 import HelicopterUnitModule from '../../unitModule/movable/airVehicle/Helicopter';
 import { addModules } from '../../Module';
 

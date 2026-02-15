@@ -1,4 +1,4 @@
-import type { MapDescription } from '@blue-might/app/lib/classes/Map';
+import type { MapDescription } from '@blue-might/app/lib/types/map';
 
 import heightMap from './heightMap.png';
 import backgroundTexture from './texture_bg.png';

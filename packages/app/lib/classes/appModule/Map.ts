@@ -5,9 +5,9 @@ import AppModule, {
   type AppModuleState
 } from '../AppModule';
 import Map from '../Map';
-import type { MapDescription } from '../Map';
 import type BaseApp from '../BaseApp';
 import type { AnimationLoopValue } from '../Renderer';
+import type { MapDescription } from '../../types/map';
 
 interface Observables extends AppModuleObservables {
   map$: ReplaySubject<Map>;

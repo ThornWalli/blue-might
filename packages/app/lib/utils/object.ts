@@ -31,7 +31,9 @@ export function setMainObjectRecursive(object: Object3D, mainObject: Object3D) {
     o.userData[OBJECT_USER_DATA.MAIN_OBJECT] = mainObject.id;
   });
 }
-export function disposeObject3D(object: Object3D): void {
+export function disposeObject3D(object: Object3D | null): void {
+  if (!object) return;
+
   for (const child of object.children) {
     disposeObject3D(child);
   }
@@ -78,6 +80,14 @@ export function disableRaycaster(object: Object3D) {
   object.traverse(child => {
     if (child instanceof Mesh) {
       child.raycast = () => false;
+      child.userData[OBJECT_USER_DATA.IGNORE_RAYCASTER] = true;
+    }
+  });
+}
+export function disablePathfinding(object: Object3D) {
+  object.traverse(child => {
+    if (child instanceof Mesh) {
+      child.userData[OBJECT_USER_DATA.IGNORE_PATHFINDING] = true;
     }
   });
 }

@@ -2,7 +2,7 @@
   <bm-app-layout class="bm-app-playground">
     <template #[PANEL.BOTTOM_LEFT]>
       <div class="panel-column">
-        <bm-panel-general key="general" :app="app" />
+        <bm-panel-general key="general" show-import :app="app" />
       </div>
     </template>
     <template #[PANEL.TOP_LEFT]>
@@ -112,7 +112,7 @@ function setupMessages(app: AppPlayground) {
       )
       .subscribe(() => {
         const player = app.modules.player.getCurrentPlayer();
-        const unit = player.modules.vehicle.getActiveUnit();
+        const unit = player.modules.vehicle.getCurrentUnit();
 
         if (unit?.modules.damage.isDestroyed()) {
           if (player.modules.life.isGameOver()) {

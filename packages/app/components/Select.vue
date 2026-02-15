@@ -20,7 +20,7 @@ defineProps<{
   id?: string;
   modelValue: T;
   attrs?: SelectHTMLAttributes;
-  options: Array<SelectOption<T>>;
+  options: SelectOption<T>[];
 }>();
 
 defineEmits<{

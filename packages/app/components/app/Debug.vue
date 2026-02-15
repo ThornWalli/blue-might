@@ -6,6 +6,11 @@
         <bm-panel-general key="general" :app="app" />
       </div>
     </template>
+    <template #[PANEL.TOP_LEFT]>
+      <div class="panel-row">
+        <bm-panel-map key="map" :app="app" />
+      </div>
+    </template>
     <template #[PANEL.TOP_RIGHT]>
       <bm-panel-player-unit key="unit-preview" :app="app" />
     </template>
@@ -16,16 +21,16 @@
 </template>
 
 <script lang="ts" setup>
-import type { App } from '@blue-might/app/lib/types';
-
+import type AppDebug from '../../lib/classes/app/AppDebug';
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
 import BmPanelDebug from '../panel/Debug.vue';
 import BmPanelGeneral from '../panel/General.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
+import BmPanelMap from '../panel/Map.vue';
 
 defineProps<{
-  app: App;
+  app: AppDebug;
 }>();
 </script>
 
