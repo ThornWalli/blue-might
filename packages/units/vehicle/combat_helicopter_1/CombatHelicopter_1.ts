@@ -339,12 +339,6 @@ export default class CombatHelicopter_1
         );
 
         velocity.multiplyScalar(0.9);
-
-        if (velocity.length() < 0.001) {
-          velocity.set(0, 0);
-        } else {
-          this.modules.weapon.updateSourcePosition(index);
-        }
       }
     });
   }

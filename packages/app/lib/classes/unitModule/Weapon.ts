@@ -15,6 +15,7 @@ import { disposeObject3D } from '../../utils/object';
 import { WeaponSlot, type WeaponSlotDescription } from '../WeaponSlot';
 import type { ShootDescription } from '../mapModule/Shoot';
 import { ControlAction } from '../playerModule/Controls';
+import { isUnitDestroyed } from '../../utils/unit';
 
 import type { UnitModules } from './../Unit';
 import type AttackUnitModule from './Attack';
@@ -168,14 +169,6 @@ export default class WeaponUnitModule<
       })
     );
 
-    this.subscription.add(
-      unit.observables.rotation$.subscribe(() => {
-        this.state.barrelTargets.forEach((barrel, index) => {
-          this.updateSourcePosition(index);
-        });
-      })
-    );
-
     const playerUnitModule = unit.modules.player;
     if (playerUnitModule) {
       this.subscription.add(
@@ -220,12 +213,6 @@ export default class WeaponUnitModule<
     this.observables.slots$.next(slots);
   }
 
-  override async addToScene() {
-    this.state.barrelTargets.forEach((barrel, index) => {
-      this.updateSourcePosition(index);
-    });
-  }
-
   override destroy() {
     const map = this.getUnit().getMap();
     const app = map?.app;
@@ -257,7 +244,17 @@ export default class WeaponUnitModule<
   }
 
   override async update(_v: AnimationLoopValue) {
-    if (this.getUnit().preview || this.destroyed) return;
+    if (
+      this.getUnit().preview ||
+      this.destroyed ||
+      isUnitDestroyed(this.getUnit())
+    )
+      return;
+
+    this.state.barrelTargets.forEach((_, index) => {
+      this.updateSourcePosition(index);
+    });
+
     this.updateShoot(_v);
     this.updateAutoAIM();
     if (this.debug) {
@@ -309,8 +306,6 @@ export default class WeaponUnitModule<
         currentTime - (this.state.lastShootTime[index] ?? 0) >
         shootCooldown
       ) {
-        this.updateSourcePosition(index);
-        // debugger;
         shootModule
           .createShoot(
             this.state.sourcePositions[index]!,
@@ -369,7 +364,7 @@ export default class WeaponUnitModule<
       if (target) {
         this.getSlots().forEach(weaponSlot => {
           const index = weaponSlot.index;
-          this.updateSourcePosition(index);
+
           const sourcePosition = this.state.sourcePositions[index]!;
           const shoot = this.options.autoAimFn({
             target,

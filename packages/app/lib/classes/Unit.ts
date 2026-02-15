@@ -893,7 +893,7 @@ export default class Unit<
     return {
       key: (this.constructor as typeof Unit).KEY,
       id: this.id,
-      position: this.getPosition().toArray(),
+      position: this.getPosition().clone().setY(0).toArray(),
       rotation: this.getRotation().toArray(),
       options: this.getOptions(),
       moduleOptions: Object.fromEntries(

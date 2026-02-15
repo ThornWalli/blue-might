@@ -50,7 +50,6 @@ interface Observables extends MapModuleObservables {
 interface State extends MapModuleState {
   terrainHeight: number;
   terrainWidth: number;
-  segments: number;
   heights: number[];
   origin: Vector3;
 }
@@ -59,7 +58,6 @@ export default class SurfaceModule extends MapModule<State, Observables> {
   static override TYPE = 'surface';
   private root?: Object3D;
   override state: State = {
-    segments: 64,
     terrainHeight: 0,
     terrainWidth: 0,
     heights: [],
@@ -116,9 +114,9 @@ export default class SurfaceModule extends MapModule<State, Observables> {
       x = x.x;
     }
 
-    const { terrainWidth, terrainHeight, segments, heights, origin } =
-      this.state;
+    const { terrainWidth, terrainHeight, heights, origin } = this.state;
 
+    const segments = terrainWidth;
     // Welt -> Terrain-Koordinaten: Offset durch object.position berücksichtigen
     const localX = x - origin.x;
     const localZ = z! - origin.z;
@@ -391,7 +389,7 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     this.state.terrainWidth = dimension.x;
     this.state.terrainHeight = dimension.y;
 
-    const segments = this.state.segments;
+    const segments = this.state.terrainWidth;
     const heights = this.getGroundHeights(segments);
     this.state.heights = heights;
 
@@ -606,11 +604,11 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     return v1.cross(v2).normalize();
   }
 
-  updateHeightAt(x: number, z: number, newHeight: number) {
-    const key = `${x}_${z}`;
-    this.heightMap.set(key, newHeight);
-    this.surfaceHeightMap.set(key, newHeight + this.getSeaLevel()); // Passe an
-  }
+  // updateHeightAt(x: number, z: number, newHeight: number) {
+  //   const key = `${x}_${z}`;
+  //   this.heightMap.set(key, newHeight);
+  //   this.surfaceHeightMap.set(key, newHeight + this.getSeaLevel()); // Passe an
+  // }
 
   // Optimierte getHeightAt: Cache prüfen, sonst Raycast und speichern
   getHeightAt(x: number, z: number): number {
@@ -618,7 +616,6 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     if (this.heightMap.has(key)) {
       return this.heightMap.get(key)!;
     }
-    // Fallback: Raycast (dein bestehender Code)
     const height = this.performRaycastForHeight(x, z);
     this.heightMap.set(key, height);
     return height;
