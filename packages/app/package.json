@@ -20,7 +20,7 @@
     "rxjs": "catalog:",
     "three": "catalog:",
     "three-mesh-bvh": "0.9.8",
-    "ts-seedrandom": "1.4.0"
+    "ts-seedrandom": "1.4.1"
   },
   "devDependencies": {
     "@types/concaveman": "1.1.6",
