@@ -417,10 +417,12 @@ export default class Unit<
   }
 
   update(v: AnimationLoopValue) {
+    if (this.preview) return;
     this.updateModules.forEach(module => module.update(v));
   }
 
   renderUpdate(v: AnimationLoopValue) {
+    if (this.preview) return;
     this.updateModules.forEach(module => module.renderUpdate(v));
   }
 

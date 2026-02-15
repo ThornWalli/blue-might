@@ -1,20 +1,16 @@
 <template>
   <div class="bm-textarea">
-    <textarea
-      :type="inputAttrs?.type ?? 'text'"
-      :value="modelValue"
-      v-bind="inputAttrs"
-      @input="onInput" />
+    <textarea :value="modelValue" v-bind="elAttrs" @input="onInput" />
     <span v-if="unit">{{ unit }}</span>
   </div>
 </template>
 
 <script setup lang="ts" generic="T extends string | number">
-import type { InputHTMLAttributes } from 'vue';
+import type { TextareaHTMLAttributes } from 'vue';
 
-const $props = defineProps<{
+defineProps<{
   modelValue: T;
-  inputAttrs?: InputHTMLAttributes;
+  elAttrs?: TextareaHTMLAttributes;
   unit?: string;
 }>();
 
@@ -23,8 +19,7 @@ const $emit = defineEmits<{
 }>();
 
 function onInput(e: InputEvent) {
-  let value: string | number = (e.target! as HTMLInputElement).value;
-  value = $props.inputAttrs?.type === 'number' ? Number(value) : value;
+  const value: string | number = (e.target! as HTMLInputElement).value;
   $emit('update:modelValue', value as T);
 }
 </script>

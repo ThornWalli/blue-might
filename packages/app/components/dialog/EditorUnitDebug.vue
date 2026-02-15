@@ -80,12 +80,12 @@ onUnmounted(() => {
 .bm-dialog-editor-unit-debug {
   display: flex;
   flex-direction: column;
-  gap: var(--bm-spacing-small);
+  gap: var(--bm-spacing-medium);
 
   & .controls {
     display: flex;
     flex-direction: row;
-    gap: var(--bm-spacing-small);
+    gap: var(--bm-spacing-small) var(--bm-spacing-medium);
 
     & > * {
       flex: 1;

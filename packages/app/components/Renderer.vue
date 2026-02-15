@@ -28,7 +28,7 @@ defineOptions({
 
 const $props = defineProps<{
   debug?: DebugState | boolean;
-  options?: RendererOptions;
+  options?: Partial<RendererOptions>;
   modules?: RendererModuleList;
 }>();
 
@@ -52,7 +52,7 @@ const canvasEl = ref();
 const subscription = new Subscription();
 
 const defaultRendererOptions: RendererOptions = {
-  fog: true,
+  fog: { enabled: true },
   pixelated: false,
   controls: true
 };

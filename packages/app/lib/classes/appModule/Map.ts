@@ -1,4 +1,4 @@
-import { ReplaySubject, Subject } from 'rxjs';
+import { EMPTY, ReplaySubject, Subject, switchMap } from 'rxjs';
 
 import AppModule, {
   type AppModuleObservables,
@@ -8,6 +8,7 @@ import Map from '../Map';
 import type BaseApp from '../BaseApp';
 import type { AnimationLoopValue } from '../Renderer';
 import type { MapDescription } from '../../types/map';
+import { APP_MODE } from '../BaseApp';
 
 interface Observables extends AppModuleObservables {
   map$: ReplaySubject<Map>;
@@ -34,6 +35,21 @@ export default class MapAppModule extends AppModule<State, Observables> {
     this.observables.beforeRestart$ = new Subject<void>();
     this.observables.enterMap$ = new Subject<Map>();
     //#endregion
+  }
+
+  override async setup() {
+    this.subscription.add(
+      this.observables.map$
+        .pipe(switchMap(map => map?.observables.fogOptions$ ?? EMPTY))
+        .subscribe(fogOptions => {
+          const options = { ...fogOptions };
+          if (this.app.getAppMode() === APP_MODE.EDITOR) {
+            options.enabled = false;
+          }
+          this.app.renderer.setFogOptions(options);
+        })
+    );
+    await super.setup();
   }
 
   getMap() {

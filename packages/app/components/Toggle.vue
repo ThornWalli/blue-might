@@ -2,9 +2,12 @@
   <div class="bm-toggle">
     <div class="track">
       <input
-        :id="$id"
-        type="checkbox"
-        :checked="modelValue"
+        v-bind="{
+          ...elAttrs,
+          type: 'checkbox',
+          checked: modelValue,
+          id: preparedId
+        }"
         @input="
           $emit(
             'update:modelValue',
@@ -14,12 +17,17 @@
       <div class="thumb"></div>
     </div>
     <bm-base-icon v-if="icon" size="very-small" :name="icon" />
-    <label :for="$id">{{ label }}</label>
+    <label v-if="label" :for="$id">{{ label }}</label>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useId, type FunctionalComponent } from 'vue';
+import {
+  computed,
+  useId,
+  type FunctionalComponent,
+  type InputHTMLAttributes
+} from 'vue';
 
 import type { ICON } from '../utils/icons';
 import type icons from '../utils/icons';
@@ -28,11 +36,14 @@ import BmBaseIcon from './base/Icon.vue';
 
 const $id = useId();
 
-defineProps<{
+const $props = defineProps<{
   icon?: ICON | keyof typeof icons | FunctionalComponent;
-  label: string;
+  label?: string;
   modelValue: boolean;
+  elAttrs?: InputHTMLAttributes;
 }>();
+
+const preparedId = computed(() => $props.elAttrs?.id ?? $id);
 
 defineEmits<{
   (event: 'update:modelValue', value: boolean): void;

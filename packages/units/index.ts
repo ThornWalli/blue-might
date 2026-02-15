@@ -41,6 +41,7 @@ export { default as CombatTank_1 } from './vehicle/combat_tank_1/CombatTank_1';
 export { default as CombatShip_1 } from './vehicle/combat_ship_1/CombatShip_1';
 export { default as CombatSubmarine_1 } from './vehicle/combat_submarine_1/CombatSubmarine_1';
 export { default as CombatFregatte_1 } from './vehicle/combat_fregatte_1/CombatFregatte_1';
+export { default as Helicopter_1 } from './vehicle/helicopter_1/Helicopter_1';
 //#endregion
 
 //#region turrets

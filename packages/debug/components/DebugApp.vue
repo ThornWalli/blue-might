@@ -30,7 +30,9 @@ const $props = defineProps<{
 const appConfig = defu($props.config ?? {}, {
   mode: APP_MODE.DEBUG,
   rendererOptions: {
-    fog: false,
+    fog: {
+      enabled: false
+    },
     pixelated: false,
     controls: true
   }

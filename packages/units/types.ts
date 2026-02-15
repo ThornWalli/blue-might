@@ -31,6 +31,7 @@ import type { RawUnitDescription_Tree_1 } from './tree/tree_1/Tree_1';
 import type { RawUnitDescription_Tree_2 } from './tree/tree_2/Tree_2';
 import type { RawUnitDescription_CombatShip_1 } from './vehicle/combat_ship_1/CombatShip_1';
 import type { RawUnitDescription_SeaSupplyStation_1 } from './building/sea_supply_station_1/SeaSupplyStation_1';
+import type { RawUnitDescription_Helicopter_1 } from './vehicle/helicopter_1/Helicopter_1';
 import type Church_1 from './building/church_1/Church_1';
 import type Tower_1 from './building/tower_1/Tower_1';
 import type ControlTower_1 from './building/control_tower_1/ControlTower_1';
@@ -60,6 +61,7 @@ import type Tree_1 from './tree/tree_1/Tree_1';
 import type Tree_2 from './tree/tree_2/Tree_2';
 import type WindTurbine_1 from './building/wind_turbine_1/WindTurbine_1';
 import type Signal_1 from './building/signal_1/Signal_1';
+import type Helicopter_1 from './vehicle/helicopter_1/Helicopter_1';
 
 export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_LandingPortSupplyStation_1<O>
@@ -91,7 +93,8 @@ export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_CombatFregatte_1<O>
   | RawUnitDescription_CombatShip_1<O>
   | RawUnitDescription_Tree_1<O>
-  | RawUnitDescription_Tree_2<O>;
+  | RawUnitDescription_Tree_2<O>
+  | RawUnitDescription_Helicopter_1<O>;
 
 export type Units =
   | Unit
@@ -124,7 +127,8 @@ export type Units =
   | CombatFregatte_1
   | CombatShip_1
   | Tree_1
-  | Tree_2;
+  | Tree_2
+  | Helicopter_1;
 
 export type VehicleUnits =
   | CombatHelicopter_1
@@ -133,4 +137,5 @@ export type VehicleUnits =
   | Tank_1
   | CombatSubmarine_1
   | CombatFregatte_1
-  | CombatShip_1;
+  | CombatShip_1
+  | Helicopter_1;

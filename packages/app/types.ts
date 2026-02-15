@@ -1,7 +1,11 @@
+import type { FogOptions } from './lib/types/map';
+
 export type Values<T> = T[keyof T];
 
 export interface RendererOptions {
-  fog: boolean;
+  fog: Partial<FogOptions> & {
+    enabled: boolean;
+  };
   pixelated: boolean;
   controls: boolean;
 }

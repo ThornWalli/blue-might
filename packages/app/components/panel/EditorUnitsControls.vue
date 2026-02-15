@@ -12,13 +12,13 @@
     <bm-form-field label-top label="Spread/Remove Radius">
       <bm-textfield
         :model-value="actionRadius"
-        :input-attrs="{ type: 'number', step: 0.5, min: 0 }"
+        :el-attrs="{ type: 'number', step: 0.5, min: 0 }"
         @update:model-value="editorUnitsModule.setActionRadius($event)" />
     </bm-form-field>
     <bm-form-field label-top label="Intensity">
       <bm-textfield
         :model-value="actionIntensity"
-        :input-attrs="{ type: 'number', step: 0.5, min: 0 }"
+        :el-attrs="{ type: 'number', step: 0.5, min: 0 }"
         @update:model-value="editorUnitsModule.setActionIntensity($event)" />
     </bm-form-field>
     <bm-toggle

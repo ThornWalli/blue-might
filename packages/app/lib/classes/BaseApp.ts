@@ -44,7 +44,7 @@ export enum APP_MODE {
 
 export interface AppConfig {
   mode?: APP_MODE;
-  rendererOptions: RendererOptions;
+  rendererOptions: Partial<RendererOptions>;
   debug?: {
     renderer?: Partial<RendererOptions>;
     map?: Partial<MapModuleDebug>;
@@ -57,6 +57,12 @@ export default class BaseApp<
   Modules extends AppModules = AppModules,
   ModuleList extends AppModuleList = AppModuleList
 > {
+  protected appMode: APP_MODE;
+
+  getAppMode() {
+    return this.appMode;
+  }
+
   assetLoader = new AssetLoader();
 
   state: State;
@@ -79,6 +85,7 @@ export default class BaseApp<
     state: Partial<State>,
     moduleList: ModuleList = [] as unknown as ModuleList
   ) {
+    this.appMode = config.mode ?? APP_MODE.PLAYGROUND;
     this.state = {
       ...state,
       updateActive: state.updateActive ?? true

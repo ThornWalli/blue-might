@@ -40,7 +40,14 @@ export default class WindTurbine_1<
     super(
       {
         ...options,
-        name: 'Wind Turbine 1'
+        name: 'Wind Turbine 1',
+        moduleOptions: {
+          ...options.moduleOptions,
+          collision: {
+            ...options.moduleOptions?.collision,
+            targets: [{ name: 'base', default: true }, { name: 'head' }]
+          }
+        }
       },
       moduleList
     );

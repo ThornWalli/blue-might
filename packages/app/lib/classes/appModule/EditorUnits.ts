@@ -128,14 +128,20 @@ export default class EditorUnitsAppModule extends AppModule<
     this.app.getScene().add(this.radiusHelper);
   }
 
+  removeRadiusHelper() {
+    if (this.radiusHelper) {
+      disposeObject3D(this.radiusHelper);
+      this.radiusHelper = null;
+    }
+  }
+
   override destroy() {
-    disposeObject3D(this.radiusHelper);
+    super.destroy();
+    this.removeRadiusHelper();
   }
 
   override async setup() {
     await super.setup();
-
-    this.createRadiusHelper();
 
     if ('editorGrid' in this.app.modules) {
       const editorGrid = this.app.modules.editorGrid;
@@ -195,12 +201,22 @@ export default class EditorUnitsAppModule extends AppModule<
             .subscribe(mode => {
               if (mode !== EDITOR_MODE.UNITS) {
                 // this.setUnit(null);
-                this.setUnitKey(null);
+                this.reset();
+              } else {
+                this.createRadiusHelper();
               }
             })
         );
       }
     }
+  }
+
+  private reset() {
+    this.setUnitKey(null);
+    this.removeRadiusHelper();
+    this.setActionRadius(0);
+    this.setActionIntensity(1);
+    this.setAction(ACTION.ADD);
   }
 
   async placeUnit(position?: Vector2) {
@@ -257,11 +273,7 @@ export default class EditorUnitsAppModule extends AppModule<
   async createUnit(unitKey: string) {
     const UnitClass = unitMap.get(unitKey);
     if (!UnitClass) throw new Error(`Unit class not found for key: ${unitKey}`);
-    let unit = new UnitClass({
-      moduleDebug: {
-        collision: true
-      }
-    });
+    let unit = new UnitClass();
     unit = await this.app.modules.map.getMap()!.modules.units.add(unit);
 
     return unit;

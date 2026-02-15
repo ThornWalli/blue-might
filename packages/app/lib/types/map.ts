@@ -1,5 +1,12 @@
 import type { UnitDescriptions } from '@blue-might/units';
-import type { Euler, EulerTuple, Texture, Vector3, Vector3Tuple } from 'three';
+import type {
+  Color,
+  Euler,
+  EulerTuple,
+  Texture,
+  Vector3,
+  Vector3Tuple
+} from 'three';
 
 import type { FactionDescription, FactionIdentifier } from '../classes/Faction';
 import type { ModuleDebug } from '../classes/Map';
@@ -15,6 +22,7 @@ export interface MapDescription {
   debug?: Partial<ModuleDebug>;
   meta: Meta;
   playerOptions: RawPlayerOptions;
+  fogOptions?: RawFogOptions;
   surface: {
     textures: {
       heightMap: string;
@@ -62,3 +70,11 @@ export interface Meta {
   name: string;
   description?: string | null;
 }
+
+export interface RawFogOptions<C = number[]> {
+  enabled: boolean;
+  color: C;
+  fogDistance: number;
+}
+
+export type FogOptions = RawFogOptions<Color>;

@@ -63,10 +63,10 @@ onUnmounted(() => {
 </script>
 
 <style lang="postcss" scoped>
-.bm-dialog-editor-unit-debug {
+.bm-dialog-editor-map-debug {
   display: flex;
   flex-direction: column;
-  gap: var(--bm-spacing-small);
+  gap: var(--bm-spacing-medium);
 
   & .controls {
     display: flex;
@@ -81,7 +81,7 @@ onUnmounted(() => {
   & ul {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--bm-spacing-small);
+    gap: var(--bm-spacing-small) var(--bm-spacing-medium);
   }
 
   & p {

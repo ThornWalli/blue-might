@@ -68,7 +68,7 @@
             " />
           <bm-form-field label="Noise Size">
             <bm-textfield
-              :input-attrs="{ type: 'number', step: '1' }"
+              :el-attrs="{ type: 'number', step: '1' }"
               :model-value="noise.size"
               @update:model-value="
                 editorSurfaceModule.setNoise({ size: $event })
@@ -77,7 +77,7 @@
 
           <bm-form-field label="Noise Intensity">
             <bm-textfield
-              :input-attrs="{ type: 'number', step: '0.01' }"
+              :el-attrs="{ type: 'number', step: '0.01' }"
               :model-value="noise.intensity"
               @update:model-value="
                 editorSurfaceModule.setNoise({ intensity: $event })
@@ -86,7 +86,7 @@
 
           <bm-form-field label="Noise Opacity">
             <bm-textfield
-              :input-attrs="{ type: 'number', step: '0.01' }"
+              :el-attrs="{ type: 'number', step: '0.01' }"
               :model-value="noise.opacity"
               @update:model-value="
                 editorSurfaceModule.setNoise({ opacity: $event })

@@ -12,9 +12,11 @@ import {
   Color,
   PCFSoftShadowMap,
   Scene,
-  Fog
+  FogExp2
 } from 'three';
 import type { RendererOptions } from '@blue-might/app/types';
+
+import type { FogOptions } from '../types/map';
 
 import IntersectionRendererModule from './rendererModule/Intersection';
 import DebugRendererModule from './rendererModule/Debug';
@@ -22,6 +24,8 @@ import CameraRendererModule from './rendererModule/Camera';
 import ControlsRendererModule from './rendererModule/Controls';
 
 import '../utils/raycast';
+
+const DEFAULT_SCENE_BACKGROUND = new Color(0x000000);
 
 export type RendererModuleList = (
   | typeof CameraRendererModule
@@ -77,7 +81,7 @@ export default class Renderer<
   modules: Modules;
 
   private options: {
-    fog: boolean;
+    fog: FogOptions;
     pixelated: boolean;
     controls: boolean;
     debug: boolean;
@@ -91,7 +95,7 @@ export default class Renderer<
     canvas: HTMLCanvasElement,
     dimension: Vector2,
     options: {
-      fog?: boolean;
+      fog?: Partial<FogOptions> & { enabled: boolean };
       pixelated?: boolean;
       controls?: boolean;
       debug?: boolean;
@@ -105,7 +109,12 @@ export default class Renderer<
     );
 
     this.options = {
-      fog: options.fog ?? true,
+      fog: {
+        enabled: false,
+        color: new Color(0x000000),
+        fogDistance: 30,
+        ...(options.fog ?? {})
+      },
       pixelated: options.pixelated ?? false,
       controls: options.controls ?? false,
       debug: options.debug ?? false
@@ -247,38 +256,37 @@ export default class Renderer<
     return this.renderer;
   }
 
-  setFog(
-    value: boolean,
-    options: {
-      color: Color;
-      fogDistance: number;
-    } = {
-      color: new Color(0x000000),
-      fogDistance: 30
-    }
-  ) {
+  setFogOptions(options: Partial<FogOptions> & { enabled: boolean }) {
+    const { enabled, color, fogDistance } = {
+      enabled: options.enabled,
+      color: options.color ?? new Color(0x000000),
+      fogDistance: options.fogDistance ?? 30
+    };
     const scene = this.scene;
-    if (value) {
-      const color = options.color;
-      const fogDistance = options.fogDistance;
+    if (enabled) {
       scene.background = color;
-      scene.fog = new Fog(
-        color,
-        options.fogDistance,
-        options.fogDistance + 0.001
-      );
+      // Verwenden Sie FogExp2 für einen natürlicheren Fog-Effekt
+      // Dichte basierend auf fogDistance berechnen (höherer Wert = dichter Fog)
+      const density = 1 / fogDistance; // Anpassen, wenn nötig (z.B. 0.5 / fogDistance für weniger dichten Fog)
+      scene.fog = new FogExp2(color, density);
 
       const mainCamera = this.modules.camera.getCamera<PerspectiveCamera>();
       if (mainCamera) {
-        mainCamera.far = fogDistance;
+        // Erhöhen Sie far, um die Sichtweite zu erweitern (z.B. 2x fogDistance)
+        mainCamera.far = fogDistance * 2;
         mainCamera.updateProjectionMatrix();
       } else {
         throw new Error('Main camera not found');
       }
     } else {
+      scene.background = DEFAULT_SCENE_BACKGROUND;
       scene.fog = null;
     }
-    this.options.fog = value;
+    this.options.fog = {
+      enabled,
+      color,
+      fogDistance
+    };
   }
 
   getPixelated() {
@@ -296,7 +304,7 @@ export default class Renderer<
 
   setOptions(options: Partial<RendererOptions>) {
     if ('fog' in options) {
-      this.setFog(options.fog ?? false);
+      this.setFogOptions(options.fog ?? { enabled: false });
     }
     if ('pixelated' in options) {
       this.setPixelated(options.pixelated ?? false);

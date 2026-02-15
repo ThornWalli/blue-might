@@ -1,4 +1,4 @@
-import { Euler, Texture, Vector3, Object3D } from 'three';
+import { Euler, Texture, Vector3, Object3D, Color } from 'three';
 import assetLoader from '@blue-might/app/services/assetLoader';
 import { ReplaySubject, Subscription } from 'rxjs';
 import type { UnitDescriptions } from '@blue-might/units';
@@ -6,6 +6,7 @@ import { imageBitmapToBlob } from '@blue-might/app/utils/blob';
 
 import type { App } from '../types';
 import type {
+  FogOptions,
   MapDescription,
   Meta,
   PlayerOptions,
@@ -26,6 +27,7 @@ import type Module from './Module';
 
 interface MapObservables {
   playerOptions$: ReplaySubject<PlayerOptions>;
+  fogOptions$: ReplaySubject<FogOptions>;
 }
 
 type MapModuleList = (
@@ -52,6 +54,7 @@ interface MapModules {
 
 interface MapState {
   playerOptions: PlayerOptions<UnitDescriptions>;
+  fogOptions: FogOptions;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-explicit-any
@@ -104,6 +107,12 @@ export default class Map<
 
     this.description = description;
 
+    const fogOptions = description.fogOptions ?? {
+      enabled: false,
+      color: [0, 0, 0, 255],
+      fogDistance: 30
+    };
+
     this.state = {
       playerOptions: {
         ...description.playerOptions,
@@ -112,14 +121,20 @@ export default class Map<
           ? new Euler().fromArray(description.playerOptions.rotation)
           : undefined,
         faction: description.playerOptions.faction
+      },
+      fogOptions: {
+        ...fogOptions,
+        color: new Color().fromArray(fogOptions.color)
       }
     };
 
     //#region observables
     this.observables = {
-      playerOptions$: new ReplaySubject<PlayerOptions>()
+      playerOptions$: new ReplaySubject<PlayerOptions>(),
+      fogOptions$: new ReplaySubject<FogOptions>()
     };
     this.observables.playerOptions$.next(this.state.playerOptions);
+    this.observables.fogOptions$.next(this.state.fogOptions);
     //#endregion
 
     this.moduleDebug = { ...this.moduleDebug, ...description.debug };
@@ -236,6 +251,12 @@ export default class Map<
     this.description.meta = meta;
   }
 
+  setFogOptions(fogOptions: FogOptions) {
+    this.state.fogOptions = {
+      ...fogOptions
+    };
+  }
+
   update(value: AnimationLoopValue) {
     Object.values(this.modules).forEach(module => {
       module.update(value);
@@ -267,6 +288,10 @@ export default class Map<
         ...this.state.playerOptions,
         position: this.state.playerOptions.position.toArray(),
         rotation: this.state.playerOptions.rotation?.toArray()
+      },
+      fogOptions: {
+        ...this.state.fogOptions,
+        color: this.state.fogOptions.color.toArray()
       },
       surface: {
         textures: textures,

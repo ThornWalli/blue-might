@@ -18,7 +18,7 @@
       <bm-form-field class="damage" label="Damage">
         <bm-textfield
           :model-value="unitDamage * 100"
-          :input-attrs="{
+          :el-attrs="{
             type: 'number',
             min: 0,
             max: Math.round(maxDamage * 100)

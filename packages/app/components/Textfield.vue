@@ -1,9 +1,9 @@
 <template>
   <div class="bm-textfield">
     <input
-      :type="inputAttrs?.type ?? 'text'"
+      :type="elAttrs?.type ?? 'text'"
       :value="modelValue"
-      v-bind="inputAttrs"
+      v-bind="elAttrs"
       @input="onInput" />
     <span v-if="unit">{{ unit }}</span>
   </div>
@@ -14,7 +14,7 @@ import type { InputHTMLAttributes } from 'vue';
 
 const $props = defineProps<{
   modelValue: T;
-  inputAttrs?: InputHTMLAttributes;
+  elAttrs?: InputHTMLAttributes;
   unit?: string;
 }>();
 
@@ -24,7 +24,7 @@ const $emit = defineEmits<{
 
 function onInput(e: InputEvent) {
   let value: string | number = (e.target! as HTMLInputElement).value;
-  value = $props.inputAttrs?.type === 'number' ? Number(value) : value;
+  value = $props.elAttrs?.type === 'number' ? Number(value) : value;
   $emit('update:modelValue', value as T);
 }
 </script>

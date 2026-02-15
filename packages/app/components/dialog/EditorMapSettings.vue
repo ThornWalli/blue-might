@@ -1,11 +1,26 @@
 <template>
   <form class="bm-dialog-editor-map-settings" @submit="onSubmit">
     <bm-fieldset label="General">
-      <bm-form-field label="Map Name">
-        <bm-textfield v-model="meta.name"></bm-textfield>
+      <bm-form-field v-slot="{ id }" label="Map Name">
+        <bm-textfield v-model="meta.name" :el-attrs="{ id }"></bm-textfield>
       </bm-form-field>
-      <bm-form-field label="Map Description">
-        <bm-textarea v-model="meta.description"></bm-textarea>
+      <bm-form-field v-slot="{ id }" label="Map Description">
+        <bm-textarea
+          v-model="meta.description"
+          :el-attrs="{ id }"></bm-textarea>
+      </bm-form-field>
+    </bm-fieldset>
+    <bm-fieldset label="Fog Options">
+      <bm-form-field v-slot="{ id }" label="Enable Fog">
+        <bm-toggle v-model="fogOptions.enabled" :el-attrs="{ id }" />
+      </bm-form-field>
+      <bm-form-field v-slot="{ id }" label="Fog Distance">
+        <bm-textfield
+          v-model="fogOptions.fogDistance"
+          :el-attrs="{ type: 'number', id }" />
+      </bm-form-field>
+      <bm-form-field v-slot="{ id }" label="Fog Color">
+        <bm-color-picker v-model="fogOptions.color" :el-attrs="{ id }" />
       </bm-form-field>
     </bm-fieldset>
     <div class="controls">
@@ -29,7 +44,8 @@
 import { inject, onMounted, onUnmounted, ref } from 'vue';
 import { Subscription } from 'rxjs';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
-import type { Meta } from '@blue-might/app/lib/types/map';
+import type { Meta, RawFogOptions } from '@blue-might/app/lib/types/map';
+import { Color } from 'three';
 
 import type { DialogContext } from '../base/Dialog.vue';
 import BmTextfield from '../Textfield.vue';
@@ -37,6 +53,8 @@ import BmTextarea from '../Textarea.vue';
 import BmFormField from '../FormField.vue';
 import BmButton from '../Button.vue';
 import BmFieldset from '../Fieldset.vue';
+import BmToggle from '../Toggle.vue';
+import BmColorPicker from '../ColorPicker.vue';
 import BmDialog from '../Dialog.vue';
 import BmDialogEditorMapDebug from '../dialog/EditorMapDebug.vue';
 
@@ -57,12 +75,26 @@ const meta = ref<
   name: 'Default Map',
   description: ''
 });
+const fogOptions = ref<RawFogOptions<string>>({
+  enabled: false,
+  fogDistance: 30,
+  color: '#ffffff'
+});
+
 onMounted(() => {
   subscription.add(
     editorMapSettingsModule.observables.meta$.subscribe(m => {
       meta.value = {
         ...m,
         description: m?.description ?? meta.value.description
+      };
+    })
+  );
+  subscription.add(
+    editorMapSettingsModule.observables.fogOptions$.subscribe(options => {
+      fogOptions.value = {
+        ...options,
+        color: '#' + options.color.getHexString()
       };
     })
   );
@@ -74,10 +106,15 @@ onUnmounted(() => {
 
 function onSubmit(e: Event) {
   e.preventDefault();
-  if (meta.value) {
-    editorMapSettingsModule.setMeta(meta.value);
-    dialog.close();
-  }
+
+  debugger;
+  editorMapSettingsModule.setMeta(meta.value);
+  editorMapSettingsModule.setFogOptions({
+    ...fogOptions.value,
+    color: new Color(fogOptions.value.color)
+  });
+
+  dialog.close();
 }
 const unitDebugDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 function onClickDebug() {

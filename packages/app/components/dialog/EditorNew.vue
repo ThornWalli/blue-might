@@ -11,14 +11,14 @@
         <bm-textfield
           :id="id"
           v-model="width"
-          :input-attrs="{ type: 'number' }"
+          :el-attrs="{ type: 'number' }"
           unit="px" />
       </bm-form-field>
       <bm-form-field v-slot="{ id }" label="Height">
         <bm-textfield
           :id="id"
           v-model="height"
-          :input-attrs="{ type: 'number' }"
+          :el-attrs="{ type: 'number' }"
           unit="px" />
       </bm-form-field>
       <bm-button type="submit" label="Create" />
