@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.54](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.53...v1.0.0-beta.54) (2026-02-15)
+
+
+### Bug Fixes
+
+* **frontend:** enable fog in renderer options ([50a4db1](https://github.com/ThornWalli/blue-might/commit/50a4db197c4681e8395eadff578c22df71f22e3c))
+
 # [1.0.0-beta.53](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.52...v1.0.0-beta.53) (2026-02-15)
 
 
