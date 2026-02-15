@@ -89,7 +89,8 @@ export default class Helicopter_1 extends HelicopterUnit<
             maxFuel: 200
           },
           transport: {
-            entryPosition: new Vector2(0.25, 0.25)
+            entryPosition: new Vector2(0.25, 0.25),
+            maxSlots: 4
           },
           helicopter: {
             ...options.moduleOptions?.helicopter,

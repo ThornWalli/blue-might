@@ -16,6 +16,8 @@ import type { RawUnitDescription_Turret_1 } from './turret/turret_1/Turret_1';
 import type { RawUnitDescription_CombatHelicopter_1 } from './vehicle/combat_helicopter_1/CombatHelicopter_1';
 import type { RawUnitDescription_CombatTank_1 } from './vehicle/combat_tank_1/CombatTank_1';
 import type { RawUnitDescription_Soldat_1 } from './vehicle/soldat_1/Soldat_1';
+import type { RawUnitDescription_Scientist_1 } from './vehicle/scientist_1/Scientist_1';
+import type { RawUnitDescription_Civilian_1 } from './vehicle/civilian_1/Civilian_1';
 import type { RawUnitDescription_Tank_1 } from './vehicle/tank_1/Tank_1';
 import type { RawUnitDescription_SeaLandingPortSupplyStation_1 } from './building/sea_landing_port_supply_station_1/SeaLandingPortSupplyStation_1';
 import type { RawUnitDescription_Flag_1 } from './building/flag_1/Flag_1';
@@ -62,6 +64,8 @@ import type Tree_2 from './tree/tree_2/Tree_2';
 import type WindTurbine_1 from './building/wind_turbine_1/WindTurbine_1';
 import type Signal_1 from './building/signal_1/Signal_1';
 import type Helicopter_1 from './vehicle/helicopter_1/Helicopter_1';
+import type Scientist_1 from './vehicle/scientist_1/Scientist_1';
+import type Civilian_1 from './vehicle/civilian_1/Civilian_1';
 
 export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_LandingPortSupplyStation_1<O>
@@ -77,6 +81,8 @@ export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_WindTurbine_1<O>
   | RawUnitDescription_Signal_1<O>
   | RawUnitDescription_Soldat_1<O>
+  | RawUnitDescription_Scientist_1<O>
+  | RawUnitDescription_Civilian_1<O>
   | RawUnitDescription_ControlTower_1<O>
   | RawUnitDescription_Factory_1<O>
   | RawUnitDescription_FactoryChimney_1<O>
@@ -113,6 +119,8 @@ export type Units =
   | CombatHelicopter_1
   | CombatTank_1
   | Soldat_1
+  | Scientist_1
+  | Civilian_1
   | Tank_1
   | SeaLandingPortSupplyStation_1
   | Flag_1
@@ -134,6 +142,8 @@ export type VehicleUnits =
   | CombatHelicopter_1
   | CombatTank_1
   | Soldat_1
+  | Scientist_1
+  | Civilian_1
   | Tank_1
   | CombatSubmarine_1
   | CombatFregatte_1

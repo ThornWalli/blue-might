@@ -35,6 +35,8 @@ export { default as LandingPortRescue_1 } from './building/landing_port_rescue_1
 
 //#region vehicles
 export { default as Soldat_1 } from './vehicle/soldat_1/Soldat_1';
+export { default as Scientist_1 } from './vehicle/scientist_1/Scientist_1';
+export { default as Civilian_1 } from './vehicle/civilian_1/Civilian_1';
 export { default as Tank_1 } from './vehicle/tank_1/Tank_1';
 export { default as CombatHelicopter_1 } from './vehicle/combat_helicopter_1/CombatHelicopter_1';
 export { default as CombatTank_1 } from './vehicle/combat_tank_1/CombatTank_1';

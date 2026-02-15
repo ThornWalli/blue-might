@@ -556,13 +556,15 @@ export default class Unit<
     if (
       this.map &&
       this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.NONE &&
-      this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT
+      this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT &&
+      this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FIGURE
     ) {
       desired =
         this.updateGroundAlignment(desired, [unit], true).position ?? desired;
     } else if (
       !this.map?.app.isUpdateActive() &&
-      this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FLIGHT
+      (this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FLIGHT ||
+        this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FIGURE)
     ) {
       desired.y =
         (this.map?.modules.surface.getSurfaceHeightAt(
@@ -570,7 +572,7 @@ export default class Unit<
           desired.z,
           undefined,
           options
-        ) ?? desired.y) + 1;
+        ) ?? desired.y) + ('helicopter' in unit.modules ? 1 / 2 : 0);
     }
 
     const isAutopilot = unit.modules.movable?.hasAIControls() ?? false;
