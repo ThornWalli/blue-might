@@ -12,7 +12,7 @@ catalog:
   '@types/node': 25.2.3
   '@types/pathfinding': 0.1.0
   '@types/three': 0.182.0
-  '@types/web': 0.0.335
+  '@types/web': 0.0.336
   '@typescript-eslint/eslint-plugin': 8.55.0
   change-case: 5.4.4
   consola: 3.4.2
