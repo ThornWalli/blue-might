@@ -6,15 +6,16 @@ import type {
 import type { SetupContext } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Mesh, SkinnedMesh } from 'three';
-import BuildingUnit, {
-  type BuildingUnitModuleList,
-  type BuildingUnitModules,
-  type BuildingUnitOptions
-} from '@blue-might/app/lib/classes/unit/Building';
+import PlantUnit, {
+  type PlantUnitModuleList,
+  type PlantUnitModules,
+  type PlantUnitOptions
+} from '@blue-might/app/lib/classes/unit/Plant';
 
 import baseGlb from './assets/tree_2.glb?url';
 
-export type Options = BuildingUnitOptions;
+export type Options = PlantUnitOptions;
+
 export interface RawUnitDescription_Tree_2<
   O extends UnitOptions = Options
 > extends RawUnitDescription<UnitConstructorOptions<O>> {
@@ -22,9 +23,9 @@ export interface RawUnitDescription_Tree_2<
 }
 
 export default class Tree_2<
-  Modules extends BuildingUnitModules = BuildingUnitModules,
-  ModuleList extends BuildingUnitModuleList = BuildingUnitModuleList
-> extends BuildingUnit<Modules, ModuleList, Options> {
+  Modules extends PlantUnitModules = PlantUnitModules,
+  ModuleList extends PlantUnitModuleList = PlantUnitModuleList
+> extends PlantUnit<Modules, ModuleList, Options> {
   static override KEY = 'tree_2';
 
   constructor(

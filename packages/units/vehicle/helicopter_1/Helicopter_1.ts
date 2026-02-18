@@ -95,7 +95,8 @@ export default class Helicopter_1 extends HelicopterUnit<
           helicopter: {
             ...options.moduleOptions?.helicopter,
             gearsHeight: 0.165,
-            maxSpeed: 2
+            maxSpeed: 1.5,
+            yawSpeed: 2
           },
           collision: {
             ...options.moduleOptions?.collision,

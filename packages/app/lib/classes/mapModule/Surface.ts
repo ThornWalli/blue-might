@@ -34,7 +34,7 @@ import type AirVehicleUnit from '../unit/vehicle/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
 import type { IntersectionListener } from '../rendererModule/Intersection';
 import type { MapNoise, Textures } from '../../types/map';
-import { isBuilding } from '../../utils/unit';
+import { isBuilding, isPlant } from '../../utils/unit';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -639,7 +639,7 @@ export default class SurfaceModule extends MapModule<State, Observables> {
 
     const testUnits = this.map.modules.units
       .getUnitsInRadius(new Vector3(x, 0, z), 0.1)
-      .filter(u => isBuilding(u) && unitFilter(u));
+      .filter(u => (isBuilding(u) || isPlant(u)) && unitFilter(u));
 
     testUnits.sort((a, b) => a.getPosition().y - b.getPosition().y);
 

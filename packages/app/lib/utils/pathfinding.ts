@@ -8,6 +8,7 @@ import {
   isAirVehicle,
   isBuilding,
   isGroundVehicle,
+  isPlant,
   isSeaVehicle
 } from './unit';
 
@@ -29,9 +30,10 @@ export enum TILE_TYPE {
   UNIT_GROUND = 301,
   UNIT_AIR = 302,
   UNIT_SEA = 303,
-  UNIT_BUILDING = 304,
-  UNIT_HIGH_BUILDING = 305,
-  UNIT_PLATFORM = 306
+  UNIT_PLANT = 304,
+  UNIT_BUILDING = 305,
+  UNIT_HIGH_BUILDING = 306,
+  UNIT_PLATFORM = 307
 }
 
 export type TILE_TYPE_COSTS = {
@@ -56,6 +58,7 @@ export const TILE_INDEX = Object.freeze({
   [TILE_TYPE.UNIT_GROUND]: TILE_TYPE.UNIT_GROUND,
   [TILE_TYPE.UNIT_AIR]: TILE_TYPE.UNIT_AIR,
   [TILE_TYPE.UNIT_SEA]: TILE_TYPE.UNIT_SEA,
+  [TILE_TYPE.UNIT_PLANT]: TILE_TYPE.UNIT_PLANT,
   [TILE_TYPE.UNIT_BUILDING]: TILE_TYPE.UNIT_BUILDING,
   [TILE_TYPE.UNIT_HIGH_BUILDING]: TILE_TYPE.UNIT_HIGH_BUILDING,
   [TILE_TYPE.UNIT_PLATFORM]: TILE_TYPE.UNIT_PLATFORM
@@ -72,6 +75,7 @@ export const TILE_TYPES = [
   TILE_TYPE.UNIT_GROUND,
   TILE_TYPE.UNIT_AIR,
   TILE_TYPE.UNIT_SEA,
+  TILE_TYPE.UNIT_PLANT,
   TILE_TYPE.UNIT_BUILDING,
   TILE_TYPE.UNIT_HIGH_BUILDING,
   TILE_TYPE.UNIT_PLATFORM
@@ -141,6 +145,9 @@ export function getTileTypeByUnit(unit: Unit): TILE_TYPE {
     return tileType;
   }
 
+  if (isPlant(unit)) {
+    return TILE_TYPE.UNIT_PLANT;
+  }
   if (isBuilding(unit)) {
     return TILE_TYPE.UNIT_BUILDING;
   }

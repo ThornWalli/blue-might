@@ -39,6 +39,10 @@ export function isBuilding(unit?: Unit | null): boolean {
   return (unit && 'building' in unit.modules) ?? false;
 }
 
+export function isPlant(unit?: Unit | null): boolean {
+  return (unit && 'plant' in unit.modules) ?? false;
+}
+
 export function getAirVehicle(unit: Unit | null): AirVehicleUnit | null {
   if (unit && 'airVehicle' in unit.modules) {
     return unit as AirVehicleUnit;

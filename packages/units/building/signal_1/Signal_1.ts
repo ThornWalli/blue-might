@@ -41,6 +41,12 @@ export default class Signal_1<
         options: {
           ...options.options,
           interval: options.options?.interval ?? 25
+        },
+        moduleOptions: {
+          ...options.moduleOptions,
+          collision: {
+            enabled: false
+          }
         }
       },
       moduleList

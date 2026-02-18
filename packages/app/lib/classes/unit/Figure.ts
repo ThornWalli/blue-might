@@ -1,6 +1,5 @@
 import type { UnitConstructorOptions, UnitOptions } from '../Unit';
 import PatrolUnitModule from '../unitModule/Patrol';
-import { COLLISION_TYPE } from '../unitModule/Collision';
 import { GROUND_ADJUSTMENT_MODE, UNIT_TYPE } from '../../types/unit';
 import { addModules } from '../Module';
 import FigureMovableUnitModule from '../unitModule/movable/FigureMovable';
@@ -49,9 +48,8 @@ export default class FigureUnit<
         moduleOptions: {
           ...options.moduleOptions,
           collision: {
-            disabled: true,
-            type: COLLISION_TYPE.SOFT,
-            ...options.moduleOptions?.collision
+            ...options.moduleOptions?.collision,
+            enabled: false
           },
           damage: {
             fire: false,

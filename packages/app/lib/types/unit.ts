@@ -11,6 +11,7 @@ export interface SetupContext {
 export enum UNIT_TYPE {
   DEFAULT = 'default',
   BUILDING = 'building',
+  PLANT = 'plant',
   SEA_VEHICLE = 'seaVehicle',
   AIR_VEHICLE = 'airVehicle',
   GROUND_VEHICLE = 'groundVehicle',

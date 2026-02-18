@@ -56,7 +56,7 @@ export enum COLLISION_TYPE {
 }
 
 export interface CollisionUnitModuleOptions extends UnitModuleOptions {
-  disabled: boolean;
+  enabled: boolean;
   type: COLLISION_TYPE;
   targets: {
     default?: boolean;
@@ -89,6 +89,7 @@ export default class CollisionUnitModule<
       unit,
       {
         ...options,
+        enabled: options.enabled ?? true,
         type: options.type ?? COLLISION_TYPE.BLOCKED,
         targets: options.targets ?? []
       },
@@ -119,6 +120,7 @@ export default class CollisionUnitModule<
   }
 
   override async afterSetup() {
+    if (!this.options.enabled) return;
     await super.afterSetup();
     this.setupLocalOBBs();
     this.refreshWorldOBBs();
@@ -257,6 +259,8 @@ export default class CollisionUnitModule<
   lastCollision: { type: COLLISION_TYPE; target: Unit } | null = null;
 
   checkCollision(box?: Box3 | Sphere) {
+    if (!this.options.enabled) return COLLISION_TYPE.NONE;
+
     const unit = this.getUnit();
     const cm1 = unit.modules.collision;
     if (!cm1) return COLLISION_TYPE.NONE;
