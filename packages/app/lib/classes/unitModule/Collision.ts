@@ -61,7 +61,14 @@ export interface CollisionUnitModuleOptions extends UnitModuleOptions {
   targets: {
     default?: boolean;
     name: string;
+    parentRotation?: boolean;
+    /**
+     * @deprecated
+     */
     childIndex?: number;
+    /**
+     * @deprecated
+     */
     useChilds?: boolean; // Rekursiv Kinder einbeziehen
   }[];
 }
@@ -87,7 +94,7 @@ export default class CollisionUnitModule<
       },
       {
         ...state,
-        enabled: true
+        enabled: state.enabled ?? true
       },
       debug
     );
@@ -144,8 +151,8 @@ export default class CollisionUnitModule<
 
   enableCollision() {
     this.state.enabled = true;
-    this.getCollisionObjects().forEach(object => {
-      object.traverse(child => {
+    this.getCollisionObjects().forEach(({ obj }) => {
+      obj.traverse(child => {
         child.userData[OBJECT_USER_DATA.IGNORE_COLLISION] = false;
       });
     });
@@ -153,27 +160,34 @@ export default class CollisionUnitModule<
 
   disableCollision() {
     this.state.enabled = false;
-    this.getCollisionObjects().forEach(object => {
-      object.traverse(child => {
+    this.getCollisionObjects().forEach(({ obj }) => {
+      obj.traverse(child => {
         child.userData[OBJECT_USER_DATA.IGNORE_COLLISION] = true;
       });
     });
   }
 
-  getTargets(): Object3D[] {
-    const result: Object3D[] = [];
+  getTargets(): { obj: Object3D; parentRotation?: boolean }[] {
+    const result: { obj: Object3D; parentRotation?: boolean }[] = [];
     this.options.targets.forEach(targetConfig => {
       const obj = this.getUnit().root.getObjectByName(targetConfig.name);
       if (obj) {
         if (targetConfig.childIndex !== undefined) {
           const child = obj.children[targetConfig.childIndex];
-          if (child) result.push(child);
+          if (child)
+            result.push({
+              obj: child,
+              parentRotation: targetConfig.parentRotation
+            });
         } else if (targetConfig.useChilds) {
           // Rekursiv alle Kinder sammeln (flach oder tief, je nach Bedarf)
-          obj.traverse(child => result.push(child));
-          result.splice(result.indexOf(obj), 1);
+          obj.traverse(child => result.push({ obj: child }));
+          result.splice(
+            result.findIndex(item => item.obj === obj),
+            1
+          );
         } else {
-          result.push(obj);
+          result.push({ obj, parentRotation: targetConfig.parentRotation });
         }
       }
     });
@@ -182,7 +196,7 @@ export default class CollisionUnitModule<
 
   setupLocalOBBs() {
     const objects = this.getCollisionObjects();
-    this.localOBBs = objects.map(obj => {
+    this.localOBBs = objects.map(({ obj }) => {
       obj.updateMatrixWorld(true);
       const aabb = new Box3().setFromObject(obj);
       const size = new Vector3();
@@ -212,12 +226,13 @@ export default class CollisionUnitModule<
     );
 
     this.worldOBBs = this.localOBBs.map((localOBB, index) => {
-      const obj = objects[index]!;
+      const { obj, parentRotation } = objects[index]!;
 
       const objWorldMatrix = new Matrix4();
       if (obj === unit.root) {
         objWorldMatrix.copy(unitWorldMatrix);
       } else {
+        objWorldMatrix.copy(obj.parent!.matrixWorld);
         obj.updateWorldMatrix(true, false); // Aktualisiert die lokale Matrix
         objWorldMatrix.multiplyMatrices(unitWorldMatrix, obj.matrix);
       }
@@ -227,6 +242,13 @@ export default class CollisionUnitModule<
 
       worldOBB.center.copy(localOBB.center).applyMatrix4(objWorldMatrix);
       worldOBB.rotation.setFromMatrix4(objWorldMatrix);
+
+      if (parentRotation) {
+        const quaternion = obj.parent!.quaternion;
+        const matrix = new Matrix4();
+        matrix.makeRotationFromQuaternion(quaternion);
+        worldOBB.rotation.setFromMatrix4(matrix);
+      }
 
       return worldOBB;
     });
@@ -325,14 +347,15 @@ export default class CollisionUnitModule<
     return this.worldOBBs[0] || new OBB();
   }
 
-  getCollisionObjects(): Object3D[] {
+  getCollisionObjects() {
     const objs = this.getTargets();
     if (!objs.length) {
-      objs.push(this.getUnit().root);
+      objs.push({ obj: this.getUnit().root });
     }
-    objs.forEach(obj => {
+    objs.forEach(({ obj }) => {
       obj.userData[OBJECT_USER_DATA.COLLISION_TYPE] = this.options.type;
     });
+
     return objs;
   }
 

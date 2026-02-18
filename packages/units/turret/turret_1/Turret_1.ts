@@ -21,7 +21,6 @@ import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import { playSound } from '@blue-might/weapon/utils';
 import {
   autoAimFunction,
-  createBarrelTargetShoot,
   updateControls
 } from '@blue-might/app/lib/utils/unit/weapon';
 import Weapon from '@blue-might/app/lib/classes/Weapon';
@@ -164,18 +163,11 @@ export default class Turret_1
     this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.MIN_HEIGHT);
   }
 
-  private barrelTargetShootTimeouts: number[] = [];
   override setup(context: SetupContext) {
     //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ index, shoot: { projectile, slot } }) => {
-          const shootObj = this.objects[index]?.barrelTargetShoots[0];
-          if (shootObj?.visible) shootObj.visible = true;
-          window.clearTimeout(this.barrelTargetShootTimeouts[index]);
-          this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
-            if (shootObj?.visible) shootObj.visible = false;
-          }, 1000 / slot.weapon.perSeconds);
+        async ({ shoot: { projectile } }) => {
           playSound(await projectile.getSfx(), 0.3);
         }
       )
@@ -200,21 +192,11 @@ export default class Turret_1
     const barrelObj = object.getObjectByName('barrel')!;
     const barrelTargetObj = object.getObjectByName('barrel_target')!;
 
-    // const barrelWrapper = new Object3D();
-
-    // // barrelObj.position.set(0, -0.55, 0);
-    // // barrelWrapper.position.set(0, 0.55, 0.1);
-    // barrelWrapper.add(barrelObj);
-    // headObj.add(barrelWrapper);
-
-    const barrelTargetShoot = createBarrelTargetShoot();
-    barrelTargetObj.add(barrelTargetShoot);
-
     this.objects.push({
       head: headObj,
       barrels: [barrelObj],
       barrelTargets: [barrelTargetObj],
-      barrelTargetShoots: [barrelTargetShoot]
+      barrelTargetShoots: [barrelTargetObj]
     });
 
     this.modules.weapon.registerBarrelTarget(barrelTargetObj);

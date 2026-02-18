@@ -50,6 +50,10 @@ export function isGroundVehicle(unit?: Unit | null): boolean {
   return (unit && 'groundVehicle' in unit.modules) ?? false;
 }
 
+export function hasWeaponModule(unit?: Unit | null): boolean {
+  return (unit && 'weapon' in unit.modules) ?? false;
+}
+
 export function ignoreByUnitByType(filter: {
   building?: boolean;
   seaVehicle?: boolean;

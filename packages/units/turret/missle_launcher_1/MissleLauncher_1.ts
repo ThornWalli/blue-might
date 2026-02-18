@@ -29,7 +29,6 @@ import AttackUnitModule, {
 } from '@blue-might/app/lib/classes/unitModule/Attack';
 import {
   autoAimFunction,
-  createBarrelTargetShoot,
   updateControls
 } from '@blue-might/app/lib/utils/unit/weapon';
 import { ReplaySubject, Subject } from 'rxjs';
@@ -179,18 +178,11 @@ export default class MissleLauncher_1
     //#endregion
   }
 
-  private barrelTargetShootTimeouts: number[] = [];
   override setup(context: SetupContext) {
     // //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ index, shoot: { projectile, slot } }) => {
-          const shootObj = this.objects[index]?.barrelTargetShoots[0];
-          if (shootObj?.visible) shootObj.visible = true;
-          window.clearTimeout(this.barrelTargetShootTimeouts[index]);
-          this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
-            if (shootObj?.visible) shootObj.visible = false;
-          }, 1000 / slot.weapon.perSeconds);
+        async ({ shoot: { projectile } }) => {
           playSound(await projectile.getSfx(), 0.3);
         }
       )
@@ -314,14 +306,11 @@ export default class MissleLauncher_1
       const barrelObj = object.getObjectByName('head')!;
       const barrelTargetObj = object.getObjectByName('target')!;
 
-      const barrelTargetShoot = createBarrelTargetShoot();
-      barrelTargetObj.add(barrelTargetShoot);
-
       this.objects.push({
         head: headObj,
         barrels: [barrelObj],
         barrelTargets: [barrelTargetObj],
-        barrelTargetShoots: [barrelTargetShoot]
+        barrelTargetShoots: [barrelTargetObj]
       });
 
       this.modules.weapon.registerBarrelTarget(barrelTargetObj);

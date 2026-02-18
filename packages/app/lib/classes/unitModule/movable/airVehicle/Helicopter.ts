@@ -475,36 +475,34 @@ export default class HelicopterUnitModule<
 
     // NEU: Sinken-Logik für zerstörte Helikopter auf Wasser
     const isDestroyed = isUnitDestroyed(unit);
-    if (isDestroyed) {
-      const groundHeight =
-        unit
-          .getMap()
-          ?.modules.surface.getSurfaceHeightAt(
-            unitPosition.x,
-            unitPosition.z,
-            u => !u.equals(unit),
-            { raycaster: true }
-          ) ?? 0;
+    // if (isDestroyed) {
+    //   const groundHeight =
+    //     unit
+    //       .getMap()
+    //       ?.modules.surface.getSurfaceHeightAt(
+    //         unitPosition.x,
+    //         unitPosition.z,
+    //         u => !u.equals(unit),
+    //         { raycaster: true }
+    //       ) ?? 0;
 
-      if (unitPosition.y <= groundHeight) {
-        // Auf Wasser – sinken lassen
-        const sinkSpeed = 1.0; // Anpassen: Sinkgeschwindigkeit (Einheiten pro Sekunde)
-        velocity.y -= sinkSpeed * delta;
-        // Stoppe horizontale Bewegung
-        velocity.x = 0;
-        velocity.z = 0;
-        // Keine weitere Bewegung, wenn unter Wasser
-        if (unitPosition.y <= groundHeight) {
-          // Optional: Tiefer als 1 Einheit unter Wasser stoppen
-          velocity.set(0, 0, 0);
-          this.getUnit().modules.damage.options.enabled = false;
-        }
-      }
-    }
+    //   if (unitPosition.y <= groundHeight) {
+    //     // Auf Wasser – sinken lassen
+    //     const sinkSpeed = 1.0; // Anpassen: Sinkgeschwindigkeit (Einheiten pro Sekunde)
+    //     velocity.y -= sinkSpeed * delta;
+    //     // Stoppe horizontale Bewegung
+    //     velocity.x = 0;
+    //     velocity.z = 0;
+    //     // Keine weitere Bewegung, wenn unter Wasser
+    //     if (unitPosition.y <= groundHeight) {
+    //       // Optional: Tiefer als 1 Einheit unter Wasser stoppen
+    //       velocity.set(0, 0, 0);
+    //       this.getUnit().modules.damage.options.enabled = false;
+    //     }
+    //   }
+    // }
 
     if (!active || !controls.ascend) {
-      const isDestroyed = isUnitDestroyed(unit);
-
       const groundModule = unit.getMap()!.modules.surface;
       let minY =
         groundModule.getSurfaceHeightAt(

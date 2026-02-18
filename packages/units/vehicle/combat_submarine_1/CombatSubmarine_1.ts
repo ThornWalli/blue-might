@@ -17,7 +17,6 @@ import SeaVehicleUnit, {
 } from '@blue-might/app/lib/classes/unit/vehicle/SeaVehicle';
 import {
   autoAimFunction,
-  createBarrelTargetShoot,
   updateControls
 } from '@blue-might/app/lib/utils/unit/weapon';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
@@ -149,19 +148,13 @@ export default class CombatSubmarine_1
       moduleList
     );
   }
-  private barrelTargetShootTimeouts: number[] = [];
 
   override async afterSetup(context: SetupContext) {
     await super.afterSetup(context);
     //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ index, shoot: { slot, projectile } }) => {
-          this.objects[index]!.barrelTargetShoots[0]!.visible = true;
-          window.clearTimeout(this.barrelTargetShootTimeouts[0]);
-          this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
-            this.objects[index]!.barrelTargetShoots[0]!.visible = false;
-          }, 1000 / slot.weapon.perSeconds);
+        async ({ shoot: { projectile } }) => {
           playSound(await projectile.getSfx(), 0.3);
         }
       )
@@ -188,11 +181,6 @@ export default class CombatSubmarine_1
 
         const barrelWrapperY = new Object3D();
         const barrelWrapperX = new Object3D();
-
-        const barrelTargetShoot = createBarrelTargetShoot({
-          object: barrelTargetObj
-        });
-        barrelTargetObj.add(barrelTargetShoot);
 
         let parent = headObj.parent!;
         barrelWrapperY.add(headObj);
@@ -222,7 +210,7 @@ export default class CombatSubmarine_1
         this.objects.push({
           barrels: [barrelWrapperX, barrelWrapperY],
           barrelTargets: [barrelTargetObj],
-          barrelTargetShoots: [barrelTargetShoot]
+          barrelTargetShoots: [barrelTargetObj]
         });
 
         this.modules.weapon.registerBarrelTarget(barrelTargetObj);

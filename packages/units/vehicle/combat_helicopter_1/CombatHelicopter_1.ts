@@ -33,7 +33,6 @@ import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { playSound } from '@blue-might/weapon/utils';
 import {
   autoAimFunction,
-  createBarrelTargetShoot,
   updateControls
 } from '@blue-might/app/lib/utils/unit/weapon';
 import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/Animation';
@@ -193,17 +192,11 @@ export default class CombatHelicopter_1
     );
   }
 
-  private barrelTargetShootTimeouts: number[] = [];
   override setup(context: SetupContext) {
     //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ index, shoot: { projectile, slot } }) => {
-          this.objects[index]!.barrelTargetShoots[0]!.visible = true;
-          window.clearTimeout(this.barrelTargetShootTimeouts[index]);
-          this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
-            this.objects[index]!.barrelTargetShoots[0]!.visible = false;
-          }, 1000 / slot.weapon.perSeconds);
+        async ({ shoot: { projectile } }) => {
           playSound(await projectile.getSfx(), 0.3);
         }
       )
@@ -260,9 +253,6 @@ export default class CombatHelicopter_1
       const barrelWrapperY = new Object3D();
       const barrelWrapperX = new Object3D();
 
-      const barrelTargetShoot = createBarrelTargetShoot();
-      barrelTargetObj.add(barrelTargetShoot);
-
       barrelObj.position.set(0, 0.03, -0.25);
       barrelWrapperX.add(barrelObj);
 
@@ -284,12 +274,12 @@ export default class CombatHelicopter_1
         {
           barrels: [barrelWrapperX, barrelWrapperY],
           barrelTargets: [barrelTargetObj],
-          barrelTargetShoots: [barrelTargetShoot]
+          barrelTargetShoots: [barrelTargetObj]
         },
         {
           barrels: [barrelWrapperX, barrelWrapperY],
           barrelTargets: [barrelTargetObj],
-          barrelTargetShoots: [barrelTargetShoot]
+          barrelTargetShoots: [barrelTargetObj]
         }
       );
 

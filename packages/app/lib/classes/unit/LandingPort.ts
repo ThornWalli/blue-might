@@ -32,7 +32,17 @@ export default class LandingPortUnit<
   ) {
     moduleList = (moduleList || []) as ModuleList;
     moduleList = addModules(moduleList, [LandingPortUnitModule]);
-    super(options, moduleList);
+    super(
+      {
+        ...options,
+        moduleStates: {
+          collision: {
+            enabled: false
+          }
+        }
+      },
+      moduleList
+    );
   }
 
   override getTileType() {

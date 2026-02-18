@@ -1,3 +1,5 @@
+import { TILE_TYPE } from '@blue-might/app/lib/utils/pathfinding';
+
 import { UNIT_TYPE } from '../../../types/unit';
 import { addModules } from '../../Module';
 import type { UnitConstructorOptions } from '../../Unit';
@@ -22,6 +24,11 @@ export default class AirVehicleUnit<
   Options extends AirVehicleUnitOptions = AirVehicleUnitOptions
 > extends VehicleUnit<Modules, ModuleList, Options> {
   static override TYPE = UNIT_TYPE.AIR_VEHICLE;
+
+  override getTileType() {
+    return TILE_TYPE.UNIT_AIR;
+  }
+
   constructor(
     options: UnitConstructorOptions<Options>,
     moduleList?: ModuleList

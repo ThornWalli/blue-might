@@ -15,11 +15,12 @@
 </template>
 
 <script lang="ts" setup>
-import { markRaw, onMounted, ref, type Raw } from 'vue';
+import type { Raw } from 'vue';
 import { EMPTY, map, Subscription, switchMap } from 'rxjs';
 import type Unit from '@blue-might/app/lib/classes/Unit';
 import type WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import type { UnitModules } from '@blue-might/app/lib/classes/Unit';
+import { markRaw, onMounted, ref } from 'vue';
 
 import BmGunScreen from '../GunScreen.vue';
 import BmPanel from '../Panel.vue';
@@ -48,7 +49,7 @@ onMounted(() => {
         )
       )
       .subscribe(u => {
-        unit.value = u?.modules.weapon ? markRaw(u) : null;
+        unit.value = u?.modules.weapon.hasSlots() ? markRaw(u) : null;
       })
   );
 });

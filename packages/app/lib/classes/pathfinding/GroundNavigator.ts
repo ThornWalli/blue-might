@@ -12,7 +12,8 @@ export default class GroundNavigator extends BaseNavigator {
       TILE_TYPE.DRY_ROAD,
       TILE_TYPE.BETON_ROAD,
       TILE_TYPE.GRASS,
-      TILE_TYPE.UNIT_PLATFORM
+      TILE_TYPE.UNIT_PLATFORM,
+      TILE_TYPE.UNIT_AIR
       // TILE_TYPE.WATER
       // TILE_TYPE.UNIT,
       // TILE_TYPE.UNIT_GROUND
@@ -31,7 +32,8 @@ export default class GroundNavigator extends BaseNavigator {
       [TILE_TYPE.DRY_ROAD]: 200,
       [TILE_TYPE.BETON_ROAD]: 50,
       [TILE_TYPE.WATER]: 2000,
-      [TILE_TYPE.UNIT_PLATFORM]: 100
+      [TILE_TYPE.UNIT_PLATFORM]: 100,
+      [TILE_TYPE.UNIT_AIR]: 100
     };
   }
 }

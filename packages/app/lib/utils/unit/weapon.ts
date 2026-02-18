@@ -2,13 +2,6 @@
 
 import { lerp } from 'three/src/math/MathUtils.js';
 import type { Euler, Object3D, Vector2 } from 'three';
-import {
-  Box3,
-  CylinderGeometry,
-  Mesh,
-  MeshLambertMaterial,
-  Vector3
-} from 'three';
 
 import { ControlAction } from '../../classes/playerModule/Controls';
 import type { UnitModules } from '../../classes/Unit';
@@ -70,31 +63,6 @@ export function updateControls(
   } else {
     unit.modules.weapon.abortShoot();
   }
-}
-
-export function createBarrelTargetShoot({
-  object,
-  color
-}: { object?: Object3D; color?: number } = {}) {
-  let geometry;
-  if (object) {
-    const box = new Box3().setFromObject(object);
-    const size = box.getSize(new Vector3());
-    const factor = Math.min(size.x, size.y, size.z);
-    geometry = new CylinderGeometry(factor * 4, factor * 8, factor * 30);
-  } else geometry = new CylinderGeometry(0.05, 0.075, 0.3);
-  geometry.translate(0, -geometry.parameters.height / 2, 0);
-  geometry.rotateX(-Math.PI / 2);
-  const barrelTargetShoot = new Mesh(
-    geometry,
-    new MeshLambertMaterial({
-      color: color ?? 0xffffff,
-      flatShading: true
-    })
-  );
-  barrelTargetShoot.visible = false;
-
-  return barrelTargetShoot;
 }
 
 export function normalizeAngle(angle: number): number {

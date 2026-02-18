@@ -45,7 +45,10 @@ export default class WindTurbine_1<
           ...options.moduleOptions,
           collision: {
             ...options.moduleOptions?.collision,
-            targets: [{ name: 'base', default: true }, { name: 'head' }]
+            targets: [
+              { name: 'base', default: true },
+              { name: 'head', parentRotation: true }
+            ]
           }
         }
       },
@@ -66,11 +69,14 @@ export default class WindTurbine_1<
 
     const globalRotation =
       this.getMap()?.modules.airFlow.getRotation() ?? new Euler();
-    const head = this.root.getObjectByName('head');
-    if (head) {
-      head.rotation.y = globalRotation.y;
-      head.rotation.y = globalRotation.y;
+    const headWrapper = this.root.getObjectByName('head_wrapper');
+    if (headWrapper) {
+      headWrapper.rotation.y = globalRotation.y;
+      headWrapper.rotation.y = globalRotation.y;
     }
+
+    this.modules.collision.refreshWorldOBBs();
+    this.modules.collision.refreshDebugHelpers();
   }
 
   override async createMesh(_context: SetupContext) {

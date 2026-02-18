@@ -17,7 +17,6 @@ import MovableUnitModule from '@blue-might/app/lib/classes/unitModule/Movable';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import type { ControlState } from '@blue-might/app/lib/classes/playerModule/Controls';
 import { playSound } from '@blue-might/weapon/utils';
-import { createBarrelTargetShoot } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/stationary_gun_2.glb?url';
@@ -187,17 +186,11 @@ export default class StationaryGun_2 extends BuildingUnit<
     barrelWrapperSecondary.position.set(0, 0.55, 0.1);
     headObj.add(barrelWrapperSecondary);
 
-    const barrelTargetShootPrimary = createBarrelTargetShoot();
-    barrelPrimaryTargetObj.add(barrelTargetShootPrimary);
-
-    const barrelTargetShootSecondary = createBarrelTargetShoot();
-    barrelSecondaryTargetObj.add(barrelTargetShootSecondary);
-
     this.objects = {
       head: headObj,
       barrels: [barrelWrapperPrimary, barrelWrapperSecondary],
       barrelTargets: [barrelPrimaryTargetObj, barrelSecondaryTargetObj],
-      barrelTargetShoots: [barrelTargetShootPrimary, barrelTargetShootSecondary]
+      barrelTargetShoots: [barrelPrimaryTargetObj, barrelSecondaryTargetObj]
     };
 
     this.modules.weapon.registerBarrelTarget(barrelPrimaryTargetObj);

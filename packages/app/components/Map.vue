@@ -236,7 +236,7 @@ onMounted(() => {
       // define default scale from minMapSize
       defaultScale.value =
         Math.min(mapDimension.value.x, mapDimension.value.y) / minMapSize;
-      localScale.value = defaultScale.value;
+      localScale.value = 1;
 
       mapSize.value = new Vector2(mapDimension.value.x, mapDimension.value.y);
       scaledMapSize.value = new Vector2(

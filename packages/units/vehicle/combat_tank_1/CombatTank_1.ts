@@ -25,7 +25,6 @@ import { playSound } from '@blue-might/weapon/utils';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import {
   autoAimFunction,
-  createBarrelTargetShoot,
   updateControls
 } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
@@ -71,8 +70,6 @@ export default class CombatTank_1
     barrelTargets: Object3D[];
     barrelTargetShoots: Object3D[];
   }[] = [];
-
-  private barrelTargetShootTimeouts: number[] = [];
 
   constructor(
     options: Omit<UnitConstructorOptions<CombatTankOptions>, 'name'> = {},
@@ -142,12 +139,7 @@ export default class CombatTank_1
     //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ index, shoot: { projectile, slot } }) => {
-          this.objects[index]!.barrelTargetShoots[0]!.visible = true;
-          window.clearTimeout(this.barrelTargetShootTimeouts[index]);
-          this.barrelTargetShootTimeouts[index] = window.setTimeout(() => {
-            this.objects[index]!.barrelTargetShoots[0]!.visible = false;
-          }, 1000 / slot.weapon.perSeconds);
+        async ({ shoot: { projectile } }) => {
           playSound(await projectile.getSfx(), 0.3);
         }
       )
@@ -172,14 +164,11 @@ export default class CombatTank_1
     barrelWrapper.add(barrelObj);
     headObj.add(barrelWrapper);
 
-    const barrelTargetShoot = createBarrelTargetShoot();
-    barrelTargetObj.add(barrelTargetShoot);
-
     this.objects.push({
       head: headObj,
       barrels: [barrelWrapper],
       barrelTargets: [barrelTargetObj],
-      barrelTargetShoots: [barrelTargetShoot]
+      barrelTargetShoots: [barrelTargetObj]
     });
 
     this.modules.weapon.registerBarrelTarget(barrelTargetObj);

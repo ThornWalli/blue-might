@@ -408,6 +408,10 @@ export default class WeaponUnitModule<
     return this.slots;
   }
 
+  public hasSlots() {
+    return this.slots.length > 0;
+  }
+
   isAutoAimActive() {
     return this.state.autoAimActive;
   }

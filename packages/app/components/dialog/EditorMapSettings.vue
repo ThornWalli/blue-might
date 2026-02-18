@@ -107,7 +107,6 @@ onUnmounted(() => {
 function onSubmit(e: Event) {
   e.preventDefault();
 
-  debugger;
   editorMapSettingsModule.setMeta(meta.value);
   editorMapSettingsModule.setFogOptions({
     ...fogOptions.value,
