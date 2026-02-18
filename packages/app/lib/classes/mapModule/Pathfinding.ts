@@ -17,12 +17,7 @@ import GroundNavigator from '../pathfinding/GroundNavigator';
 import AirNavigator, { VehicleType } from '../pathfinding/AirNavigator';
 import type Unit from '../Unit';
 import SeaNavigator from '../pathfinding/SeaNavigator';
-import {
-  isAirVehicle,
-  isBuilding,
-  isGroundVehicle,
-  isSeaVehicle
-} from '../../utils/unit';
+import { isAirVehicle, isSeaVehicle } from '../../utils/unit';
 import type { GridNode } from '../pathfinding/Grid';
 import Grid from '../pathfinding/Grid';
 import { TILE_TYPE, TILE_TYPES, type TileType } from '../../utils/pathfinding';
@@ -239,15 +234,17 @@ export default class PathfindingModule extends MapModule<State, Observables> {
         const grid = this.grid;
         if (grid) {
           const usedNodes: Set<GridNode> = new Set();
-          grid.resetNodes(this.unitNodes.get(unit) ?? []).forEach(node => {
-            usedNodes.add(node);
-          });
+          grid
+            .resetNodesByUnit(this.unitNodes.get(unit) ?? [], unit)
+            .forEach(node => {
+              usedNodes.add(node);
+            });
 
           const nodes = grid.getNodesAroundObject(
             unit.modules.collision.getDefaultCollisionObject() ?? unit.root
           );
           nodes.forEach(node => {
-            grid.updateNode(node.x, node.y, getTileTypeByUnit(unit));
+            grid.updateNodeByUnit(node.x, node.y, unit);
             usedNodes.add(node);
           });
           this.unitNodes.set(unit, nodes);
@@ -404,27 +401,4 @@ function getColorByTileType(type: TILE_TYPE): number {
     default:
       return 0xffffff;
   }
-}
-
-function getTileTypeByUnit(unit: Unit): TILE_TYPE {
-  const tileType = unit.getTileType();
-  if (tileType !== TILE_TYPE.UNIT) {
-    return tileType;
-  }
-
-  if (isBuilding(unit)) {
-    return TILE_TYPE.UNIT_BUILDING;
-  }
-  if (isAirVehicle(unit)) {
-    return TILE_TYPE.UNIT_AIR;
-  }
-  if (isSeaVehicle(unit)) {
-    return TILE_TYPE.UNIT_SEA;
-  }
-
-  if (isGroundVehicle(unit)) {
-    return TILE_TYPE.UNIT_GROUND;
-  }
-
-  return TILE_TYPE.UNIT;
 }

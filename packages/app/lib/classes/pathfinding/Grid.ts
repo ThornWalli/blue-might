@@ -3,8 +3,10 @@ import type { Object3D, Sphere } from 'three';
 import { Box3, Vector2, Vector3 } from 'three';
 
 import type { TILE_TYPE } from '../../utils/pathfinding';
+import type Unit from '../Unit';
 
 export class GridNode {
+  units: Set<Unit> = new Set();
   clone(): GridNode {
     return new GridNode(this);
   }
@@ -43,6 +45,12 @@ export default class Grid {
   resetNodes(nodes: GridNode[]) {
     return nodes.map(node => {
       this.updateNode(node.x, node.y);
+      return node;
+    });
+  }
+  resetNodesByUnit(nodes: GridNode[], unit: Unit) {
+    return nodes.map(node => {
+      this.updateNodeByUnit(node.x, node.y, unit, true);
       return node;
     });
   }
@@ -120,6 +128,20 @@ export default class Grid {
   ) {
     const node = this.getNode(x, z);
     node.type = tileType;
+    this.matrix[z]![x] = node.type;
+  }
+
+  updateNodeByUnit(x: number, z: number, unit: Unit, reset: boolean = false) {
+    const node = this.getNode(x, z);
+    if (reset) {
+      node.units.delete(unit);
+    } else {
+      node.units.add(unit);
+    }
+    const tileTypeUnit = Array.from(node.units).sort(
+      (a, b) => a.getPosition().y - b.getPosition().y
+    )[0];
+    node.type = tileTypeUnit?.getTileType() ?? node.initialType;
     this.matrix[z]![x] = node.type;
   }
 

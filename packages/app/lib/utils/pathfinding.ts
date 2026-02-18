@@ -1,7 +1,15 @@
 import type { Object3D, Vector3, Texture } from 'three';
 import { Raycaster, Vector2 } from 'three';
 
+import type Unit from '../classes/Unit';
+
 import { resizeCanvas } from './canvas';
+import {
+  isAirVehicle,
+  isBuilding,
+  isGroundVehicle,
+  isSeaVehicle
+} from './unit';
 
 export type TileType = number;
 
@@ -125,4 +133,27 @@ export function getCostsFromImage(
   }
 
   return tileMap;
+}
+
+export function getTileTypeByUnit(unit: Unit): TILE_TYPE {
+  const tileType = unit.getTileType();
+  if (tileType !== TILE_TYPE.UNIT) {
+    return tileType;
+  }
+
+  if (isBuilding(unit)) {
+    return TILE_TYPE.UNIT_BUILDING;
+  }
+  if (isAirVehicle(unit)) {
+    return TILE_TYPE.UNIT_AIR;
+  }
+  if (isSeaVehicle(unit)) {
+    return TILE_TYPE.UNIT_SEA;
+  }
+
+  if (isGroundVehicle(unit)) {
+    return TILE_TYPE.UNIT_GROUND;
+  }
+
+  return TILE_TYPE.UNIT;
 }

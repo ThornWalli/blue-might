@@ -159,10 +159,6 @@ export default class Unit<
   visible: boolean = true;
   ready: boolean = false;
   moduleDebug: Partial<ModuleDebug> = {};
-
-  getRoot() {
-    return this.root;
-  }
   updateModules: UnitModule[] = [];
   map: Map | null = null;
   groundAdjustmentMode: GROUND_ADJUSTMENT_MODE = GROUND_ADJUSTMENT_MODE.GROUND;
@@ -294,6 +290,10 @@ export default class Unit<
 
   get key(): string {
     return (this.constructor as typeof Unit).KEY;
+  }
+
+  getRoot() {
+    return this.root;
   }
 
   equal(unit: Unit) {
