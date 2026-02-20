@@ -33,7 +33,14 @@ export default class Barrack_1<
     super(
       {
         ...options,
-        name: 'Barrack 1'
+        name: 'Barrack 1',
+        moduleOptions: {
+          ...options.moduleOptions,
+          collision: {
+            ...options.moduleOptions?.collision,
+            targets: [{ name: 'base', default: true }]
+          }
+        }
       },
       moduleList
     );

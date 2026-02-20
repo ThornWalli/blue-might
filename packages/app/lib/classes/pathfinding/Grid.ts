@@ -222,7 +222,7 @@ export default class Grid {
     } else {
       const colliderSize = aabb.getSize(new Vector3());
       // Buffer
-      const bufferFactor = 0.05;
+      const bufferFactor = 0;
       const buffer = Math.max(colliderSize.x, colliderSize.z) * bufferFactor;
       aabb.expandByScalar(buffer);
     }

@@ -55,6 +55,10 @@ export default class BarrackRescue_1<
           transport: {
             maxSlots: Infinity,
             entryPosition: new Vector2(0, 0.65)
+          },
+          collision: {
+            ...options.moduleOptions?.collision,
+            targets: [{ name: 'base', default: true }]
           }
         }
       },
