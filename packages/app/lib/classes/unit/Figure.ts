@@ -1,9 +1,14 @@
 import type { UnitConstructorOptions, UnitOptions } from '../Unit';
 import PatrolUnitModule from '../unitModule/Patrol';
-import { GROUND_ADJUSTMENT_MODE, UNIT_TYPE } from '../../types/unit';
+import {
+  GROUND_ADJUSTMENT_MODE,
+  UNIT_TYPE,
+  type SetupContext
+} from '../../types/unit';
 import { addModules } from '../Module';
 import FigureMovableUnitModule from '../unitModule/movable/FigureMovable';
 import FigureUnitModule from '../unitModule/Figure';
+import { disableSurfaceDetection } from '../../utils/object';
 
 import MovableUnit, {
   type MovableUnitModuleList,
@@ -66,5 +71,10 @@ export default class FigureUnit<
       moduleList
     );
     this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.FIGURE);
+  }
+  override async afterSetup(_context: SetupContext) {
+    await super.afterSetup(_context);
+
+    disableSurfaceDetection(this.root);
   }
 }

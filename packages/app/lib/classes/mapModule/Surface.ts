@@ -50,6 +50,14 @@ declare module '../Map' {
   }
 }
 
+declare module '../../utils/object' {
+  interface ObjectUserData {
+    IGNORE_SURFACE_DETECTION: string;
+  }
+}
+
+OBJECT_USER_DATA.IGNORE_SURFACE_DETECTION = 'ignoreSurfaceDetection';
+
 interface Observables extends MapModuleObservables {
   select$: Subject<Vector2>;
   hover$: Subject<Vector2>;
@@ -379,7 +387,9 @@ export default class SurfaceModule extends MapModule<
     });
 
     allMeshes = allMeshes.filter(
-      mesh => !mesh.userData[OBJECT_USER_DATA.IGNORE_RAYCASTER]
+      mesh =>
+        !mesh.userData[OBJECT_USER_DATA.IGNORE_RAYCASTER] ||
+        !mesh.userData[OBJECT_USER_DATA.IGNORE_SURFACE_DETECTION]
     );
 
     const intersections = raycaster.intersectObjects(allMeshes, true);
@@ -469,7 +479,9 @@ export default class SurfaceModule extends MapModule<
     });
 
     allMeshes = allMeshes.filter(
-      mesh => !mesh.userData[OBJECT_USER_DATA.IGNORE_RAYCASTER]
+      mesh =>
+        !mesh.userData[OBJECT_USER_DATA.IGNORE_RAYCASTER] ||
+        !mesh.userData[OBJECT_USER_DATA.IGNORE_SURFACE_DETECTION]
     );
 
     const intersections = raycaster.intersectObjects(allMeshes, false);

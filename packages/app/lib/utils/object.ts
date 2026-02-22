@@ -91,3 +91,10 @@ export function disablePathfinding(object: Object3D) {
     }
   });
 }
+export function disableSurfaceDetection(object: Object3D) {
+  object.traverse(child => {
+    if (child instanceof Mesh) {
+      child.userData[OBJECT_USER_DATA.IGNORE_SURFACE_DETECTION] = true;
+    }
+  });
+}
