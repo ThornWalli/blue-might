@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.66](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.65...v1.0.0-beta.66) (2026-02-22)
+
+
+### Bug Fixes
+
+* **app:** add loading state and transition for app initialization ([5dcd340](https://github.com/ThornWalli/blue-might/commit/5dcd3408c7ed55f261915ea7269c01a41dad9ac5))
+
 # [1.0.0-beta.65](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.64...v1.0.0-beta.65) (2026-02-22)
 
 
