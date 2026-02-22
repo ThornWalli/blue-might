@@ -41,15 +41,19 @@ declare module '../Map' {
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Observables extends MapModuleObservables {}
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface Options extends MapModuleState {}
 interface State extends MapModuleState {
   particles: Particle[];
 }
 
-export default class EffectModule extends MapModule<State, Observables> {
+export default class EffectModule extends MapModule<
+  Options,
+  State,
+  Observables
+> {
   static override TYPE = 'effect';
-  override state: State = {
-    particles: []
-  };
+
   private textures: {
     fire: Texture<ImageBitmap>;
     smoke: {
@@ -60,8 +64,13 @@ export default class EffectModule extends MapModule<State, Observables> {
   } | null = null;
 
   private root: Group;
-  constructor(map: Map, debug: boolean) {
-    super(map, debug);
+  constructor(map: Map, options: Options, states: State, debug: boolean) {
+    super(
+      map,
+      options,
+      { ...states, particles: states.particles ?? [] },
+      debug
+    );
     this.root = new Group();
     this.addToScene(this.root);
   }

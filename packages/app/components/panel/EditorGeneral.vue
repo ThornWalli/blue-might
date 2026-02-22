@@ -26,7 +26,7 @@
       :disabled="played"
       label="Settings"
       @click="onClickMapSettings" />
-    <bm-button label="Missions" disabled />
+    <bm-button :disabled="played" label="Mission" @click="onClickMission" />
     <bm-button :disabled="played" label="Player" @click="onClickPlayer" />
     <bm-button :disabled="played" label="Surface" @click="onClickSurface" />
     <bm-button :disabled="played" label="Units" @click="onClickUnits" />
@@ -44,6 +44,12 @@
         <template #header>Surface Settings</template>
         <template #default>
           <bm-dialog-editor-surface-settings :app="$props.app" />
+        </template>
+      </bm-dialog>
+      <bm-dialog ref="missionDialog">
+        <template #header>Mission Settings</template>
+        <template #default>
+          <bm-dialog-editor-mission-settings :app="$props.app" />
         </template>
       </bm-dialog>
       <bm-dialog ref="factionsDialog">
@@ -75,6 +81,7 @@ import BmButton from '../Button.vue';
 import BmDialog from '../Dialog.vue';
 import BmDialogEditorMapSettings from '../dialog/EditorMapSettings.vue';
 import BmDialogEditorFactionSettings from '../dialog/EditorFactionSettings.vue';
+import BmDialogEditorMissionSettings from '../dialog/EditorMissionSettings.vue';
 import BmDialogEditorSurfaceSettings from '../dialog/EditorSurfaceSettings.vue';
 import BmDialogEditorNew from '../dialog/EditorNew.vue';
 
@@ -116,6 +123,7 @@ onUnmounted(() => {
 
 const mapSettingsDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 const factionsDialog = ref<InstanceType<typeof BmDialog> | null>(null);
+const missionDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 const surfaceDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 const newDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 
@@ -137,6 +145,11 @@ async function onClickSurface() {
 async function onClickFactions() {
   await reset();
   factionsDialog.value?.context?.open();
+}
+
+async function onClickMission() {
+  await reset();
+  missionDialog.value?.context?.open();
 }
 
 async function onClickPlayer() {

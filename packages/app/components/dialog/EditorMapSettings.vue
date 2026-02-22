@@ -1,5 +1,8 @@
 <template>
-  <form class="bm-dialog-editor-map-settings" @submit="onSubmit">
+  <form
+    class="bm-dialog-editor-map-settings"
+    @submit="onSubmit"
+    @reset="onReset">
     <bm-fieldset label="General">
       <bm-form-field v-slot="{ id }" label="Map Name">
         <bm-textfield v-model="meta.name" :el-attrs="{ id }"></bm-textfield>
@@ -24,7 +27,7 @@
       </bm-form-field>
     </bm-fieldset>
     <div class="controls">
-      <bm-button label="Abort" @click="onClickAbort" />
+      <bm-button label="Abort" type="reset" />
       <div class="spacer"></div>
       <bm-button label="Debug" type="button" @click="onClickDebug" />
       <bm-button label="Apply" type="submit" />
@@ -115,13 +118,14 @@ function onSubmit(e: Event) {
 
   dialog.close();
 }
+
+function onReset() {
+  dialog.close();
+}
+
 const unitDebugDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 function onClickDebug() {
   unitDebugDialog.value?.context?.open();
-}
-
-function onClickAbort() {
-  dialog.close();
 }
 </script>
 

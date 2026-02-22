@@ -21,7 +21,6 @@ onUnmounted(() => {
 });
 
 const map: Partial<MapDescription> = {
-  factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]],
   playerOptions: {
     position: [0, 0, 0],
     faction: FACTION.BLUE,
@@ -44,65 +43,72 @@ const map: Partial<MapDescription> = {
       }
     }
   },
-  units: [
-    {
-      key: 'landing_port_supply_station_1',
-      moduleDebug: {
-        collision: false,
-        supply: false
-      },
-      position: [0, 0, 0],
-      moduleOptions: {
-        faction: {
-          faction: FACTION.BLUE
-        }
-      }
+  moduleOptions: {
+    faction: {
+      factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]]
     },
-    {
-      key: 'missile_launcher_1',
-      position: [-2.83, 0, 2.5],
-      moduleOptions: {
-        faction: {
-          faction: FACTION.BLUE
+    units: {
+      units: [
+        {
+          key: 'landing_port_supply_station_1',
+          moduleDebug: {
+            collision: false,
+            supply: false
+          },
+          position: [0, 0, 0],
+          moduleOptions: {
+            faction: {
+              faction: FACTION.BLUE
+            }
+          }
+        },
+        {
+          key: 'missile_launcher_1',
+          position: [-2.83, 0, 2.5],
+          moduleOptions: {
+            faction: {
+              faction: FACTION.BLUE
+            }
+          }
+        },
+        {
+          key: 'turret_1',
+          position: [2.83, 0, 2.5],
+          moduleOptions: {
+            faction: {
+              faction: FACTION.BLUE
+            }
+          }
+        },
+        {
+          key: 'turret_1',
+          position: [2.83, 0, 2.5],
+          moduleOptions: {
+            faction: {
+              faction: FACTION.BLUE
+            }
+          }
+        },
+        {
+          key: 'missile_launcher_1',
+          position: [-2.83, 0, 14.83],
+          moduleOptions: {
+            faction: {
+              faction: FACTION.ENEMY
+            }
+          }
+        },
+        {
+          key: 'turret_1',
+          position: [2.83, 0, 14.83],
+          moduleOptions: {
+            faction: {
+              faction: FACTION.ENEMY
+            }
+          }
         }
-      }
-    },
-    {
-      key: 'turret_1',
-      position: [2.83, 0, 2.5],
-      moduleOptions: {
-        faction: {
-          faction: FACTION.BLUE
-        }
-      }
-    },
-    {
-      key: 'turret_1',
-      position: [2.83, 0, 2.5],
-      moduleOptions: {
-        faction: {
-          faction: FACTION.BLUE
-        }
-      }
-    },
-    {
-      key: 'missile_launcher_1',
-      position: [-2.83, 0, 14.83],
-      moduleOptions: {
-        faction: {
-          faction: FACTION.ENEMY
-        }
-      }
-    },
-    {
-      key: 'turret_1',
-      position: [2.83, 0, 14.83],
-      moduleOptions: {
-        faction: {
-          faction: FACTION.ENEMY
-        }
-      }
+      ]
     }
-  ]
+  }
 };
 </script>

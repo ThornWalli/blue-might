@@ -31,14 +31,13 @@ export default class EditorPatrolAppModule extends AppModule<
   Observables
 > {
   static override TYPE = 'editorPatrol';
-  override state: State = {
-    unit: null,
-    index: 0,
-    active: false
-  };
 
   constructor(app: App) {
-    super(app, {} as State);
+    super(app, {
+      unit: null,
+      index: 0,
+      active: false
+    });
     //#region observables
     this.observables.unit$ = new ReplaySubject<Units | null>(1);
     this.observables.index$ = new ReplaySubject<number>(1);

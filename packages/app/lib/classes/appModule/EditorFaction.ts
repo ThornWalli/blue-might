@@ -18,7 +18,6 @@ export default class EditorFactionAppModule extends AppModule<
   Observables
 > {
   static override TYPE = 'editorFaction';
-  override state: State = {};
 
   get neutralFaction() {
     const map = this.app.modules.map.getMap();

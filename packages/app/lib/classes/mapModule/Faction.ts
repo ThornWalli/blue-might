@@ -11,6 +11,12 @@ import type Unit from '../Unit';
 import factions, { FACTION } from '../../utils/factions';
 
 declare module '../Map' {
+  interface ModuleStates {
+    faction: Partial<State>;
+  }
+  interface ModuleOptions {
+    faction: Partial<Options>;
+  }
   interface ModuleDebug {
     faction: boolean;
   }
@@ -21,28 +27,43 @@ interface Observables extends MapModuleObservables {
   factions$: ReplaySubject<Faction[]>;
 }
 
+interface Options extends MapModuleState {
+  factions: FactionDescription[];
+}
 interface State extends MapModuleState {
   factions: Faction[];
 }
 
-export default class FactionModule extends MapModule<State, Observables> {
+export default class FactionModule extends MapModule<
+  Options,
+  State,
+  Observables
+> {
   static override TYPE = 'faction';
-  readonly neutralFaction = new Faction(factions[FACTION.NEUTRAL]);
-  override state: State = {
-    factions: [this.neutralFaction]
-  };
-  constructor(map: Map, debug: boolean) {
-    super(map, debug);
+  readonly neutralFaction;
+
+  constructor(map: Map, options: Options, states: State, debug: boolean) {
+    const neutralFaction = new Faction(factions[FACTION.NEUTRAL]);
+    super(
+      map,
+      options,
+      {
+        ...states,
+        factions: [neutralFaction]
+      },
+      debug
+    );
     //#region observables
     this.observables.factions$ = new ReplaySubject<Faction[]>(1);
     this.observables.add$ = new Subject<Faction>();
     //#endregion
+
+    this.neutralFaction = neutralFaction;
+    this.setFactions(this.options.factions);
   }
 
   override async setup() {
     await super.setup();
-
-    this.setFactions(this.map.description.factions);
   }
 
   addFaction(faction: Faction) {
@@ -74,5 +95,13 @@ export default class FactionModule extends MapModule<State, Observables> {
       unit.modules.faction.getFaction()?.id
     ];
     return friendlyFactions.includes(target.modules.faction.getFaction()?.id);
+  }
+
+  override async getOptions() {
+    return {
+      factions: Object.values(this.getFactions())
+        .filter(faction => !faction.builtin)
+        .map(faction => faction.toDescription())
+    };
   }
 }

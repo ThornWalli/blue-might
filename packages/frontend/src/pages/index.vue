@@ -52,7 +52,7 @@ onMounted(async () => {
       joinURL(
         '/',
         $runtimeConfig.app.baseURL,
-        String($route.query.map ?? 'extended_map.zip')
+        `maps/${String($route.params.map ?? 'extended_map.zip')}`
       )
     ).then(res => res.arrayBuffer())
   );

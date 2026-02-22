@@ -7,7 +7,7 @@
       'embed-content': embedContent
     }">
     <div class="wrapper">
-      <div class="header">
+      <div v-if="!hideHeader" class="header">
         <header v-if="$slots.header">
           <slot :close="close" name="header"></slot>
         </header>
@@ -52,6 +52,7 @@ import BaseButton from './base/Button.vue';
 const dialog = ref<InstanceType<typeof BaseDialog> | null>(null);
 
 const $props = defineProps<{
+  hideHeader?: boolean;
   forceOpen?: boolean;
   hideClose?: boolean;
   showFullscreen?: boolean;

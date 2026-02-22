@@ -36,17 +36,15 @@ const AppComponent = defineAsyncComponent(
 );
 
 const config = ref<AppConfig>({
-  mode: APP_MODE.DEBUG,
+  mode: APP_MODE.PLAYGROUND,
   rendererOptions: {
-    fog: {
-      enabled: false
-    },
-    pixelated: false,
+    pixelated: true,
     controls: true
   }
 });
 
 const $route = useRoute();
+
 const $runtimeConfig = useRuntimeConfig();
 const description = ref<Raw<MapDescription>>();
 onMounted(async () => {
@@ -55,11 +53,13 @@ onMounted(async () => {
       joinURL(
         '/',
         $runtimeConfig.app.baseURL,
-        `maps/${String($route.params.map ?? 'debug/default.zip')}`
+        `maps/${String($route.params.map ?? 'extended_map.zip')}`
       )
     ).then(res => res.arrayBuffer())
   );
-  description.value = markRaw(desc);
+  description.value = markRaw({
+    ...desc
+  } as MapDescription);
 });
 
 async function onSetup(app: App) {

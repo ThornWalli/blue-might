@@ -1,6 +1,6 @@
 import { Subject } from 'rxjs';
 import type { Object3D, Sphere } from 'three';
-import { Box3, Vector2, Vector3 } from 'three';
+import { Box3, Vector2 } from 'three';
 
 import type { TILE_TYPE } from '../../utils/pathfinding';
 import type Unit from '../Unit';
@@ -219,12 +219,6 @@ export default class Grid {
     const aabb = box.setFromObject(object);
     if (sphere) {
       aabb.expandByScalar(sphere.radius);
-    } else {
-      const colliderSize = aabb.getSize(new Vector3());
-      // Buffer
-      const bufferFactor = 0;
-      const buffer = Math.max(colliderSize.x, colliderSize.z) * bufferFactor;
-      aabb.expandByScalar(buffer);
     }
 
     // Clipping auf Grid-Grenzen, um ungültige Zellen zu vermeiden

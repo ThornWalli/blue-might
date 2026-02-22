@@ -68,8 +68,8 @@ defineExpose<DialogContext>({
 
 <script lang="ts">
 export interface DialogContext<Result = unknown> {
-  open: () => Promise<Result>;
-  close: (value?: Result | undefined) => void;
+  open<O = unknown, R = Result>(options?: O): Promise<R>;
+  close<R = Result>(value?: R): void;
   visible: Ref<boolean, boolean>;
   fullscreen: Ref<boolean, boolean>;
   toggleFullscreen: () => void;

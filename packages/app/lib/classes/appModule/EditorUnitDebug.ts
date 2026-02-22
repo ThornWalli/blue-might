@@ -23,13 +23,11 @@ export default class EditorUnitDebugAppModule extends AppModule<
   Observables
 > {
   static override TYPE = 'editorUnitDebug';
-  override state: State = {
-    unit: null,
-    moduleDebug: {}
-  };
-
   constructor(app: App) {
-    super(app, {} as State);
+    super(app, {
+      unit: null,
+      moduleDebug: {}
+    });
     //#region observables
     this.observables.unit$ = new ReplaySubject<Unit | null>(1);
     this.observables.moduleDebug$ = new ReplaySubject<Partial<ModuleDebug>>(1);

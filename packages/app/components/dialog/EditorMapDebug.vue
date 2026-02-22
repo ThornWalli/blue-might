@@ -30,7 +30,8 @@ const moduleDebug: ModuleDebug = reactive({
   pathfinding: false,
   shoot: false,
   surface: false,
-  units: false
+  units: false,
+  mission: false
 });
 const dialog = inject<DialogContext>('dialog')!;
 

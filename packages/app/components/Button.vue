@@ -31,8 +31,8 @@ import BmBaseIcon from './base/Icon.vue';
 defineProps<{
   disabled?: boolean;
   tag?: string;
-  styleType?: 'primary' | 'secondary' | 'tertiary' | 'quaternary';
-  mode?: 'normal' | 'icon';
+  styleType?: 'primary' | 'secondary' | 'danger';
+  mode?: 'normal' | 'icon' | 'text';
   selected?: boolean;
   label?: string;
   hideLabel?: boolean;
@@ -92,11 +92,27 @@ defineProps<{
       --color-foreground: var(--color-white);
       --color-border: var(--color-gold);
     }
+
+    &.style-type-danger {
+      --color-background: var(--color-red-dark);
+      --color-background-hover: var(--color-red-mid);
+      --color-foreground: var(--color-white);
+      --color-border: var(--color-gold);
+    }
   }
 
   &.mode-icon {
     padding: var(--bm-spacing-medium);
     color: var(--color-foreground);
+  }
+
+  &.mode-text {
+    padding: 0;
+    font-family: var(--font-family-base);
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--color-foreground);
+    text-decoration: underline;
   }
 
   & span {

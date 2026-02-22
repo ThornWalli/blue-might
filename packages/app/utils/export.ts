@@ -3,14 +3,19 @@ import { Color, Vector2, Vector3 } from 'three';
 import type { MapDescription } from '@blue-might/app/lib/types/map';
 
 import Unit from '../lib/classes/Unit';
+import type { SurfaceModuleOptions } from '../lib/classes/mapModule/Surface';
 
 export async function createExport(description: MapDescription) {
   const JSZip = await import('jszip').then(m => m.default);
   const { saveAs } = await import('file-saver');
 
+  const surfaceModule = description.moduleOptions.surface;
+  if (!surfaceModule?.textures)
+    throw new Error('Surface textures not found in map description');
+
   //#region textures to blob
   const textureBlobs = (await Promise.all(
-    Object.entries(description.surface.textures).map(([key, texture]) => {
+    Object.entries(surfaceModule.textures).map(([key, texture]) => {
       return fetch(texture)
         .then(response => response.blob())
         .then(blob => [key, blob]);
@@ -23,36 +28,48 @@ export async function createExport(description: MapDescription) {
 
   const textures = zip.folder('textures')!;
   const surface = {
-    ...description.surface,
-    textures: { ...description.surface.textures }
+    ...description.moduleOptions.surface,
+    textures: { ...surfaceModule.textures }
   };
   textureBlobs.forEach(([key, blob]) => {
-    surface.textures[key as keyof MapDescription['surface']['textures']] =
+    surface.textures[key as keyof SurfaceModuleOptions['textures']] =
       `textures/${key}.png`;
     textures.file(`${key}.png`, blob);
   });
 
   zip.file(
     'data.json',
-    JSON.stringify({ ...description, surface }, (key, value) => {
-      if (value instanceof Vector2 || value instanceof Vector3) {
-        return {
-          _type: 'Vector2',
-          _value: value.toArray()
-        };
+    JSON.stringify(
+      {
+        ...description,
+        moduleOptions: {
+          ...description.moduleOptions,
+          surface: {
+            ...description.moduleOptions.surface,
+            textures: { ...surface.textures }
+          }
+        }
+      } as MapDescription,
+      (key, value) => {
+        if (value instanceof Vector2 || value instanceof Vector3) {
+          return {
+            _type: 'Vector2',
+            _value: value.toArray()
+          };
+        }
+        if (value instanceof Color) {
+          return value.getHexString();
+        }
+        if (value instanceof Unit) {
+          return {
+            key: value.key,
+            id: value.id,
+            position: value.position
+          };
+        }
+        return value;
       }
-      if (value instanceof Color) {
-        return value.getHexString();
-      }
-      if (value instanceof Unit) {
-        return {
-          key: value.key,
-          id: value.id,
-          position: value.position
-        };
-      }
-      return value;
-    })
+    )
   );
 
   const zipContent = await zip.generateAsync({ type: 'blob' });
@@ -86,7 +103,7 @@ export async function getMapDescriptionFromArrayBuffer(buffer: ArrayBuffer) {
       })
   )) as [string, string][];
 
-  const description = JSON.parse(
+  let description = JSON.parse(
     (await zip.file('data.json')?.async('text')) ?? '{}',
     (key, value) => {
       if (value && typeof value === 'object') {
@@ -103,12 +120,18 @@ export async function getMapDescriptionFromArrayBuffer(buffer: ArrayBuffer) {
       return value;
     }
   ) as MapDescription;
+
+  description = fromLegacyMapDescription(description);
+
+  const surfaceModule = description.moduleOptions.surface;
+  if (!surfaceModule?.textures)
+    throw new Error('Surface textures not found in map description');
+  const textures = surfaceModule.textures;
+
   textureBlobs.forEach(([key, url]) => {
-    Object.keys(description.surface.textures).forEach(textureKey => {
+    Object.keys(textures).forEach(textureKey => {
       if (textureKey === key) {
-        description.surface.textures[
-          textureKey as keyof MapDescription['surface']['textures']
-        ] = url;
+        textures[textureKey as keyof SurfaceModuleOptions['textures']] = url;
       }
     });
   });
@@ -134,4 +157,45 @@ export function convertColor(color: number | string): string {
     return `#${color.toString(16).padStart(6, '0')}`;
   }
   return color;
+}
+
+export function fromLegacyMapDescription(
+  description: MapDescription
+): MapDescription {
+  if ('debug' in description && description.debug) {
+    description.moduleOptions = {
+      ...description.moduleOptions,
+      debug: {
+        ...description.debug
+      }
+    };
+  }
+  if ('units' in description && description.units) {
+    description.moduleOptions = {
+      ...description.moduleOptions,
+      units: {
+        units: description.units
+      }
+    };
+  }
+  if ('factions' in description && description.factions) {
+    description.moduleOptions = {
+      ...description.moduleOptions,
+      faction: {
+        factions: description.factions
+      }
+    };
+  }
+  if ('surface' in description && description.surface) {
+    description.moduleOptions = {
+      ...description.moduleOptions,
+      surface: {
+        textures: description.surface.textures,
+        heightMapInclude: description.surface.heightMapInclude,
+        noise: description.surface.noise
+      }
+    };
+  }
+
+  return description;
 }

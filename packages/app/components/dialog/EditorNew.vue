@@ -105,15 +105,18 @@ async function createMap({
       faction: factions.neutral.id,
       position: [0, 0, 0]
     },
-    factions: [structuredClone(factions.neutral)],
-    surface: {
-      textures: {
-        backgroundTexture: await URL.createObjectURL(background),
-        heightMap: await URL.createObjectURL(heightMap),
-        foregroundTexture: await URL.createObjectURL(foreground)
+    moduleOptions: {
+      surface: {
+        textures: {
+          backgroundTexture: await URL.createObjectURL(background),
+          heightMap: await URL.createObjectURL(heightMap),
+          foregroundTexture: await URL.createObjectURL(foreground)
+        }
+      },
+      faction: {
+        factions: [structuredClone(factions.neutral)]
       }
-    },
-    units: []
+    }
   };
 
   await $props.app.modules.map.enterMap(mapDescription);

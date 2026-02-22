@@ -11,6 +11,7 @@ import {
 
 import MapModule, {
   type MapModuleObservables,
+  type MapModuleOptions,
   type MapModuleState
 } from '../MapModule';
 import type Unit from '../Unit';
@@ -28,6 +29,8 @@ declare module '../Map' {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface Options extends MapModuleOptions {}
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Observables extends MapModuleObservables {}
 
@@ -54,11 +57,15 @@ export interface ShootDescription {
   velocity: Vector3;
 }
 
-export default class ShootModule extends MapModule<State, Observables> {
+export default class ShootModule extends MapModule<
+  Options,
+  State,
+  Observables
+> {
   static override TYPE = 'shoot';
   private raycastFrameCounter = 0;
   private raycaster = new Raycaster();
-  override state: State = {};
+
   private shoots: ShootDescription[] = [];
   /**
    * Gravitation nach unten (m/s²), skaliere für dein Spiel

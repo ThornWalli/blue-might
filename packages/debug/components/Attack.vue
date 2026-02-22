@@ -67,49 +67,56 @@ const map: Partial<MapDescription> = {
       }
     }
   },
-  factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]],
-  units: [
-    {
-      key: 'tank_1',
-      id: 'tank-1',
-      position: [-2, 0, 0],
-      rotation: [0, Math.PI / 4, 0],
-      moduleOptions: {
-        faction: {
-          faction: FACTION.BLUE
-        }
-      }
+
+  moduleOptions: {
+    faction: {
+      factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]]
     },
-    {
-      key: 'combat_helicopter_1',
-      id: 'combat-helicopter-1',
-      position: [5.5, 0, 5.5],
-      moduleOptions: {
-        damage: {
-          maxDamage: 500
+    units: {
+      units: [
+        {
+          key: 'tank_1',
+          id: 'tank-1',
+          position: [-2, 0, 0],
+          rotation: [0, Math.PI / 4, 0],
+          moduleOptions: {
+            faction: {
+              faction: FACTION.BLUE
+            }
+          }
         },
-        faction: {
-          faction: FACTION.ENEMY
+        {
+          key: 'combat_helicopter_1',
+          id: 'combat-helicopter-1',
+          position: [5.5, 0, 5.5],
+          moduleOptions: {
+            damage: {
+              maxDamage: 500
+            },
+            faction: {
+              faction: FACTION.ENEMY
+            },
+            patrol: {
+              active: true,
+              path: [
+                [1.6, 2.4],
+                [-1.6, 2.4]
+              ]
+            }
+          }
         },
-        patrol: {
-          active: true,
-          path: [
-            [1.6, 2.4],
-            [-1.6, 2.4]
-          ]
+        {
+          key: 'combat_tank_1',
+          id: 'combat-tank-1',
+          position: [2, 0, 0],
+          moduleOptions: {
+            faction: {
+              faction: FACTION.BLUE
+            }
+          }
         }
-      }
-    },
-    {
-      key: 'combat_tank_1',
-      id: 'combat-tank-1',
-      position: [2, 0, 0],
-      moduleOptions: {
-        faction: {
-          faction: FACTION.BLUE
-        }
-      }
+      ]
     }
-  ]
+  }
 };
 </script>

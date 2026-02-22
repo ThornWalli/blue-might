@@ -43,13 +43,19 @@ export const DEFAULT_NAVIGATOR_TYPE = NAVIGATOR_TYPE.GROUND_LARGE;
 interface Observables extends MapModuleObservables {}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface Options extends MapModuleState {}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface State extends MapModuleState {}
 
-export default class PathfindingModule extends MapModule<State, Observables> {
+export default class PathfindingModule extends MapModule<
+  Options,
+  State,
+  Observables
+> {
   static override TYPE = 'pathfinding';
   readonly debugNavigatorType: NAVIGATOR_TYPE | null =
     NAVIGATOR_TYPE.GROUND_SMALL;
-  override state: State = {};
+
   private units: Unit[] = [];
   private unitSubscriptions = new Map<Unit, Subscription>();
   private collidersByType = new Map<NAVIGATOR_TYPE, Object3D[]>();
@@ -108,7 +114,7 @@ export default class PathfindingModule extends MapModule<State, Observables> {
     await super.afterSetup();
 
     // Erstelle gemeinsames Grid mit niedriger Grid-Size (1/3)
-    const gridSize = 1 / 3;
+    const gridSize = 1 / 8;
     const size = new Vector2(
       this.map.modules.surface.state.terrainWidth,
       this.map.modules.surface.state.terrainHeight

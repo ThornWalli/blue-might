@@ -9,14 +9,14 @@ export default function (): Omit<MapDescription, 'playerOptions'> {
     meta: {
       name: 'Default Map'
     },
-    surface: {
-      textures: {
-        heightMap,
-        backgroundTexture,
-        foregroundTexture
+    moduleOptions: {
+      surface: {
+        textures: {
+          heightMap,
+          backgroundTexture,
+          foregroundTexture
+        }
       }
-    },
-    factions: [],
-    units: []
+    }
   };
 }

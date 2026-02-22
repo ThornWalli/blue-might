@@ -50,11 +50,13 @@
       <bm-button
         mode="icon"
         hide-label
+        :disabled="localScale >= maxLocalScale"
         :icon="icons[ICON.PLUS]"
         @click="onClickZoom(true)" />
       <bm-button
         mode="icon"
         hide-label
+        :disabled="localScale < maxLocalScale && localScale <= 1"
         :icon="icons[ICON.MINUS]"
         @click="onClickZoom(false)" />
     </div>
@@ -72,13 +74,14 @@ import type Player from '../lib/classes/Player';
 import type Unit from '../lib/classes/Unit';
 import type { App } from '../lib/types';
 import icons, { ICON } from '../utils/icons';
+import { isPlant } from '../lib/utils/unit';
 
 import BmButton from './Button.vue';
 
 const $props = defineProps<{
   app: App;
   scale?: number;
-  origin?: Vector2;
+  center?: Vector2;
   controls?: boolean;
   debug?: boolean;
 }>();
@@ -106,7 +109,7 @@ const pan = ref<Vector2>(new Vector2());
 const scaleFactor = ref<number>($props.scale ?? 0.1);
 const defaultScale = ref<number>(1);
 const localScale = ref<number>($props.scale ?? 3);
-const minMapSize = 16;
+const minMapSize = 4;
 
 // sizes
 const mapDimension = ref<Vector2>(new Vector2(0, 0));
@@ -162,6 +165,14 @@ const minMax = computed(() => {
     .multiplyScalar(1 / localScale.value);
 });
 
+const maxLocalScale = computed(() => {
+  return Math.max(mapDimension.value.x, mapDimension.value.y) / minMapSize;
+});
+
+const localScaleProgress = computed(() => {
+  return (localScale.value - 1) / (maxLocalScale.value - 1);
+});
+
 const debugData = computed(() => {
   if (!$props.debug) return null;
   return {
@@ -170,9 +181,11 @@ const debugData = computed(() => {
     mapSize,
     mapDimension,
     scaledMapSize,
+    localScaleProgress,
     orientation,
     defaultScale,
     localScale,
+    maxLocalScale: maxLocalScale.value,
     scaleFactor,
     localPosition: localPosition.value.toArray(),
     pan: pan.value.toArray(),
@@ -225,7 +238,7 @@ onMounted(() => {
 
   subscription.add(
     map$.subscribe(m => {
-      const { backgroundTexture } = m.getTextures();
+      const { backgroundTexture } = m.modules.surface.getTextures();
       map.value = m;
       units = m.modules.units.getUnits();
       mapDimension.value = new Vector2(
@@ -236,7 +249,7 @@ onMounted(() => {
       // define default scale from minMapSize
       defaultScale.value =
         Math.min(mapDimension.value.x, mapDimension.value.y) / minMapSize;
-      localScale.value = 1;
+      localScale.value = defaultScale.value;
 
       mapSize.value = new Vector2(mapDimension.value.x, mapDimension.value.y);
       scaledMapSize.value = new Vector2(
@@ -301,7 +314,7 @@ function renderBackground() {
   if (!canvas || !map.value) return;
 
   const { backgroundTexture, heightMap, foregroundTexture } =
-    map.value.getTextures();
+    map.value.modules.surface.getTextures();
 
   if (!backgroundTexture || !foregroundTexture) return;
 
@@ -406,7 +419,11 @@ function renderUnits() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   units.forEach(unit => {
+    const visible =
+      (localScaleProgress.value >= 0.1 && isPlant(unit)) || !isPlant(unit);
+
     if (
+      !visible ||
       unit.modules.damage.isDestroyed() ||
       currentPlayer.value?.modules.vehicle.getCurrentUnit() === unit
     ) {
@@ -503,7 +520,7 @@ function onClickZoom(zoomIn: boolean) {
   const factor = zoomIn ? -scaleFactor.value : scaleFactor.value;
 
   const newScale = localScale.value * (1 - factor);
-  localScale.value = Math.max(1, newScale);
+  localScale.value = Math.max(1, Math.min(maxLocalScale.value, newScale));
 
   if (playerCentered.value) {
     centerPlayer();
@@ -514,6 +531,8 @@ function onClickZoom(zoomIn: boolean) {
 
 function onClickFocusPlayer() {
   if (!map.value) return;
+
+  localScale.value = defaultScale.value;
 
   playerCentered.value = true;
 

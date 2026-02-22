@@ -5,6 +5,12 @@
         <nuxt-link :href="link.href">{{ link.title }}</nuxt-link>
       </li>
     </ul>
+    <bm-separator />
+    <ul>
+      <li v-for="link in missionLinks" :key="link.title">
+        <nuxt-link :href="link.href">{{ link.title }}</nuxt-link>
+      </li>
+    </ul>
     <bm-details label="Debug">
       <ul>
         <li v-for="link in debugLinks" :key="link.title">
@@ -33,9 +39,10 @@ import { inject, ref } from 'vue';
 import type { App } from '@blue-might/app/lib/types';
 
 import type { DialogContext } from '../base/Dialog.vue';
+import BmSeparator from '../Separator.vue';
 import BmDetails from '../Details.vue';
 
-import { useRoute, useRuntimeConfig } from '#imports';
+import { useRoute, useRouter, useRuntimeConfig } from '#imports';
 
 const runtimeConfig = useRuntimeConfig();
 
@@ -48,22 +55,51 @@ defineProps<{
 }>();
 
 const $route = useRoute();
+console.log(useRouter());
 const links = ref([
   {
     title: 'Default',
     href: {
-      name: 'index',
-      query: {
-        ...$route.query
+      name: 'map',
+      params: {
+        ...$route.params
       }
     }
   },
   {
     title: 'Editor',
     href: {
-      path: '/editor',
-      query: {
-        ...$route.query
+      name: 'editor-map',
+      params: {
+        ...$route.params
+      }
+    }
+  },
+  {
+    title: 'Debug',
+    href: {
+      name: 'debug-map',
+      params: {
+        ...$route.params
+      }
+    }
+  }
+]);
+
+console.log(links.value);
+const missionLinks = ref([
+  {
+    title: 'Default',
+    href: {
+      name: 'map'
+    }
+  },
+  {
+    title: 'Mission 1',
+    href: {
+      name: 'map',
+      params: {
+        map: 'mission_1.zip'
       }
     }
   }
@@ -78,29 +114,24 @@ const debugLinks = ref([
   {
     title: 'Helicopter',
     href: {
-      path: '/debug',
-      query: { map: 'debug/helicopter.zip' }
+      name: 'debug-map',
+      params: { map: 'debug/helicopter.zip' }
     }
   },
   {
     title: 'Rescue',
     href: {
-      path: '/debug',
-      query: { map: 'debug/rescue.zip' }
+      name: 'debug-map',
+      params: { map: 'debug/rescue.zip' }
     }
   },
   {
     title: 'Building',
     href: {
-      path: '/debug',
-      query: { map: 'debug/building.zip' }
+      name: 'debug-map',
+      params: { map: 'debug/building.zip' }
     }
-  },
-  { title: 'Attack (Legacy)', href: '/debug/attack' },
-  { title: 'Patrol (Legacy)', href: '/debug/patrol' },
-  { title: 'Tank (Legacy)', href: '/debug/tank' },
-  { title: 'Pathfinding (Legacy)', href: '/debug/pathfinding' },
-  { title: 'Sea (Legacy)', href: '/debug/sea' }
+  }
 ]);
 </script>
 

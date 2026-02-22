@@ -41,17 +41,15 @@ export default class EditorGridAppModule extends AppModule<State, Observables> {
     return this.state.currentPosition;
   }
   static override TYPE = 'editorGrid';
-  override state: State = {
-    gridActive: false,
-    snapPosition: true,
-    gridSize: 1,
-    currentPosition: new Vector2()
-  };
-
   private root: InstancedMesh | null = null;
 
   constructor(app: App) {
-    super(app, {} as State);
+    super(app, {
+      gridActive: false,
+      snapPosition: true,
+      gridSize: 8,
+      currentPosition: new Vector2()
+    });
     //#region observables
     this.observables.gridActive$ = new ReplaySubject(1);
     this.observables.gridActive$.next(this.state.gridActive);

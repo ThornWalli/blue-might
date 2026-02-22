@@ -891,22 +891,39 @@ export default class Unit<
     return {};
   }
 
-  toDescription(): RawUnitDescription {
+  async toDescription(): Promise<RawUnitDescription> {
     return {
       key: (this.constructor as typeof Unit).KEY,
       id: this.id,
       position: this.getPosition().clone().setY(0).toArray(),
       rotation: this.getRotation().toArray(),
       options: this.getOptions(),
+
       moduleOptions: Object.fromEntries(
-        Object.entries(this.modules).map(([key, module]) => {
-          return [key, (module as UnitModule).getOptions()];
-        })
+        (
+          await Promise.all(
+            Object.entries(this.modules).map(async ([key, module]) => {
+              const options = await (module as UnitModule).getOptions();
+              if (Object.values(options).filter(Boolean).length) {
+                return [key, options];
+              }
+              return null;
+            })
+          )
+        ).filter(v => v !== null)
       ),
       moduleStates: Object.fromEntries(
-        Object.entries(this.modules).map(([key, module]) => {
-          return [key, (module as UnitModule).getState()];
-        })
+        (
+          await Promise.all(
+            Object.entries(this.modules).map(async ([key, module]) => {
+              const options = await (module as UnitModule).getState();
+              if (Object.values(options).filter(Boolean).length) {
+                return [key, options];
+              }
+              return null;
+            })
+          )
+        ).filter(v => v !== null)
       ),
       moduleDebug: this.moduleDebug
     };

@@ -20,8 +20,6 @@ export default class EditorPlayerAppModule extends AppModule<
   Observables
 > {
   static override TYPE = 'editorPlayer';
-  override state: State = {};
-
   private helperObj: Object3D | null = null;
 
   constructor(app: App) {

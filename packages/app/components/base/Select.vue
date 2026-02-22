@@ -5,6 +5,7 @@
       :key="String(option.value)"
       :label="option.label"
       :value="option.value"
+      :model-value="modelValue"
       :options="option.options"
       :disabled="option.disabled" />
   </select>

@@ -43,27 +43,29 @@ onUnmounted(() => {
 const map_ = $props.mapType === 'sea' ? debugSeaMap() : debugGroundMap();
 console.log({
   ...map_,
-  surface: {
-    ...map_.surface,
-    noise: {
-      ...(map_.surface.noise || DEFAULT_MAP_NOISE),
-      active: true
+  moduleOptions: {
+    ...map_.moduleOptions,
+    surface: {
+      ...map_.moduleOptions?.surface,
+      noise: {
+        ...(map_.moduleOptions?.surface?.noise || DEFAULT_MAP_NOISE),
+        active: true
+      }
     }
-  },
-  factions: [...map_.factions],
-  units: [...map_.units]
+  }
 });
 const map: MapDescription = defu($props.map ?? {}, {
   ...map_,
-  surface: {
-    ...map_.surface,
-    noise: {
-      ...(map_.surface.noise || DEFAULT_MAP_NOISE),
-      active: true
+  moduleOptions: {
+    ...map_.moduleOptions,
+    surface: {
+      ...map_.moduleOptions?.surface,
+      noise: {
+        ...(map_.moduleOptions?.surface?.noise || DEFAULT_MAP_NOISE),
+        active: true
+      }
     }
-  },
-  factions: [...map_.factions],
-  units: [...map_.units]
+  }
 }) as MapDescription;
 
 const AppComponent = defineAsyncComponent(

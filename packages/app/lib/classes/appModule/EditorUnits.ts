@@ -62,22 +62,20 @@ export default class EditorUnitsAppModule extends AppModule<
     this.setUnit(unit);
   }
   static override TYPE = 'editorUnits';
-  override state: State = {
-    unitKey: null,
-    unit: null,
-    creating: false,
-    moving: false,
-    action: ACTION.ADD,
-    actionRadius: 0,
-    actionIntensity: 1,
-    autoApply: false,
-    ghostUnit: null
-  };
-
   radiusHelper: Mesh | null = null;
 
   constructor(app: App) {
-    super(app, {} as State);
+    super(app, {
+      unitKey: null,
+      unit: null,
+      creating: false,
+      moving: false,
+      action: ACTION.ADD,
+      actionRadius: 0,
+      actionIntensity: 1,
+      autoApply: false,
+      ghostUnit: null
+    });
     //#region observables
     this.observables.unitKey$ = new ReplaySubject<UnitIdentifier | null>(1);
     this.observables.unit$ = new ReplaySubject<Unit | null>(1);

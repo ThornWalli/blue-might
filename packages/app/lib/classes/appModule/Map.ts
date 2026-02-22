@@ -22,13 +22,11 @@ interface State extends AppModuleState {
 }
 export default class MapAppModule extends AppModule<State, Observables> {
   static override TYPE = 'map';
-  override state: State = {
-    map: null,
-    descriptionStash: null
-  };
-
   constructor(app: BaseApp) {
-    super(app, {} as State);
+    super(app, {
+      map: null,
+      descriptionStash: null
+    });
 
     //#region observables
     this.observables.map$ = new ReplaySubject<Map>(1);

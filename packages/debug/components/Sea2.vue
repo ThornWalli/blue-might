@@ -19,7 +19,6 @@ onUnmounted(() => {
 });
 
 const map: Partial<MapDescription> = {
-  factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]],
   playerOptions: {
     position: [4, 0, 0],
     faction: FACTION.BLUE,
@@ -32,57 +31,65 @@ const map: Partial<MapDescription> = {
       }
     }
   },
-  debug: {
-    pathfinding: false
+  moduleDebug: {
+    pathfinding: false,
+    attack: false
   },
-  units: [
-    {
-      key: 'combat_ship_1',
-      position: [0, 0, 0],
-      debug: false,
-      moduleDebug: {
-        pathfinding: false,
-        attack: false
-      },
-
-      moduleOptions: {
-        damage: {
-          maxDamage: 1000
-        },
-        faction: {
-          faction: FACTION.BLUE
-        }
-      }
+  moduleOptions: {
+    faction: {
+      factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]]
     },
+    units: {
+      units: [
+        {
+          key: 'combat_ship_1',
+          position: [0, 0, 0],
+          debug: false,
+          moduleDebug: {
+            pathfinding: false,
+            attack: false
+          },
 
-    {
-      key: 'lighthouse_1',
-      position: [2.67, 0, 9.19],
-      moduleOptions: {
-        faction: {
-          faction: FACTION.BLUE
-        }
-      }
-    },
+          moduleOptions: {
+            damage: {
+              maxDamage: 1000
+            },
+            faction: {
+              faction: FACTION.BLUE
+            }
+          }
+        },
 
-    {
-      key: 'combat_submarine_1',
-      position: [2, 0, 0],
-      moduleOptions: {
-        damage: {
-          maxDamage: 1000
+        {
+          key: 'lighthouse_1',
+          position: [2.67, 0, 9.19],
+          moduleOptions: {
+            faction: {
+              faction: FACTION.BLUE
+            }
+          }
         },
-        movable: {
-          active: true
-        },
-        faction: {
-          faction: FACTION.BLUE
+
+        {
+          key: 'combat_submarine_1',
+          position: [2, 0, 0],
+          moduleOptions: {
+            damage: {
+              maxDamage: 1000
+            },
+            movable: {
+              active: true
+            },
+            faction: {
+              faction: FACTION.BLUE
+            }
+            // patrol: {
+            //   active: true
+            // }
+          }
         }
-        // patrol: {
-        //   active: true
-        // }
-      }
+      ]
     }
-  ]
+  }
 };
 </script>

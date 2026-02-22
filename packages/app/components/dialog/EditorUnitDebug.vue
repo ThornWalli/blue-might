@@ -1,5 +1,5 @@
 <template>
-  <div class="bm-dialog-editor-unit-debug">
+  <form class="bm-dialog-editor-unit-debug" @submit="onSubmit" @reset="onReset">
     <p>Select Modules to Debug:</p>
     <ul>
       <li v-for="[key] in Object.entries(moduleDebug)" :key="key">
@@ -7,10 +7,10 @@
       </li>
     </ul>
     <div class="controls">
-      <bm-button label="Close" @click="onClickClose" />
-      <bm-button label="Apply" @click="onClickApply" />
+      <bm-button label="Close" type="reset" />
+      <bm-button label="Apply" type="submit" />
     </div>
-  </div>
+  </form>
 </template>
 
 <script lang="ts" setup>
@@ -53,12 +53,12 @@ const $props = defineProps<{
 }>();
 const editorUnitDebug = $props.app.modules.editorUnitDebug;
 
-function onClickClose() {
+function onSubmit() {
+  editorUnitDebug.setModuleDebug(moduleDebug);
   dialog.close();
 }
 
-function onClickApply() {
-  editorUnitDebug.setModuleDebug(moduleDebug);
+function onReset() {
   dialog.close();
 }
 

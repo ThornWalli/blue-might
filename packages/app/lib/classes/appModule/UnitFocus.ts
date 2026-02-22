@@ -17,12 +17,10 @@ interface State extends AppModuleState {
 }
 export default class UnitFocusAppModule extends AppModule<State, Observables> {
   static override TYPE = 'unitFocus';
-  override state: State = {
-    followedUnit: null
-  };
-
   constructor(app: BaseApp) {
-    super(app, {} as State);
+    super(app, {
+      followedUnit: null
+    });
 
     //#region observables
     this.observables.focus$ = new ReplaySubject<Unit>(1);

@@ -40,7 +40,7 @@
         </figure>
       </div>
     </bm-fieldset>
-    <form @submit="onSubmit">
+    <form @submit="onSubmit" @reset="onReset">
       <bm-fieldset label="Background">
         <div class="controls">
           <bm-toggle
@@ -95,7 +95,7 @@
         </div>
       </bm-fieldset>
       <div class="buttons">
-        <bm-button label="Abort" @click="onClickAbort" />
+        <bm-button label="Abort" type="reset" />
         <bm-button label="Apply" type="submit" />
       </div>
     </form>
@@ -216,13 +216,13 @@ function onFiles(key: string, files: FileList) {
   }
 }
 
-function onClickAbort() {
-  dialog.close();
-}
-
 async function onSubmit(e: Event) {
   e.preventDefault();
   await $props.app.modules.editorSurface.apply();
+  dialog.close();
+}
+
+function onReset() {
   dialog.close();
 }
 </script>

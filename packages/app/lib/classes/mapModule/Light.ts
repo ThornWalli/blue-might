@@ -14,12 +14,16 @@ declare module '../Map' {
 type Observables = MapModuleObservables;
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface Options extends MapModuleState {}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface State extends MapModuleState {}
 
-export default class LightModule extends MapModule<State, Observables> {
+export default class LightModule extends MapModule<
+  Options,
+  State,
+  Observables
+> {
   static override TYPE = 'light';
-
-  override state: State = {};
   private lights: (DirectionalLight | AmbientLight)[] = [];
 
   setupLights() {

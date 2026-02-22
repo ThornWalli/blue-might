@@ -1,20 +1,18 @@
-import { Euler, Texture, Vector3, Object3D, Color } from 'three';
-import assetLoader from '@blue-might/app/services/assetLoader';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { Euler, Vector3, Object3D, Color } from 'three';
 import { ReplaySubject, Subscription } from 'rxjs';
 import type { UnitDescriptions } from '@blue-might/units';
-import { imageBitmapToBlob } from '@blue-might/app/utils/blob';
 
 import type { App } from '../types';
 import type {
   FogOptions,
   MapDescription,
   Meta,
-  PlayerOptions,
-  Textures
+  PlayerOptions
 } from '../types/map';
 
 import type { AnimationLoopValue } from './Renderer';
-import { LOADER } from './AssetLoader';
 import UnitsModule from './mapModule/Units';
 import SurfaceModule from './mapModule/Surface';
 import LightModule from './mapModule/Light';
@@ -24,6 +22,9 @@ import EffectModule from './mapModule/Effect';
 import FactionModule from './mapModule/Faction';
 import AirFlowModule from './mapModule/AirFlow';
 import type Module from './Module';
+import MissionModule from './mapModule/Mission';
+import type { MapModuleOptions, MapModuleState } from './MapModule';
+import type MapModule from './MapModule';
 
 interface MapObservables {
   playerOptions$: ReplaySubject<PlayerOptions>;
@@ -39,6 +40,7 @@ type MapModuleList = (
   | typeof FactionModule
   | typeof AirFlowModule
   | typeof EffectModule
+  | typeof MissionModule
 )[];
 
 interface MapModules {
@@ -50,6 +52,7 @@ interface MapModules {
   faction: FactionModule;
   airFlow: AirFlowModule;
   effect: EffectModule;
+  mission: MissionModule;
 }
 
 interface MapState {
@@ -57,8 +60,16 @@ interface MapState {
   fogOptions: FogOptions;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type, @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ModuleDebug extends Record<any, boolean> {}
+
+export interface ModuleOptions {
+  [key: string]: MapModuleOptions;
+}
+
+export interface ModuleStates {
+  [key: string]: MapModuleState;
+}
 
 export default class Map<
   Modules extends MapModules = MapModules,
@@ -79,23 +90,11 @@ export default class Map<
   subscription = new Subscription();
   state: MapState;
   observables: MapObservables;
+  protected moduleOptions: Partial<ModuleOptions>;
+  protected moduleStates: Partial<ModuleStates>;
   modules: Modules = {} as Modules;
   root: Object3D;
   description: MapDescription;
-
-  private textures: Textures = {
-    heightMap: new Texture(),
-    backgroundTexture: new Texture(),
-    foregroundTexture: new Texture()
-  };
-
-  getTextures() {
-    return this.textures;
-  }
-
-  setTextures(textures: Textures) {
-    this.textures = textures;
-  }
 
   constructor(
     description: MapDescription,
@@ -106,6 +105,9 @@ export default class Map<
     this.root.name = 'map';
 
     this.description = description;
+
+    this.moduleOptions = description.moduleOptions ?? {};
+    this.moduleStates = description.moduleStates ?? {};
 
     const fogOptions = description.fogOptions ?? {
       enabled: false,
@@ -137,11 +139,10 @@ export default class Map<
     this.observables.fogOptions$.next(this.state.fogOptions);
     //#endregion
 
-    this.moduleDebug = { ...this.moduleDebug, ...description.debug };
+    this.moduleDebug = { ...this.moduleDebug, ...description.moduleDebug };
   }
 
   async setup() {
-    await this.loadAssets();
     await this.setupModules();
 
     this.subscription.add(
@@ -161,14 +162,40 @@ export default class Map<
       ShootModule,
       PathfindingModule,
       AirFlowModule,
-      EffectModule
+      EffectModule,
+      MissionModule
     );
 
-    const preparedModules = moduleList
+    const moduleOptions = this.moduleOptions;
+    const moduleStates = this.moduleStates;
+
+    const preparedModules = (moduleList as ModuleList)
       .map(ModuleClass => {
+        const types = ModuleClass.TYPES;
+
+        const { options, state } = types.reduce<{
+          options: any;
+          state: any;
+        }>(
+          (acc, type) => {
+            acc.options = {
+              ...acc.options,
+              ...(moduleOptions?.[type] ?? {})
+            };
+            acc.state = {
+              ...acc.state,
+              ...(moduleStates?.[type] ?? {})
+            };
+            return acc;
+          },
+          { options: {}, state: {} }
+        );
+
         const moduleInstance = new ModuleClass(
           this,
-          this.moduleDebug && (this.moduleDebug[ModuleClass.TYPE] ?? false)
+          options,
+          state,
+          this.moduleDebug[ModuleClass.TYPE] ?? false
         );
         return ModuleClass.TYPES.map(type => [type, moduleInstance]);
       })
@@ -191,28 +218,6 @@ export default class Map<
     if (this.state.playerOptions === playerOptions) return;
     this.state.playerOptions = playerOptions;
     this.observables.playerOptions$.next(playerOptions);
-  }
-
-  private async loadAssets() {
-    const [heightMap, backgroundTexture, foregroundTexture] = await Promise.all(
-      [
-        assetLoader.add<Texture<ImageBitmap>>({
-          value: this.description.surface.textures.heightMap,
-          loader: LOADER.TEXTURE
-        }),
-        assetLoader.add<Texture<ImageBitmap>>({
-          value: this.description.surface.textures.backgroundTexture,
-          loader: LOADER.TEXTURE
-        }),
-        assetLoader.add<Texture<ImageBitmap>>({
-          value: this.description.surface.textures.foregroundTexture,
-          loader: LOADER.TEXTURE
-        })
-      ]
-    );
-    this.textures.heightMap = heightMap;
-    this.textures.backgroundTexture = backgroundTexture;
-    this.textures.foregroundTexture = foregroundTexture;
   }
 
   destroy() {
@@ -268,19 +273,7 @@ export default class Map<
   }
 
   async toDescription(): Promise<MapDescription> {
-    const textures = Object.fromEntries(
-      await Promise.all(
-        Object.entries(this.textures).map(async ([key, texture]) => {
-          return [
-            key,
-            URL.createObjectURL(await imageBitmapToBlob(texture.image))
-          ];
-        })
-      )
-    );
-
     return {
-      debug: this.moduleDebug,
       meta: {
         ...this.description.meta
       },
@@ -293,23 +286,33 @@ export default class Map<
         ...this.state.fogOptions,
         color: this.state.fogOptions.color.toArray()
       },
-      surface: {
-        textures: textures,
-        heightMapInclude: this.description.surface.heightMapInclude ?? false,
-        noise: this.description.surface.noise ?? {
-          active: false,
-          size: 2,
-          intensity: 0.25,
-          opacity: 0.5,
-          monochrome: false
-        }
-      },
-      units: Object.values(this.modules.units.getUnits()).map(unit =>
-        unit.toDescription()
+      moduleOptions: Object.fromEntries(
+        (
+          await Promise.all(
+            Object.entries(this.modules).map(async ([key, module]) => {
+              const options = await (module as MapModule).getOptions();
+              if (Object.values(options).filter(Boolean).length) {
+                return [key, options];
+              }
+              return null;
+            })
+          )
+        ).filter(v => v !== null)
       ),
-      factions: Object.values(this.modules.faction.getFactions())
-        .filter(faction => !faction.builtin)
-        .map(faction => faction.toDescription())
+      moduleStates: Object.fromEntries(
+        (
+          await Promise.all(
+            Object.entries(this.modules).map(async ([key, module]) => {
+              const options = await (module as MapModule).getState();
+              if (Object.values(options).filter(Boolean).length) {
+                return [key, options];
+              }
+              return null;
+            })
+          )
+        ).filter(v => v !== null)
+      ),
+      moduleDebug: this.moduleDebug
     };
   }
 }

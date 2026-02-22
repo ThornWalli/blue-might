@@ -9,7 +9,7 @@ import type {
 } from 'three';
 
 import type { FactionDescription, FactionIdentifier } from '../classes/Faction';
-import type { ModuleDebug } from '../classes/Map';
+import type { ModuleDebug, ModuleOptions, ModuleStates } from '../classes/Map';
 import type { RawUnitDescription } from '../classes/Unit';
 
 export interface Textures {
@@ -18,12 +18,24 @@ export interface Textures {
   foregroundTexture: Texture<ImageBitmap>;
 }
 
-export interface MapDescription {
-  debug?: Partial<ModuleDebug>;
+export interface MapDescription extends LegacyMapDescription {
   meta: Meta;
   playerOptions: RawPlayerOptions;
   fogOptions?: RawFogOptions;
-  surface: {
+  moduleOptions: Partial<ModuleOptions>;
+  moduleStates?: Partial<ModuleStates>;
+  moduleDebug?: Partial<ModuleDebug>;
+}
+
+interface LegacyMapDescription {
+  /**
+   * @deprecated
+   */
+  debug?: Partial<ModuleDebug>;
+  /**
+   * @deprecated
+   */
+  surface?: {
     textures: {
       heightMap: string;
       backgroundTexture: string;
@@ -32,8 +44,14 @@ export interface MapDescription {
     heightMapInclude?: boolean;
     noise?: MapNoise;
   };
-  units: RawUnitDescription[];
-  factions: FactionDescription[];
+  /**
+   * @deprecated
+   */
+  factions?: FactionDescription[];
+  /**
+   * @deprecated
+   */
+  units?: RawUnitDescription[];
 }
 
 export interface MapNoise {

@@ -18,13 +18,11 @@ interface State extends AppModuleState {
 }
 export default class TimeAppModule extends AppModule<State, Observables> {
   static override TYPE = 'time';
-  override state: State = {
-    lastTime: 0,
-    mapOffsetTime: 0
-  };
-
   constructor(app: App) {
-    super(app, {} as State);
+    super(app, {
+      lastTime: 0,
+      mapOffsetTime: 0
+    });
     //#region observables
     this.observables.time$ = new ReplaySubject<number>(1);
     this.observables.mapTime$ = new ReplaySubject<number>(1);

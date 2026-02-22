@@ -502,8 +502,6 @@ export default class PathfindingUnitModule extends UnitModule<
       pathfindingModule?.getGridNodesByUnit(unit)
     );
 
-    console.log('path', path);
-
     if (!path) return false;
 
     this.state.currentPath = path;

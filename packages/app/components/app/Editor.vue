@@ -37,6 +37,12 @@
         <bm-panel-editor-grid key="editor-grid" :app="app" />
       </div>
     </template>
+    <template #[PANEL.TOP_RIGHT]>
+      <bm-panel-editor-mission
+        v-if="isMode(EDITOR_MODE.DEFAULT)"
+        key="editor-mission"
+        :app="app" />
+    </template>
     <template #[PANEL.BOTTOM_RIGHT]>
       <bm-panel-editor-unit-patrol
         v-if="isMode(EDITOR_MODE.PATROL)"
@@ -69,6 +75,7 @@ import BmPanelEditorGeneral from '../panel/EditorGeneral.vue';
 import BmPanelEditorUnitPatrol from '../panel/EditorUnitPatrol.vue';
 import BmPanelEditorPlayer from '../panel/EditorPlayer.vue';
 import BmPanelEditorUnitSettings from '../panel/EditorUnitSettings.vue';
+import BmPanelEditorMission from '../panel/EditorMission.vue';
 
 const mode = ref<EDITOR_MODE>(EDITOR_MODE.DEFAULT);
 

@@ -21,12 +21,10 @@ export default class EditorUnitSettingsAppModule extends AppModule<
   Observables
 > {
   static override TYPE = 'editorUnitSettings';
-  override state: State = {
-    unit: null
-  };
-
   constructor(app: App) {
-    super(app, {} as State);
+    super(app, {
+      unit: null
+    });
     //#region observables
     this.observables.unit$ = new ReplaySubject<Unit | null>(1);
     //#endregion

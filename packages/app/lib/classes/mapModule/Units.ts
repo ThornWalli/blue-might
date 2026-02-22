@@ -26,10 +26,16 @@ import type Map from '../Map';
 import type { IntersectionListener } from '../rendererModule/Intersection';
 import { OBJECT_USER_DATA } from '../../utils/object';
 import BuildingUnit from '../unit/Building';
-import type { UnitDescription } from '../Unit';
+import type { RawUnitDescription, UnitDescription } from '../Unit';
 import { getUnitMap } from '../../utils/unit';
 
 declare module '../Map' {
+  interface ModuleStates {
+    units: Partial<State>;
+  }
+  interface ModuleOptions {
+    units: Partial<Options>;
+  }
   interface ModuleDebug {
     units: boolean;
   }
@@ -42,28 +48,39 @@ interface Observables extends MapModuleObservables {
   ready$: ReplaySubject<void>;
 }
 
+interface Options extends MapModuleState {
+  units: RawUnitDescription[];
+}
 interface State extends MapModuleState {
   ready: boolean;
   visibleUnits: Unit[];
   units: globalThis.Map<string, Unit>;
 }
 
-export default class UnitsModule extends MapModule<State, Observables> {
+export default class UnitsModule extends MapModule<
+  Options,
+  State,
+  Observables
+> {
   static override TYPE = 'units';
 
   chunkManager: UnitChunkManager = new UnitChunkManager();
 
-  override state: State = {
-    ready: false,
-    visibleUnits: [],
-    units: new globalThis.Map<string, Unit>()
-  };
-
   root: Group;
   listener: IntersectionListener;
 
-  constructor(room: Map, debug: boolean) {
-    super(room, debug);
+  constructor(room: Map, options: Options, states: State, debug: boolean) {
+    super(
+      room,
+      { ...options, units: options.units ?? [] },
+      {
+        ...states,
+        ready: states.ready ?? false,
+        visibleUnits: states.visibleUnits ?? [],
+        units: states.units ?? new globalThis.Map<string, Unit>()
+      },
+      debug
+    );
     //#region observables
     this.observables.addUnit$ = new Subject<Unit>();
     this.observables.removeUnit$ = new Subject<Unit>();
@@ -123,7 +140,7 @@ export default class UnitsModule extends MapModule<State, Observables> {
 
     await this.setupUnits(
       resolveUnits(
-        this.map.description.units.map(unit => ({
+        this.options.units.map(unit => ({
           ...unit,
           position: Array.isArray(unit.position)
             ? new Vector3().fromArray(unit.position)
@@ -269,6 +286,14 @@ export default class UnitsModule extends MapModule<State, Observables> {
   }
 
   //#endregion
+
+  override async getOptions() {
+    return {
+      units: await Promise.all(
+        Object.values(this.getUnits()).map(unit => unit.toDescription())
+      )
+    };
+  }
 }
 
 function getMeshes(obj: Object3D): Mesh[] {

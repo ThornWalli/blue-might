@@ -1,5 +1,8 @@
 <template>
-  <div class="bm-dialog-editor-faction-settings">
+  <form
+    class="bm-dialog-editor-faction-settings"
+    @submit="onSubmit"
+    @reset="onReset">
     <div class="items">
       <div class="head">
         <div>Name</div>
@@ -30,12 +33,10 @@
       <bm-button label="Copy Factions" @click="onClickCopy" />
       <bm-button label="Paste Factions" @click="onClickPaste" />
       <div class="spacer"></div>
-      <bm-button label="Abort" @click="() => dialog.close()" />
-      <bm-button
-        label="Save"
-        @click="onClickSave($event, () => dialog.close())" />
+      <bm-button label="Abort" type="reset" />
+      <bm-button label="Save" type="submit" />
     </div>
-  </div>
+  </form>
 </template>
 
 <script lang="ts" setup>
@@ -105,9 +106,14 @@ function onClickDelete(factionId: string) {
   factions.value = factions.value.filter(faction => faction.id !== factionId);
 }
 
-function onClickSave(e: Event, close: () => void) {
+function onSubmit(e: Event) {
+  e.preventDefault();
   editorFactionModule.setFactions(factions.value);
-  close();
+  dialog.close();
+}
+
+function onReset() {
+  dialog.close();
 }
 
 function prepareFactions(factions: FactionDescription[]): FactionDescription[] {

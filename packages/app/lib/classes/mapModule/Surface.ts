@@ -4,11 +4,9 @@ import {
   LinearSRGBColorSpace,
   Raycaster,
   ShadowMaterial,
+  Texture,
   Vector2,
   Vector3,
-  type Texture
-} from 'three';
-import {
   Mesh,
   MeshLambertMaterial,
   NearestFilter,
@@ -17,9 +15,12 @@ import {
 } from 'three';
 import { filter, map, Subject } from 'rxjs';
 import type { Units } from '@blue-might/units';
+import assetLoader from '@blue-might/app/services/assetLoader';
+import { imageBitmapToBlob } from '@blue-might/app/utils/blob';
 
 import MapModule, {
   type MapModuleObservables,
+  type MapModuleOptions,
   type MapModuleState
 } from '../MapModule';
 import type Map from '../Map';
@@ -35,8 +36,15 @@ import type { AnimationLoopValue } from '../Renderer';
 import type { IntersectionListener } from '../rendererModule/Intersection';
 import type { MapNoise, Textures } from '../../types/map';
 import { isBuilding, isPlant } from '../../utils/unit';
+import { LOADER } from '../AssetLoader';
 
 declare module '../Map' {
+  interface ModuleStates {
+    surface: Partial<State>;
+  }
+  interface ModuleOptions {
+    surface: SurfaceModuleOptions;
+  }
   interface ModuleDebug {
     surface: boolean;
   }
@@ -47,6 +55,16 @@ interface Observables extends MapModuleObservables {
   hover$: Subject<Vector2>;
 }
 
+export interface SurfaceModuleOptions extends MapModuleOptions {
+  textures: {
+    heightMap: string;
+    backgroundTexture: string;
+    foregroundTexture: string;
+  };
+  heightMapInclude?: boolean;
+  noise?: MapNoise;
+}
+
 interface State extends MapModuleState {
   terrainHeight: number;
   terrainWidth: number;
@@ -54,15 +72,13 @@ interface State extends MapModuleState {
   origin: Vector3;
 }
 
-export default class SurfaceModule extends MapModule<State, Observables> {
+export default class SurfaceModule extends MapModule<
+  SurfaceModuleOptions,
+  State,
+  Observables
+> {
   static override TYPE = 'surface';
   private root?: Object3D;
-  override state: State = {
-    terrainHeight: 0,
-    terrainWidth: 0,
-    heights: [],
-    origin: new Vector3(0, 9, 0)
-  };
   private surfaceData = {
     raycaster: new Raycaster(),
     position: new Vector3(0, 0, 0),
@@ -71,10 +87,39 @@ export default class SurfaceModule extends MapModule<State, Observables> {
   private pathfinderTileTypes: (TILE_TYPE | undefined)[][] = [];
 
   private heightMap = new globalThis.Map<string, number>();
-  private surfaceHeightMap = new globalThis.Map<string, number>();
+  private listener: IntersectionListener | undefined;
 
-  constructor(map: Map, debug: boolean) {
-    super(map, debug);
+  private textures: Textures = {
+    heightMap: new Texture(),
+    backgroundTexture: new Texture(),
+    foregroundTexture: new Texture()
+  };
+  getTextures() {
+    return this.textures;
+  }
+
+  setTextures(textures: Textures) {
+    this.textures = textures;
+  }
+
+  constructor(
+    map: Map,
+    options: SurfaceModuleOptions,
+    state: State,
+    debug: boolean
+  ) {
+    super(
+      map,
+      options,
+      {
+        ...state,
+        terrainWidth: state.terrainWidth ?? 0,
+        terrainHeight: state.terrainHeight ?? 0,
+        heights: state.heights ?? [],
+        origin: state.origin ?? new Vector3(0, 9, 0)
+      },
+      debug
+    );
     //#region observables
     this.observables.select$ = new Subject<Vector2>();
     this.observables.hover$ = new Subject<Vector2>();
@@ -88,6 +133,111 @@ export default class SurfaceModule extends MapModule<State, Observables> {
       );
     }
     super.destroy();
+  }
+
+  override async setup() {
+    await super.setup();
+
+    await this.loadAssets();
+    const textures = this.getTextures();
+
+    const object = await this.createMeshes();
+    this.map.addToRoot(object);
+    this.root = object;
+
+    const listener =
+      this.map.app.renderer.modules.intersection.registerListener();
+    this.listener = listener;
+    listener.addMeshes(Array.from(object.children));
+
+    this.subscription.add(
+      listener.clickIntersect$.subscribe(intersect => {
+        this.observables.select$?.next(
+          new Vector2(intersect.point.x, intersect.point.z)
+        );
+      })
+    );
+    this.subscription.add(
+      listener.hoverIntersect$
+        .pipe(
+          map(intersections => intersections[0]),
+          filter(Boolean)
+        )
+        .subscribe(intersect => {
+          this.observables.hover$?.next(
+            new Vector2(intersect.point.x, intersect.point.z)
+          );
+        })
+    );
+
+    function tileTypeByColor(
+      r: number,
+      g: number,
+      b: number,
+      a: number
+    ): TILE_TYPE | undefined {
+      if (a > 128) {
+        if (r === 166 && g === 166 && b === 166) return TILE_TYPE.BETON_ROAD; // A6A6A6
+      }
+
+      return undefined;
+    }
+
+    const { width, height } = textures.backgroundTexture!;
+
+    // Pathfinder cells
+    const cellSize = 8;
+    let tileMap: (TILE_TYPE | undefined)[][] = Array.from(
+      { length: height * cellSize },
+      () => Array.from({ length: width / (1 / cellSize) }, () => undefined)
+    );
+
+    tileMap = await getCostsFromImage(
+      textures.heightMap!,
+      (r, g, b) => {
+        const maxSeaLevel = 255 * 0.9;
+        if (r > maxSeaLevel && g > maxSeaLevel && b > maxSeaLevel) {
+          return TILE_TYPE.WATER;
+        } else {
+          return TILE_TYPE.GRASS;
+        }
+      },
+      new Vector2(width, height),
+      cellSize,
+      tileMap
+    );
+
+    tileMap = await getCostsFromImage(
+      textures.foregroundTexture!,
+      tileTypeByColor,
+      new Vector2(width, height),
+      cellSize,
+      tileMap
+    );
+
+    this.pathfinderTileTypes = tileMap;
+  }
+
+  private async loadAssets() {
+    const [heightMap, backgroundTexture, foregroundTexture] = await Promise.all(
+      [
+        assetLoader.add<Texture<ImageBitmap>>({
+          value: this.options.textures.heightMap,
+          loader: LOADER.TEXTURE
+        }),
+        assetLoader.add<Texture<ImageBitmap>>({
+          value: this.options.textures.backgroundTexture,
+          loader: LOADER.TEXTURE
+        }),
+        assetLoader.add<Texture<ImageBitmap>>({
+          value: this.options.textures.foregroundTexture,
+          loader: LOADER.TEXTURE
+        })
+      ]
+    );
+    this.textures.heightMap = heightMap;
+    this.textures.backgroundTexture = backgroundTexture;
+    this.textures.foregroundTexture = foregroundTexture;
   }
 
   getSeaLevel() {
@@ -342,7 +492,7 @@ export default class SurfaceModule extends MapModule<State, Observables> {
   }
 
   private getGroundHeights(segments = 64) {
-    const heightMap = this.map.getTextures().heightMap!;
+    const heightMap = this.getTextures().heightMap!;
     heightMap.minFilter = NearestFilter;
     heightMap.magFilter = NearestFilter;
     heightMap.generateMipmaps = false;
@@ -377,7 +527,7 @@ export default class SurfaceModule extends MapModule<State, Observables> {
   }
 
   async createMeshes() {
-    const textures = this.map.getTextures();
+    const textures = this.getTextures();
     const backgroundTexture = textures.backgroundTexture!;
 
     // Terrain-Dimensionen
@@ -412,9 +562,8 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     const foregroundTexture = textures.foregroundTexture!;
 
     let noiseTexture: CanvasTexture | null = null;
-    if (this.map.description.surface.noise?.active) {
-      const { size, intensity, opacity, monochrome } =
-        this.map.description.surface.noise;
+    if (this.options.noise?.active) {
+      const { size, intensity, opacity, monochrome } = this.options.noise;
       noiseTexture = new CanvasTexture(
         resizeCanvas(
           generateNoiseTexture({
@@ -430,8 +579,8 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     }
     const combinedTexture = combineTerrainTextures(
       {
-        heightMap: this.map.description.surface.heightMapInclude ?? false,
-        noise: this.map.description.surface.noise ?? null
+        heightMap: this.options.heightMapInclude ?? false,
+        noise: this.options.noise ?? null
       },
       {
         ...textures,
@@ -501,89 +650,6 @@ export default class SurfaceModule extends MapModule<State, Observables> {
     }
     this.lastUpdateTime = time;
     this.resetHeightCache();
-  }
-
-  listener: IntersectionListener | undefined;
-  override async setup() {
-    await super.setup();
-
-    const textures = this.map.getTextures();
-
-    const object = await this.createMeshes();
-    this.map.addToRoot(object);
-    this.root = object;
-
-    const listener =
-      this.map.app.renderer.modules.intersection.registerListener();
-    this.listener = listener;
-    listener.addMeshes(Array.from(object.children));
-
-    this.subscription.add(
-      listener.clickIntersect$.subscribe(intersect => {
-        this.observables.select$?.next(
-          new Vector2(intersect.point.x, intersect.point.z)
-        );
-      })
-    );
-    this.subscription.add(
-      listener.hoverIntersect$
-        .pipe(
-          map(intersections => intersections[0]),
-          filter(Boolean)
-        )
-        .subscribe(intersect => {
-          this.observables.hover$?.next(
-            new Vector2(intersect.point.x, intersect.point.z)
-          );
-        })
-    );
-
-    function tileTypeByColor(
-      r: number,
-      g: number,
-      b: number,
-      a: number
-    ): TILE_TYPE | undefined {
-      if (a > 128) {
-        if (r === 166 && g === 166 && b === 166) return TILE_TYPE.BETON_ROAD; // A6A6A6
-      }
-
-      return undefined;
-    }
-
-    const { width, height } = textures.backgroundTexture!;
-
-    // Pathfinder cells
-    const cellSize = 3;
-    let tileMap: (TILE_TYPE | undefined)[][] = Array.from(
-      { length: height * cellSize },
-      () => Array.from({ length: width / (1 / cellSize) }, () => undefined)
-    );
-
-    tileMap = await getCostsFromImage(
-      textures.heightMap!,
-      (r, g, b) => {
-        const maxSeaLevel = 255 * 0.9;
-        if (r > maxSeaLevel && g > maxSeaLevel && b > maxSeaLevel) {
-          return TILE_TYPE.WATER;
-        } else {
-          return TILE_TYPE.GRASS;
-        }
-      },
-      new Vector2(width, height),
-      cellSize,
-      tileMap
-    );
-
-    tileMap = await getCostsFromImage(
-      textures.foregroundTexture!,
-      tileTypeByColor,
-      new Vector2(width, height),
-      cellSize,
-      tileMap
-    );
-
-    this.pathfinderTileTypes = tileMap;
   }
 
   getNormalAt(x: number | Vector2, z?: number): Vector3 {
@@ -688,6 +754,31 @@ export default class SurfaceModule extends MapModule<State, Observables> {
       maxDistance ?? 50
     );
     return height;
+  }
+
+  override async getOptions() {
+    const textures = Object.fromEntries(
+      await Promise.all(
+        Object.entries(this.textures).map(async ([key, texture]) => {
+          return [
+            key,
+            URL.createObjectURL(await imageBitmapToBlob(texture.image))
+          ];
+        })
+      )
+    );
+
+    return {
+      textures: textures,
+      heightMapInclude: this.options.heightMapInclude ?? false,
+      noise: this.options.noise ?? {
+        active: false,
+        size: 2,
+        intensity: 0.25,
+        opacity: 0.5,
+        monochrome: false
+      }
+    };
   }
 }
 

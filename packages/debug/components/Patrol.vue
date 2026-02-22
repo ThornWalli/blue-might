@@ -56,185 +56,192 @@ const map: Partial<MapDescription> = {
       }
     }
   },
-  factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]],
-  units: [
-    {
-      key: 'tree_1',
 
-      position: [-0.17, 0, 2.5],
-      rotation: [0, 0, 0],
-      moduleDebug: {
-        collision: true
-      }
+  moduleOptions: {
+    faction: {
+      factions: [factions[FACTION.BLUE], factions[FACTION.ENEMY]]
     },
-    {
-      key: 'tree_1',
+    units: {
+      units: [
+        {
+          key: 'tree_1',
 
-      position: [-0.17, 0, -2.5],
-      rotation: [0, 0, 0],
-      moduleDebug: {
-        collision: true
-      }
-    },
-    {
-      key: 'tree_1',
-
-      position: [2.83, 0, 2.5],
-      rotation: [0, 0, 0],
-      moduleDebug: {
-        collision: true
-      }
-    },
-    {
-      key: 'tree_1',
-
-      position: [-2.83, 0, 2.5],
-      rotation: [0, 0, 0],
-      moduleDebug: {
-        collision: true
-      }
-    },
-    {
-      key: 'tree_1',
-
-      position: [-2.83, 0, 2.5],
-      rotation: [0, 0, 0],
-      moduleDebug: {
-        collision: true
-      }
-    },
-    {
-      key: 'tree_1',
-
-      position: [2.83, 0, -2.5],
-      rotation: [0, 0, 0],
-      moduleDebug: {
-        collision: true
-      }
-    },
-    {
-      key: 'tree_1',
-
-      position: [2.83, 0, -2.5],
-      rotation: [0, 0, 0],
-      moduleDebug: {
-        collision: true
-      }
-    },
-    {
-      key: 'tree_1',
-
-      position: [-2.83, 0, -2.5],
-      rotation: [0, 0, 0],
-      moduleDebug: {
-        collision: true
-      }
-    },
-
-    {
-      key: 'combat_helicopter_1',
-      moduleDebug: {
-        pathfinding: true,
-        patrol: true
-      },
-      position: [2, 0, 0],
-      moduleOptions: {
-        faction: {
-          faction: FACTION.BLUE
-        },
-        movable: {
-          active: true
-        },
-        patrol: {
-          active: true,
-          path: [
-            [4.17, -4.17],
-            [4.17, 4.17],
-            [-4.17, 4.17],
-            [-4.17, -4.17]
-          ]
-        }
-      }
-    },
-    {
-      key: 'tank_1',
-      position: [-0.5, 0, -0.17],
-      rotation: [0, Math.PI, 0],
-      moduleDebug: {
-        pathfinding: true,
-        patrol: true
-      },
-      moduleOptions: {
-        faction: {
-          faction: FACTION.BLUE
-        },
-        movable: {
-          active: false
-        },
-        patrol: {
-          active: true,
-          path: [
-            [-3.83, -1.17],
-            [-3.83, -3.83],
-            [3.83, -3.83],
-            [3.83, -1.17]
-          ]
-        }
-      }
-    },
-    ...(Array(5)
-      .fill(null)
-      .map((_, i) => {
-        return {
-          key: 'soldat_1',
-          id: `soldat-1-${i + 1}`,
-          position: [1 + i * 0.2, 0, 1],
+          position: [-0.17, 0, 2.5],
           rotation: [0, 0, 0],
-
           moduleDebug: {
-            pathfinding: true
+            collision: true
+          }
+        },
+        {
+          key: 'tree_1',
+
+          position: [-0.17, 0, -2.5],
+          rotation: [0, 0, 0],
+          moduleDebug: {
+            collision: true
+          }
+        },
+        {
+          key: 'tree_1',
+
+          position: [2.83, 0, 2.5],
+          rotation: [0, 0, 0],
+          moduleDebug: {
+            collision: true
+          }
+        },
+        {
+          key: 'tree_1',
+
+          position: [-2.83, 0, 2.5],
+          rotation: [0, 0, 0],
+          moduleDebug: {
+            collision: true
+          }
+        },
+        {
+          key: 'tree_1',
+
+          position: [-2.83, 0, 2.5],
+          rotation: [0, 0, 0],
+          moduleDebug: {
+            collision: true
+          }
+        },
+        {
+          key: 'tree_1',
+
+          position: [2.83, 0, -2.5],
+          rotation: [0, 0, 0],
+          moduleDebug: {
+            collision: true
+          }
+        },
+        {
+          key: 'tree_1',
+
+          position: [2.83, 0, -2.5],
+          rotation: [0, 0, 0],
+          moduleDebug: {
+            collision: true
+          }
+        },
+        {
+          key: 'tree_1',
+
+          position: [-2.83, 0, -2.5],
+          rotation: [0, 0, 0],
+          moduleDebug: {
+            collision: true
+          }
+        },
+
+        {
+          key: 'combat_helicopter_1',
+          moduleDebug: {
+            pathfinding: true,
+            patrol: true
+          },
+          position: [2, 0, 0],
+          moduleOptions: {
+            faction: {
+              faction: FACTION.BLUE
+            },
+            movable: {
+              active: true
+            },
+            patrol: {
+              active: true,
+              path: [
+                [4.17, -4.17],
+                [4.17, 4.17],
+                [-4.17, 4.17],
+                [-4.17, -4.17]
+              ]
+            }
+          }
+        },
+        {
+          key: 'tank_1',
+          position: [-0.5, 0, -0.17],
+          rotation: [0, Math.PI, 0],
+          moduleDebug: {
+            pathfinding: true,
+            patrol: true
           },
           moduleOptions: {
             faction: {
               faction: FACTION.BLUE
             },
-            patrol: {
-              active: true,
-              path: [
-                [3.17, 1.17],
-                [3.17, -1.17],
-                [-3.17, -1.17],
-                [-3.17, 1.17]
-              ]
-            }
-          }
-        };
-      }) as UnitDescriptions[]),
-    ...(Array(5)
-      .fill(null)
-      .map((_, i) => {
-        return {
-          key: 'soldat_1',
-          id: `soldat-2-${i + 1}`,
-          position: [-1 + i * -0.2, 0, 1],
-          rotation: [0, 0, 0],
-
-          moduleOptions: {
-            faction: {
-              faction: FACTION.BLUE
+            movable: {
+              active: false
             },
             patrol: {
               active: true,
               path: [
-                [-3.17, 1.17],
-                [-3.17, -1.17],
-                [3.17, -1.17],
-                [3.17, 1.17]
+                [-3.83, -1.17],
+                [-3.83, -3.83],
+                [3.83, -3.83],
+                [3.83, -1.17]
               ]
             }
           }
-        };
-      }) as UnitDescriptions[])
-  ]
+        },
+        ...(Array(5)
+          .fill(null)
+          .map((_, i) => {
+            return {
+              key: 'soldat_1',
+              id: `soldat-1-${i + 1}`,
+              position: [1 + i * 0.2, 0, 1],
+              rotation: [0, 0, 0],
+
+              moduleDebug: {
+                pathfinding: true
+              },
+              moduleOptions: {
+                faction: {
+                  faction: FACTION.BLUE
+                },
+                patrol: {
+                  active: true,
+                  path: [
+                    [3.17, 1.17],
+                    [3.17, -1.17],
+                    [-3.17, -1.17],
+                    [-3.17, 1.17]
+                  ]
+                }
+              }
+            };
+          }) as UnitDescriptions[]),
+        ...(Array(5)
+          .fill(null)
+          .map((_, i) => {
+            return {
+              key: 'soldat_1',
+              id: `soldat-2-${i + 1}`,
+              position: [-1 + i * -0.2, 0, 1],
+              rotation: [0, 0, 0],
+
+              moduleOptions: {
+                faction: {
+                  faction: FACTION.BLUE
+                },
+                patrol: {
+                  active: true,
+                  path: [
+                    [-3.17, 1.17],
+                    [-3.17, -1.17],
+                    [3.17, -1.17],
+                    [3.17, 1.17]
+                  ]
+                }
+              }
+            };
+          }) as UnitDescriptions[])
+      ]
+    }
+  }
 };
 </script>

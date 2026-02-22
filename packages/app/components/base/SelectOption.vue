@@ -9,11 +9,18 @@
       :label="option.label"
       :value="option.value"
       :disabled="option.disabled"
-      :selected="option.value === value">
+      :model-value="modelValue"
+      :selected="option.value === modelValue">
       {{ option.label }}
     </bm-select-option>
   </optgroup>
-  <option v-else :value="value" :disabled="disabled">{{ label }}</option>
+  <option
+    v-else
+    :value="value"
+    :disabled="disabled"
+    :selected="modelValue === value">
+    {{ label }}
+  </option>
 </template>
 
 <script lang="ts" setup generic="T">
@@ -25,7 +32,9 @@ defineProps<SelectOption<T>>();
 <script lang="ts">
 export interface SelectOption<T> {
   label: string;
+  modelValue?: T;
   value?: T;
+
   options?: SelectOption<T>[];
   disabled?: boolean;
 }

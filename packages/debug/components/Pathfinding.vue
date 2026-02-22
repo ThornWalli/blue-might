@@ -38,27 +38,31 @@ const map: Partial<MapDescription> = {
       }
     }
   },
-  units: [
-    {
-      key: 'tank_1',
-      id: 'tank-1',
-      position: [0, 0, 0],
-      rotation: [0, 0, 0],
-      moduleOptions: {
-        movable: {
-          active: true
+  moduleOptions: {
+    units: {
+      units: [
+        {
+          key: 'tank_1',
+          id: 'tank-1',
+          position: [0, 0, 0],
+          rotation: [0, 0, 0],
+          moduleOptions: {
+            movable: {
+              active: true
+            }
+          },
+          moduleDebug: {
+            pathfinding: true
+          }
+        },
+        {
+          key: 'tree_1',
+          id: 'tree-1',
+          position: [-0.17, 0, 2.83],
+          rotation: [0, 0, 0]
         }
-      },
-      moduleDebug: {
-        pathfinding: true
-      }
-    },
-    {
-      key: 'tree_1',
-      id: 'tree-1',
-      position: [-0.17, 0, 2.83],
-      rotation: [0, 0, 0]
+      ]
     }
-  ]
+  }
 };
 </script>

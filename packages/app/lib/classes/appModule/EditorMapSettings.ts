@@ -24,14 +24,13 @@ export default class EditorMapSettingsAppModule extends AppModule<
   Observables
 > {
   static override TYPE = 'editorMapSettings';
-  override state: State = {
-    meta: null,
-    fogOptions: null,
-    moduleDebug: {}
-  };
 
   constructor(app: App) {
-    super(app, {} as State);
+    super(app, {
+      meta: null,
+      fogOptions: null,
+      moduleDebug: {}
+    });
     //#region observables
     this.observables.meta$ = new ReplaySubject<Meta>(1);
     this.observables.fogOptions$ = new ReplaySubject<FogOptions>(1);

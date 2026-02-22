@@ -26,15 +26,12 @@ interface State extends AppModuleState {
 }
 export default class CursorAppModule extends AppModule<State, Observables> {
   static override TYPE = 'cursor';
-
-  override state: State = {
-    current: getDefaultCursor()
-  };
-
   private currentSubject = new ReplaySubject<Cursor>(0);
 
   constructor(app: BaseApp) {
-    super(app, {} as State);
+    super(app, {
+      current: getDefaultCursor()
+    });
     //#region observables
     this.observables.current$ = this.currentSubject.pipe(
       distinctUntilChanged((prev, current) => current.type === prev.type)

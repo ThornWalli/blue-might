@@ -35,17 +35,15 @@ export default class EditorSurfaceAppModule extends AppModule<
   Observables
 > {
   static override TYPE = 'editorSurface';
-  override state: State = {
-    textures: [],
-    heightMapInclude: false,
-    noise: {
-      ...DEFAULT_MAP_NOISE
-    },
-    noiseMonochrome: false
-  };
-
   constructor(app: App) {
-    super(app, {} as State);
+    super(app, {
+      textures: [],
+      heightMapInclude: false,
+      noise: {
+        ...DEFAULT_MAP_NOISE
+      },
+      noiseMonochrome: false
+    });
     //#region observables
     this.observables.textures$ = new ReplaySubject<TextureDescription[]>(1);
     this.observables.heightMapInclude$ = new ReplaySubject<boolean>(1);
@@ -61,17 +59,19 @@ export default class EditorSurfaceAppModule extends AppModule<
     this.subscription.add(
       this.app.modules.map.observables.map$.subscribe(map => {
         this.setTextures(
-          Object.entries(map.getTextures()).map(([key, texture]) => {
-            return {
-              key,
-              texture
-            };
-          })
+          Object.entries(map.modules.surface.getTextures()).map(
+            ([key, texture]) => {
+              return {
+                key,
+                texture
+              };
+            }
+          )
         );
         this.setHeightMapInclude(
-          map.description.surface.heightMapInclude ?? false
+          map.modules.surface.options.heightMapInclude ?? false
         );
-        this.setNoise(map.description.surface.noise ?? DEFAULT_MAP_NOISE);
+        this.setNoise(map.modules.surface.options.noise ?? DEFAULT_MAP_NOISE);
       })
     );
   }
@@ -106,15 +106,16 @@ export default class EditorSurfaceAppModule extends AppModule<
 
   async apply() {
     const map = this.app.modules.map.getMap()!;
-    map.setTextures(
+    const surface = map.modules.surface;
+    surface.setTextures(
       this.state.textures.reduce((acc, cur) => {
         acc[cur.key as keyof Textures] = cur.texture;
         return acc;
       }, {} as Textures)
     );
 
-    map.description.surface.heightMapInclude = this.getHeightMapInclude();
-    map.description.surface.noise = this.getNoise();
+    surface.options.heightMapInclude = this.getHeightMapInclude();
+    surface.options.noise = this.getNoise();
 
     await this.app.modules.map.restartMap(await map.toDescription());
   }
