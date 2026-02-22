@@ -42,7 +42,7 @@ import type { DialogContext } from '../base/Dialog.vue';
 import BmSeparator from '../Separator.vue';
 import BmDetails from '../Details.vue';
 
-import { useRoute, useRouter, useRuntimeConfig } from '#imports';
+import { useRoute, useRuntimeConfig } from '#imports';
 
 const runtimeConfig = useRuntimeConfig();
 
@@ -55,14 +55,14 @@ defineProps<{
 }>();
 
 const $route = useRoute();
-console.log(useRouter());
+
 const links = ref([
   {
     title: 'Default',
     href: {
       name: 'map',
       params: {
-        ...$route.params
+        map: $route.params.map ?? 'extended_map.zip'
       }
     }
   },
@@ -71,7 +71,7 @@ const links = ref([
     href: {
       name: 'editor-map',
       params: {
-        ...$route.params
+        map: $route.params.map ?? 'extended_map.zip'
       }
     }
   },
@@ -80,18 +80,20 @@ const links = ref([
     href: {
       name: 'debug-map',
       params: {
-        ...$route.params
+        map: $route.params.map ?? 'extended_map.zip'
       }
     }
   }
 ]);
 
-console.log(links.value);
 const missionLinks = ref([
   {
     title: 'Default',
     href: {
-      name: 'map'
+      name: 'map',
+      params: {
+        map: $route.params.map ?? 'extended_map.zip'
+      }
     }
   },
   {
