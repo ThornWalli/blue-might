@@ -11,6 +11,9 @@
     <transition name="fade-short">
       <component :is="currentComponent" v-if="ready" :app="app!" />
     </transition>
+    <transition name="fade-short">
+      <div v-if="!appReady" class="loading">Loading…</div>
+    </transition>
   </div>
 </template>
 
@@ -66,6 +69,8 @@ const currentComponent = computed(() => {
   }
 });
 
+const appReady = ref(false);
+
 onMounted(() => {
   nextTick(async () => {
     await setup();
@@ -90,6 +95,7 @@ async function setup() {
   if (app.value) {
     await $props.onSetup?.(app.value);
     await app.value.modules.map.enterMap($props.map);
+    appReady.value = true;
   } else {
     throw new Error('App not initialized');
   }
@@ -149,5 +155,31 @@ function onResize() {
     height: 100%;
     cursor: var(--cursor);
   }
+}
+
+.loading {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-family-bit-font);
+  font-size: var(--font-size-bit-font);
+  line-height: var(--line-height-bit-font);
+  color: white;
+  background: #000;
+}
+
+.fade-short-enter-active,
+.fade-short-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-short-enter,
+.fade-short-leave-to {
+  opacity: 0;
 }
 </style>
