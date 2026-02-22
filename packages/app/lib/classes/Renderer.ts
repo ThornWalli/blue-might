@@ -4,7 +4,7 @@ import { fromEvent, Observable, ReplaySubject, Subscription } from 'rxjs';
 import type { PerspectiveCamera, Vector2, Object3D, Camera } from 'three';
 import {
   WebGLRenderer,
-  Clock,
+  Timer,
   SRGBColorSpace,
   BasicShadowMap,
   PCFShadowMap,
@@ -72,7 +72,7 @@ export default class Renderer<
   };
   shadowQuality: ShadowQuality = DEFAULT_SHADOW_QUALITY;
 
-  clock = new Clock();
+  timer = new Timer();
   private renderer?: WebGLRenderer;
   scene!: Scene;
   private composer?: EffectComposer;
@@ -177,8 +177,12 @@ export default class Renderer<
 
     this.setShadowQuality(DEFAULT_SHADOW_QUALITY);
 
+    this.timer.connect(document);
+
     renderer.setAnimationLoop(time => {
-      const rawDelta = this.clock.getDelta();
+      this.timer.update(time);
+      const rawDelta = this.timer.getDelta();
+
       const delta = Math.min(rawDelta, 1 / 60);
       this.observables.animationLoop$.next({
         time,
@@ -209,6 +213,8 @@ export default class Renderer<
   }
 
   destroy() {
+    this.timer.disconnect();
+    this.timer.dispose();
     this.subscription.unsubscribe();
     this.observables.animationLoop$.complete();
     Object.values(this.modules).forEach(module => module.destroy());

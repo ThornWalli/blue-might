@@ -17,7 +17,7 @@ import {
   type Scene,
   type WebGLRenderer,
   BoxGeometry,
-  Clock,
+  Timer,
   Mesh,
   MeshBasicMaterial,
   Object3D,
@@ -196,17 +196,19 @@ function setupRenderer() {
   }
 
   renderer.setAnimationLoop(time => {
+    timer.value.update(time);
     renderer.render(previewScene, previewCamera);
 
     $emit('animation-loop', {
       scene: previewScene,
       time,
-      delta: $props.mode === 'loop' ? clock.value.getDelta() : 1000
+      delta: $props.mode === 'loop' ? timer.value.getDelta() : 1000
     });
   });
 }
 
-const clock = ref(new Clock());
+const timer = ref(new Timer());
+timer.value.connect(document);
 
 const $emit = defineEmits<{
   (e: 'animation-loop', value: AnimationLoopValue): void;
@@ -250,6 +252,9 @@ async function renderImage() {
 }
 
 onUnmounted(() => {
+  timer.value.disconnect();
+  timer.value.dispose();
+
   if (renderer) {
     renderer.dispose();
     previewScene.clear();

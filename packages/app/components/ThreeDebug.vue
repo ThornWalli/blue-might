@@ -16,13 +16,14 @@ import {
   SRGBColorSpace,
   NeutralToneMapping,
   BasicShadowMap,
-  Clock
+  Timer
 } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 //#region Three.js setup
 
-const clock = new Clock();
+const timer = new Timer();
+timer.connect(document);
 
 const root = ref<HTMLDivElement | null>(null);
 let scene: Scene;
@@ -126,10 +127,11 @@ onMounted(async () => {
 
   renderer.setAnimationLoop(time => {
     controls.update();
+    timer.update(time);
 
     renderer.render(scene, camera);
 
-    const rawDelta = clock.getDelta();
+    const rawDelta = timer.getDelta();
     const delta = Math.min(rawDelta, 1 / 60);
 
     $props.updateAnimation({
@@ -150,6 +152,8 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
+  timer.disconnect();
+  timer.dispose();
   $props.destroy?.({ scene });
 
   if (renderer) {
