@@ -37,7 +37,7 @@ import {
   EMPTY,
   filter,
   fromEvent,
-  map,
+  map as rxjsMap,
   merge,
   Subscription,
   switchMap
@@ -96,10 +96,10 @@ function setupMessages(app: AppPlayground) {
       .subscribe(player => {
         const subscription = merge(
           player?.modules.controls.observables.controls$.pipe(
-            map(controls => controls[ControlAction.RESTART]),
+            rxjsMap(controls => controls[ControlAction.RESTART]),
             filter(Boolean)
           ) ?? EMPTY,
-          fromEvent(document, 'click').pipe(map(() => true))
+          fromEvent(document, 'click').pipe(rxjsMap(() => true))
         ).subscribe(async () => {
           if (player.modules.life.isGameOver()) {
             await app.modules.map.restartMap();
@@ -141,6 +141,37 @@ function setupMessages(app: AppPlayground) {
         } else {
           messageType.value = null;
         }
+      })
+  );
+
+  subscription.add(
+    app.modules.player.observables.currentPlayer$
+      .pipe(
+        switchMap(player =>
+          app.modules.map.observables.map$.pipe(
+            switchMap(
+              map =>
+                map?.modules.mission.observables.complete$.pipe(
+                  rxjsMap(() => player)
+                ) ?? EMPTY
+            )
+          )
+        )
+      )
+      .subscribe(async player => {
+        messageType.value = MESSAGE_TYPE.MISSION_COMPLETE;
+        const subscription = merge(
+          player?.modules.controls.observables.controls$.pipe(
+            rxjsMap(controls => controls[ControlAction.RESTART]),
+            filter(Boolean)
+          ) ?? EMPTY,
+          fromEvent(document, 'click').pipe(rxjsMap(() => true))
+        ).subscribe(async () => {
+          messageType.value = null;
+          await app.modules.map.restartMap();
+          subscription.unsubscribe();
+        });
+        subscription.add(subscription);
       })
   );
 }

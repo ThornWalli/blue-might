@@ -3,19 +3,19 @@
     <form @submit="onSubmit">
       <h1 class="name">Mission Briefing: "{{ mission.getName() }}"</h1>
       <div class="briefing">
-        <div class="objective">
+        <div v-if="mission.getObjective()" class="objective">
           <h2>Objective</h2>
           <p>{{ mission.getObjective() }}</p>
         </div>
-        <div class="location">
+        <div v-if="mission.getLocation()" class="location">
           <h2>Location</h2>
           <p>{{ mission.getLocation() }}</p>
         </div>
-        <div class="situation-report">
+        <div v-if="mission.getSituationReport()" class="situation-report">
           <h2>Situation Report</h2>
           <div v-html="situationReport"></div>
         </div>
-        <div class="mission-objectives">
+        <div v-if="mission.getMissionObjectives()" class="mission-objectives">
           <h2>Mission Objectives</h2>
           <div v-html="missionObjectives"></div>
         </div>

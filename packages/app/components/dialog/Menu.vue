@@ -92,7 +92,7 @@ const missionLinks = ref([
     href: {
       name: 'map',
       params: {
-        map: $route.params.map ?? 'extended_map.zip'
+        map: 'extended_map.zip'
       }
     }
   },

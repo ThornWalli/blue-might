@@ -54,10 +54,10 @@ export default class EditorMissionAppModule extends AppModule<
   createMission() {
     const mission: MissionDescription = {
       name: 'New Mission',
-      objective: 'Mission Objective',
-      location: 'Mission Location',
-      situationReport: 'Mission Situation Report',
-      missionObjectives: 'Mission Objectives'
+      objective: '',
+      location: '',
+      situationReport: '',
+      missionObjectives: ''
     };
     this.missionModule?.setMission(mission);
   }

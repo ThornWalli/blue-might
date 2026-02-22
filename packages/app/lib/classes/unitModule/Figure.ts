@@ -89,7 +89,6 @@ export default class FigureUnitModule extends UnitModule<
     this.observables.rescueUnit$ = new ReplaySubject<Units | null>(1);
     this.observables.rescueUnit$.next(this.state.rescueUnit);
     this.observables.rescueComplete$ = new ReplaySubject<boolean>(1);
-    this.observables.rescueComplete$.next(this.isRescueComplete());
     //#endregion
 
     this.sphere = new Sphere(new Vector3(), this.options.targetRadius);
