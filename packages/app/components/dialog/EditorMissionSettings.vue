@@ -50,7 +50,10 @@
             <li
               v-for="target in targets.filter(t => t.type === 'attack')"
               :key="target.unit.id">
-              <span>{{ target.unit.name }}</span>
+              <span>
+                {{ target.unit.name }}
+                <span v-if="!target.optional">*</span>
+              </span>
               <bm-button
                 mode="text"
                 label="Remove"
@@ -69,7 +72,10 @@
             <li
               v-for="target in targets.filter(t => t.type === 'rescue')"
               :key="target.unit.id">
-              <span>{{ target.unit.name }}</span>
+              <span>
+                {{ target.unit.name }}
+                <span v-if="!target.optional">*</span>
+              </span>
               <bm-button
                 mode="text"
                 label="Remove"
@@ -102,12 +108,10 @@
 import { inject, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import { map as rxjsMap, EMPTY, Subscription, switchMap } from 'rxjs';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
-import type {
-  MissionDescription,
-  TargetType
-} from '@blue-might/app/lib/classes/Mission';
+import type { MissionDescription } from '@blue-might/app/lib/classes/Mission';
 import type Mission from '@blue-might/app/lib/classes/Mission';
 import type Unit from '@blue-might/app/lib/classes/Unit';
+import type { TargetType } from '@blue-might/app/lib/types/mission';
 
 import BmButton from '../Button.vue';
 import BmTextfield from '../Textfield.vue';
@@ -129,6 +133,7 @@ const targets = ref<
   {
     type: TargetType;
     unit: Unit;
+    optional: boolean;
   }[]
 >([]);
 
@@ -150,7 +155,8 @@ onMounted(() => {
         missionDescription.value = mission.value?.toDescription() ?? null;
         targets.value = (mission.value?.getTargets() ?? []).map(t => ({
           type: t.type,
-          unit: map.modules.units.getUnitById(t.unit)!
+          unit: map.modules.units.getUnitById(t.unit)!,
+          optional: t.optional ?? false
         }));
       })
   );

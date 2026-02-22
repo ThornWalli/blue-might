@@ -6,13 +6,17 @@ import AppModule, {
 } from '../AppModule';
 import type { App } from '../../types';
 import type Mission from '../Mission';
-import type { MissionDescription, TargetType } from '../Mission';
+import type { MissionDescription } from '../Mission';
 import type Unit from '../Unit';
+import type { TargetType } from '../../types/mission';
+import { isFigure } from '../../utils/unit';
 
 interface Observables extends AppModuleObservables {
   mission$: ReplaySubject<Mission | null>;
   unit$: ReplaySubject<Unit | null>;
+  optional$: ReplaySubject<boolean>;
   targetType$: ReplaySubject<TargetType>;
+  availability$: ReplaySubject<{ canAttack: boolean; canRescue: boolean }>;
 }
 
 interface State extends AppModuleState {
@@ -28,9 +32,15 @@ export default class EditorMissionAppModule extends AppModule<
   constructor(app: App) {
     super(app, {} as State);
     //#region observables
+    this.observables.optional$ = new ReplaySubject<boolean>(1);
     this.observables.targetType$ = new ReplaySubject<TargetType>(1);
     this.observables.unit$ = new ReplaySubject<Unit | null>(1);
     this.observables.mission$ = new ReplaySubject<Mission | null>(1);
+    this.observables.availability$ = new ReplaySubject<{
+      canAttack: boolean;
+      canRescue: boolean;
+    }>(1);
+    this.observables.availability$.next({ canAttack: false, canRescue: false });
     //#endregion
   }
 
@@ -98,16 +108,32 @@ export default class EditorMissionAppModule extends AppModule<
     if (!this.state.mission) return;
     this.state.unit = unit;
     if (unit) {
-      const target = this.state.mission.getTargetTypeFromUnit(unit.id)!;
-      this.observables.targetType$.next(target);
+      const { type, optional } = this.state.mission.getTarget(unit.id) ?? {};
+      if (type) {
+        this.observables.targetType$.next(type);
+      }
+
+      this.observables.optional$.next(optional ?? false);
+
+      const availability = { canAttack: false, canRescue: false };
+      if (isFigure(unit)) {
+        availability.canRescue = true;
+      }
+      availability.canAttack = true;
+
+      this.observables.availability$.next(availability);
     }
     this.observables.unit$.next(unit);
   }
 
-  setTargetType(targetType: TargetType) {
+  setTarget(targetType: TargetType, optional: boolean = false) {
     const map = this.app.modules.map.getMap();
     if (!map || !this.state.mission || !this.state.unit) return;
-    map.modules.mission.addTarget(this.state.unit, targetType);
+    map.modules.mission.addTarget(this.state.unit, {
+      type: targetType,
+      optional
+    });
     this.observables.targetType$.next(targetType);
+    this.observables.optional$.next(optional);
   }
 }

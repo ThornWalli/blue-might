@@ -153,7 +153,7 @@ export default class VehiclePlayerModule extends PlayerModule<
   }
 
   setVehicleUnit(vehicle: Units | null) {
-    if (this.state.unit === vehicle) return;
+    if (!vehicle || this.state.unit === vehicle) return;
 
     if (vehicle?.modules && 'player' in vehicle.modules) {
       const last = this.state.unit;

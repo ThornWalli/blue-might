@@ -20,6 +20,14 @@
         <span>Click or type "R" for restart.</span>
       </div>
     </div>
+
+    <div v-if="$props.type === MESSAGE_TYPE.MISSION_FAILED">
+      <div>Mission Failed</div>
+      <div>
+        <span>Better luck next time!</span>
+        <span>Click or type "R" for restart.</span>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -33,7 +41,8 @@ const $props = defineProps<{
 export enum MESSAGE_TYPE {
   DESTROYED_GAME_OVER = 'destroyed_game_over',
   DESTROYED_RESTART = 'destroyed_restart',
-  MISSION_COMPLETE = 'mission_complete'
+  MISSION_COMPLETE = 'mission_complete',
+  MISSION_FAILED = 'mission_failed'
 }
 </script>
 

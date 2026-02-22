@@ -521,7 +521,7 @@ export default class HelicopterUnitModule<
           unitPosition.y <= Math.max(groundModule?.getSeaLevel(), minY)) ||
         ((status === FLIGHT_STATUS.TAKING_OFF ||
           status === FLIGHT_STATUS.LANDED) &&
-          unitPosition.y < minY)
+          unitPosition.y <= minY)
       ) {
         if (!isDestroyed) {
           const impactStrength = Math.abs(velocity.y);
@@ -557,7 +557,10 @@ export default class HelicopterUnitModule<
           position.setY(minY);
         }
 
-        if (position.clone().sub(unit.getPosition()).length() < 0.001) return;
+        if (position.clone().sub(unit.getPosition()).length() < 0.001) {
+          this.setFlightStatus(FLIGHT_STATUS.LANDED);
+          return;
+        }
         unit.setPosition(position, {
           raycaster: true
         });

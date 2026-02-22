@@ -1,6 +1,5 @@
 import type { UnitIdentifier } from '../types/unit';
-
-export type TargetType = 'rescue' | 'attack';
+import type { TargetType } from '../types/mission';
 
 export interface MissionDescription {
   name: string;
@@ -11,6 +10,7 @@ export interface MissionDescription {
   targets?: {
     type: TargetType;
     unit: UnitIdentifier;
+    optional: boolean;
   }[];
 }
 
@@ -22,6 +22,7 @@ export default class Mission {
   private missionObjectives: string;
   private targets: {
     type: TargetType;
+    optional: boolean;
     unit: UnitIdentifier;
   }[];
   constructor(description: MissionDescription) {
@@ -71,12 +72,14 @@ export default class Mission {
   public getTargets() {
     return this.targets;
   }
-  public setTargets(targets: { type: TargetType; unit: UnitIdentifier }[]) {
+  public setTargets(
+    targets: { type: TargetType; unit: UnitIdentifier; optional: boolean }[]
+  ) {
     this.targets = targets;
   }
 
-  public getTargetTypeFromUnit(unitId: UnitIdentifier) {
-    return this.targets.find(target => target.unit === unitId)?.type;
+  public getTarget(unitId: UnitIdentifier) {
+    return this.targets.find(target => target.unit === unitId);
   }
 
   public toDescription(): MissionDescription {

@@ -1,8 +1,11 @@
+import type { Subscription } from 'rxjs';
 import {
   combineLatest,
   concatMap,
   EMPTY,
   filter,
+  from,
+  map,
   ReplaySubject,
   switchMap
 } from 'rxjs';
@@ -113,43 +116,53 @@ export default class FigureUnitModule extends UnitModule<
         .subscribe(() => this.getUnit().destroy())
     );
 
+    let subscription: Subscription | null = null;
     this.subscription.add(
       this.observables.targetUnit$
         .pipe(
-          filter(Boolean),
           concatMap(async u => {
             const unit = this.getUnit();
-            if (!unit) {
+            if (!unit || !u) {
               if (this.getUnit().modules.pathfinding.isMoving()) {
                 await this.getUnit().modules.pathfinding.abortMovement();
               }
             }
-            await this.moveToUnit();
             return u;
-          }),
-          switchMap(() => {
-            const targetUnit = this.state.targetUnit;
-            const unit = this.getUnit();
-            if (targetUnit && 'rescue' in targetUnit.modules) {
-              console.log('Target unit is a rescue unit');
-              targetUnit.modules.rescue.rescueUnit(unit);
-              return EMPTY;
-            } else if (targetUnit && 'transport' in targetUnit.modules) {
-              console.log('Target unit is a transport unit');
-              if (targetUnit.modules.transport.load(unit)) {
-                return targetUnit.modules.transport.observables.unload$.pipe(
-                  filter(u => unit === u)
-                );
-              } else {
-                this.setTargetUnit(null);
-              }
-            }
-            return EMPTY;
           })
         )
-        .subscribe(() => {
-          console.log('Unit has been unloaded from transport');
-          this.setTargetUnit(null);
+        .subscribe(u => {
+          subscription?.unsubscribe();
+          subscription = null;
+          if (u) {
+            subscription = from(this.moveToUnit())
+              .pipe(
+                map(() => u),
+                switchMap(() => {
+                  const targetUnit = this.state.targetUnit;
+                  const unit = this.getUnit();
+                  if (targetUnit && 'rescue' in targetUnit.modules) {
+                    console.log('Target unit is a rescue unit');
+                    targetUnit.modules.rescue.rescueUnit(unit);
+                    return EMPTY;
+                  } else if (targetUnit && 'transport' in targetUnit.modules) {
+                    console.log('Target unit is a transport unit');
+                    if (targetUnit.modules.transport.load(unit)) {
+                      return targetUnit.modules.transport.observables.unload$.pipe(
+                        filter(u => unit === u)
+                      );
+                    } else {
+                      this.setTargetUnit(null);
+                    }
+                  }
+                  return EMPTY;
+                })
+              )
+              .subscribe(() => {
+                console.log('Unit has been unloaded from transport');
+                this.setTargetUnit(null);
+              });
+            this.subscription.add(subscription);
+          }
         })
     );
   }

@@ -178,7 +178,7 @@
                     <span>{{ message.text }}</span>
                   </div>
                 </div>
-
+                {{ flightStatus }}
                 <bm-fieldset v-if="hasTransport" label="Transport">
                   <bm-control-item
                     :button="

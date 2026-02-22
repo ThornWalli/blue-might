@@ -30,10 +30,28 @@
                 :key="target.name">
                 <div>
                   <span>{{ target.name }}</span>
+                  <span class="spacer"></span>
+                  <span
+                    class="optional-count"
+                    :class="{
+                      complete: target.completes === target.count,
+                      half: target.completes > Math.floor(target.count / 2)
+                    }">
+                    {{ target.failed }} / {{ target.completes }} /
+                    {{ target.count }}
+                  </span>
                   <span
                     class="count"
-                    :class="{ complete: target.completes === target.count }">
-                    {{ target.completes }} / {{ target.count }}
+                    :class="{
+                      complete:
+                        target.optionalCompletes === target.optionalCount,
+                      half:
+                        target.optionalCompletes >
+                        Math.floor(target.optionalCount / 2)
+                    }">
+                    {{ target.optionalFailed }} /
+                    {{ target.optionalCompletes }} /
+                    {{ target.optionalCount }}
                   </span>
                 </div>
               </li>
@@ -51,10 +69,29 @@
                 :key="target.name">
                 <div>
                   <span>{{ target.name }}</span>
+                  <span class="spacer"></span>
+                  <span
+                    v-if="target.optionalCount > 0"
+                    class="optional-count"
+                    :class="{
+                      complete:
+                        target.optionalCompletes === target.optionalCount,
+                      half:
+                        target.optionalCompletes >
+                        Math.floor(target.optionalCount / 2)
+                    }">
+                    {{ target.optionalFailed }} /
+                    {{ target.optionalCompletes }} /
+                    {{ target.optionalCount }}
+                  </span>
                   <span
                     class="count"
-                    :class="{ complete: target.completes === target.count }">
-                    {{ target.completes }} / {{ target.count }}
+                    :class="{
+                      complete: target.completes === target.count,
+                      half: target.completes > Math.floor(target.count / 2)
+                    }">
+                    {{ target.failed }} / {{ target.completes }} /
+                    {{ target.count }}
                   </span>
                 </div>
               </li>
@@ -88,12 +125,12 @@ import type { App } from '@blue-might/app/lib/types';
 import type Mission from '@blue-might/app/lib/classes/Mission';
 import { map as rxjsMap, EMPTY, Subscription, switchMap } from 'rxjs';
 import { marked } from 'marked';
-import type { TargetType } from '@blue-might/app/lib/classes/Mission';
-import type { Units } from '@blue-might/units';
+import { groupTargetsByUnit } from '@blue-might/app/lib/utils/mission';
 
 import type { DialogContext } from '../base/Dialog.vue';
 import BmFieldset from '../Fieldset.vue';
 import BmButton from '../Button.vue';
+import type { TargetResult } from '../../lib/utils/mission';
 
 const dialog = inject<DialogContext>('dialog')!;
 
@@ -102,14 +139,7 @@ const $props = defineProps<{
 }>();
 
 const mission = ref<Raw<Mission> | null>(null);
-const targets = ref<
-  {
-    type: TargetType;
-    name: string;
-    count: number;
-    completes: number;
-  }[]
->([]);
+const targets = ref<TargetResult[]>([]);
 
 const subscription = new Subscription();
 
@@ -152,7 +182,7 @@ onMounted(() => {
         targets.value = groupTargetsByUnit(
           (mission.value?.getTargets() ?? []).map(t => {
             return {
-              type: t.type,
+              ...t,
               unit: unitMap.get(t.unit)!
             };
           })
@@ -169,45 +199,11 @@ function onSubmit(e: Event) {
   e.preventDefault();
   dialog.close();
 }
-
-function groupTargetsByUnit(targets: { type: TargetType; unit: Units }[]) {
-  const grouped: {
-    name: string;
-    type: TargetType;
-    count: number;
-    completes: number;
-  }[] = [];
-  for (const target of targets) {
-    let existing = grouped.find(t => t.name === target.unit.name);
-    if (!existing) {
-      existing = {
-        name: target.unit.name,
-        type: target.type,
-        count: 0,
-        completes: 0
-      };
-      grouped.push(existing);
-    }
-
-    existing.count++;
-
-    if (
-      target.type === 'rescue' &&
-      'figure' in target.unit.modules &&
-      target.unit.modules.figure.isRescueComplete()
-    ) {
-      existing.completes++;
-    }
-    if (target.type === 'attack' && target.unit.modules.damage.isDestroyed()) {
-      existing.completes++;
-    }
-  }
-  return grouped;
-}
 </script>
 
 <style lang="postcss" scoped>
 .bm-dialog-mission-briefing {
+  box-sizing: border-box;
   width: 100%;
   max-width: 640px;
   padding: var(--bm-spacing-small);
@@ -267,12 +263,6 @@ function groupTargetsByUnit(targets: { type: TargetType; unit: Units }[]) {
     border-bottom: solid 4px var(--bm-line-color);
   }
 
-  & .briefing {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--bm-spacing-medium);
-  }
-
   & :deep(h2),
   & :deep(h3),
   & :deep(h4),
@@ -286,44 +276,55 @@ function groupTargetsByUnit(targets: { type: TargetType; unit: Units }[]) {
     opacity: 0.6;
   }
 
-  & :deep(ul),
-  & :deep(ol),
-  & :deep(p) {
-    margin: var(--bm-spacing-medium) 0;
+  & .briefing {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--bm-spacing-medium);
 
-    &:first-child {
-      margin-top: 0;
+    & :deep(ul),
+    & :deep(ol),
+    & :deep(p) {
+      margin: var(--bm-spacing-medium) 0;
+
+      &:first-child {
+        margin-top: 0;
+      }
+
+      &:last-child {
+        margin-bottom: 0;
+      }
     }
 
-    &:last-child {
-      margin-bottom: 0;
+    & :deep(ul),
+    & :deep(ol) {
+      display: flex;
+      flex-direction: column;
+      gap: var(--bm-spacing-small);
+      padding-left: 1.25em;
+    }
+
+    & :deep(ol) {
+      list-style-type: decimal;
+    }
+
+    & :deep(ul) {
+      list-style-type: circle;
+    }
+
+    & :deep(hr) {
+      margin: var(--bm-spacing-small) 0;
+      border: none;
+      border-top: 2px solid var(--bm-line-color);
     }
   }
 
-  & :deep(ul),
-  & :deep(ol) {
-    display: flex;
-    flex-direction: column;
-    gap: var(--bm-spacing-small);
-    padding-left: 1.25em;
-  }
-
-  & :deep(ol) {
-    list-style-type: decimal;
-  }
-
-  & :deep(ul) {
-    list-style-type: circle;
-  }
-
-  & :deep(hr) {
-    margin: var(--bm-spacing-small) 0;
-    border: none;
-    border-top: 2px solid var(--bm-line-color);
-  }
-
-  & .count {
+  & .count,
+  & .optional-count {
     color: red;
+
+    &.half {
+      color: yellow;
+    }
 
     &.complete {
       color: green;

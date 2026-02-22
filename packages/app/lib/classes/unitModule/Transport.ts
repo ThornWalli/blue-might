@@ -111,6 +111,15 @@ export default class TransportUnitModule<
 
     const unit = this.getUnit();
 
+    this.subscription.add(
+      unit.modules.damage.observables.destroyed$.subscribe(() => {
+        // this.unloadAll();
+        this.getSlots().forEach(u => {
+          u.modules.damage.takeMaxDamage();
+        });
+      })
+    );
+
     if ('airVehicle' in unit.modules) {
       this.subscription.add(
         combineLatest([

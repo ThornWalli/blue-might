@@ -7,8 +7,10 @@ import MapModule, {
   type MapModuleState
 } from '../MapModule';
 import type Map from '../Map';
-import type { MissionDescription, TargetType } from '../Mission';
+import type { MissionDescription } from '../Mission';
 import Mission from '../Mission';
+import { groupTargetsByUnit } from '../../utils/mission';
+import type { TargetType } from '../../types/mission';
 
 declare module '../Map' {
   interface ModuleDebug {
@@ -19,6 +21,7 @@ declare module '../Map' {
 interface Observables extends MapModuleObservables {
   mission$: ReplaySubject<Mission | null>;
   complete$: ReplaySubject<void>;
+  failed$: ReplaySubject<void>;
 }
 
 interface Options extends MapModuleOptions {
@@ -27,6 +30,7 @@ interface Options extends MapModuleOptions {
 interface State extends MapModuleState {
   mission: Mission | null;
   complete: boolean;
+  failed: boolean;
 }
 
 export default class MissionModule extends MapModule<
@@ -35,6 +39,7 @@ export default class MissionModule extends MapModule<
   Observables
 > {
   static override TYPE = 'mission';
+  private targetSubscription: Subscription | null = null;
 
   constructor(map: Map, options: Options, state: State, debug: boolean) {
     super(
@@ -45,13 +50,15 @@ export default class MissionModule extends MapModule<
       {
         ...state,
         mission: null,
-        complete: false
+        complete: false,
+        failed: false
       },
       debug
     );
     //#region observables
     this.observables.mission$ = new ReplaySubject<Mission | null>(1);
     this.observables.complete$ = new ReplaySubject<void>();
+    this.observables.failed$ = new ReplaySubject<void>();
     //#endregion
   }
 
@@ -67,14 +74,15 @@ export default class MissionModule extends MapModule<
     );
   }
 
-  getMission() {
-    return this.state.mission;
-  }
-
   private registerTargetUnits(type: TargetType, unit: Units) {
     switch (type) {
       case 'rescue':
         if ('figure' in unit.modules) {
+          this.targetSubscription?.add(
+            unit.modules.damage.observables.destroyed$.subscribe(() => {
+              this.checkStatus();
+            })
+          );
           this.targetSubscription?.add(
             unit.modules.figure.observables.rescueComplete$.subscribe(() => {
               this.checkStatus();
@@ -90,6 +98,14 @@ export default class MissionModule extends MapModule<
         );
         break;
     }
+  }
+
+  isComplete() {
+    return this.state.complete;
+  }
+
+  isFailed() {
+    return this.state.failed;
   }
 
   checkStatus() {
@@ -111,23 +127,33 @@ export default class MissionModule extends MapModule<
       ].map(u => [u.id, u])
     );
 
-    const result = !groupTargetsByUnit(
+    const grouped = groupTargetsByUnit(
       (mission.getTargets() ?? []).map(t => {
         return {
-          type: t.type,
+          ...t,
           unit: unitMap.get(t.unit)!
         };
       })
-    ).find(r => r.count !== r.completes);
+    );
 
-    console.log('checkStatus', result);
-    if (!result) {
-      this.state.complete = true;
-      this.observables.complete$.next();
+    const resultFailed = grouped.some(r => r.failed > 0);
+    if (resultFailed) {
+      this.state.failed = true;
+      this.observables.failed$.next();
+    } else {
+      const resultSuccess = !grouped.find(
+        r => r.count !== r.completes + r.optionalCompletes
+      );
+      if (resultSuccess) {
+        this.state.complete = true;
+        this.observables.complete$.next();
+      }
     }
   }
 
-  private targetSubscription: Subscription | null = null;
+  getMission() {
+    return this.state.mission;
+  }
   setMission(description: MissionDescription | null) {
     if (!description) {
       this.state.mission = null;
@@ -170,7 +196,10 @@ export default class MissionModule extends MapModule<
     ];
   }
 
-  addTarget(unit: Units, targetType: TargetType) {
+  addTarget(
+    unit: Units,
+    { type, optional }: { type: TargetType; optional: boolean }
+  ) {
     if (!this.state.mission) return;
 
     const targets = this.state.mission
@@ -179,7 +208,8 @@ export default class MissionModule extends MapModule<
 
     targets.push({
       unit: unit.id,
-      type: targetType
+      type,
+      optional
     });
 
     this.state.mission.setTargets(targets);
@@ -190,39 +220,4 @@ export default class MissionModule extends MapModule<
       mission: this.state.mission?.toDescription()
     };
   }
-}
-
-function groupTargetsByUnit(targets: { type: TargetType; unit: Units }[]) {
-  const grouped: {
-    name: string;
-    type: TargetType;
-    count: number;
-    completes: number;
-  }[] = [];
-  for (const target of targets) {
-    let existing = grouped.find(t => t.name === target.unit.name);
-    if (!existing) {
-      existing = {
-        name: target.unit.name,
-        type: target.type,
-        count: 0,
-        completes: 0
-      };
-      grouped.push(existing);
-    }
-
-    existing.count++;
-
-    if (
-      target.type === 'rescue' &&
-      'figure' in target.unit.modules &&
-      target.unit.modules.figure.isRescueComplete()
-    ) {
-      existing.completes++;
-    }
-    if (target.type === 'attack' && target.unit.modules.damage.isDestroyed()) {
-      existing.completes++;
-    }
-  }
-  return grouped;
 }
