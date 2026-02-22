@@ -12,6 +12,8 @@ import {
   WebGLRenderer
 } from 'three';
 
+import { getPixelRatio } from './renderer';
+
 interface CameraSetupOptions {
   fill: 'width' | 'height'; // Welche Dimension füllen
 }
@@ -29,9 +31,8 @@ export function createRenderer(canvas: HTMLCanvasElement | OffscreenCanvas) {
   renderer.outputColorSpace = SRGBColorSpace;
   renderer.toneMapping = NeutralToneMapping;
   renderer.toneMappingExposure = 1.0;
-  renderer.setPixelRatio(480 / window.innerWidth);
-  // renderer.setPixelRatio(1 / 3);
-  // renderer.setPixelRatio(window.devicePixelRatio); // window.devicePixelRatio
+
+  renderer.setPixelRatio(getPixelRatio());
 
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = PCFShadowMap;

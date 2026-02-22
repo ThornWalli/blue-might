@@ -15,6 +15,7 @@ import {
   FogExp2
 } from 'three';
 import type { RendererOptions } from '@blue-might/app/types';
+import { getPixelRatio } from '@blue-might/app/utils/renderer';
 
 import type { FogOptions } from '../types/map';
 
@@ -300,11 +301,7 @@ export default class Renderer<
   }
 
   setPixelated(value: boolean) {
-    this.renderer?.setPixelRatio(
-      value
-        ? window.innerWidth / window.devicePixelRatio / window.innerWidth
-        : 1
-    );
+    this.renderer?.setPixelRatio(getPixelRatio());
     this.options.pixelated = value;
   }
 
@@ -355,15 +352,11 @@ export function createRenderer(
   renderer.setSize(dimension.x, dimension.y);
 
   if (options.pixelated) {
-    renderer.setPixelRatio(getPixelRationBase() / window.innerWidth);
+    renderer.setPixelRatio(getPixelRatio());
   }
   //#endregion
 
   return renderer;
-}
-
-function getPixelRationBase() {
-  return window.devicePixelRatio > 1 ? 640 : 320;
 }
 
 export function createComposer(
