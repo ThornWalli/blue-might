@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.64](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.63...v1.0.0-beta.64) (2026-02-22)
+
+
+### Bug Fixes
+
+* **app:** update route parameters to use default map if not provided ([4681954](https://github.com/ThornWalli/blue-might/commit/46819547c0a3f833b3b03cb4ac0daa18df4e92ef))
+
 # [1.0.0-beta.63](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.62...v1.0.0-beta.63) (2026-02-22)
 
 
