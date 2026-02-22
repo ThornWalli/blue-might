@@ -14,6 +14,7 @@ import {
 import type { Object3D, Vector3Tuple } from 'three';
 import { Euler, Group, Mesh, SkinnedMesh, Vector3 } from 'three';
 import * as units from '@blue-might/units';
+import type { Units } from '@blue-might/units';
 
 import MapModule, {
   type MapModuleObservables,
@@ -53,8 +54,9 @@ interface Options extends MapModuleState {
 }
 interface State extends MapModuleState {
   ready: boolean;
-  visibleUnits: Unit[];
-  units: globalThis.Map<string, Unit>;
+  visibleUnits: Units[];
+  units: globalThis.Map<string, Units>;
+  destroyedUnits: Units[];
 }
 
 export default class UnitsModule extends MapModule<
@@ -77,7 +79,8 @@ export default class UnitsModule extends MapModule<
         ...states,
         ready: states.ready ?? false,
         visibleUnits: states.visibleUnits ?? [],
-        units: states.units ?? new globalThis.Map<string, Unit>()
+        units: states.units ?? new globalThis.Map<string, Unit>(),
+        destroyedUnits: states.destroyedUnits ?? []
       },
       debug
     );
@@ -211,6 +214,9 @@ export default class UnitsModule extends MapModule<
   getUnits() {
     return Array.from(this.state.units.values());
   }
+  getDestroyedUnits() {
+    return Array.from(this.state.destroyedUnits);
+  }
 
   getUnitsInRadius(position: Vector3, radius: number) {
     return this.chunkManager.getUnitsInRadius(position, radius);
@@ -244,7 +250,7 @@ export default class UnitsModule extends MapModule<
           })
       );
       unit.subscription.add(
-        unit.observables.destroyed$.subscribe(() => this.remove(unit))
+        unit.observables.destroyed$.subscribe(() => this.remove(unit, true))
       );
     }
 
@@ -272,13 +278,17 @@ export default class UnitsModule extends MapModule<
     );
   }
 
-  remove(unit: Unit) {
+  remove(unit: Unit, destroyed = false) {
     this.listener!.removeMeshes(getMeshes(unit.root));
     this.state.units.delete(unit.id);
     this.chunkManager.removeFromChunk(unit);
     this.root.remove(unit.root);
     unit.setActive(false);
     this.observables.removeUnit$.next(unit);
+
+    if (destroyed) {
+      this.state.destroyedUnits.push(unit);
+    }
   }
 
   getById<U extends Unit = Unit>(id: string): U | undefined {

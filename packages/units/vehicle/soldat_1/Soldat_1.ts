@@ -54,39 +54,42 @@ export default class Soldat_1<
   override async afterSetup(_context: SetupContext) {
     await super.afterSetup(_context);
 
-    this.modules.animation.applySettings(this.animationSettings);
-
     this.setMaterialReady();
-    this.subscription.add(
-      this.modules.figureMovable.observables.status$.subscribe(status => {
-        this.modules.animation.stopActions();
-        switch (status) {
-          case FIGURE_STATUS.WALKING:
-            this.modules.animation.playAction('walk');
-            break;
-          case FIGURE_STATUS.RUNNING:
-            this.modules.animation.playAction('run');
-            break;
-          case FIGURE_STATUS.IDLE:
-            this.modules.animation.playAction('idle');
-            break;
-          case FIGURE_STATUS.SWIMMING:
-            this.modules.animation.playAction('swim');
-            break;
-          case FIGURE_STATUS.DEAD:
-            this.modules.animation.playAction('dead');
-            break;
-          default:
-            this.modules.animation.playAction('idle');
-        }
-      })
-    );
+    if (!this.preview) {
+      this.modules.animation.applySettings(this.animationSettings);
+      this.subscription.add(
+        this.modules.figureMovable.observables.status$.subscribe(status => {
+          this.modules.animation.stopActions();
+          switch (status) {
+            case FIGURE_STATUS.WALKING:
+              this.modules.animation.playAction('walk');
+              break;
+            case FIGURE_STATUS.RUNNING:
+              this.modules.animation.playAction('run');
+              break;
+            case FIGURE_STATUS.IDLE:
+              this.modules.animation.playAction('idle');
+              break;
+            case FIGURE_STATUS.SWIMMING:
+              this.modules.animation.playAction('swim');
+              break;
+            case FIGURE_STATUS.DEAD:
+              this.modules.animation.playAction('dead');
+              break;
+            default:
+              this.modules.animation.playAction('idle');
+          }
+        })
+      );
+    }
   }
 
   override async createMesh(_context: SetupContext) {
     const { object, animations } = await loadGltf(baseGlb);
 
-    this.modules.animation.setAnimations(animations);
+    if (!this.preview) {
+      this.modules.animation.setAnimations(animations);
+    }
 
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {

@@ -15,7 +15,7 @@
         @files="onFiles" />
     </div>
     <teleport to="body">
-      <bm-dialog ref="missionBriefingDialog" hidrxse-header>
+      <bm-dialog ref="missionBriefingDialog" hide-header>
         <template #header>Mission Briefing</template>
         <template #default>
           <bm-dialog-mission-briefing :app="$props.app" />
@@ -102,6 +102,12 @@ async function onFiles(files: FileList) {
     $props.app.modules.map.enterMap(await createImport(file));
   }
 }
+
+defineExpose({
+  openMissionBriefing: onClickMissionBriefing,
+  openInstructions: onClickInstructions,
+  openMenu: onClickMenu
+});
 </script>
 
 <style lang="postcss" scoped>

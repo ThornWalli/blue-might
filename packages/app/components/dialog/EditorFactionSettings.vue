@@ -23,15 +23,16 @@
           <bm-button
             :icon="ICON.TRASH"
             hide-label
+            type="button"
             label="Delete"
             @click="onClickDelete(faction.id)" />
         </div>
       </div>
     </div>
     <div class="controls">
-      <bm-button label="New" @click="onClickNew" />
-      <bm-button label="Copy Factions" @click="onClickCopy" />
-      <bm-button label="Paste Factions" @click="onClickPaste" />
+      <bm-button type="button" label="New" @click="onClickNew" />
+      <bm-button type="button" label="Copy Factions" @click="onClickCopy" />
+      <bm-button type="button" label="Paste Factions" @click="onClickPaste" />
       <div class="spacer"></div>
       <bm-button label="Abort" type="reset" />
       <bm-button label="Save" type="submit" />

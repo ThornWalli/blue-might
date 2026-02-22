@@ -53,7 +53,8 @@ const $props = defineProps<{
 }>();
 const editorUnitDebug = $props.app.modules.editorUnitDebug;
 
-function onSubmit() {
+function onSubmit(e: Event) {
+  e.preventDefault();
   editorUnitDebug.setModuleDebug(moduleDebug);
   dialog.close();
 }

@@ -61,13 +61,6 @@ export default class FigureUnitModule extends UnitModule<
   FigureUnitModuleState,
   Observables
 > {
-  setRescueUnit(unit: Units) {
-    this.state.rescueUnit = unit;
-    this.observables.rescueComplete$.next(true);
-  }
-  isRescueComplete() {
-    return !!this.state.rescueUnit;
-  }
   static override TYPE = 'figure';
 
   sphere: Sphere;
@@ -321,6 +314,14 @@ export default class FigureUnitModule extends UnitModule<
   setNeedRescue(needRescue: boolean) {
     this.options.needRescue = needRescue;
     this.observables.needRescue$.next(needRescue);
+  }
+
+  setRescueUnit(unit: Units) {
+    this.state.rescueUnit = unit;
+    this.observables.rescueComplete$.next(true);
+  }
+  isRescueComplete() {
+    return !!this.state.rescueUnit;
   }
 
   override getOptions() {

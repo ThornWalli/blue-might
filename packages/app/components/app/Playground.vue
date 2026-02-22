@@ -2,7 +2,11 @@
   <bm-app-layout class="bm-app-playground">
     <template #[PANEL.BOTTOM_LEFT]>
       <div class="panel-column">
-        <bm-panel-general key="general" show-import :app="app" />
+        <bm-panel-general
+          ref="generalEl"
+          key="general"
+          show-import
+          :app="app" />
       </div>
     </template>
     <template #[PANEL.TOP_LEFT]>
@@ -51,6 +55,7 @@ import BmPanelMap from '../panel/Map.vue';
 import BmMessage, { MESSAGE_TYPE } from '../Message.vue';
 
 const messageType = ref<MESSAGE_TYPE | null>(null);
+const generalEl = ref<InstanceType<typeof BmPanelGeneral> | null>(null);
 
 const $props = defineProps<{
   app: AppPlayground;
@@ -68,6 +73,19 @@ onUnmounted(() => {
 });
 
 function setupMessages(app: AppPlayground) {
+  subscription.add(
+    app.modules.map.observables.map$
+      .pipe(
+        switchMap(map =>
+          map ? map.modules.mission.observables.mission$ : EMPTY
+        ),
+        filter(Boolean)
+      )
+      .subscribe(() => {
+        generalEl.value?.openMissionBriefing();
+      })
+  );
+
   subscription.add(
     app.modules.player.observables.currentPlayer$
       .pipe(

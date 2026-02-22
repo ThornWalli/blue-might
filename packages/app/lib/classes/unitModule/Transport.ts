@@ -7,6 +7,7 @@ import {
   EMPTY
 } from 'rxjs';
 import { BoxGeometry, Mesh, MeshBasicMaterial, Vector2 } from 'three';
+import type { Units } from '@blue-might/units';
 
 import UnitModule, {
   type UnitModuleObservables,
@@ -47,7 +48,7 @@ export interface TransportUnitModuleOptions extends UnitModuleOptions {
 }
 
 export interface TransportUnitModuleState extends UnitModuleState {
-  slots: Unit[];
+  slots: Units[];
   canProcess: boolean;
 }
 
@@ -57,6 +58,9 @@ export default class TransportUnitModule<
   Observables extends TransportUnitModuleObservables =
     TransportUnitModuleObservables
 > extends UnitModule<Options, State, Observables> {
+  getSlots() {
+    return this.state.slots;
+  }
   static override TYPE = 'transport';
 
   private debugEntry: Mesh | null = null;
