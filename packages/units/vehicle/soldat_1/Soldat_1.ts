@@ -5,7 +5,7 @@ import type {
 } from '@blue-might/app/lib/classes/Unit';
 import type { SetupContext } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { LoopOnce, LoopRepeat, Mesh, SkinnedMesh } from 'three';
+import { LoopOnce, LoopRepeat, Mesh, Object3D, SkinnedMesh } from 'three';
 import FigureUnit, {
   type FigureUnitModuleList,
   type FigureUnitModules,
@@ -91,13 +91,19 @@ export default class Soldat_1<
       this.modules.animation.setAnimations(animations);
     }
 
+    const test = new Object3D();
+    test.add(object);
+
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
+        if (this.preview) {
+          child.translateZ(0.175);
+        }
       }
     });
 
-    return object;
+    return test;
   }
 }

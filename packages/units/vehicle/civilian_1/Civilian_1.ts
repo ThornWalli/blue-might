@@ -92,6 +92,9 @@ export default class Civilian_1<
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.castShadow = true;
         child.receiveShadow = false;
+        if (this.preview) {
+          child.translateZ(0.175);
+        }
       }
     });
 
