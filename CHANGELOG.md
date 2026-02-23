@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.72](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.71...v1.0.0-beta.72) (2026-02-23)
+
+
+### Bug Fixes
+
+* **app:** added missing bit-font ([068f0a7](https://github.com/ThornWalli/blue-might/commit/068f0a7f02cd2484bb8a6d2fffce7b8fa3e113eb))
+
 # [1.0.0-beta.71](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.70...v1.0.0-beta.71) (2026-02-22)
 
 
