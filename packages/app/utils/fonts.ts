@@ -1,6 +1,7 @@
 import useFonts from '../composables/useFonts';
 import OpenSansRegular from '../assets/fonts/open-sans-v43-latin/open-sans-v43-latin-regular.woff2';
 import OpenSans700 from '../assets/fonts/open-sans-v43-latin/open-sans-v43-latin-700.woff2';
+import BitFont from '../assets/fonts/bit-font/bit-font.woff2';
 
 export default function setupFonts() {
   const { registerFont } = useFonts();
@@ -25,6 +26,15 @@ export default function setupFonts() {
       fontStyle: 'normal',
       fontDisplay: 'swap',
       src: [OpenSans700, 'woff2']
+    },
+    {
+      fontFamily: 'BitFont',
+      fontVariant: 'normal',
+      fontFeatureSettings: 'normal',
+      fontWeight: 400,
+      fontStyle: 'normal',
+      fontDisplay: 'swap',
+      src: [BitFont, 'woff2']
     }
   ]);
 }
