@@ -1,5 +1,5 @@
 <template>
-  <div class="bm-map">
+  <div class="bm-navigator-map">
     <div class="map-container">
       <div ref="mapEl" class="map">
         <canvas ref="canvasEl"> </canvas>
@@ -118,6 +118,8 @@ const scaledMapSize = ref<Vector2>(new Vector2());
 
 let units: Unit[] = [];
 
+const destroyed = ref(false);
+
 watchEffect(() => {
   const _scale = localScale.value;
   const _pos = localPosition.value;
@@ -220,15 +222,13 @@ onMounted(() => {
   }
 
   subscription.add(
-    $props.app.modules.map.observables.map$
+    map$
       .pipe(
         switchMap(map =>
-          map
-            ? merge(
-                map.modules.units.observables.addUnit$,
-                map.modules.units.observables.removeUnit$
-              )
-            : EMPTY
+          merge(
+            map.modules.units.observables.addUnit$,
+            map.modules.units.observables.removeUnit$
+          )
         )
       )
       .subscribe(() => {
@@ -277,6 +277,7 @@ const dimension = new Vector2(
   mapEl.value?.clientHeight || 0
 );
 function loop() {
+  if (destroyed.value) return;
   dimension.set(mapEl.value?.clientWidth || 0, mapEl.value?.clientHeight || 0);
   // updateFrameState();
   renderUnits();
@@ -325,7 +326,7 @@ function renderBackground() {
 
   ctx.imageSmoothingEnabled = false;
 
-  const test: {
+  const layerDescriptions: {
     image: ImageBitmap;
     globalCompositeOperation: GlobalCompositeOperation;
     globalAlpha: number;
@@ -346,15 +347,13 @@ function renderBackground() {
       globalAlpha: 0.2
     }
   ];
-  test.forEach(layer => {
+  layerDescriptions.forEach(layer => {
     ctx.globalCompositeOperation = layer.globalCompositeOperation;
     ctx.globalAlpha = layer.globalAlpha;
 
     const dimension = new Vector2(layer.image.width, layer.image.height);
     if (orientation.value === 'landscape') {
       // landscape;
-
-      // cover image
       const scale = canvas.height / dimension.y;
       dimension.setX(dimension.x * scale);
       dimension.setY(dimension.y * scale);
@@ -541,7 +540,7 @@ function onClickFocusPlayer() {
 </script>
 
 <style lang="postcss" scoped>
-.bm-map {
+.bm-navigator-map {
   position: relative;
 
   & .map-container {

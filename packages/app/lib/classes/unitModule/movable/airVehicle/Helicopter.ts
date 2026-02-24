@@ -470,8 +470,16 @@ export default class HelicopterUnitModule<
     }
 
     // Clamp altitude
-    const maxAlt = this.options.maxAltitude;
-    if (unitPosition.y >= maxAlt && velocity.y > 0) velocity.y = 0;
+
+    const groundHeight =
+      unit
+        .getMap()
+        ?.modules.surface.getTerrainHeightAt(unitPosition.x, unitPosition.z) ??
+      0;
+
+    const maxAlt = groundHeight + this.options.maxAltitude;
+    if (unitPosition.y > maxAlt || (unitPosition.y >= maxAlt && velocity.y > 0))
+      velocity.y = -1;
 
     // NEU: Sinken-Logik für zerstörte Helikopter auf Wasser
     const isDestroyed = isUnitDestroyed(unit);

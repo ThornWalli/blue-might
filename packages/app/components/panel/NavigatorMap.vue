@@ -1,6 +1,6 @@
 <template>
-  <bm-panel class="bm-panel-map" title="Map">
-    <bm-map :app="app" controls />
+  <bm-panel class="bm-panel-navigator-map" title="Map">
+    <bm-navigator-map :app="app" controls />
     <bm-button
       :icon="unitFocused ? ICON.UNLOCKED : ICON.LOCKED"
       :label="unitFocused ? 'Unlock' : 'Lock'"
@@ -17,7 +17,7 @@ import type VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
 import type { App } from '@blue-might/app/lib/types';
 
 import BmPanel from '../Panel.vue';
-import BmMap from '../Map.vue';
+import BmNavigatorMap from '../NavigatorMap.vue';
 import BmButton from '../Button.vue';
 
 const unit = ref<Raw<Unit> | null>(null);

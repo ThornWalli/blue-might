@@ -27,7 +27,7 @@ import BmPanelDebug from '../panel/Debug.vue';
 import BmPanelGeneral from '../panel/General.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
-import BmPanelMap from '../panel/Map.vue';
+import BmPanelMap from '../panel/NavigatorMap.vue';
 
 defineProps<{
   app: AppDebug;

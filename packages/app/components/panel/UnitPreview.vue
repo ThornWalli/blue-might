@@ -225,7 +225,6 @@ function onClickFocusUnit() {
     position: relative;
     width: 128px;
     padding: var(--bm-spacing-medium) var(--bm-spacing-large);
-    background-color: #000;
 
     & > div {
       position: relative;

@@ -66,7 +66,7 @@ import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
 import { EDITOR_MODE } from '@blue-might/app/lib/classes/app/AppEditor';
 
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
-import BmPanelMap from '../panel/Map.vue';
+import BmPanelMap from '../panel/NavigatorMap.vue';
 import BmPanelGeneral from '../panel/General.vue';
 import BmPanelEditorGrid from '../panel/EditorGrid.vue';
 import BmPanelEditorUnits from '../panel/EditorUnits.vue';

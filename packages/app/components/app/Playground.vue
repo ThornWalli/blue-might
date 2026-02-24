@@ -53,7 +53,7 @@ import BmPanelGeneral from '../panel/General.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
 import BmPanelSecondaryScreen from '../panel/GunScreen.vue';
-import BmPanelMap from '../panel/Map.vue';
+import BmPanelMap from '../panel/NavigatorMap.vue';
 import BmMessage, { MESSAGE_TYPE } from '../Message.vue';
 
 const messageType = ref<MESSAGE_TYPE | null>(null);
@@ -125,7 +125,6 @@ function setupMessages(app: AppPlayground) {
         })
       )
       .subscribe(({ type, player }) => {
-        debugger;
         messageType.value = type;
 
         subscription_?.unsubscribe();
