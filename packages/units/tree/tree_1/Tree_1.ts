@@ -42,7 +42,7 @@ export default class Tree_1<
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targets: [{ name: 'base', default: true }, { name: 'head' }]
+            targets: [{ name: 'base', default: true }]
           }
         }
       },

@@ -40,7 +40,7 @@ export default class Tree_2<
           faction: {
             disabled: true
           },
-          targets: [{ name: 'base', default: true }, { name: 'head' }]
+          targets: [{ name: 'base', default: true }]
         }
       },
       moduleList
