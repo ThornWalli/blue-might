@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.75](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.74...v1.0.0-beta.75) (2026-02-24)
+
+
+### Bug Fixes
+
+* **app:** replace target lists with tables for improved readability ([7d41cb7](https://github.com/ThornWalli/blue-might/commit/7d41cb7ba05f9fd3f75cc6a4f26f9d2fef51604d))
+
 # [1.0.0-beta.74](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.73...v1.0.0-beta.74) (2026-02-24)
 
 
