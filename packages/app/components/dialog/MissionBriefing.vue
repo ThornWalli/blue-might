@@ -24,83 +24,49 @@
         <h2>Targets</h2>
         <div class="units">
           <bm-fieldset label="Attack">
-            <ul>
-              <li
-                v-for="target in targets.filter(t => t.type === 'attack')"
-                :key="target.name">
-                <div>
-                  <span>{{ target.name }}</span>
-                  <span class="spacer"></span>
-                  <span
-                    class="optional-count"
-                    :class="{
-                      complete: target.completes === target.count,
-                      half: target.completes > Math.floor(target.count / 2)
-                    }">
-                    {{ target.failed }} / {{ target.completes }} /
-                    {{ target.count }}
-                  </span>
-                  <span
-                    class="count"
-                    :class="{
-                      complete:
-                        target.optionalCompletes === target.optionalCount,
-                      half:
-                        target.optionalCompletes >
-                        Math.floor(target.optionalCount / 2)
-                    }">
-                    {{ target.optionalFailed }} /
-                    {{ target.optionalCompletes }} /
-                    {{ target.optionalCount }}
-                  </span>
-                </div>
-              </li>
-              <li
-                v-if="!targets.filter(t => t.type === 'attack').length"
-                class="empty">
-                No Attack Targets
-              </li>
-            </ul>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th class="spacer"></th>
+                  <th>Failed</th>
+                  <th>Completes</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="target in targets.filter(t => t.type === 'attack')"
+                  :key="target.name">
+                  <td>{{ target.name }}</td>
+                  <td>{{ target.failed }}</td>
+                  <td>{{ target.completes }}</td>
+                  <td>{{ target.count }}</td>
+                </tr>
+              </tbody>
+            </table>
           </bm-fieldset>
           <bm-fieldset label="Rescue">
-            <ul>
-              <li
-                v-for="target in targets.filter(t => t.type === 'rescue')"
-                :key="target.name">
-                <div>
-                  <span>{{ target.name }}</span>
-                  <span class="spacer"></span>
-                  <span
-                    v-if="target.optionalCount > 0"
-                    class="optional-count"
-                    :class="{
-                      complete:
-                        target.optionalCompletes === target.optionalCount,
-                      half:
-                        target.optionalCompletes >
-                        Math.floor(target.optionalCount / 2)
-                    }">
-                    {{ target.optionalFailed }} /
-                    {{ target.optionalCompletes }} /
-                    {{ target.optionalCount }}
-                  </span>
-                  <span
-                    class="count"
-                    :class="{
-                      complete: target.completes === target.count,
-                      half: target.completes > Math.floor(target.count / 2)
-                    }">
-                    {{ target.failed }} / {{ target.completes }} /
-                    {{ target.count }}
-                  </span>
-                </div>
-              </li>
-              <li
-                v-if="!targets.filter(t => t.type === 'rescue').length"
-                class="empty">
-                No Rescue Targets
-              </li>
-            </ul>
+            <table>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Failed</th>
+                  <th>Completes</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  v-for="target in targets.filter(t => t.type === 'rescue')"
+                  :key="target.name">
+                  <td>{{ target.name }}</td>
+                  <td>{{ target.failed }}</td>
+                  <td>{{ target.completes }}</td>
+                  <td>{{ target.count }}</td>
+                </tr>
+              </tbody>
+            </table>
           </bm-fieldset>
         </div>
       </div>
@@ -228,25 +194,6 @@ function onSubmit(e: Event) {
     font-size: 12px;
     font-weight: bold;
 
-    & ul {
-      display: flex;
-      flex-direction: column;
-      gap: var(--bm-spacing-small);
-
-      & li {
-        & > div {
-          justify-content: space-between;
-        }
-
-        & > div,
-        &.empty {
-          display: flex;
-          gap: var(--bm-spacing-small);
-          align-items: center;
-        }
-      }
-    }
-
     & .empty {
       justify-content: center;
       padding: var(--bm-spacing-small) 0;
@@ -315,19 +262,6 @@ function onSubmit(e: Event) {
       margin: var(--bm-spacing-small) 0;
       border: none;
       border-top: 2px solid var(--bm-line-color);
-    }
-  }
-
-  & .count,
-  & .optional-count {
-    color: red;
-
-    &.half {
-      color: yellow;
-    }
-
-    &.complete {
-      color: green;
     }
   }
 }
