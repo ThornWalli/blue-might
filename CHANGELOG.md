@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.74](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.73...v1.0.0-beta.74) (2026-02-24)
+
+
+### Bug Fixes
+
+* **tree:** remove 'head' target from collision options in Tree_1 and Tree_2 ([f6df3b0](https://github.com/ThornWalli/blue-might/commit/f6df3b08ea2dc127d5bc77bc13cdc7a12b91ff62))
+
 # [1.0.0-beta.73](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.72...v1.0.0-beta.73) (2026-02-24)
 
 
