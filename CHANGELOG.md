@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.76](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.75...v1.0.0-beta.76) (2026-02-26)
+
+
+### Bug Fixes
+
+* **app:** add delay to unloadAll process for smoother execution ([239cb44](https://github.com/ThornWalli/blue-might/commit/239cb4490b54375f6401fbbb563112cfbce39062))
+
 # [1.0.0-beta.75](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.74...v1.0.0-beta.75) (2026-02-24)
 
 
