@@ -113,7 +113,6 @@ export default class TransportUnitModule<
 
     this.subscription.add(
       unit.modules.damage.observables.destroyed$.subscribe(() => {
-        // this.unloadAll();
         this.getSlots().forEach(u => {
           u.modules.damage.takeMaxDamage();
         });
@@ -240,7 +239,15 @@ export default class TransportUnitModule<
   async unloadAll() {
     const slots = this.state.slots;
     await slots.reduce(
-      (result, unit) => result.then(() => this.unload(unit)),
+      (result, unit) =>
+        result.then(() =>
+          this.unload(unit).then(
+            () =>
+              new Promise(resolve =>
+                window.setTimeout(resolve, 1000 + Math.random() * 1000)
+              )
+          )
+        ),
       Promise.resolve()
     );
     this.observables.unloadAll$.next(slots);
