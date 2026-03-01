@@ -36,7 +36,7 @@ export default class LandingPort_1 extends LandingPortUnit<
     super(
       {
         ...options,
-        name: 'Landing Port 1',
+        name: 'Landing Port',
         moduleOptions: {
           ...options.moduleOptions,
           collision: {

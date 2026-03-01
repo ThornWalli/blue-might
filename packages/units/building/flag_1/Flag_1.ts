@@ -35,7 +35,7 @@ export default class Flag_1<
     super(
       {
         ...options,
-        name: 'Flag 1'
+        name: 'Flag'
       },
       moduleList
     );

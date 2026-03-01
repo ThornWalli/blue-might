@@ -225,7 +225,7 @@ export default class FigureMovableUnitModule extends MovableUnitModule<
       raycaster: true
     });
 
-    const seaLevel = unit.getMap()?.modules.surface.getSeaLevel() ?? 0;
+    const seaLevel = unit.getMap()?.modules.surface.getWaterLevel() ?? 0;
 
     if (pos.y <= seaLevel) {
       this.setStatus(FIGURE_STATUS.SWIMMING);

@@ -15,7 +15,7 @@ interface Observables extends AppModuleObservables {
   mission$: ReplaySubject<Mission | null>;
   unit$: ReplaySubject<Unit | null>;
   optional$: ReplaySubject<boolean>;
-  targetType$: ReplaySubject<TargetType>;
+  targetType$: ReplaySubject<TargetType | null>;
   availability$: ReplaySubject<{ canAttack: boolean; canRescue: boolean }>;
 }
 
@@ -33,7 +33,7 @@ export default class EditorMissionAppModule extends AppModule<
     super(app, {} as State);
     //#region observables
     this.observables.optional$ = new ReplaySubject<boolean>(1);
-    this.observables.targetType$ = new ReplaySubject<TargetType>(1);
+    this.observables.targetType$ = new ReplaySubject<TargetType | null>(1);
     this.observables.unit$ = new ReplaySubject<Unit | null>(1);
     this.observables.mission$ = new ReplaySubject<Mission | null>(1);
     this.observables.availability$ = new ReplaySubject<{
@@ -52,12 +52,22 @@ export default class EditorMissionAppModule extends AppModule<
       this.subscription.add(unit$.subscribe(u => this.setUnit(u)));
     }
 
+    const map$ = this.app.modules.map.observables.map$;
+
     this.subscription.add(
-      this.app.modules.map.observables.map$
+      map$
         .pipe(
           switchMap(map => map?.modules.mission.observables.mission$ ?? EMPTY)
         )
         .subscribe(m => this.setMission(m))
+    );
+
+    this.subscription.add(
+      map$
+        .pipe(
+          switchMap(map => map?.modules.units.observables.removeUnit$ ?? EMPTY)
+        )
+        .subscribe(u => this.removeTargetById(u.id))
     );
   }
 
@@ -82,7 +92,7 @@ export default class EditorMissionAppModule extends AppModule<
     this.missionModule?.setMission(null);
   }
 
-  removeTarget(targetId: string) {
+  removeTargetById(targetId: string) {
     const mission = this.missionModule?.getMission();
     if (!mission) return;
 
@@ -111,6 +121,8 @@ export default class EditorMissionAppModule extends AppModule<
       const { type, optional } = this.state.mission.getTarget(unit.id) ?? {};
       if (type) {
         this.observables.targetType$.next(type);
+      } else {
+        this.observables.targetType$.next(null);
       }
 
       this.observables.optional$.next(optional ?? false);
@@ -126,7 +138,8 @@ export default class EditorMissionAppModule extends AppModule<
     this.observables.unit$.next(unit);
   }
 
-  setTarget(targetType: TargetType, optional: boolean = false) {
+  setTarget(targetType: TargetType | null, optional: boolean = false) {
+    if (targetType === null) return;
     const map = this.app.modules.map.getMap();
     if (!map || !this.state.mission || !this.state.unit) return;
     map.modules.mission.addTarget(this.state.unit, {

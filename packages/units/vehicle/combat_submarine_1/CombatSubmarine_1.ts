@@ -88,7 +88,7 @@ export default class CombatSubmarine_1
     super(
       {
         ...options,
-        name: 'Submarine 1',
+        name: 'Submarine',
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [

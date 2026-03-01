@@ -1,3 +1,4 @@
+//#region imports
 import type {
   RawUnitDescription,
   UnitConstructorOptions,
@@ -39,7 +40,9 @@ import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/combat_fregatte_1.glb?url';
+//#endregion
 
+//#region definitions
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface State extends WeaponSupportState {}
 
@@ -61,6 +64,7 @@ export interface RawUnitDescription_CombatFregatte_1<
 > extends RawUnitDescription<UnitConstructorOptions<O>> {
   key: 'combat_fregatte_1';
 }
+//#endregion
 
 export default class CombatFregatte_1
   extends SeaVehicleUnit<
@@ -96,7 +100,7 @@ export default class CombatFregatte_1
     super(
       {
         ...options,
-        name: 'Fregatte 1',
+        name: 'Fregatte',
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [
@@ -109,6 +113,9 @@ export default class CombatFregatte_1
         },
         moduleOptions: {
           ...options.moduleOptions,
+          damage: {
+            maxDamage: 4
+          },
           attack: {
             radius: 10
           },

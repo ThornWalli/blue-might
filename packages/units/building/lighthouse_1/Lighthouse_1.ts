@@ -35,7 +35,7 @@ export default class Lighthouse_1<
     super(
       {
         ...options,
-        name: 'Lighthouse 1'
+        name: 'Lighthouse'
       },
       moduleList
     );

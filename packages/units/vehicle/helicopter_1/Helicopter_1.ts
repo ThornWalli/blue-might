@@ -75,7 +75,7 @@ export default class Helicopter_1 extends HelicopterUnit<
     super(
       {
         ...options,
-        name: 'Helicopter 1',
+        name: 'Helicopter',
 
         options: {
           ...options.options,

@@ -328,7 +328,7 @@ export default class ShootModule extends MapModule<
         }
       }
 
-      if (!hit && obj.position.y <= this.map.modules.surface.getSeaLevel()) {
+      if (!hit && obj.position.y <= this.map.modules.surface.getWaterLevel()) {
         hit = true;
         if (shoot.projectile.hasExplosion()) {
           const position = new Vector3()

@@ -11,7 +11,7 @@ import type { RawUnitDescription_WindTurbine_1 } from './building/wind_turbine_1
 import type { RawUnitDescription_Signal_1 } from './building/signal_1/Signal_1';
 import type { RawUnitDescription_LandingPortSupplyStation_1 } from './building/landing_port_supply_station_1/LandingPortSupplyStation_1';
 import type { RawUnitDescription_Lighthouse_1 } from './building/lighthouse_1/Lighthouse_1';
-import type { RawUnitDescription_MissleLauncher_1 } from './turret/missle_launcher_1/MissleLauncher_1';
+import type { RawUnitDescription_MissileLauncher_1 } from './turret/missile_launcher_1/MissileLauncher_1';
 import type { RawUnitDescription_Turret_1 } from './turret/turret_1/Turret_1';
 import type { RawUnitDescription_CombatHelicopter_1 } from './vehicle/combat_helicopter_1/CombatHelicopter_1';
 import type { RawUnitDescription_CombatTank_1 } from './vehicle/combat_tank_1/CombatTank_1';
@@ -42,7 +42,7 @@ import type FactoryChimney_1 from './building/factory_chimney_1/FactoryChimney_1
 import type House_1 from './building/house_1/House_1';
 import type LandingPortSupplyStation_1 from './building/landing_port_supply_station_1/LandingPortSupplyStation_1';
 import type Lighthouse_1 from './building/lighthouse_1/Lighthouse_1';
-import type MissleLauncher_1 from './turret/missle_launcher_1/MissleLauncher_1';
+import type MissileLauncher_1 from './turret/missile_launcher_1/MissileLauncher_1';
 import type Turret_1 from './turret/turret_1/Turret_1';
 import type CombatHelicopter_1 from './vehicle/combat_helicopter_1/CombatHelicopter_1';
 import type CombatTank_1 from './vehicle/combat_tank_1/CombatTank_1';
@@ -69,7 +69,7 @@ import type Civilian_1 from './vehicle/civilian_1/Civilian_1';
 
 export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_LandingPortSupplyStation_1<O>
-  | RawUnitDescription_MissleLauncher_1<O>
+  | RawUnitDescription_MissileLauncher_1<O>
   | RawUnitDescription_Turret_1<O>
   | RawUnitDescription_CombatHelicopter_1<O>
   | RawUnitDescription_CombatTank_1<O>
@@ -114,7 +114,7 @@ export type Units =
   | Signal_1
   | LandingPortSupplyStation_1
   | Lighthouse_1
-  | MissleLauncher_1
+  | MissileLauncher_1
   | Turret_1
   | CombatHelicopter_1
   | CombatTank_1

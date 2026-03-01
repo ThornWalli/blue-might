@@ -34,7 +34,7 @@ export default class FactoryChimney_1<
     super(
       {
         ...options,
-        name: 'Factory Chimney 1'
+        name: 'Factory Chimney'
       },
       moduleList
     );

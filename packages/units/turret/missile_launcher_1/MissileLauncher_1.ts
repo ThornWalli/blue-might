@@ -38,46 +38,46 @@ import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 
-import baseGlb from './assets/missle_launcher_1.glb?url';
+import baseGlb from './assets/missile_launcher_1.glb?url';
 
 interface State extends WeaponSupportState {
   opened: boolean;
   opening: boolean;
 }
 
-interface MissleLauncherObservables extends UnitObservables {
+interface MissileLauncherObservables extends UnitObservables {
   opened$: ReplaySubject<boolean>;
   opening$: Subject<boolean>;
 }
 
-export interface MissleLauncherOptions
+export interface MissileLauncherOptions
   extends BuildingUnitOptions, WeaponSupportOptions {
   rotationSpeed: number;
 }
 
-export interface MissleLauncherModules extends BuildingUnitModules {
+export interface MissileLauncherModules extends BuildingUnitModules {
   attack: AttackUnitModule;
   weapon: WeaponUnitModule;
   player: PlayerUnitModule;
 }
 
-export type MissleLauncherModuleList = BuildingUnitModuleList &
+export type MissileLauncherModuleList = BuildingUnitModuleList &
   [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
 
-export interface RawUnitDescription_MissleLauncher_1<
-  O extends UnitOptions = MissleLauncherOptions
+export interface RawUnitDescription_MissileLauncher_1<
+  O extends UnitOptions = MissileLauncherOptions
 > extends RawUnitDescription<UnitConstructorOptions<O>> {
   key: 'missile_launcher_1';
 }
 
 const CLOSE_DELAY = 1000;
 
-export default class MissleLauncher_1
+export default class MissileLauncher_1
   extends BuildingUnit<
-    MissleLauncherModules,
-    MissleLauncherModuleList,
-    MissleLauncherOptions,
-    MissleLauncherObservables
+    MissileLauncherModules,
+    MissileLauncherModuleList,
+    MissileLauncherOptions,
+    MissileLauncherObservables
   >
   implements WeaponUnitInterface<State>
 {
@@ -101,8 +101,8 @@ export default class MissleLauncher_1
   }[] = [];
 
   constructor(
-    options: Omit<UnitConstructorOptions<MissleLauncherOptions>, 'name'> = {},
-    moduleList?: MissleLauncherModuleList
+    options: Omit<UnitConstructorOptions<MissileLauncherOptions>, 'name'> = {},
+    moduleList?: MissileLauncherModuleList
   ) {
     moduleList = addModules(moduleList, [
       AttackUnitModule,
@@ -112,7 +112,7 @@ export default class MissleLauncher_1
     super(
       {
         ...options,
-        name: 'MissleLauncher 1',
+        name: 'MissileLauncher',
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [

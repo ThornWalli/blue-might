@@ -4,7 +4,11 @@ import { ReplaySubject, Subscription } from 'rxjs';
 import type { Object3D, Scene, Vector3Tuple, EulerTuple } from 'three';
 import { Euler, Quaternion, Vector3, Group } from 'three';
 
-import { OBJECT_USER_DATA, setMainObjectRecursive } from '../utils/object';
+import {
+  disposeObject3D,
+  OBJECT_USER_DATA,
+  setMainObjectRecursive
+} from '../utils/object';
 import {
   GROUND_ADJUSTMENT_MODE,
   UNIT_TYPE,
@@ -395,8 +399,7 @@ export default class Unit<
 
     this.subscription.unsubscribe();
     Object.values(this.modules).forEach(module => module.destroy());
-    this.root.removeFromParent();
-    this.root.remove();
+    disposeObject3D(this.root);
   }
 
   isDestroyed() {
@@ -505,7 +508,7 @@ export default class Unit<
       const alignmentInfo = this.updateGroundAlignment(position, [], false);
       this.position.copy(alignmentInfo.position); // Temporär für Kollisionsprüfung
     } else if (this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FLIGHT) {
-      const seaLevel = this.map?.modules.surface.getSeaLevel() ?? 0;
+      const seaLevel = this.map?.modules.surface.getWaterLevel() ?? 0;
       this.position.y = Math.max(
         this.map?.modules.surface.getSurfaceHeightAt(
           position.x,
@@ -752,7 +755,7 @@ export default class Unit<
           //   ignoredUnits
           // );
 
-          const seaLevel = this.map?.modules.surface.getSeaLevel() ?? 0;
+          const seaLevel = this.map?.modules.surface.getWaterLevel() ?? 0;
           const water = this.position.y <= seaLevel;
 
           // info.position.setY(Math.max(info.position.y, seaLevel));
@@ -796,7 +799,7 @@ export default class Unit<
           this.position.y = Math.max(info.position.y, this.position.y);
           info.position.setY(this.position.y);
         } else {
-          const seaLevel = this.map?.modules.surface.getSeaLevel() ?? 0;
+          const seaLevel = this.map?.modules.surface.getWaterLevel() ?? 0;
           this.position.y = seaLevel; // Höhe auf Sea Level setzen
           info.position.setY(seaLevel);
         }

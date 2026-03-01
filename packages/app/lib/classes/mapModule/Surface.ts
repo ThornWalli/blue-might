@@ -11,7 +11,8 @@ import {
   MeshLambertMaterial,
   NearestFilter,
   Object3D,
-  PlaneGeometry
+  PlaneGeometry,
+  Color
 } from 'three';
 import { filter, map, Subject } from 'rxjs';
 import type { Units } from '@blue-might/units';
@@ -34,7 +35,12 @@ import { FLIGHT_STATUS } from '../unitModule/movable/airVehicle/Helicopter';
 import type AirVehicleUnit from '../unit/vehicle/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
 import type { IntersectionListener } from '../rendererModule/Intersection';
-import type { MapNoise, Textures } from '../../types/map';
+import type {
+  MapHeightMap,
+  MapNoise,
+  Textures,
+  WaterOptions
+} from '../../types/map';
 import { isBuilding, isPlant } from '../../utils/unit';
 import { LOADER } from '../AssetLoader';
 
@@ -69,8 +75,9 @@ export interface SurfaceModuleOptions extends MapModuleOptions {
     backgroundTexture: string;
     foregroundTexture: string;
   };
-  heightMapInclude?: boolean;
+  heightMap?: MapHeightMap | null;
   noise?: MapNoise;
+  water?: WaterOptions;
 }
 
 interface State extends MapModuleState {
@@ -102,13 +109,6 @@ export default class SurfaceModule extends MapModule<
     backgroundTexture: new Texture(),
     foregroundTexture: new Texture()
   };
-  getTextures() {
-    return this.textures;
-  }
-
-  setTextures(textures: Textures) {
-    this.textures = textures;
-  }
 
   constructor(
     map: Map,
@@ -118,7 +118,15 @@ export default class SurfaceModule extends MapModule<
   ) {
     super(
       map,
-      options,
+      {
+        ...options,
+        water: {
+          enabled: options.water?.enabled ?? true,
+          waterLevel: options.water?.waterLevel ?? 0,
+          color: new Color(options.water?.color ?? 0x004080),
+          opacity: options.water?.opacity ?? 0.9
+        }
+      },
       {
         ...state,
         terrainWidth: state.terrainWidth ?? 0,
@@ -248,16 +256,44 @@ export default class SurfaceModule extends MapModule<
     this.textures.foregroundTexture = foregroundTexture;
   }
 
-  getSeaLevel() {
-    return 0;
+  getWaterLevel() {
+    if (this.options.water?.enabled) {
+      return this.options.water.waterLevel ?? 0;
+    } else {
+      return -1;
+    }
   }
 
   getRoot() {
     return this.root!;
   }
 
+  getTextures() {
+    return this.textures;
+  }
+
+  setTextures(textures: Textures) {
+    this.textures = textures;
+  }
+
   getPathfinderTileTypes() {
     return this.pathfinderTileTypes;
+  }
+
+  setWaterOptions(waterOptions: WaterOptions) {
+    this.options.water = waterOptions;
+  }
+
+  setHeightMapOptions(heightMapOptions: MapHeightMap) {
+    this.options.heightMap = heightMapOptions;
+  }
+
+  getNoiseOptions() {
+    return this.options.noise;
+  }
+
+  setNoiseOptions(noiseOptions: MapNoise) {
+    this.options.noise = noiseOptions;
   }
 
   /**
@@ -574,7 +610,7 @@ export default class SurfaceModule extends MapModule<
     const foregroundTexture = textures.foregroundTexture!;
 
     let noiseTexture: CanvasTexture | null = null;
-    if (this.options.noise?.active) {
+    if (this.options.noise?.enable) {
       const { size, intensity, opacity, monochrome } = this.options.noise;
       noiseTexture = new CanvasTexture(
         resizeCanvas(
@@ -590,15 +626,15 @@ export default class SurfaceModule extends MapModule<
       );
     }
     const combinedTexture = combineTerrainTextures(
+      dimension,
       {
-        heightMap: this.options.heightMapInclude ?? false,
+        heightMap: this.options.heightMap ?? null,
         noise: this.options.noise ?? null
       },
       {
         ...textures,
         noiseTexture
-      },
-      dimension
+      }
     );
 
     const geometry = new PlaneGeometry(
@@ -630,25 +666,12 @@ export default class SurfaceModule extends MapModule<
     shadowTerrain.name = 'Ground Shadow';
     shadowTerrain.receiveShadow = true;
 
-    const waterMaterial = new MeshLambertMaterial({
-      color: 0x004080,
-      flatShading: true,
-      wireframe: false,
-      transparent: true,
-      opacity: 0.9
-    });
-
-    const waterGeometry = new PlaneGeometry(dimension.x, dimension.y, 1, 1);
-    waterGeometry.rotateX(-Math.PI / 2);
-    waterGeometry.translate(0, -9, 0);
-
-    const water = new Mesh(waterGeometry, waterMaterial);
-    water.name = 'water';
-
     const object = new Object3D();
     object.add(backgroundTerrain);
     object.add(shadowTerrain);
-    object.add(water);
+    if (this.options.water?.enabled) {
+      object.add(this.createWater(dimension)!);
+    }
     object.position.copy(new Vector3(0, 9, 0));
     // origin speichern, damit Abfragen korrekt transformieren
     this.state.origin.copy(object.position);
@@ -662,6 +685,25 @@ export default class SurfaceModule extends MapModule<
     }
     this.lastUpdateTime = time;
     this.resetHeightCache();
+  }
+
+  private createWater(dimension: Vector2) {
+    if (!this.options.water) return null;
+    const waterMaterial = new MeshLambertMaterial({
+      color: this.options.water.color,
+      flatShading: true,
+      wireframe: false,
+      transparent: true,
+      opacity: this.options.water.opacity ?? 0.8
+    });
+
+    const waterGeometry = new PlaneGeometry(dimension.x, dimension.y, 1, 1);
+    waterGeometry.rotateX(-Math.PI / 2);
+    waterGeometry.translate(0, -9 + this.getWaterLevel(), 0);
+
+    const water = new Mesh(waterGeometry, waterMaterial);
+    water.name = 'water';
+    return water;
   }
 
   getNormalAt(x: number | Vector2, z?: number): Vector3 {
@@ -782,13 +824,21 @@ export default class SurfaceModule extends MapModule<
 
     return {
       textures: textures,
-      heightMapInclude: this.options.heightMapInclude ?? false,
+      heightMap: this.options.heightMap ?? {
+        operation: 'darken'
+      },
       noise: this.options.noise ?? {
-        active: false,
+        enable: false,
         size: 2,
         intensity: 0.25,
         opacity: 0.5,
-        monochrome: false
+        monochrome: false,
+        operation: 'multiply'
+      },
+      water: this.options.water ?? {
+        enabled: true,
+        waterLevel: 0,
+        color: new Color(0x004080)
       }
     };
   }
@@ -845,14 +895,18 @@ function getPixelsFromTexture(texture: Texture<ImageBitmap>) {
 }
 
 function combineTerrainTextures(
+  dimension: Vector2,
   combine: {
-    heightMap: boolean;
+    heightMap: MapHeightMap | null;
     noise: MapNoise | null;
   },
   textures: Textures & {
     noiseTexture?: CanvasTexture<HTMLCanvasElement> | null;
   },
-  dimension: Vector2
+  operation?: {
+    noise: GlobalCompositeOperation;
+    heightMap: GlobalCompositeOperation;
+  }
 ): CanvasTexture {
   let canvas: HTMLCanvasElement | OffscreenCanvas =
     document.createElement('canvas');
@@ -870,7 +924,7 @@ function combineTerrainTextures(
   );
 
   if (combine.heightMap) {
-    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalCompositeOperation = operation?.heightMap ?? 'darken';
     ctx.globalAlpha = 1;
     ctx.drawImage(
       textures.heightMap.image,
@@ -887,7 +941,7 @@ function combineTerrainTextures(
   ctx = canvas.getContext('2d')!;
 
   if (textures.noiseTexture) {
-    ctx.globalCompositeOperation = 'multiply';
+    ctx.globalCompositeOperation = operation?.noise ?? 'multiply';
     // ctx.globalAlpha = 0.5;
     ctx.drawImage(
       textures.noiseTexture.image,

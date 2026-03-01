@@ -191,7 +191,7 @@ export function fromLegacyMapDescription(
       ...description.moduleOptions,
       surface: {
         textures: description.surface.textures,
-        heightMapInclude: description.surface.heightMapInclude,
+        heightMap: description.surface.heightMap,
         noise: description.surface.noise
       }
     };

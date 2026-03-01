@@ -84,7 +84,7 @@ export default class CombatTank_1
     super(
       {
         ...options,
-        name: 'Combat Tank 1',
+        name: 'Combat Tank',
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [
@@ -97,6 +97,9 @@ export default class CombatTank_1
         },
         moduleOptions: {
           ...options.moduleOptions,
+          damage: {
+            maxDamage: 2
+          },
           weapon: {
             autoAimFn: (options: AutoAimFnOptions) =>
               autoAimFunction(

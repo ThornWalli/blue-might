@@ -34,7 +34,7 @@ export default class House_1<
     super(
       {
         ...options,
-        name: 'House 1'
+        name: 'House'
       },
       moduleList
     );

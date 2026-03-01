@@ -5,6 +5,7 @@ import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 
 PROJECTILE_TYPE.DEFAULT = 'default';
 export default class Default extends Projectile {
+  static override KEY = 'default';
   constructor(
     options: Partial<ConstructorParameters<typeof Projectile>[0]> = {}
   ) {
@@ -44,6 +45,7 @@ export default class Default extends Projectile {
 
 PROJECTILE_TYPE.LIGHT_PROJECTILE = 'light_projectile';
 export class LightProjectile extends Default {
+  static override KEY = PROJECTILE_TYPE.LIGHT_PROJECTILE;
   constructor() {
     super({
       id: PROJECTILE_TYPE.LIGHT_PROJECTILE,
@@ -59,6 +61,7 @@ export class LightProjectile extends Default {
 
 PROJECTILE_TYPE.MEDIUM_PROJECTILE = 'medium_projectile';
 export class MediumProjectile extends Default {
+  static override KEY = PROJECTILE_TYPE.MEDIUM_PROJECTILE;
   constructor() {
     super({
       id: PROJECTILE_TYPE.MEDIUM_PROJECTILE,

@@ -196,7 +196,7 @@ function onReset() {
 }
 
 function onClickRemoveTarget(targetId: string) {
-  $props.app.modules.editorMission.removeTarget(targetId);
+  $props.app.modules.editorMission.removeTargetById(targetId);
 }
 </script>
 

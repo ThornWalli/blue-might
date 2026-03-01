@@ -45,7 +45,7 @@ export default class Scientist_1<
     super(
       {
         ...options,
-        name: 'Scientist 1'
+        name: 'Scientist'
       },
       moduleList
     );
@@ -93,7 +93,7 @@ export default class Scientist_1<
         child.castShadow = true;
         child.receiveShadow = false;
         if (this.preview) {
-          child.translateZ(0.175);
+          child.translateY(-0.175 / 2);
         }
       }
     });

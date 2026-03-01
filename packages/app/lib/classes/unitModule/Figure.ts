@@ -26,7 +26,7 @@ import UnitModule, {
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import type { AnimationLoopValue } from '../Renderer';
 import { intersect } from '../../utils/intersect';
-import { isRescue } from '../../utils/unit';
+import { canRescue, isRescue, isUnitDestroyed } from '../../utils/unit';
 import type FigureUnit from '../unit/Figure';
 
 declare module '../Unit' {
@@ -247,7 +247,7 @@ export default class FigureUnitModule extends UnitModule<
         sphere: this.sphere,
         radius: this.options.targetRadius
       });
-      if (intersected) {
+      if (intersected && !isUnitDestroyed(intersected)) {
         intersectingUnits.push(intersected);
         break;
       }
@@ -260,7 +260,7 @@ export default class FigureUnitModule extends UnitModule<
       this.setTargetUnit(null);
     } else {
       const unit =
-        intersectingUnits.find(u => isRescue(u)) ??
+        intersectingUnits.find(u => canRescue(u)) ??
         (intersectingUnits[0] as Units);
 
       if (unit && 'transport' in unit.modules) {
@@ -274,7 +274,6 @@ export default class FigureUnitModule extends UnitModule<
           }
         });
         this.subscription.add(subscription);
-
         this.setTargetUnit(unit);
       }
     }

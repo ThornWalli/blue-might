@@ -112,6 +112,84 @@ export function createCamera() {
   return new OrthographicCamera(-1, 1, 1, -1, 0.1, 1000);
 }
 
+/**
+ * Aktualisiert die orthografische Kamera für eine frontale Ansicht des Objekts.
+ * Positioniert die Kamera frontal (entlang der Z-Achse) und passt die Frustum an.
+ */
+export function updateOrthoCameraForObjectFrontal(
+  camera: OrthographicCamera,
+  aspect: number,
+  scene: Scene,
+  direction: Vector3 = new Vector3(0, 0, 1), // Frontale Richtung (positive Z-Achse)
+  frustum = 0.6
+) {
+  // Berechne die Bounding-Box des Szeneninhalts (oder des spezifischen Objekts, falls verfügbar)
+  const box = new Box3().setFromObject(scene);
+  const size = box.getSize(new Vector3());
+  const center = box.getCenter(new Vector3());
+
+  // Bestimme den Abstand basierend auf der Größe des Objekts
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const distance = maxDim * 2; // Passe den Faktor an, um das Objekt vollständig zu erfassen
+
+  // Positioniere die Kamera frontal (entlang der gegebenen Richtung)
+  const cameraPosition = center
+    .clone()
+    .add(direction.clone().normalize().multiplyScalar(distance));
+  camera.position.copy(cameraPosition);
+  camera.lookAt(center);
+
+  // Passe die Frustum an (orthografisch, basierend auf der Größe und dem Aspekt)
+  const frustumSize = maxDim * frustum; // Passe an, um Padding zu haben
+  camera.left = -frustumSize * aspect;
+  camera.right = frustumSize * aspect;
+  camera.top = frustumSize;
+  camera.bottom = -frustumSize;
+
+  camera.near = 0.1;
+  camera.far = distance * 2;
+  camera.updateProjectionMatrix();
+}
+
+/**
+ * Aktualisiert die orthografische Kamera für eine seitliche Ansicht des Objekts.
+ * Positioniert die Kamera seitlich (entlang der X-Achse) und passt die Frustum an.
+ */
+export function updateOrthoCameraForObjectSide(
+  camera: OrthographicCamera,
+  aspect: number,
+  scene: Scene,
+  direction: Vector3 = new Vector3(1, 0, 0), // Seitliche Richtung (positive X-Achse)
+  frustum = 0.6
+) {
+  // Berechne die Bounding-Box des Szeneninhalts (oder des spezifischen Objekts, falls verfügbar)
+  const box = new Box3().setFromObject(scene);
+  const size = box.getSize(new Vector3());
+  const center = box.getCenter(new Vector3());
+
+  // Bestimme den Abstand basierend auf der Größe des Objekts
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const distance = maxDim * 2; // Passe den Faktor an, um das Objekt vollständig zu erfassen
+
+  // Positioniere die Kamera seitlich (entlang der gegebenen Richtung)
+  const cameraPosition = center
+    .clone()
+    .add(direction.clone().normalize().multiplyScalar(distance));
+  camera.position.copy(cameraPosition);
+  camera.lookAt(center);
+
+  // Passe die Frustum an (orthografisch, basierend auf der Größe und dem Aspekt)
+  const frustumSize = maxDim * frustum; // Passe an, um Padding zu haben
+  camera.left = -frustumSize * aspect;
+  camera.right = frustumSize * aspect;
+  camera.top = frustumSize;
+  camera.bottom = -frustumSize;
+
+  camera.near = 0.1;
+  camera.far = distance * 2;
+  camera.updateProjectionMatrix();
+}
+
 export function updateOrthoCameraForObject(
   camera: OrthographicCamera,
   aspect: number,
@@ -172,45 +250,8 @@ export function updateOrthoCameraForObject(
   camera.bottom = minY; // Objekt-Unterkante genau unten
   camera.top = minY + worldHeight; // Höhe basierend auf Frustum
 
-  camera.updateProjectionMatrix();
-}
-
-export function updateOrthoCameraFrontal(
-  camera: OrthographicCamera,
-  aspect: number,
-  object: Object3D
-) {
-  // Bounding Box des Objekts berechnen
-  const box = new Box3().setFromObject(object);
-  const center = box.getCenter(new Vector3());
-  const size = box.getSize(new Vector3());
-
-  // Kamera frontal positionieren (entlang Z-Achse, weit genug entfernt)
-  const distance = Math.max(size.x, size.y, size.z) * 2; // Sicherheitsabstand
-  camera.position.set(center.x, center.y, center.z + distance);
-  camera.lookAt(center);
-  camera.updateMatrixWorld();
-
-  // Frustum berechnen, um das Objekt zu umfassen und zu zentrieren
-  const halfWidth = size.x / 2;
-  const halfHeight = size.y / 2;
-
-  if (aspect > size.x / size.y) {
-    // Höhe füllt den Viewport, Breite anpassen
-    camera.top = halfHeight;
-    camera.bottom = -halfHeight;
-    camera.left = -halfHeight * aspect;
-    camera.right = halfHeight * aspect;
-  } else {
-    // Breite füllt den Viewport, Höhe anpassen
-    camera.left = -halfWidth;
-    camera.right = halfWidth;
-    camera.top = halfWidth / aspect;
-    camera.bottom = -halfWidth / aspect;
-  }
-
   camera.near = 0.1;
-  camera.far = distance * 2;
+  camera.far = 1000;
   camera.updateProjectionMatrix();
 }
 

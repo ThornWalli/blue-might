@@ -11,6 +11,7 @@ declare module '@blue-might/app/lib/types/weapon' {
 
 PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1 = 'air_surface_missile_1';
 export default class AirSurfaceMissile_1 extends Projectile {
+  static override KEY = PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1;
   constructor() {
     super({
       id: PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1,

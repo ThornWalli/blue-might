@@ -49,7 +49,7 @@ export default class BarrackRescue_1<
     super(
       {
         ...options,
-        name: 'Barrack Rescue 1',
+        name: 'Barrack Rescue',
         moduleOptions: {
           ...options.moduleOptions,
           transport: {

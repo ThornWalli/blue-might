@@ -10,6 +10,8 @@ declare module '@blue-might/app/lib/types/weapon' {
 }
 PROJECTILE_TYPE.AIR_HOMING_MISSILE_1 = 'air_homing_missile_1';
 export default class AirHomingMissile_1 extends Projectile {
+  static override KEY = PROJECTILE_TYPE.AIR_HOMING_MISSILE_1;
+
   /**
    * Gibt an, wie genau die Rakete ihr Ziel ansteuert.
    * 0 = keine Lenkung, 1 = sofortige Ausrichtung

@@ -34,7 +34,7 @@ export default class ControlTower_1<
     super(
       {
         ...options,
-        name: 'ControlTower 1',
+        name: 'ControlTower',
         moduleOptions: {
           ...options.moduleOptions,
           collision: {

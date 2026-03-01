@@ -1,3 +1,4 @@
+//#region  imports
 import type {
   RawUnitDescription,
   UnitConstructorOptions,
@@ -23,11 +24,6 @@ import {
   autoAimFunction,
   updateControls
 } from '@blue-might/app/lib/utils/unit/weapon';
-import Weapon from '@blue-might/app/lib/classes/Weapon';
-import {
-  PROJECTILE_TYPE,
-  WEAPON_SHOOT_TYPE
-} from '@blue-might/app/lib/types/weapon';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import {
   disablePathfinding,
@@ -40,9 +36,12 @@ import type {
 } from '@blue-might/app/lib/classes/unit/building/Turret';
 import TurretBuildingUnit from '@blue-might/app/lib/classes/unit/building/Turret';
 import { addModules } from '@blue-might/app/lib/classes/Module';
+import { GatlingGun } from '@blue-might/weapon/weapon';
 
 import baseGlb from './assets/turret_1.glb?url';
+//#endregion
 
+//#region definitions
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface State extends WeaponSupportState {}
 
@@ -65,6 +64,8 @@ export interface RawUnitDescription_Turret_1<
 > extends RawUnitDescription<UnitConstructorOptions<O>> {
   key: 'turret_1';
 }
+
+//#endregion
 
 export default class Turret_1
   extends TurretBuildingUnit<TurretModules, TurretModuleList, TurretOptions>
@@ -97,7 +98,7 @@ export default class Turret_1
     super(
       {
         ...options,
-        name: 'Turret 1',
+        name: 'Turret',
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [
@@ -131,13 +132,7 @@ export default class Turret_1
               //   ammunition: Infinity
               // },
               {
-                weapon: new Weapon({
-                  id: 'gatling_gun',
-                  spreadAmount: 0.125,
-                  perSeconds: 15,
-                  projectile: PROJECTILE_TYPE.LIGHT_PROJECTILE,
-                  shootType: WEAPON_SHOOT_TYPE.AUTO
-                }),
+                weapon: new GatlingGun(),
                 maxAmmunition: Infinity,
                 ammunition: Infinity
               }

@@ -120,7 +120,7 @@ export default class DebugAppModule extends AppModule<State, Observables> {
     if (!helper) return;
 
     const y = Math.max(
-      map.modules.surface.getSeaLevel(),
+      map.modules.surface.getWaterLevel(),
       map.modules.surface.getSurfaceHeightAt(position.x, position.y)
     );
     helper.position.set(position.x, y, position.y);
@@ -319,7 +319,7 @@ export default class DebugAppModule extends AppModule<State, Observables> {
         color: 0xffff00
       });
       const y = Math.max(
-        map.modules.surface.getSeaLevel(),
+        map.modules.surface.getWaterLevel(),
         map.modules.surface.getSurfaceHeightAt(position.x, position.y)
       );
       marker.position.set(position.x, y, position.y);

@@ -4,12 +4,15 @@ import {
   distinctUntilChanged,
   EMPTY,
   filter,
+  forkJoin,
+  from,
   map,
   of,
   Subscription,
   switchMap,
   throttleTime,
-  timer
+  timer,
+  toArray
 } from 'rxjs';
 import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import type { Vector3 } from 'three';
@@ -20,7 +23,6 @@ import WeaponUnitModule from '../lib/classes/unitModule/Weapon';
 import type AirVehicleUnit from '../lib/classes/unit/vehicle/AirVehicle';
 import type { FLIGHT_STATUS } from '../lib/classes/unitModule/movable/airVehicle/Helicopter';
 import type { PowerInfo } from '../lib/classes/unitModule/Movable';
-import { DAMAGE_LEVEL } from '../lib/classes/unitModule/Damage';
 import type { WeaponSlot } from '../lib/classes/WeaponSlot';
 import type Unit from '../lib/classes/Unit';
 import type { UnitModules } from '../lib/classes/Unit';
@@ -33,6 +35,18 @@ import {
 import type { App } from '../lib/types';
 import { getCompassDisplayValue } from '../lib/utils/compas';
 import type TransportUnitModule from '../lib/classes/unitModule/Transport';
+import thumbGenerator from '../services/thumbGenerator';
+
+export interface TransportSlotInfoSlot {
+  key: string;
+  id: string;
+  name: string;
+  thumb?: string;
+}
+export interface TransportSlotInfo {
+  slots: TransportSlotInfoSlot[];
+  maxSlots: number;
+}
 
 export default function usePlayerUnitInterface(app: App) {
   const subscription = new Subscription();
@@ -46,17 +60,16 @@ export default function usePlayerUnitInterface(app: App) {
   const unit = ref<Raw<VehicleUnits> | null>(null);
 
   const unitDamage = ref<{
+    destroyed: boolean;
     max: number;
     value: number;
     level: number;
   }>({
+    destroyed: false,
     max: 0,
     value: 0,
     level: 0
   });
-  const isDestroyed = computed(
-    () => unitDamage.value.value >= DAMAGE_LEVEL.DESTROYED / 2
-  );
 
   const unitGears = ref<{
     has: boolean;
@@ -82,7 +95,7 @@ export default function usePlayerUnitInterface(app: App) {
   });
   const autoAimActive = ref<boolean>(false);
   const unitActive = ref<boolean>(false);
-  const weaponSlots = ref<WeaponSlot[]>([]);
+  const weaponSlots = ref<({ thumb: string } & WeaponSlot)[]>([]);
   const fuelWarningMinValue = ref<number>(0.4);
   const fuelInfo = ref<{
     fuel: number;
@@ -92,16 +105,13 @@ export default function usePlayerUnitInterface(app: App) {
     fuelMax: 0
   });
   const playerLifes = ref<number>(3);
-  const transportSlotInfo = ref<{
-    used: number;
-    max: number;
-  }>({
-    used: 0,
-    max: 0
+  const transportSlotInfo = ref<TransportSlotInfo>({
+    slots: [],
+    maxSlots: 0
   });
 
   const seaHeight = computed(
-    () => app.modules.map.getMap()?.modules.surface.getSeaLevel() ?? 0
+    () => app.modules.map.getMap()?.modules.surface.getWaterLevel() ?? 0
   );
   const currentHeight = computed(() => {
     return seaHeight.value + ((position.value?.y ?? 0) - seaHeight.value);
@@ -184,9 +194,28 @@ export default function usePlayerUnitInterface(app: App) {
             vehicle =>
               vehicle?.getModuleByType(WeaponUnitModule)?.observables.slots$ ??
               EMPTY
-          )
+          ),
+          switchMap(slots => {
+            return from(slots).pipe(
+              concatMap(async slot => {
+                return {
+                  ...slot,
+                  thumb: await thumbGenerator.getFromProjectile(
+                    slot.weapon.projectile.id,
+                    {
+                      size: 16,
+                      view: 'side'
+                    }
+                  )
+                };
+              }),
+              toArray()
+            );
+          })
         )
-        .subscribe(slots => (weaponSlots.value = markRaw([...slots])))
+        .subscribe(slots => {
+          weaponSlots.value = markRaw([...slots]);
+        })
     );
 
     subscription.add(
@@ -233,20 +262,40 @@ export default function usePlayerUnitInterface(app: App) {
     subscription.add(
       transportModule$
         .pipe(
-          switchMap(v => {
-            return v
+          switchMap(v =>
+            v
               ? of(v).pipe(
                   switchMap(v => v.observables.slots$),
-                  map(slots => ({ used: slots.length, max: v.getMaxSlots() }))
+                  switchMap(slots =>
+                    forkJoin({
+                      slots: from(slots).pipe(
+                        concatMap(async slot => {
+                          const thumb = slot.key
+                            ? await thumbGenerator.getFromUnit(slot.key, {
+                                size: 16,
+                                view: 'front',
+                                faction: slot.modules.faction.getFaction()
+                              })
+                            : undefined;
+
+                          return {
+                            key: slot.key,
+                            id: slot.id,
+                            name: slot.name,
+                            thumb
+                          };
+                        }),
+                        toArray()
+                      ),
+                      maxSlots: of(v.getMaxSlots())
+                    })
+                  )
                 )
-              : EMPTY;
-          })
+              : EMPTY
+          )
         )
-        .subscribe(({ used, max }) => {
-          transportSlotInfo.value = {
-            used,
-            max
-          };
+        .subscribe(v => {
+          transportSlotInfo.value = v;
         })
     );
 
@@ -261,7 +310,24 @@ export default function usePlayerUnitInterface(app: App) {
             weaponModule.observables.shoot$.pipe(
               map(() => weaponModule.getSlots())
             )
-          )
+          ),
+          switchMap(slots => {
+            return from(slots).pipe(
+              concatMap(async slot => {
+                return {
+                  ...slot,
+                  thumb: await thumbGenerator.getFromProjectile(
+                    slot.weapon.projectile.id,
+                    {
+                      size: 16,
+                      view: 'side'
+                    }
+                  )
+                };
+              }),
+              toArray()
+            );
+          })
         )
         .subscribe(slots => (weaponSlots.value = markRaw([...slots])))
     );
@@ -314,6 +380,7 @@ export default function usePlayerUnitInterface(app: App) {
             vehicle =>
               vehicle?.modules.damage.observables.damage$.pipe(
                 map(() => ({
+                  destroyed: vehicle?.modules.damage.isDestroyed(),
                   max: vehicle?.modules.damage.getMaxDamage(),
                   value: vehicle?.modules.damage.getDamageValue(),
                   level: vehicle?.modules.damage.getDamageLevel()
@@ -377,7 +444,6 @@ export default function usePlayerUnitInterface(app: App) {
   return {
     unit,
     unitDamage,
-    isDestroyed,
     unitGears,
     unitSpeed,
     unitRotation,

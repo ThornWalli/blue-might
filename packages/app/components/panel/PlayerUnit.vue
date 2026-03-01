@@ -23,6 +23,7 @@
                   : CONTROL_ITEM_STATUS.INACTIVE
               "
               @click="onClickAimActive" />
+
             <bm-control-item
               v-for="(slot, index) in weaponSlots"
               :key="index"
@@ -45,7 +46,16 @@
                   : `${slot.ammunition}/${slot.maxAmmunition}`
                       .toString()
                       .padStart(padLength, '\u00A0')
-              " />
+              ">
+              <template #after-indicator>
+                <img
+                  v-if="slot.thumb"
+                  :src="slot.thumb"
+                  :alt="
+                    slot.weapon.projectile.shortName ?? `Weapon #${index + 1}`
+                  " />
+              </template>
+            </bm-control-item>
             <bm-control-item
               v-if="weaponSlots.length === 1"
               label="(none)"
@@ -178,30 +188,6 @@
                     <span>{{ message.text }}</span>
                   </div>
                 </div>
-                {{ flightStatus }}
-                <bm-fieldset v-if="hasTransport" label="Transport">
-                  <bm-control-item
-                    :button="
-                      flightStatus === FLIGHT_STATUS.LANDED &&
-                      transportSlotInfo.used > 0
-                    "
-                    indicator
-                    :indicator-status="
-                      transportSlotInfo.used === 0
-                        ? CONTROL_ITEM_STATUS.INACTIVE
-                        : flightStatus === FLIGHT_STATUS.LANDED
-                          ? CONTROL_ITEM_STATUS.NORMAL
-                          : CONTROL_ITEM_STATUS.DANGER
-                    "
-                    :value="
-                      `${transportSlotInfo.used}/${transportSlotInfo.max}`.padStart(
-                        padLength,
-                        '\u00A0'
-                      )
-                    "
-                    label="Unload"
-                    @click="onClickUnload" />
-                </bm-fieldset>
               </div>
             </div>
           </div>
@@ -209,7 +195,7 @@
       </div>
     </div>
     <div class="grid-row grid-row-end">
-      <div class="grid-col">
+      <div class="grid-col grid-col-end">
         <div v-if="isAirVehicle" class="info air">
           <bm-fieldset label="Air Control">
             <div class="grid-row">
@@ -253,6 +239,25 @@
             </div>
           </bm-fieldset>
         </div>
+        <div
+          v-if="hasTransport && transportSlotInfo.slots.length"
+          class="info transport">
+          <bm-fieldset label="Transport">
+            <bm-control-item
+              v-for="item in transportSlotInfo.slots"
+              :key="item.key"
+              button
+              indicator
+              :value="item.name.padStart(10, '\u00A0')"
+              label="Unload"
+              :label-pad="6"
+              @click="onClickUnload(item)">
+              <template #indicator>
+                <img v-if="item.thumb" :src="item.thumb" :alt="item.name" />
+              </template>
+            </bm-control-item>
+          </bm-fieldset>
+        </div>
       </div>
     </div>
   </bm-panel>
@@ -264,7 +269,9 @@ import AirVehicleUnit from '@blue-might/app/lib/classes/unit/vehicle/AirVehicle'
 import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 import { MAX_AIR_VEHICLE_ALTITUDE } from '@blue-might/app/lib/classes/unitModule/movable/AirVehicle';
-import usePlayerUnitInterface from '@blue-might/app/composables/usePlayerUnitInterface';
+import usePlayerUnitInterface, {
+  type TransportSlotInfoSlot
+} from '@blue-might/app/composables/usePlayerUnitInterface';
 import type { App } from '@blue-might/app/lib/types';
 import { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
 
@@ -284,7 +291,6 @@ const $props = defineProps<{
 const {
   unit,
   unitDamage,
-  isDestroyed,
   unitGears,
   compassValue,
   // unitSpeed,
@@ -333,7 +339,7 @@ enum MessageType {
 }
 
 const message = computed(() => {
-  if (isDestroyed.value) {
+  if (unitDamage.value.destroyed) {
     return {
       type: MessageType.WARNING,
       text: 'Destroyed!'
@@ -399,9 +405,9 @@ function onClickGears() {
   airVehicleModule.toggleGears();
 }
 
-async function onClickUnload() {
+async function onClickUnload(item: TransportSlotInfoSlot) {
   if (unit.value && 'transport' in unit.value.modules) {
-    await unit.value.modules.transport.unloadAll();
+    await unit.value.modules.transport.unloadById(item.id);
   }
 }
 //#endregion

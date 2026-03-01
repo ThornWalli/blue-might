@@ -34,7 +34,7 @@ export default class Factory_1<
     super(
       {
         ...options,
-        name: 'Factory 1'
+        name: 'Factory'
       },
       moduleList
     );

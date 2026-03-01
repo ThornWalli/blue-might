@@ -35,7 +35,7 @@ export default class Tree_2<
     super(
       {
         ...options,
-        name: 'Tree 1',
+        name: 'Tree 2',
         moduleOptions: {
           faction: {
             disabled: true

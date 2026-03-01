@@ -4,27 +4,31 @@
     @submit="onSubmit"
     @reset="onReset">
     <bm-fieldset label="General">
-      <bm-form-field v-slot="{ id }" label="Map Name">
-        <bm-textfield v-model="meta.name" :el-attrs="{ id }"></bm-textfield>
-      </bm-form-field>
-      <bm-form-field v-slot="{ id }" label="Map Description">
-        <bm-textarea
-          v-model="meta.description"
-          :el-attrs="{ id }"></bm-textarea>
-      </bm-form-field>
+      <div class="form-fields">
+        <bm-form-field v-slot="{ id }" label="Map Name">
+          <bm-textfield v-model="meta.name" :el-attrs="{ id }"></bm-textfield>
+        </bm-form-field>
+        <bm-form-field v-slot="{ id }" label="Map Description">
+          <bm-textarea
+            v-model="meta.description"
+            :el-attrs="{ id }"></bm-textarea>
+        </bm-form-field>
+      </div>
     </bm-fieldset>
     <bm-fieldset label="Fog Options">
-      <bm-form-field v-slot="{ id }" label="Enable Fog">
-        <bm-toggle v-model="fogOptions.enabled" :el-attrs="{ id }" />
-      </bm-form-field>
-      <bm-form-field v-slot="{ id }" label="Fog Distance">
-        <bm-textfield
-          v-model="fogOptions.fogDistance"
-          :el-attrs="{ type: 'number', id }" />
-      </bm-form-field>
-      <bm-form-field v-slot="{ id }" label="Fog Color">
-        <bm-color-picker v-model="fogOptions.color" :el-attrs="{ id }" />
-      </bm-form-field>
+      <div class="form-fields col-2">
+        <bm-form-field v-slot="{ id }" label="Enable Fog">
+          <bm-toggle v-model="fogOptions.enabled" :el-attrs="{ id }" />
+        </bm-form-field>
+        <bm-form-field v-slot="{ id }" label="Fog Distance">
+          <bm-textfield
+            v-model="fogOptions.fogDistance"
+            :el-attrs="{ type: 'number', id }" />
+        </bm-form-field>
+        <bm-form-field v-slot="{ id }" label="Fog Color">
+          <bm-color-picker v-model="fogOptions.color" :el-attrs="{ id }" />
+        </bm-form-field>
+      </div>
     </bm-fieldset>
     <div class="controls">
       <bm-button label="Abort" type="reset" />
@@ -132,6 +136,19 @@ function onClickDebug() {
 <style lang="postcss" scoped>
 .bm-dialog-editor-map-settings {
   width: 400px;
+
+  & .form-fields {
+    --cols: 1;
+
+    display: grid;
+    grid-template-columns: repeat(var(--cols), 1fr);
+    gap: var(--bm-spacing-medium);
+    margin: var(--bm-spacing-small) 0;
+
+    &.col-2 {
+      --cols: 2;
+    }
+  }
 
   & .controls {
     display: flex;

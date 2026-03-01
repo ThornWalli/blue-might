@@ -295,7 +295,7 @@ export default class SeaVehicleUnitModule<
     if (Math.abs(dx) > eps || Math.abs(dz) > eps) {
       const newPos = pos.clone().add(new Vector3(dx, 0, dz));
 
-      const seaLevel = map.modules.surface.getSeaLevel() ?? 0;
+      const seaLevel = map.modules.surface.getWaterLevel() ?? 0;
 
       const test = map.modules.surface.getSurfaceHeightAt(
         newPos.x,

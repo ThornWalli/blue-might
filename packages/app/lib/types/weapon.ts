@@ -34,6 +34,8 @@ export type WeaponId = Values<Weapon>;
 export type WeaponIdentifier = string;
 export interface WeaponDescription<P = ProjectileIdentifier> {
   id: WeaponIdentifier;
+  name: string;
+  description?: string | null;
   projectile: P;
   spreadAmount: number;
   perSeconds: number;

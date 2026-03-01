@@ -35,7 +35,7 @@ export default class Tower_1<
     super(
       {
         ...options,
-        name: 'Tower 1'
+        name: 'Tower'
       },
       moduleList
     );

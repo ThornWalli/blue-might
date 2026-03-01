@@ -1,0 +1,39 @@
+.style-scrollbar {
+
+  --size: 8px;
+  --color-background: var(--bm-scrollbar-background);
+  --color-thumb: var(--bm-scrollbar-thumb);
+
+
+  &::-webkit-scrollbar {
+    width: var(--size);
+
+  }
+  &::-webkit-scrollbar:horizontal {
+      width: inherit;
+      height: var(--size);
+   }
+
+   &::-webkit-scrollbar:vertical {
+      width: var(--size);
+      height: inherit;
+  }
+
+  &::-webkit-scrollbar-track-piece {
+    background: var(--color-background);
+  }
+  &::-webkit-scrollbar-track {
+    background-color: var(--color-background);
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color-thumb);
+  }
+
+  /* &::-webkit-scrollbar-button,
+  &::-webkit-resizer,
+  &::-webkit-scrollbar-corner {
+    background: red;
+  } */
+
+}

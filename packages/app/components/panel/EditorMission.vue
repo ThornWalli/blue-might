@@ -47,7 +47,7 @@ const $props = defineProps<{
 
 const mission = ref<Raw<Mission> | null>(null);
 const unit = ref<Raw<Unit> | null>(null);
-const targetType = ref<TargetType>('rescue');
+const targetType = ref<TargetType | null>(null);
 const optional = ref(false);
 const canAttack = ref(false);
 const canRescue = ref(false);

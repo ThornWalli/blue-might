@@ -216,6 +216,14 @@ export default class TransportUnitModule<
     return false;
   }
 
+  async unloadById(id: string) {
+    const slots = this.state.slots;
+    const unit = slots.find(u => u.id === id);
+    if (unit) {
+      return this.unload(unit);
+    }
+  }
+
   async unload(unit: Unit) {
     const slots = this.state.slots;
     if (slots.includes(unit)) {

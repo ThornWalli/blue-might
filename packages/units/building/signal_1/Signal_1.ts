@@ -37,7 +37,7 @@ export default class Signal_1<
     super(
       {
         ...options,
-        name: 'Signal 1',
+        name: 'Signal',
         options: {
           ...options.options,
           interval: options.options?.interval ?? 25

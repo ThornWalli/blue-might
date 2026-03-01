@@ -1,5 +1,5 @@
 import { ReplaySubject } from 'rxjs';
-import type { Texture } from 'three';
+import { Color, type Texture } from 'three';
 
 import AppModule, {
   type AppModuleObservables,
@@ -8,15 +8,18 @@ import AppModule, {
 import type { App } from '../../types';
 import {
   DEFAULT_MAP_NOISE,
+  type MapHeightMap,
   type MapNoise,
-  type Textures
+  type Textures,
+  type WaterOptions
 } from '../../types/map';
 
 interface Observables extends AppModuleObservables {
   textures$: ReplaySubject<TextureDescription[]>;
-  heightMapInclude$: ReplaySubject<boolean>;
-  noise$: ReplaySubject<MapNoise>;
+  noiseOptions$: ReplaySubject<MapNoise>;
   noiseMonochrome$: ReplaySubject<boolean>;
+  waterOptions$: ReplaySubject<WaterOptions>;
+  heightMapOptions$: ReplaySubject<MapHeightMap>;
 }
 
 export interface TextureDescription {
@@ -26,9 +29,10 @@ export interface TextureDescription {
 
 interface State extends AppModuleState {
   textures: TextureDescription[];
-  heightMapInclude: boolean;
   noise: MapNoise;
   noiseMonochrome: boolean;
+  waterOptions: WaterOptions;
+  heightMapOptions: MapHeightMap;
 }
 export default class EditorSurfaceAppModule extends AppModule<
   State,
@@ -38,20 +42,31 @@ export default class EditorSurfaceAppModule extends AppModule<
   constructor(app: App) {
     super(app, {
       textures: [],
-      heightMapInclude: false,
       noise: {
         ...DEFAULT_MAP_NOISE
       },
-      noiseMonochrome: false
+      noiseMonochrome: false,
+      waterOptions: {
+        enabled: false,
+        color: new Color(0x004080),
+        waterLevel: 0,
+        opacity: 0.9
+      },
+      heightMapOptions: {
+        operation: 'darken',
+        include: false
+      }
     });
     //#region observables
     this.observables.textures$ = new ReplaySubject<TextureDescription[]>(1);
-    this.observables.heightMapInclude$ = new ReplaySubject<boolean>(1);
-    this.observables.heightMapInclude$.next(this.state.heightMapInclude);
-    this.observables.noise$ = new ReplaySubject<MapNoise>(1);
-    this.observables.noise$.next(this.state.noise);
+    this.observables.noiseOptions$ = new ReplaySubject<MapNoise>(1);
+    this.observables.noiseOptions$.next(this.state.noise);
     this.observables.noiseMonochrome$ = new ReplaySubject<boolean>(1);
     this.observables.noiseMonochrome$.next(this.state.noiseMonochrome);
+    this.observables.waterOptions$ = new ReplaySubject<WaterOptions>(1);
+    this.observables.waterOptions$.next(this.state.waterOptions);
+    this.observables.heightMapOptions$ = new ReplaySubject<MapHeightMap>(1);
+    this.observables.heightMapOptions$.next(this.state.heightMapOptions);
     //#endregion
   }
 
@@ -68,10 +83,11 @@ export default class EditorSurfaceAppModule extends AppModule<
             }
           )
         );
-        this.setHeightMapInclude(
-          map.modules.surface.options.heightMapInclude ?? false
+        this.setHeightMapOptions(map.modules.surface.options.heightMap ?? {});
+        this.setNoiseOptions(
+          map.modules.surface.options.noise ?? DEFAULT_MAP_NOISE
         );
-        this.setNoise(map.modules.surface.options.noise ?? DEFAULT_MAP_NOISE);
+        this.setWaterOptions(map.modules.surface.options.water ?? {});
       })
     );
   }
@@ -85,23 +101,34 @@ export default class EditorSurfaceAppModule extends AppModule<
     this.observables.textures$.next(this.state.textures);
   }
 
-  getHeightMapInclude() {
-    return this.state.heightMapInclude;
-  }
-
-  setHeightMapInclude(heightMapInclude: boolean) {
-    if (this.state.heightMapInclude === heightMapInclude) return;
-    this.state.heightMapInclude = heightMapInclude;
-    this.observables.heightMapInclude$.next(this.state.heightMapInclude);
-  }
-
-  getNoise() {
+  getNoiseOptions() {
     return this.state.noise;
   }
 
-  setNoise(noise: Partial<MapNoise>) {
+  setNoiseOptions(noise: Partial<MapNoise>) {
     this.state.noise = { ...this.state.noise, ...noise };
-    this.observables.noise$.next(this.state.noise);
+    this.observables.noiseOptions$.next(this.state.noise);
+  }
+
+  getWaterOptions() {
+    return this.state.waterOptions;
+  }
+
+  setWaterOptions(waterOptions: Partial<WaterOptions>) {
+    this.state.waterOptions = { ...this.state.waterOptions, ...waterOptions };
+    this.observables.waterOptions$.next(this.state.waterOptions);
+  }
+
+  getHeightMapOptions() {
+    return this.state.heightMapOptions;
+  }
+
+  setHeightMapOptions(heightMapOptions: Partial<MapHeightMap>) {
+    this.state.heightMapOptions = {
+      ...this.state.heightMapOptions,
+      ...heightMapOptions
+    };
+    this.observables.heightMapOptions$.next(this.state.heightMapOptions);
   }
 
   async apply() {
@@ -114,8 +141,9 @@ export default class EditorSurfaceAppModule extends AppModule<
       }, {} as Textures)
     );
 
-    surface.options.heightMapInclude = this.getHeightMapInclude();
-    surface.options.noise = this.getNoise();
+    surface.setHeightMapOptions(this.getHeightMapOptions());
+    surface.setNoiseOptions(this.getNoiseOptions());
+    surface.setWaterOptions(this.getWaterOptions());
 
     await this.app.modules.map.restartMap(await map.toDescription());
   }

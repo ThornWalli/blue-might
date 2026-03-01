@@ -33,7 +33,7 @@ export default class Barrack_1<
     super(
       {
         ...options,
-        name: 'Barrack 1',
+        name: 'Barrack',
         moduleOptions: {
           ...options.moduleOptions,
           collision: {

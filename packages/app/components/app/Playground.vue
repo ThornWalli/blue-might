@@ -97,15 +97,16 @@ function setupMessages(app: AppPlayground) {
         switchMap(([player, map]) => {
           return merge(
             player?.modules.vehicle.observables.unit$.pipe(
-              switchMap(
-                u =>
-                  u?.modules.damage.observables.destroyed$.pipe(
-                    rxjsMap(() =>
-                      player.modules.life.isGameOver()
-                        ? MESSAGE_TYPE.DESTROYED_GAME_OVER
-                        : MESSAGE_TYPE.DESTROYED_RESTART
+              switchMap(u =>
+                !map?.modules.mission.isFailed() && u
+                  ? u.modules.damage.observables.destroyed$.pipe(
+                      rxjsMap(() =>
+                        player.modules.life.isGameOver()
+                          ? MESSAGE_TYPE.DESTROYED_GAME_OVER
+                          : MESSAGE_TYPE.DESTROYED_RESTART
+                      )
                     )
-                  ) ?? EMPTY
+                  : EMPTY
               )
             ) ?? EMPTY,
             map?.modules.mission.observables.complete$.pipe(

@@ -155,7 +155,7 @@ export default class EditorGridAppModule extends AppModule<State, Observables> {
       map.modules.surface.state.terrainHeight
     );
 
-    const gridSize = this.state.gridSize;
+    const gridSize = 1 / this.state.gridSize;
 
     const boxSize = 0.05;
     const geometry = new BoxGeometry(boxSize, boxSize, boxSize);
@@ -185,7 +185,7 @@ export default class EditorGridAppModule extends AppModule<State, Observables> {
       matrix.setPosition(
         x_,
         map.modules.surface.getTerrainHeightAt(x_, y_) ||
-          map.modules.surface.getSeaLevel(),
+          map.modules.surface.getWaterLevel(),
         y_
       );
       this.root!.setMatrixAt(i, matrix);
@@ -244,7 +244,7 @@ export default class EditorGridAppModule extends AppModule<State, Observables> {
     if (!helper) return;
 
     const y = Math.max(
-      map.modules.surface.getSeaLevel(),
+      map.modules.surface.getWaterLevel(),
       map.modules.surface.getSurfaceHeightAt(position.x, position.y)
     );
     helper.position.set(position.x, y, position.y);
@@ -272,7 +272,9 @@ function snapToGrid(state: { gridSize: number; snapPosition: boolean }) {
   ) =>
     source.pipe(
       rxjsMap(({ map, position }) => {
-        const { gridSize, snapPosition } = state;
+        const { snapPosition } = state;
+        const gridSize = 1 / state.gridSize;
+
         if (snapPosition) {
           const size = new Vector2(
             map.modules.surface.state.terrainWidth,

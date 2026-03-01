@@ -38,7 +38,7 @@ export interface FactionUnitModuleOptions extends UnitModuleOptions {
   /**
    * Wird Beispiel in der UnitPreview verwendet.
    */
-  factionOverride?: FactionDescription;
+  factionOverride?: Faction;
 }
 
 export type FactionUnitModuleState = UnitModuleState;
@@ -137,13 +137,13 @@ export default class FactionUnitModule extends UnitModule<
   }
 }
 
-function useColors(object: Object3D, faction: FactionDescription) {
+function useColors(object: Object3D, faction?: FactionDescription) {
   object.traverse(child => {
     if (child instanceof Mesh || child instanceof SkinnedMesh) {
       replaceColors(
         [
-          ['primary', faction.colors[0] ?? 0xf2f2f2],
-          ['secondary', faction.colors[1] ?? 0xf2f2f2]
+          ['primary', faction?.colors[0] ?? 0xf2f2f2],
+          ['secondary', faction?.colors[1] ?? 0xf2f2f2]
         ],
         child
       );

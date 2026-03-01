@@ -39,7 +39,7 @@ export default class SupplyStation_1 extends BuildingUnit {
     super(
       {
         ...options,
-        name: 'Landing Port Supply Station',
+        name: 'Supply Station',
         moduleOptions: {
           ...options.moduleOptions,
           supply: {

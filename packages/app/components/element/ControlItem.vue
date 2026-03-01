@@ -9,11 +9,13 @@
     <div>
       <div>
         <slot v-if="indicator" name="indicator">
-          <span class="indicator-lamp"></span>
+          <span class="indicator-lamp" />
         </slot>
-
+        <slot name="after-indicator"></slot>
         <div class="label">
-          <slot name="label">{{ label.padStart(10, '\u00A0') }}</slot>
+          <slot name="label">{{
+            label.padStart(labelPad ?? 10, '\u00A0')
+          }}</slot>
         </div>
       </div>
       <div v-html="value"></div>
@@ -29,6 +31,7 @@ const $props = defineProps<{
   button?: boolean;
   indicatorStatus?: CONTROL_ITEM_STATUS;
   label: string;
+  labelPad?: number;
   value: string;
   blink?: boolean;
 }>();
@@ -104,6 +107,11 @@ export enum CONTROL_ITEM_STATUS {
       text-align: right;
       background-color: #333;
     }
+  }
+
+  & :deep(img) {
+    width: auto;
+    height: 16px;
   }
 
   & .indicator-lamp {

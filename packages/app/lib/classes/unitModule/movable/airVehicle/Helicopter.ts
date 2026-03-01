@@ -526,7 +526,7 @@ export default class HelicopterUnitModule<
 
       if (
         (this.state.isAirborne &&
-          unitPosition.y <= Math.max(groundModule?.getSeaLevel(), minY)) ||
+          unitPosition.y <= Math.max(groundModule?.getWaterLevel(), minY)) ||
         ((status === FLIGHT_STATUS.TAKING_OFF ||
           status === FLIGHT_STATUS.LANDED) &&
           unitPosition.y <= minY)

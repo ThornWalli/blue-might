@@ -17,6 +17,7 @@ export type ProjectileUpdateContext = {
 } & AnimationLoopValue;
 
 export default abstract class Projectile implements ProjectileDescription {
+  static KEY: string;
   id: ProjectileIdentifier;
   name: string;
   shortName: string | null;

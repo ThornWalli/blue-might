@@ -6,6 +6,8 @@ import type Projectile from './Projectile';
 
 export default class Weapon implements WeaponDescription<Projectile> {
   id: string;
+  name: string;
+  description?: string | null;
   readonly projectile: Projectile;
   spreadAmount: number;
   perSeconds: number;
@@ -13,6 +15,8 @@ export default class Weapon implements WeaponDescription<Projectile> {
 
   constructor(options: WeaponDescription) {
     this.id = options.id;
+    this.name = options.name;
+    this.description = options.description;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.projectile = new (projectiles[options.projectile]! as any)();
     this.spreadAmount = options.spreadAmount;

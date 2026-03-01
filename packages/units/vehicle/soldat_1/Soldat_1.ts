@@ -45,7 +45,7 @@ export default class Soldat_1<
     super(
       {
         ...options,
-        name: 'Soldat 1'
+        name: 'Soldat'
       },
       moduleList
     );
@@ -99,7 +99,7 @@ export default class Soldat_1<
         child.castShadow = true;
         child.receiveShadow = false;
         if (this.preview) {
-          child.translateZ(0.175);
+          child.translateY(-0.175 / 2);
         }
       }
     });

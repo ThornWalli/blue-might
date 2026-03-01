@@ -2,6 +2,7 @@
   <bm-app-layout class="bm-app-debug">
     <template #[PANEL.BOTTOM_LEFT]>
       <div class="panel-column">
+        <bm-panel-internals key="internals" :app="app" />
         <bm-panel-debug key="debug" :app="app" />
         <bm-panel-general key="general" :app="app" />
       </div>
@@ -23,6 +24,7 @@
 <script lang="ts" setup>
 import type AppDebug from '../../lib/classes/app/AppDebug';
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
+import BmPanelInternals from '../panel/Internals.vue';
 import BmPanelDebug from '../panel/Debug.vue';
 import BmPanelGeneral from '../panel/General.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';

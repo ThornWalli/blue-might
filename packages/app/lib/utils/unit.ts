@@ -35,6 +35,10 @@ export function isRescue(unit?: Unit | null): boolean {
   return (unit && 'rescue' in unit.modules) ?? false;
 }
 
+export function canRescue(unit?: Unit | null): boolean {
+  return (unit && isRescue(unit) && !isUnitDestroyed(unit)) ?? false;
+}
+
 export function isBuilding(unit?: Unit | null): boolean {
   return (unit && 'building' in unit.modules) ?? false;
 }

@@ -32,7 +32,7 @@ export default class Church_1<
     super(
       {
         ...options,
-        name: 'Church 1'
+        name: 'Church'
       },
       moduleList
     );

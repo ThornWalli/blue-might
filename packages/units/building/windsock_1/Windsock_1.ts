@@ -33,7 +33,7 @@ export default class Windsock_1<
     super(
       {
         ...options,
-        name: 'Windsock 1'
+        name: 'Windsock'
       },
       moduleList
     );

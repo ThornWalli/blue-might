@@ -91,6 +91,8 @@ export interface DialogContext<Result = unknown> {
 
   .base-dialog-inner {
     position: relative;
+    max-width: 96svw;
+    max-height: 96svh;
   }
 
   &.visible {

@@ -42,54 +42,93 @@
     </bm-fieldset>
     <form @submit="onSubmit" @reset="onReset">
       <bm-fieldset label="Background">
-        <div class="controls">
+        <div class="form-fields">
           <bm-toggle
-            :model-value="heightMapInclude"
+            :model-value="heightMapOptions.include ?? false"
             label="HeightMap in Background"
             @update:model-value="
-              editorSurfaceModule.setHeightMapInclude($event)
+              editorSurfaceModule.setHeightMapOptions({ include: $event })
             " />
         </div>
       </bm-fieldset>
 
+      <bm-fieldset label="Water Options">
+        <div class="form-fields col-2">
+          <bm-form-field v-slot="{ id }" label="Enable Water">
+            <bm-toggle
+              :model-value="waterOptions.enabled"
+              :el-attrs="{ id }"
+              @update:model-value="
+                editorSurfaceModule.setWaterOptions({ enabled: $event })
+              " />
+          </bm-form-field>
+          <bm-form-field v-slot="{ id }" label="Water Color">
+            <bm-color-picker
+              :model-value="waterOptions.color"
+              :el-attrs="{ id }"
+              @update:model-value="
+                editorSurfaceModule.setWaterOptions({
+                  color: new Color($event)
+                })
+              " />
+          </bm-form-field>
+          <bm-form-field v-slot="{ id }" label="Water Level">
+            <bm-textfield
+              v-model="waterOptions.waterLevel"
+              :el-attrs="{ type: 'number', id }"
+              @update:model-value="
+                editorSurfaceModule.setWaterOptions({ waterLevel: $event })
+              " />
+          </bm-form-field>
+          <bm-form-field v-slot="{ id }" label="Water Opacity">
+            <bm-textfield
+              v-model="waterOptions.opacity"
+              :el-attrs="{ type: 'number', id }"
+              @update:model-value="
+                editorSurfaceModule.setWaterOptions({ opacity: $event })
+              " />
+          </bm-form-field>
+        </div>
+      </bm-fieldset>
+
       <bm-fieldset label="Noise">
-        <div class="controls">
+        <div class="form-fields col-2">
           <bm-toggle
-            :model-value="noise.active"
+            :model-value="noiseOptions.enable"
             label="Enable Noise"
             @update:model-value="
-              editorSurfaceModule.setNoise({ active: $event })
+              editorSurfaceModule.setNoiseOptions({ enable: $event })
             " />
           <bm-toggle
-            :model-value="noise.monochrome"
+            :model-value="noiseOptions.monochrome"
             label="Enable Noise Monochrome"
             @update:model-value="
-              editorSurfaceModule.setNoise({ monochrome: $event })
+              editorSurfaceModule.setNoiseOptions({ monochrome: $event })
             " />
           <bm-form-field label="Noise Size">
             <bm-textfield
               :el-attrs="{ type: 'number', step: '1' }"
-              :model-value="noise.size"
+              :model-value="noiseOptions.size"
               @update:model-value="
-                editorSurfaceModule.setNoise({ size: $event })
+                editorSurfaceModule.setNoiseOptions({ size: $event })
               " />
           </bm-form-field>
 
           <bm-form-field label="Noise Intensity">
             <bm-textfield
               :el-attrs="{ type: 'number', step: '0.01' }"
-              :model-value="noise.intensity"
+              :model-value="noiseOptions.intensity"
               @update:model-value="
-                editorSurfaceModule.setNoise({ intensity: $event })
+                editorSurfaceModule.setNoiseOptions({ intensity: $event })
               " />
           </bm-form-field>
 
           <bm-form-field label="Noise Opacity">
             <bm-textfield
               :el-attrs="{ type: 'number', step: '0.01' }"
-              :model-value="noise.opacity"
+              :model-value="noiseOptions.opacity"
               @update:model-value="
-                editorSurfaceModule.setNoise({ opacity: $event })
+                editorSurfaceModule.setNoiseOptions({ opacity: $event })
               " />
           </bm-form-field>
         </div>
@@ -106,13 +145,16 @@
 import { inject, onMounted, onUnmounted, ref } from 'vue';
 import { Subscription } from 'rxjs';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
-import { Texture } from 'three';
+import { Color, Texture } from 'three';
 import type { TextureDescription } from '@blue-might/app/lib/classes/appModule/EditorSurface';
 import { ICON } from '@blue-might/app/utils/icons';
 import { imageBitmapToBlob } from '@blue-might/app/utils/blob';
 import {
+  DEFAULT_MAP_HEIGHT_MAP,
   DEFAULT_MAP_NOISE,
-  type MapNoise
+  type MapHeightMap,
+  type MapNoise,
+  type RawWaterOptions
 } from '@blue-might/app/lib/types/map';
 
 import BmFieldset from '../Fieldset.vue';
@@ -120,14 +162,15 @@ import BmButton from '../Button.vue';
 import BmButtonUpload from '../button/Upload.vue';
 import BmToggle from '../Toggle.vue';
 import BmTextfield from '../Textfield.vue';
+import BmColorPicker from '../ColorPicker.vue';
 import BmFormField from '../FormField.vue';
 import type { DialogContext } from '../base/Dialog.vue';
 
 const dialog = inject<DialogContext>('dialog')!;
 
 const textures = ref<TextureDescription[]>([]);
-const heightMapInclude = ref<boolean>(true);
-const noise = ref<MapNoise>(DEFAULT_MAP_NOISE);
+const heightMapOptions = ref<MapHeightMap>(DEFAULT_MAP_HEIGHT_MAP);
+const noiseOptions = ref<MapNoise>(DEFAULT_MAP_NOISE);
 
 const $props = defineProps<{
   app: AppEditor;
@@ -145,15 +188,30 @@ onMounted(() => {
     })
   );
   subscription.add(
-    editorSurfaceModule.observables.heightMapInclude$.subscribe(v => {
-      heightMapInclude.value = v;
+    editorSurfaceModule.observables.heightMapOptions$.subscribe(v => {
+      heightMapOptions.value = v;
     })
   );
   subscription.add(
-    editorSurfaceModule.observables.noise$.subscribe(v => {
-      noise.value = v;
+    editorSurfaceModule.observables.noiseOptions$.subscribe(v => {
+      noiseOptions.value = v;
     })
   );
+  subscription.add(
+    editorSurfaceModule.observables.waterOptions$.subscribe(v => {
+      waterOptions.value = {
+        ...v,
+        color: `#${v.color.getHexString()}`
+      };
+    })
+  );
+});
+
+const waterOptions = ref<RawWaterOptions<string>>({
+  enabled: false,
+  color: '#004080',
+  waterLevel: 0,
+  opacity: 0.9
 });
 
 const previewItems = ref<
@@ -309,10 +367,17 @@ function onReset() {
     }
   }
 
-  & .controls {
+  & .form-fields {
+    --cols: 1;
+
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(var(--cols), 1fr);
     gap: var(--bm-spacing-medium);
+    margin: var(--bm-spacing-small) 0;
+
+    &.col-2 {
+      --cols: 2;
+    }
   }
 }
 </style>

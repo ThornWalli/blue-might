@@ -114,7 +114,7 @@ export default class CombatHelicopter_1
     super(
       {
         ...options,
-        name: 'Combat Helicopter 1',
+        name: 'Combat Helicopter',
 
         options: {
           ...options.options,

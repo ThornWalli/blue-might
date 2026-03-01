@@ -88,7 +88,7 @@ export default class CombatShip_1
     super(
       {
         ...options,
-        name: 'Boat 1',
+        name: 'Boat',
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [
@@ -101,6 +101,9 @@ export default class CombatShip_1
         },
         moduleOptions: {
           ...options.moduleOptions,
+          damage: {
+            maxDamage: 2
+          },
           weapon: {
             autoAimFn: (options: AutoAimFnOptions) =>
               autoAimFunction(

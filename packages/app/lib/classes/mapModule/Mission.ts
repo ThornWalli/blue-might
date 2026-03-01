@@ -164,14 +164,17 @@ export default class MissionModule extends MapModule<
 
     this.targetSubscription = new Subscription();
     const unitMap = new globalThis.Map(this.getUnits().map(u => [u.id, u]));
-    const targets = (description.targets ?? []).map(target => {
-      const { type, unit: unitId } = target;
-      const unit = unitMap.get(unitId);
-      if (unit) {
-        this.registerTargetUnits(type, unit);
-      }
-      return target;
-    });
+    const targets = (description.targets ?? [])
+      // filter out invalid targets
+      .filter(t => t.unit && unitMap.has(t.unit))
+      .map(target => {
+        const { type, unit: unitId } = target;
+        const unit = unitMap.get(unitId);
+        if (unit) {
+          this.registerTargetUnits(type, unit);
+        }
+        return target;
+      });
 
     const preparedDescription: MissionDescription = {
       ...description,

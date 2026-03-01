@@ -36,7 +36,7 @@ export default class LandingPortRescue_1 extends LandingPortUnit<
     super(
       {
         ...options,
-        name: 'Landing Port Rescue 1',
+        name: 'Landing Port Rescue',
         moduleOptions: {
           ...options.moduleOptions,
           collision: {

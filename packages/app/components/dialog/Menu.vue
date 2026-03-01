@@ -104,6 +104,15 @@ const missionLinks = ref([
         map: 'mission_1.zip'
       }
     }
+  },
+  {
+    title: 'Mission 2',
+    href: {
+      name: 'map',
+      params: {
+        map: 'mission_2.zip'
+      }
+    }
   }
 ]);
 const debugLinks = ref([

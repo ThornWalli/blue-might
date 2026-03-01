@@ -10,7 +10,7 @@
       @update:model-value="app.modules.editorGrid.setGridActive($event)" />
     <bm-form-field label="Grid Size">
       <bm-select
-        :model-value="1 / gridSize"
+        :model-value="gridSize"
         :options="gridSizeOptions"
         label="Grid Size"
         @update:model-value="app.modules.editorGrid.setGridSize($event)" />
@@ -42,13 +42,13 @@ const $props = defineProps<{
 
 const snapPosition = ref(false);
 const gridVisible = ref(false);
-const gridSize = ref(8);
+const gridSize = ref(1);
 const gridSizeOptions = ref(
   Array(12)
     .fill(null)
     .map((_, i) => ({
       label: `${i + 1}`,
-      value: 1 / (i + 1)
+      value: i + 1
     }))
 );
 
@@ -61,13 +61,11 @@ onMounted(() => {
       currentPosition.value.copy(p);
     })
   );
-
   subscription.add(
     $props.app.modules.editorGrid.observables.gridActive$.subscribe(v => {
       gridVisible.value = v;
     })
   );
-
   subscription.add(
     $props.app.modules.editorGrid.observables.gridSize$.subscribe(v => {
       gridSize.value = v;

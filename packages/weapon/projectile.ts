@@ -10,7 +10,7 @@ import Default, {
   MediumProjectile
 } from './projectile/default/Default';
 import AirSurfaceMissile_1 from './projectile/air_surface_missile_1/AirSurfaceMissile_1';
-import AirHomingMissile_1 from './projectile/air_homing_missle_1/AirHomingMissle_1';
+import AirHomingMissile_1 from './projectile/air_homing_missile_1/AirHomingMissile_1';
 
 declare module '@blue-might/app/lib/types/weapon' {
   interface ProjectileTypes {
@@ -33,3 +33,11 @@ const projectiles: Record<
   [PROJECTILE_TYPE.AIR_HOMING_MISSILE_1]: AirHomingMissile_1
 });
 export { projectiles };
+
+export type Projectiles =
+  | Default
+  | LightProjectile
+  | MediumProjectile
+  | HeavyProjectile
+  | AirSurfaceMissile_1
+  | AirHomingMissile_1;

@@ -36,7 +36,7 @@ export default class Tank_1<
     super(
       {
         ...options,
-        name: 'Tank 1',
+        name: 'Tank',
         moduleOptions: {
           ...options?.moduleOptions,
           collision: {

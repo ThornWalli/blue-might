@@ -4,7 +4,7 @@ import BaseNavigator from '../abstract/BaseNavigator';
 export default class SeaNavigator extends BaseNavigator {
   protected getHeightAt(x: number, z: number): number {
     return Math.max(
-      this.map.modules.surface.getSeaLevel(),
+      this.map.modules.surface.getWaterLevel(),
       this.map.modules.surface.getSurfaceHeightAt(x, z)
     );
   }

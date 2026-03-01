@@ -26,6 +26,8 @@ export class Default extends Weapon {
   ) {
     super({
       id: WEAPON.DEFAULT,
+      name: 'Default Weapon',
+      description: 'The default weapon.',
       spreadAmount: 0.1,
       perSeconds: getSecondsByType(projectile),
       projectile: projectile,
@@ -52,6 +54,8 @@ export class AirSurfaceMissile_1 extends Weapon {
   constructor(options?: Partial<ConstructorParameters<typeof Weapon>[0]>) {
     super({
       id: options?.id ?? WEAPON.AIR_SURFACE_MISSILE_1,
+      name: options?.name ?? 'Air Surface Missile 1',
+      description: options?.description ?? 'An air-to-surface missile.',
       spreadAmount: options?.spreadAmount ?? 0,
       perSeconds: options?.perSeconds ?? 0.25,
       projectile: options?.projectile ?? PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1,
@@ -60,9 +64,26 @@ export class AirSurfaceMissile_1 extends Weapon {
   }
 }
 
+export class GatlingGun extends Weapon {
+  constructor(options?: Partial<ConstructorParameters<typeof Weapon>[0]>) {
+    super({
+      id: options?.id ?? 'gatling_gun',
+      name: options?.name ?? 'Gatling Gun',
+      description: options?.description ?? 'A rapid-fire gun.',
+      spreadAmount: options?.spreadAmount ?? 0.125,
+      perSeconds: options?.perSeconds ?? 15,
+      projectile: options?.projectile ?? PROJECTILE_TYPE.LIGHT_PROJECTILE,
+      shootType: options?.shootType ?? WEAPON_SHOOT_TYPE.AUTO
+    });
+  }
+}
+
 const weapons = {
   default: Default,
-  air_surface_missile_1: AirSurfaceMissile_1
+  air_surface_missile_1: AirSurfaceMissile_1,
+  gatling_gun: GatlingGun
 };
 
 export { weapons };
+
+export type Weapons = Default | AirSurfaceMissile_1 | GatlingGun;

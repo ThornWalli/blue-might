@@ -22,6 +22,7 @@ export interface MapDescription extends LegacyMapDescription {
   meta: Meta;
   playerOptions: RawPlayerOptions;
   fogOptions?: RawFogOptions;
+  waterOptions?: RawWaterOptions;
   moduleOptions: Partial<ModuleOptions>;
   moduleStates?: Partial<ModuleStates>;
   moduleDebug?: Partial<ModuleDebug>;
@@ -41,7 +42,7 @@ interface LegacyMapDescription {
       backgroundTexture: string;
       foregroundTexture: string;
     };
-    heightMapInclude?: boolean;
+    heightMap?: MapHeightMap;
     noise?: MapNoise;
   };
   /**
@@ -54,20 +55,32 @@ interface LegacyMapDescription {
   units?: RawUnitDescription[];
 }
 
+export interface MapHeightMap {
+  include: boolean;
+  operation?: GlobalCompositeOperation;
+}
+
+export const DEFAULT_MAP_HEIGHT_MAP = Object.freeze<MapHeightMap>({
+  include: false,
+  operation: 'multiply'
+});
+
 export interface MapNoise {
-  active: boolean;
+  enable: boolean;
   size: number;
   intensity: number;
   opacity: number;
   monochrome: boolean;
+  operation?: GlobalCompositeOperation;
 }
 
 export const DEFAULT_MAP_NOISE = Object.freeze<MapNoise>({
-  active: false,
+  enable: false,
   size: 2,
   intensity: 0.25,
   opacity: 0.5,
-  monochrome: false
+  monochrome: false,
+  operation: 'multiply'
 });
 
 export interface RawPlayerOptions<
@@ -96,3 +109,12 @@ export interface RawFogOptions<C = number[]> {
 }
 
 export type FogOptions = RawFogOptions<Color>;
+
+export interface RawWaterOptions<C = number[]> {
+  enabled: boolean;
+  color: C;
+  waterLevel: number;
+  opacity: number;
+}
+
+export type WaterOptions = RawWaterOptions<Color>;

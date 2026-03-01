@@ -40,7 +40,7 @@ export default class WindTurbine_1<
     super(
       {
         ...options,
-        name: 'Wind Turbine 1',
+        name: 'Wind Turbine',
         moduleOptions: {
           ...options.moduleOptions,
           collision: {

@@ -195,7 +195,7 @@ export default class PatrolUnitModule extends UnitModule<
     const map = this.getUnit().getMap()!;
     return this.options.path.map(point => {
       const y = Math.max(
-        map.modules.surface.getSeaLevel(),
+        map.modules.surface.getWaterLevel(),
         map.modules.surface.getTerrainHeightAt(point[0], point[1])
       );
       return new Vector3(point[0], y, point[1]);
@@ -339,7 +339,7 @@ export default class PatrolUnitModule extends UnitModule<
 export function getWorldPath(groundModule: SurfaceModule, path: PatrolPath) {
   return path.map(point => {
     const y = Math.max(
-      groundModule.getSeaLevel(),
+      groundModule.getWaterLevel(),
       groundModule.getSurfaceHeightAt(point[0], point[1])
     );
     return new Vector3(point[0], y, point[1]);
