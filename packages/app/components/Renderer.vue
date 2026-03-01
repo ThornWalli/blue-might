@@ -52,7 +52,6 @@ const canvasEl = ref();
 const subscription = new Subscription();
 
 const defaultRendererOptions: RendererOptions = {
-  fog: { enabled: true },
   pixelated: false,
   controls: true
 };
@@ -64,14 +63,13 @@ onMounted(async () => {
     rootEl.value.offsetHeight
   );
 
-  const { pixelated, fog } = $props.options || defaultRendererOptions;
+  const { pixelated } = $props.options || defaultRendererOptions;
 
   renderer.value = markRaw(
     new Renderer(
       canvasEl.value,
       dimension.value,
       {
-        fog,
         debug: !!$props.debug,
         pixelated: pixelated
       },
@@ -97,24 +95,21 @@ onMounted(async () => {
   );
 
   subscription.add(
-    fromEvent<PointerEvent>(canvasEl.value, 'pointermove').subscribe(e => {
-      $emit('pointermove', e);
-      // renderer.value?.modules.intersection?.onMove();
-    })
+    fromEvent<PointerEvent>(canvasEl.value, 'pointermove').subscribe(e =>
+      $emit('pointermove', e)
+    )
   );
 
   subscription.add(
-    fromEvent<PointerEvent>(canvasEl.value, 'pointerenter').subscribe(e => {
-      $emit('pointerenter', e);
-      // renderer.value?.modules.intersection?.onEnter();
-    })
+    fromEvent<PointerEvent>(canvasEl.value, 'pointerenter').subscribe(e =>
+      $emit('pointerenter', e)
+    )
   );
 
   subscription.add(
-    fromEvent<PointerEvent>(canvasEl.value, 'pointerout').subscribe(e => {
-      $emit('pointerout', e);
-      // renderer.value?.modules.intersection?.onOut();
-    })
+    fromEvent<PointerEvent>(canvasEl.value, 'pointerout').subscribe(e =>
+      $emit('pointerout', e)
+    )
   );
 
   nextTick(() => {
@@ -136,8 +131,10 @@ defineExpose({
 <style lang="postcss" scoped>
 .bm-renderer {
   &.pixelated {
-    image-rendering: crisp-edges;
-    image-rendering: pixelated;
+    & canvas {
+      image-rendering: crisp-edges;
+      image-rendering: pixelated;
+    }
   }
 
   & canvas {

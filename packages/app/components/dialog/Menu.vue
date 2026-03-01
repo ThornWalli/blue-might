@@ -106,7 +106,7 @@ const missionLinks = ref([
     }
   },
   {
-    title: 'Mission 2',
+    title: 'Mission 2 (Progress…)',
     href: {
       name: 'map',
       params: {

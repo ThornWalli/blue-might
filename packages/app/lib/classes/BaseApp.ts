@@ -100,10 +100,6 @@ export default class BaseApp<
 
     this.moduleList = moduleList;
 
-    if (config.debug?.renderer) {
-      this.renderer.setOptions(config.debug.renderer);
-    }
-
     //#region observables
     this.observables.updateActive$ = new ReplaySubject<boolean>(1);
     //#endregion

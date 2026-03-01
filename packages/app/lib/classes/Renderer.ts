@@ -81,8 +81,13 @@ export default class Renderer<
 
   modules: Modules;
 
+  private fogOptions: FogOptions = {
+    enabled: false,
+    color: new Color(0x000000),
+    fogDistance: 30
+  };
+
   private options: {
-    fog: FogOptions;
     pixelated: boolean;
     controls: boolean;
     debug: boolean;
@@ -96,7 +101,6 @@ export default class Renderer<
     canvas: HTMLCanvasElement,
     dimension: Vector2,
     options: {
-      fog?: Partial<FogOptions> & { enabled: boolean };
       pixelated?: boolean;
       controls?: boolean;
       debug?: boolean;
@@ -110,12 +114,6 @@ export default class Renderer<
     );
 
     this.options = {
-      fog: {
-        enabled: false,
-        color: new Color(0x000000),
-        fogDistance: 30,
-        ...(options.fog ?? {})
-      },
       pixelated: options.pixelated ?? false,
       controls: options.controls ?? false,
       debug: options.debug ?? false
@@ -289,7 +287,7 @@ export default class Renderer<
       scene.background = DEFAULT_SCENE_BACKGROUND;
       scene.fog = null;
     }
-    this.options.fog = {
+    this.fogOptions = {
       enabled,
       color,
       fogDistance
@@ -306,9 +304,6 @@ export default class Renderer<
   }
 
   setOptions(options: Partial<RendererOptions>) {
-    if ('fog' in options) {
-      this.setFogOptions(options.fog ?? { enabled: false });
-    }
     if ('pixelated' in options) {
       this.setPixelated(options.pixelated ?? false);
     }

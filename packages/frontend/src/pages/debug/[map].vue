@@ -38,9 +38,6 @@ const AppComponent = defineAsyncComponent(
 const config = ref<AppConfig>({
   mode: APP_MODE.DEBUG,
   rendererOptions: {
-    fog: {
-      enabled: false
-    },
     pixelated: false,
     controls: true
   }

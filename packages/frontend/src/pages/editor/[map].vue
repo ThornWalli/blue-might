@@ -42,9 +42,6 @@ onMounted(async () => {
 const config = ref<AppConfig>({
   mode: APP_MODE.EDITOR,
   rendererOptions: {
-    fog: {
-      enabled: false
-    },
     pixelated: false,
     controls: true
   }
