@@ -7,12 +7,12 @@ catalog:
   '@fullhuman/postcss-purgecss': 8.0.0
   '@nuxt/eslint': 1.15.2
   '@nuxtjs/critters': 0.9.0
-  '@nuxtjs/robots': 5.7.0
+  '@nuxtjs/robots': 5.7.1
   '@nuxtjs/sitemap': 7.6.0
   '@types/node': 25.3.3
   '@types/pathfinding': 0.1.0
   '@types/three': 0.183.1
-  '@types/web': 0.0.338
+  '@types/web': 0.0.339
   '@typescript-eslint/eslint-plugin': 8.56.1
   change-case: 5.4.4
   consola: 3.4.2

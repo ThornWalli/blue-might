@@ -22,8 +22,8 @@ catalogs:
       specifier: 0.9.0
       version: 0.9.0
     '@nuxtjs/robots':
-      specifier: 5.7.0
-      version: 5.7.0
+      specifier: 5.7.1
+      version: 5.7.1
     '@nuxtjs/sitemap':
       specifier: 7.6.0
       version: 7.6.0
@@ -34,8 +34,8 @@ catalogs:
       specifier: 0.183.1
       version: 0.183.1
     '@types/web':
-      specifier: 0.0.338
-      version: 0.0.338
+      specifier: 0.0.339
+      version: 0.0.339
     change-case:
       specifier: 5.4.4
       version: 5.4.4
@@ -175,7 +175,7 @@ importers:
         version: 25.3.3
       '@types/web':
         specifier: 'catalog:'
-        version: 0.0.338
+        version: 0.0.339
       eslint:
         specifier: 'catalog:'
         version: 10.0.2(jiti@2.6.1)
@@ -318,7 +318,7 @@ importers:
         version: 0.9.0(magicast@0.5.2)
       '@nuxtjs/robots':
         specifier: 'catalog:'
-        version: 5.7.0(magicast@0.5.2)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vue@3.5.29(typescript@5.9.3))
+        version: 5.7.1(magicast@0.5.2)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vue@3.5.29(typescript@5.9.3))
       '@nuxtjs/sitemap':
         specifier: 'catalog:'
         version: 7.6.0(magicast@0.5.2)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vue@3.5.29(typescript@5.9.3))
@@ -1391,8 +1391,8 @@ packages:
   '@nuxtjs/critters@0.9.0':
     resolution: {integrity: sha512-XFspmZajsQPbgOWcMERKxQrTd/6ze4L4QOuNv1fM8YOCD3YeCyYpJ/n96Riakv3rsL6biayL3WwYSxGUO3CYOA==}
 
-  '@nuxtjs/robots@5.7.0':
-    resolution: {integrity: sha512-pkGtOP88rzIalvYE3rTCkJ+f0TDHfB/sbSCcA7inVemFa17JVu8AFlO4e+y4zthj+Jh98Tkf7yCuaDU5w3C1vQ==}
+  '@nuxtjs/robots@5.7.1':
+    resolution: {integrity: sha512-1y1pW8Dh2gqJGFpXwkTin1KokBofYAG91C1gqxR4XbI7Xkl7DAXQ+BropHF2AeCV/uCxs6qz28ONp0+60TSw1Q==}
     peerDependencies:
       zod: '>=3'
     peerDependenciesMeta:
@@ -2192,8 +2192,8 @@ packages:
   '@types/three@0.183.1':
     resolution: {integrity: sha512-f2Pu5Hrepfgavttdye3PsH5RWyY/AvdZQwIVhrc4uNtvF7nOWJacQKcoVJn0S4f0yYbmAE6AR+ve7xDcuYtMGw==}
 
-  '@types/web@0.0.338':
-    resolution: {integrity: sha512-zek7Yu+9x/lfD40oA4Biw7GZuV7yIcvNAlhxGh+40NLO13G7rC2qeNqegcSthV6wq3L2z+8+ERj3GXgjoU1MvA==}
+  '@types/web@0.0.339':
+    resolution: {integrity: sha512-bckDV6OqUF2vnpXMAR7Qo9Wc6gAiGGqupU0RiHo7GVvgZcGdpTf5T3MIB4s83hxNp83VNCgRh2L4OuhL0zxMFw==}
 
   '@types/webxr@0.5.24':
     resolution: {integrity: sha512-h8fgEd/DpoS9CBrjEQXR+dIDraopAEfu4wYVNY2tEPwk60stPWhvZMf4Foo5FakuQ7HFZoa8WceaWFervK2Ovg==}
@@ -7790,7 +7790,7 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
-  '@nuxtjs/robots@5.7.0(magicast@0.5.2)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vue@3.5.29(typescript@5.9.3))':
+  '@nuxtjs/robots@5.7.1(magicast@0.5.2)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))(vue@3.5.29(typescript@5.9.3))':
     dependencies:
       '@fingerprintjs/botd': 2.0.0
       '@nuxt/devtools-kit': 3.2.2(magicast@0.5.2)(vite@7.3.1(@types/node@25.3.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2))
@@ -8311,7 +8311,7 @@ snapshots:
       fflate: 0.8.2
       meshoptimizer: 1.0.1
 
-  '@types/web@0.0.338': {}
+  '@types/web@0.0.339': {}
 
   '@types/webxr@0.5.24': {}
 
