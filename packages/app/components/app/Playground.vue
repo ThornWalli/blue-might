@@ -41,8 +41,8 @@ import {
   merge,
   Subscription,
   switchMap,
-  combineLatest,
-  debounceTime
+  debounceTime,
+  combineLatest
 } from 'rxjs';
 import { ControlAction } from '@blue-might/app/lib/classes/playerModule/Controls';
 
@@ -87,7 +87,9 @@ function setupMessages(app: AppPlayground) {
         generalEl.value?.openMissionBriefing();
       })
   );
-
+  //  if (u.modules.damage.observables.destroyed$.closed) {
+  //             return EMPTY;
+  //           } else {
   subscription.add(
     combineLatest([
       app.modules.player.observables.currentPlayer$,
@@ -138,6 +140,9 @@ function setupMessages(app: AppPlayground) {
         ).subscribe(async () => {
           messageType.value = null;
           if (type !== MESSAGE_TYPE.DESTROYED_RESTART) {
+            app.modules.player
+              .getCurrentPlayer()
+              .modules.vehicle.setVehicleUnit(null);
             await app.modules.map.restartMap();
           } else {
             await app.modules.player.respawnPlayer();
@@ -150,110 +155,6 @@ function setupMessages(app: AppPlayground) {
   );
 
   let subscription_: Subscription | null = null;
-
-  // subscription.add(
-  //   app.modules.player.observables.currentPlayer$
-  //     .pipe(
-  //       switchMap(player => player?.modules.vehicle.observables.unit$ ?? EMPTY),
-  //       switchMap(unit => unit?.modules.damage.observables.destroyed$ ?? EMPTY),
-  //       switchMap(() => app.modules.player.observables.currentPlayer$ ?? EMPTY)
-  //     )
-  //     .subscribe(player => {
-  //       const mission = app.modules.map.getMap()?.modules.mission;
-  //       if (mission && (mission.isComplete() || mission.isFailed())) {
-  //         return;
-  //       }
-  //       const subscription = merge(
-  //         player?.modules.controls.observables.controls$.pipe(
-  //           rxjsMap(controls => controls[ControlAction.RESTART]),
-  //           filter(Boolean)
-  //         ) ?? EMPTY,
-  //         fromEvent(document, 'click').pipe(rxjsMap(() => true))
-  //       ).subscribe(async () => {
-  //         if (player.modules.life.isGameOver()) {
-  //           await app.modules.map.restartMap();
-  //         } else {
-  //           await app.modules.player.respawnPlayer();
-  //         }
-  //         subscription.unsubscribe();
-  //       });
-  //       subscription.add(subscription);
-  //     })
-  // );
-
-  // subscription.add(
-  //   app.modules.player.observables.currentPlayer$
-  //     .pipe(
-  //       switchMap(player =>
-  //         player
-  //           ? merge(
-  //               player.modules.vehicle.observables.unit$.pipe(filter(Boolean)),
-  //               player.modules.vehicle.observables.unit$.pipe(
-  //                 switchMap(
-  //                   unit => unit?.modules.damage.observables.destroyed$ ?? EMPTY
-  //                 )
-  //               )
-  //             )
-  //           : EMPTY
-  //       )
-  //     )
-  //     .subscribe(() => {
-  //       const player = app.modules.player.getCurrentPlayer();
-  //       const unit = player.modules.vehicle.getCurrentUnit();
-
-  //       const mission = app.modules.map.getMap()?.modules.mission;
-  //       if (mission && (mission.isComplete() || mission.isFailed())) {
-  //         return;
-  //       }
-
-  //       if (unit?.modules.damage.isDestroyed()) {
-  //         if (player.modules.life.isGameOver()) {
-  //           messageType.value = MESSAGE_TYPE.DESTROYED_GAME_OVER;
-  //         } else {
-  //           messageType.value = MESSAGE_TYPE.DESTROYED_RESTART;
-  //         }
-  //       } else {
-  //         messageType.value = null;
-  //       }
-  //     })
-  // );
-
-  // subscription.add(
-  //   app.modules.player.observables.currentPlayer$
-  //     .pipe(
-  //       switchMap(player =>
-  //         app.modules.map.observables.map$.pipe(
-  //           switchMap(map =>
-  //             merge(
-  //               map?.modules.mission.observables.complete$ ?? EMPTY,
-  //               map?.modules.mission.observables.failed$ ?? EMPTY
-  //             )
-  //           ),
-  //           rxjsMap(() => player)
-  //         )
-  //       )
-  //     )
-  //     .subscribe(async player => {
-  //       const mission = app.modules.map.getMap()?.modules.mission;
-  //       if (!mission) return;
-
-  //       messageType.value = mission.isComplete()
-  //         ? MESSAGE_TYPE.MISSION_COMPLETE
-  //         : MESSAGE_TYPE.MISSION_FAILED;
-  //       const subscription = merge(
-  //         player?.modules.controls.observables.controls$.pipe(
-  //           rxjsMap(controls => controls[ControlAction.RESTART]),
-  //           filter(Boolean)
-  //         ) ?? EMPTY,
-  //         fromEvent(document, 'click').pipe(rxjsMap(() => true))
-  //       ).subscribe(async () => {
-  //         messageType.value = null;
-  //         await app.modules.map.restartMap();
-  //         subscription.unsubscribe();
-  //       });
-  //       subscription.add(subscription);
-  //     })
-  // );
 }
 </script>
 

@@ -151,11 +151,11 @@ export interface TableColumn<Row extends TableRow = TableRow> {
     color: white;
     white-space: nowrap;
     cursor: pointer;
-    background: none;
-    border: solid rgb(255 255 255 / 20%) 2px;
+    background: rgb(255 255 255 / 0%);
+    border: none;
 
     &.active {
-      border-color: rgb(255 255 255 / 80%);
+      background-color: rgb(255 255 255 / 20%);
     }
 
     & svg {

@@ -52,8 +52,9 @@ export class LightProjectile extends Default {
       name: 'Light Projectile',
       shortName: 'Light',
       description: 'A lightweight projectile.',
+      maxLifetime: 1,
       speed: 15,
-      strength: 0.2,
+      strength: 0.1,
       weight: 0.01
     });
   }
@@ -69,7 +70,7 @@ export class MediumProjectile extends Default {
       shortName: 'Medium',
       description: 'A medium-weight projectile.',
       speed: 10,
-      strength: 0.3,
+      strength: 0.2,
       weight: 0.1
     });
   }
@@ -84,7 +85,7 @@ export class HeavyProjectile extends Default {
       shortName: 'Heavy',
       description: 'A heavy-weight projectile.',
       speed: 20,
-      strength: 1,
+      strength: 0.4,
       weight: 0.25
     });
   }

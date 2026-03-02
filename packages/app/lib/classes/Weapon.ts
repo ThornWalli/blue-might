@@ -1,6 +1,6 @@
 import { projectiles } from '@blue-might/weapon';
 
-import type { WEAPON_SHOOT_TYPE, WeaponDescription } from '../types/weapon';
+import { WEAPON_SHOOT_TYPE, type WeaponDescription } from '../types/weapon';
 
 import type Projectile from './Projectile';
 
@@ -9,9 +9,21 @@ export default class Weapon implements WeaponDescription<Projectile> {
   name: string;
   description?: string | null;
   readonly projectile: Projectile;
-  spreadAmount: number;
-  perSeconds: number;
-  shootType: WEAPON_SHOOT_TYPE;
+  /**
+   * The amount of spread for the weapon's projectiles.
+   * @default 0
+   */
+  spreadAmount: number = 0;
+  /**
+   * The number of projectiles fired per second.
+   * @default 1
+   */
+  perSeconds: number = 1;
+  /**
+   * The type of shooting for the weapon.
+   * @default WEAPON_SHOOT_TYPE.SINGLE
+   */
+  shootType: WEAPON_SHOOT_TYPE = WEAPON_SHOOT_TYPE.SINGLE;
 
   constructor(options: WeaponDescription) {
     this.id = options.id;

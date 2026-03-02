@@ -50,6 +50,7 @@
             <table>
               <thead>
                 <tr>
+                  <th></th>
                   <th>Name</th>
                   <th>Failed</th>
                   <th>Completes</th>
@@ -60,6 +61,9 @@
                 <tr
                   v-for="target in targets.filter(t => t.type === 'rescue')"
                   :key="target.name">
+                  <td class="thumb">
+                    <img :src="target.thumb" alt="Target Image" />
+                  </td>
                   <td>{{ target.name }}</td>
                   <td>{{ target.failed }}</td>
                   <td>{{ target.completes }}</td>
@@ -89,9 +93,18 @@ import {
 } from 'vue';
 import type { App } from '@blue-might/app/lib/types';
 import type Mission from '@blue-might/app/lib/classes/Mission';
-import { map as rxjsMap, EMPTY, Subscription, switchMap } from 'rxjs';
+import {
+  map as rxjsMap,
+  EMPTY,
+  Subscription,
+  switchMap,
+  concatMap,
+  from,
+  toArray
+} from 'rxjs';
 import { marked } from 'marked';
 import { groupTargetsByUnit } from '@blue-might/app/lib/utils/mission';
+import thumbGenerator from '@blue-might/app/services/thumbGenerator';
 
 import type { DialogContext } from '../base/Dialog.vue';
 import BmFieldset from '../Fieldset.vue';
@@ -105,7 +118,7 @@ const $props = defineProps<{
 }>();
 
 const mission = ref<Raw<Mission> | null>(null);
-const targets = ref<TargetResult[]>([]);
+const targets = ref<({ thumb: string } & TargetResult)[]>([]);
 
 const subscription = new Subscription();
 
@@ -126,33 +139,72 @@ onMounted(() => {
                 rxjsMap(mission => ({ map, mission }))
               )
             : EMPTY
-        )
+        ),
+        switchMap(({ map, mission: m }) => {
+          mission.value = m ? markRaw(m) : null;
+
+          // Create a map of all units
+          const unitMap = new Map(
+            [
+              ...map.modules.units.getUnits(),
+              ...map.modules.units.getDestroyedUnits(),
+              ...map.modules.units
+                .getUnits()
+                .map(u =>
+                  'transport' in u.modules ? u.modules.transport.getSlots() : []
+                )
+                .flat()
+            ].map(u => [u.id, u])
+          );
+
+          return from(
+            groupTargetsByUnit(
+              (mission.value?.getTargets() ?? []).map(t => {
+                return {
+                  ...t,
+                  unit: unitMap.get(t.unit)!
+                };
+              })
+            )
+          ).pipe(
+            concatMap(async test => {
+              return {
+                ...test,
+                thumb: await thumbGenerator.getFromUnit(test.unitKey, {
+                  size: 16,
+                  faction: test.faction,
+                  view: 'front'
+                })
+              };
+            }),
+            toArray()
+          );
+        })
       )
-      .subscribe(({ map, mission: m }) => {
-        mission.value = m ? markRaw(m) : null;
-
-        // Create a map of all units
-        const unitMap = new Map(
-          [
-            ...map.modules.units.getUnits(),
-            ...map.modules.units.getDestroyedUnits(),
-            ...map.modules.units
-              .getUnits()
-              .map(u =>
-                'transport' in u.modules ? u.modules.transport.getSlots() : []
-              )
-              .flat()
-          ].map(u => [u.id, u])
-        );
-
-        targets.value = groupTargetsByUnit(
-          (mission.value?.getTargets() ?? []).map(t => {
-            return {
-              ...t,
-              unit: unitMap.get(t.unit)!
-            };
-          })
-        );
+      .subscribe(t => {
+        targets.value = t;
+        // mission.value = m ? markRaw(m) : null;
+        // // Create a map of all units
+        // const unitMap = new Map(
+        //   [
+        //     ...map.modules.units.getUnits(),
+        //     ...map.modules.units.getDestroyedUnits(),
+        //     ...map.modules.units
+        //       .getUnits()
+        //       .map(u =>
+        //         'transport' in u.modules ? u.modules.transport.getSlots() : []
+        //       )
+        //       .flat()
+        //   ].map(u => [u.id, u])
+        // );
+        // targets.value = groupTargetsByUnit(
+        //   (mission.value?.getTargets() ?? []).map(t => {
+        //     return {
+        //       ...t,
+        //       unit: unitMap.get(t.unit)!
+        //     };
+        //   })
+        // );
       })
   );
 });
@@ -263,6 +315,12 @@ function onSubmit(e: Event) {
       border: none;
       border-top: 2px solid var(--bm-line-color);
     }
+  }
+
+  & .thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 </style>

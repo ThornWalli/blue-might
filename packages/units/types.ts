@@ -7,6 +7,7 @@ import type { RawUnitDescription_ControlTower_1 } from './building/control_tower
 import type { RawUnitDescription_Factory_1 } from './building/factory_1/Factory_1';
 import type { RawUnitDescription_FactoryChimney_1 } from './building/factory_chimney_1/FactoryChimney_1';
 import type { RawUnitDescription_House_1 } from './building/house_1/House_1';
+import type { RawUnitDescription_House_2 } from './building/house_2/House_2';
 import type { RawUnitDescription_WindTurbine_1 } from './building/wind_turbine_1/WindTurbine_1';
 import type { RawUnitDescription_Signal_1 } from './building/signal_1/Signal_1';
 import type { RawUnitDescription_LandingPortSupplyStation_1 } from './building/landing_port_supply_station_1/LandingPortSupplyStation_1';
@@ -40,6 +41,7 @@ import type ControlTower_1 from './building/control_tower_1/ControlTower_1';
 import type Factory_1 from './building/factory_1/Factory_1';
 import type FactoryChimney_1 from './building/factory_chimney_1/FactoryChimney_1';
 import type House_1 from './building/house_1/House_1';
+import type House_2 from './building/house_2/House_2';
 import type LandingPortSupplyStation_1 from './building/landing_port_supply_station_1/LandingPortSupplyStation_1';
 import type Lighthouse_1 from './building/lighthouse_1/Lighthouse_1';
 import type MissileLauncher_1 from './turret/missile_launcher_1/MissileLauncher_1';
@@ -78,6 +80,7 @@ export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_SeaLandingPortSupplyStation_1<O>
   | RawUnitDescription_SeaSupplyStation_1<O>
   | RawUnitDescription_House_1<O>
+  | RawUnitDescription_House_2<O>
   | RawUnitDescription_WindTurbine_1<O>
   | RawUnitDescription_Signal_1<O>
   | RawUnitDescription_Soldat_1<O>
@@ -110,6 +113,7 @@ export type Units =
   | Factory_1
   | FactoryChimney_1
   | House_1
+  | House_2
   | WindTurbine_1
   | Signal_1
   | LandingPortSupplyStation_1

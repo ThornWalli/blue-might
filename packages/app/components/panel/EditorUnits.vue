@@ -26,6 +26,7 @@
         !isMove
       "
       :key="targetUnit.id"
+      :mode="mode"
       :app="app"
       :unit="targetUnit"
       :can-abort="isCreating"

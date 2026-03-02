@@ -136,11 +136,24 @@ export default class AirVehicleUnitModule<
     return this.options.gearsHeight;
   }
 
+  isGearsActive() {
+    return this.state.gearsActive;
+  }
+
   protected setGearsOpened(opened: boolean) {
     this.state.gearsActive = false;
     this.state.gearsOpened = opened;
     this.observables.gearsOpened$.next(this.state.gearsOpened);
     this.observables.gearsActive$.next(this.state.gearsActive);
+    if (this.nextToggle && this.canToggleGears()) {
+      this.nextToggle = false;
+      this.toggleGears();
+    }
+  }
+
+  private nextToggle: boolean = false;
+  setNextToggle(value: boolean) {
+    this.nextToggle = value;
   }
 
   getFlightStatus() {

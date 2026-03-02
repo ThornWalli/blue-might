@@ -7,6 +7,7 @@
         @click="onClickMissionBriefing" />
       <hr v-if="hasMission" />
       <bm-button label="Instructions" @click="onClickInstructions" />
+      <bm-button label="Stats" @click="onClickStats" />
       <bm-button label="Menu" @click="onClickMenu" />
       <hr v-if="showImport" />
       <bm-button-upload
@@ -25,6 +26,12 @@
         <template #header>Instructions</template>
         <template #default>
           <bm-dialog-instructions :app="$props.app" />
+        </template>
+      </bm-dialog>
+      <bm-dialog ref="statsDialog">
+        <template #header>Stats</template>
+        <template #default>
+          <bm-dialog-stats :app="$props.app" />
         </template>
       </bm-dialog>
       <bm-dialog ref="menuDialog">
@@ -51,9 +58,11 @@ import BmButtonUpload from '../button/Upload.vue';
 import BmDialogMenu from '../dialog/Menu.vue';
 import BmDialogMissionBriefing from '../dialog/MissionBriefing.vue';
 import BmDialogInstructions from '../dialog/Instructions.vue';
+import BmDialogStats from '../dialog/Stats.vue';
 
 const missionBriefingDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 const instructionsDialog = ref<InstanceType<typeof BmDialog> | null>(null);
+const statsDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 const menuDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 
 const $props = defineProps<{
@@ -90,6 +99,10 @@ function onClickMissionBriefing() {
 
 function onClickInstructions() {
   instructionsDialog.value?.context?.open();
+}
+
+function onClickStats() {
+  statsDialog.value?.context?.open();
 }
 
 function onClickMenu() {

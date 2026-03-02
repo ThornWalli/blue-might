@@ -1,5 +1,5 @@
 <template>
-  <details class="bm-details">
+  <details class="bm-details" :open="open">
     <summary>{{ label }}</summary>
     <div><slot /></div>
   </details>
@@ -8,6 +8,7 @@
 <script lang="ts" setup>
 defineProps<{
   label: string;
+  open?: boolean;
 }>();
 </script>
 

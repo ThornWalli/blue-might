@@ -71,14 +71,12 @@ onUnmounted(() => {
 
 <style lang="postcss" scoped>
 .bm-editor-units-controls {
-  /* transform: translate(50%, -50%); */
-}
-
-div {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: var(--bm-spacing-small);
-  pointer-events: auto;
+  & > div {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--bm-spacing-small);
+    pointer-events: auto;
+  }
 }
 </style>

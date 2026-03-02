@@ -10,13 +10,37 @@ export interface WeaponSlotDescription {
 }
 
 export class WeaponSlot implements WeaponSlotDescription {
-  active?: boolean;
   index: number;
+  /**
+   * Whether this slot is currently active.
+   * @default true
+   */
+  active: boolean = true;
+  /**
+   * The weapon assigned to this slot.
+   */
   weapon: Weapon;
-  ammunition: number;
-  maxAmmunition: number;
-  parallel?: boolean;
-  revert?: boolean;
+  /**
+   * The current amount of ammunition in this slot.
+   * @default 100
+   */
+  ammunition: number = 100;
+  /**
+   * The maximum amount of ammunition this slot can hold.
+   * @default 100
+   */
+  maxAmmunition: number = 100;
+  /**
+   * Whether this slot can fire its weapon in parallel with other slots.
+   * @default false
+   */
+  parallel: boolean = false;
+  /**
+   * Whether this slot should revert to its previous state after firing.
+   * @default false
+   */
+  revert: boolean = false;
+
   constructor({
     active,
     index,
@@ -26,12 +50,12 @@ export class WeaponSlot implements WeaponSlotDescription {
     parallel,
     revert
   }: WeaponSlotDescription & { index: number }) {
-    this.active = active ?? true;
+    this.active = active ?? this.active;
     this.index = index;
     this.weapon = weapon;
-    this.ammunition = ammunition ?? 100;
-    this.maxAmmunition = maxAmmunition ?? 100;
-    this.parallel = parallel ?? false;
-    this.revert = revert ?? false;
+    this.ammunition = ammunition ?? this.ammunition;
+    this.maxAmmunition = maxAmmunition ?? this.maxAmmunition;
+    this.parallel = parallel ?? this.parallel;
+    this.revert = revert ?? this.revert;
   }
 }

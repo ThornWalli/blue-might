@@ -1,6 +1,7 @@
 import type { Units } from '@blue-might/units';
 
 import type { TargetType } from '../types/mission';
+import type Faction from '../classes/Faction';
 
 export interface TargetResult {
   name: string;
@@ -11,6 +12,8 @@ export interface TargetResult {
   optionalCompletes: number;
   failed: number;
   optionalFailed: number;
+  unitKey: string;
+  faction: Faction | undefined;
 }
 
 export function groupTargetsByUnit(
@@ -21,6 +24,8 @@ export function groupTargetsByUnit(
     let existing = grouped.find(t => t.name === target.unit.name);
     if (!existing) {
       existing = {
+        unitKey: target.unit.key,
+        faction: target.unit.modules.faction.getFaction(),
         name: target.unit.name,
         type: target.type,
         count: 0,

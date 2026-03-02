@@ -1,29 +1,84 @@
 <template>
   <div class="bm-dialog-instructions">
-    <bm-fieldset label="Controls">
-      <div class="controls-grid">
-        <div>Power</div>
-        <div>P</div>
-        <div>Move</div>
-        <div>W/S</div>
-        <div>Rotate</div>
-        <div>A/D</div>
-        <div>Pitch Left/Right</div>
-        <div>Q/E</div>
-        <div>Move Turret</div>
-        <div>Arrow Keys</div>
-        <div>Primary Fire</div>
-        <div>Space</div>
-        <div>Switch Weapon</div>
-        <div>X</div>
-        <div>Landing Gears</div>
-        <div>L</div>
-        <div>Get in/out</div>
-        <div>G</div>
-        <div>Up / Down</div>
-        <div>R/F</div>
+    <bm-details label="Keyboard" open>
+      <div class="grid-row">
+        <div class="grid-col">
+          <div class="keys">
+            <bm-key-cap
+              value="Q"
+              direction="top-right"
+              description="Pitch Left" />
+            <bm-key-cap
+              value="W"
+              direction="top-right"
+              description="Move Forward" />
+            <bm-key-cap
+              value="E"
+              direction="top-right"
+              description="Pitch Right" />
+            <bm-key-cap value="R" direction="top-right" description="Up" />
+          </div>
+          <div class="keys">
+            <bm-key-cap
+              value="A"
+              direction="bottom-right"
+              description="Rotate Left" />
+            <bm-key-cap
+              value="S"
+              direction="bottom-right"
+              description="Move Backward" />
+            <bm-key-cap
+              value="D"
+              direction="bottom-right"
+              description="Rotate Right" />
+            <bm-key-cap value="F" direction="bottom-right" description="Down" />
+          </div>
+        </div>
+        <div class="grid-col">
+          <div>
+            <div class="keys center">
+              <bm-key-cap
+                value="↑"
+                direction="top"
+                description="Secondary Top" />
+            </div>
+          </div>
+          <div class="keys center">
+            <bm-key-cap
+              value="←"
+              direction="bottom-right"
+              description="Secondary Left" />
+            <bm-key-cap
+              value="↓"
+              direction="bottom-right"
+              description="Secondary Bottom" />
+            <bm-key-cap
+              value="→"
+              direction="bottom-right"
+              description="Secondary Right" />
+          </div>
+        </div>
       </div>
-    </bm-fieldset>
+      <div class="grid-row">
+        <div class="grid-col grid-col-start">
+          <div class="keys right">
+            <bm-key-cap value="P" direction="right" description="Power" />
+            <bm-key-cap
+              value="X"
+              direction="right"
+              description="Switch Weapon" />
+            <bm-key-cap value="Space" direction="right" description="Fire" />
+          </div>
+          <div class="keys right">
+            <bm-key-cap value="G" direction="right" description="Get in/out" />
+            <bm-key-cap
+              value="L"
+              direction="right"
+              description="Landing Gears" />
+          </div>
+        </div>
+      </div>
+    </bm-details>
   </div>
 </template>
 
@@ -32,7 +87,8 @@ import { inject } from 'vue';
 import type { App } from '@blue-might/app/lib/types';
 
 import type { DialogContext } from '../base/Dialog.vue';
-import BmFieldset from '../Fieldset.vue';
+import BmKeyCap from '../KeyCap.vue';
+import BmDetails from '../Details.vue';
 
 inject<DialogContext>('dialog')!;
 
@@ -46,21 +102,33 @@ defineProps<{
   display: flex;
   flex-direction: column;
   gap: var(--bm-spacing-small);
-  width: 420px;
+  min-width: 584px;
   font-size: var(--bm-font-size-small);
 
-  & .controls-grid {
-    display: grid;
-    grid-template-columns: auto auto;
-    gap: 0.5rem;
+  & .keys {
+    display: flex;
+    gap: var(--bm-spacing-large);
 
-    & div:nth-of-type(odd) {
-      font-weight: bold;
-      opacity: 0.6;
+    &.center {
+      justify-content: center;
     }
 
-    & div:nth-of-type(even) {
-      opacity: 1;
+    &.right {
+      gap: var(--bm-spacing-large) 120px;
+    }
+  }
+
+  .grid-row {
+    & .grid-col {
+      gap: var(--bm-spacing-large);
+      padding: 100px;
+      padding-left: 20px;
+    }
+
+    &:last-child {
+      & .grid-col {
+        padding: 20px;
+      }
     }
   }
 }

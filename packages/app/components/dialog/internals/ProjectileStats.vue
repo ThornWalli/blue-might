@@ -3,6 +3,18 @@
     <div class="style-scrollbar">
       <bm-table :column-definitions="columnDefinitions" :rows="rows" />
     </div>
+    <bm-details label="Infos">
+      <p>
+        For damage to a unit, the projectile strength is calculated based on the
+        unit damage.
+      </p>
+      <p>Strength value unit equal to value unit damage unit</p>
+      <div class="formal">
+        <span class="result">CurrentDamage</span> =
+        <span class="input-a">UnitDamage</span> +
+        <span class="input-b">ProjectileStrength</span>
+      </div>
+    </bm-details>
   </div>
 </template>
 
@@ -15,6 +27,7 @@ import type Projectile from '@blue-might/app/lib/classes/Projectile';
 import type { Projectiles } from '@blue-might/weapon/projectile';
 
 import BmTable from '../../Table.vue';
+import BmDetails from '../../Details.vue';
 import type { TableRow, TableColumn } from '../../Table.vue';
 
 defineProps<{
@@ -63,7 +76,7 @@ const columnDefinitions = ref<TableColumn<Row>[]>([
     sortType: 'number'
   },
   {
-    title: 'Strength',
+    title: 'Strength (Damage)',
     key: 'strength',
     sortable: true,
     sortType: 'number'
@@ -129,6 +142,30 @@ onMounted(async () => {
 
   & > div {
     overflow: auto;
+  }
+}
+
+.formal {
+  display: flex;
+  gap: var(--bm-spacing-small);
+  align-items: center;
+  justify-content: center;
+  padding: var(--bm-spacing-small);
+
+  & span {
+    font-weight: bold;
+  }
+
+  & .result {
+    color: blue;
+  }
+
+  & .input-a {
+    color: green;
+  }
+
+  & .input-b {
+    color: red;
   }
 }
 </style>

@@ -181,7 +181,12 @@ export default class HelicopterUnitModule<
           map(() => this.canToggleGears()),
           distinctUntilChanged()
         )
-        .subscribe(() => this.toggleGears())
+        .subscribe(() => {
+          if (this.isGearsActive()) {
+            this.setNextToggle(true);
+          }
+          this.toggleGears();
+        })
     );
   }
 

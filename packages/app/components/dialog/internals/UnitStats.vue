@@ -1,6 +1,11 @@
 <template>
   <div class="bm-dialog-internals-unit-stats">
-    <div class="style-scrollbar">
+    <div class="controls">
+      <bm-form-field label="Filter by module">
+        <bm-select v-model="selectedModule" :options="unitModuleOptions" />
+      </bm-form-field>
+    </div>
+    <div class="table style-scrollbar">
       <bm-table :column-definitions="columnDefinitions" :rows="rows" />
     </div>
   </div>
@@ -14,11 +19,30 @@ import * as units from '@blue-might/units';
 import { computed, onMounted, ref } from 'vue';
 
 import BmTable from '../../Table.vue';
+import BmFormField from '../../FormField.vue';
+import BmSelect from '../../Select.vue';
 import type { TableRow, TableColumn } from '../../Table.vue';
 
 defineProps<{
   app: App;
 }>();
+
+const selectedModule = ref<string | null>(null);
+const unitModuleOptions = computed(() => {
+  const modules = Array.from(
+    new Set(items.value.map(unit => Object.keys(unit.modules)).flat())
+  );
+  return [
+    {
+      label: 'All Modules',
+      value: ''
+    },
+    ...modules.map(module => ({
+      label: module,
+      value: module
+    }))
+  ];
+});
 
 const preparedItems = ref<
   {
@@ -94,43 +118,48 @@ const columnDefinitions = ref<TableColumn<Row>[]>([
 ]);
 
 const rows = computed<Row[]>(() => {
-  const rows = (preparedItems.value || []).map(item => {
-    return {
-      image: item.image,
-      name: item.unit.name,
-      transport_slots:
-        'transport' in item.unit.modules
-          ? item.unit.modules.transport.getMaxSlots()
-          : undefined,
-      max_damage: item.unit.modules.damage.getMaxDamage(),
-      weapon_1_projectile:
-        'weapon' in item.unit.modules
-          ? item.unit.modules.weapon.getSlot(0)?.weapon.projectile.name
-          : undefined,
-      weapon_1_strength:
-        'weapon' in item.unit.modules
-          ? item.unit.modules.weapon.getSlot(0)?.weapon.projectile.strength
-          : undefined,
+  const rows = (preparedItems.value || [])
+    .filter(item => {
+      if (!selectedModule.value) return true;
+      return selectedModule.value in item.unit.modules;
+    })
+    .map(item => {
+      return {
+        image: item.image,
+        name: item.unit.name,
+        transport_slots:
+          'transport' in item.unit.modules
+            ? item.unit.modules.transport.getMaxSlots()
+            : undefined,
+        max_damage: item.unit.modules.damage.getMaxDamage(),
+        weapon_1_projectile:
+          'weapon' in item.unit.modules
+            ? item.unit.modules.weapon.getSlot(0)?.weapon.projectile.name
+            : undefined,
+        weapon_1_strength:
+          'weapon' in item.unit.modules
+            ? item.unit.modules.weapon.getSlot(0)?.weapon.projectile.strength
+            : undefined,
 
-      weapon_2_projectile:
-        'weapon' in item.unit.modules
-          ? item.unit.modules.weapon.getSlot(1)?.weapon.projectile.name
-          : undefined,
-      weapon_2_strength:
-        'weapon' in item.unit.modules
-          ? item.unit.modules.weapon.getSlot(1)?.weapon.projectile.strength
-          : undefined,
+        weapon_2_projectile:
+          'weapon' in item.unit.modules
+            ? item.unit.modules.weapon.getSlot(1)?.weapon.projectile.name
+            : undefined,
+        weapon_2_strength:
+          'weapon' in item.unit.modules
+            ? item.unit.modules.weapon.getSlot(1)?.weapon.projectile.strength
+            : undefined,
 
-      weapon_3_projectile:
-        'weapon' in item.unit.modules
-          ? item.unit.modules.weapon.getSlot(2)?.weapon.projectile.name
-          : undefined,
-      weapon_3_strength:
-        'weapon' in item.unit.modules
-          ? item.unit.modules.weapon.getSlot(2)?.weapon.projectile.strength
-          : undefined
-    };
-  });
+        weapon_3_projectile:
+          'weapon' in item.unit.modules
+            ? item.unit.modules.weapon.getSlot(2)?.weapon.projectile.name
+            : undefined,
+        weapon_3_strength:
+          'weapon' in item.unit.modules
+            ? item.unit.modules.weapon.getSlot(2)?.weapon.projectile.strength
+            : undefined
+      };
+    });
 
   return rows;
 });
@@ -158,10 +187,13 @@ onMounted(async () => {
 
 <style lang="postcss" scoped>
 .bm-dialog-internals-unit-stats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bm-spacing-small);
   font-family: var(--font-family-base);
   font-size: 12px;
 
-  & > div {
+  & > .table {
     height: 400px;
     overflow: auto;
   }

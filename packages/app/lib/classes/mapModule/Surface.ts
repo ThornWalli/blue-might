@@ -923,15 +923,19 @@ function combineTerrainTextures(
     dimension.y
   );
 
-  if (combine.heightMap) {
-    ctx.globalCompositeOperation = operation?.heightMap ?? 'darken';
+  if (combine.heightMap?.include) {
+    ctx.globalCompositeOperation = operation?.heightMap ?? 'multiply';
     ctx.globalAlpha = 1;
     ctx.drawImage(
       textures.heightMap.image,
       0,
       0,
       textures.heightMap.width,
-      textures.heightMap.height
+      textures.heightMap.height,
+      0,
+      0,
+      dimension.x,
+      dimension.y
     );
   }
 

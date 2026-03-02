@@ -13,6 +13,7 @@ export { default as Signal_1 } from './building/signal_1/Signal_1';
 export { default as Tree_1 } from './tree/tree_1/Tree_1';
 export { default as Tree_2 } from './tree/tree_2/Tree_2';
 export { default as House_1 } from './building/house_1/House_1';
+export { default as House_2 } from './building/house_2/House_2';
 export { default as Church_1 } from './building/church_1/Church_1';
 export { default as Flag_1 } from './building/flag_1/Flag_1';
 export { default as Windsock_1 } from './building/windsock_1/Windsock_1';

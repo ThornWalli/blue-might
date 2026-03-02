@@ -49,7 +49,7 @@ export default class VehiclePlayerModule extends PlayerModule<
     );
 
     //#region observables
-    this.observables.unit$ = new ReplaySubject<Units | null>();
+    this.observables.unit$ = new ReplaySubject<Units | null>(1);
     this.observables.currentUnit$ = new ReplaySubject<Units>(1);
     //#endregion
   }
@@ -153,8 +153,12 @@ export default class VehiclePlayerModule extends PlayerModule<
   }
 
   setVehicleUnit(vehicle: Units | null) {
-    if (!vehicle || this.state.unit === vehicle) return;
-
+    if (this.state.unit === vehicle) return;
+    if (!vehicle) {
+      this.state.unit = null;
+      this.observables.unit$.next(null);
+      return;
+    }
     if (vehicle?.modules && 'player' in vehicle.modules) {
       const last = this.state.unit;
       if (last && 'player' in last.modules) {

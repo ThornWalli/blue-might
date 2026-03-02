@@ -22,22 +22,46 @@ export type ParticleConstructorOptions<Options = ParticleOptions> =
 
 export default class Particle {
   private root!: Object3D;
-  private startTime?: number;
-  private complete: boolean = false;
   protected texture: Texture;
-  private fade: boolean;
-  private scale: number;
+  private startTime?: number;
+  /**
+   * Whether this particle has completed its lifecycle.
+   * @default false
+   */
+  private complete: boolean = false;
+  /**
+   * Whether this particle should fade out over its lifetime.
+   * @default false
+   */
+  private fade: boolean = false;
+  /**
+   * The scale of the particle.
+   * @default 1
+   */
+  private scale: number = 1;
+  /**
+   * The lifespan of the particle.
+   * @default 1
+   */
   private life: number = 1;
+  /**
+   * The maximum lifespan of the particle.
+   * @default 1
+   */
   private maxLife: number = 1;
-  private velocity: Vector3;
+
+  private velocity: Vector3 = new Vector3();
+  /**
+   * The airflow module associated with this particle.
+   */
   readonly airFlow: AirFlowModule;
 
   constructor(options: ParticleConstructorOptions) {
     this.texture = options.texture ?? new Texture();
-    this.fade = options.fade ?? false;
-    this.scale = options.scale ?? 1;
-    this.maxLife = this.life = options.life ?? 1;
-    this.velocity = options.velocity ?? new Vector3();
+    this.fade = options.fade ?? this.fade;
+    this.scale = options.scale ?? this.scale;
+    this.maxLife = this.life = options.life ?? this.maxLife;
+    this.velocity = options.velocity ?? this.velocity;
     this.airFlow = options.airFlow;
   }
 

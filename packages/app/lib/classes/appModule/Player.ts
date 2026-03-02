@@ -165,7 +165,7 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
     const startPosition = map.getPlayerOptions().position;
 
     const unitsByRadius = map.modules.units.getUnitsInRadius(
-      new Vector3(startPosition.x, 0, startPosition.y),
+      new Vector3(startPosition.x, 0, startPosition.z),
       1
     );
 

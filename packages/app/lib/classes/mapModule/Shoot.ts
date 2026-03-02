@@ -81,7 +81,7 @@ export default class ShootModule extends MapModule<
     vector: new Vector3(),
     gravity: new Vector3(),
     drag: new Vector3(),
-    hitSphere: new Sphere() // Neu für Area Hit
+    hitSphere: new Sphere()
   };
 
   private shootByProjectile: {
@@ -247,21 +247,25 @@ export default class ShootModule extends MapModule<
       const oldPosition = this.temp.vector.copy(obj.position);
 
       if (shoot.projectile.hasSmoke() && shoot.enableSmoke) {
-        this.map.modules.effect.addSmoke(shoot.object.position.clone(), {
-          type: SMOKE_TYPE.MEDIUM,
-          life: 0.8,
-          static: true
-        });
+        // Smoke nur alle 2 Frames hinzufügen, um Overhead zu reduzieren
+        if (this.raycastFrameCounter % 2 === 0) {
+          this.map.modules.effect.addSmoke(shoot.object.position.clone(), {
+            type: SMOKE_TYPE.MEDIUM,
+            life: 0.8,
+            static: true
+          });
+        }
       }
 
       let hit = false;
 
-      this.temp.sphere.set(obj.position, 1.0);
+      // Sphere-Check für grobe Kollision (immer machen, aber Raycast nur wenn shouldRaycast)
+      this.temp.sphere.set(obj.position, 1.5);
       let needsRaycast = false;
       for (const target of allPossibleTargets) {
         if (
           target !== obj &&
-          this.temp.sphere.intersectsSphere(new Sphere(target.position, 2.0))
+          this.temp.sphere.intersectsSphere(new Sphere(target.position, 3.0)) // Ziel-Radius erhöht auf 3.0
         ) {
           needsRaycast = true;
           break;
@@ -286,6 +290,7 @@ export default class ShootModule extends MapModule<
           if (distanceToIntersection <= moveDistance) {
             hit = true;
 
+            // Effekte nur bei Hit hinzufügen
             if (shoot.projectile.hasExplosion()) {
               this.map.modules.effect.addExplosion(point, 1);
             }
@@ -328,6 +333,7 @@ export default class ShootModule extends MapModule<
         }
       }
 
+      // Wasser-Check immer machen, aber vereinfacht
       if (!hit && obj.position.y <= this.map.modules.surface.getWaterLevel()) {
         hit = true;
         if (shoot.projectile.hasExplosion()) {
@@ -349,9 +355,11 @@ export default class ShootModule extends MapModule<
         shoot.isActive = false;
         shoot.object.visible = false;
       }
-      if (this.raycastFrameCounter > 10) {
-        this.raycastFrameCounter = 0;
-      }
+    }
+
+    // Counter zurücksetzen nach 10 Frames (bleibt, aber nicht kritisch)
+    if (this.raycastFrameCounter > 10) {
+      this.raycastFrameCounter = 0;
     }
   }
 

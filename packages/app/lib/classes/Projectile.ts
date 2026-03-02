@@ -23,39 +23,68 @@ export default abstract class Projectile implements ProjectileDescription {
   shortName: string | null;
   description: string | null;
   /**
-   * Aktuelle Lebensdauer in Sekunden
+   * The maximum lifetime of the projectile in seconds.
+   * @default 5
    */
-  maxLifetime: number;
-  speed: number;
-  strength: number;
-  radius: number;
-  airResistance: number;
-  weight: number;
-  protected isAlive = true;
+  maxLifetime: number = 5;
+  /**
+   * The speed of the projectile.
+   * @default 1
+   */
+  speed: number = 1;
+  /**
+   * The strength of the projectile, representing its damage potential.
+   * @default 0.1
+   */
+  strength: number = 0.1;
+  /**
+   * The radius of the projectile.
+   * @default 1
+   */
+  radius: number = 1;
+  /**
+   * The air resistance of the projectile.
+   * @default 0.1
+   */
+  airResistance: number = 0.1;
+  /**
+   * The weight of the projectile.
+   * @default 1
+   */
+  weight: number = 1;
+  /**
+   * The features of the projectile.
+   */
   features: {
     smoke: boolean;
     fire: boolean;
     explosion: boolean;
     dust: boolean;
   };
-  constructor(options?: ProjectileDescription) {
-    this.id = options?.id ?? '';
-    this.name = options?.name ?? 'Unnamed Projectile';
-    this.shortName = options?.shortName ?? null;
-    this.description = options?.description ?? null;
-    this.maxLifetime = options?.maxLifetime ?? 5; // Standardwert, z. B. 5 Sekunden
-    this.speed = options?.speed ?? 1;
-    this.strength = options?.strength ?? 0.1;
-    this.radius = options?.radius ?? 1;
-    this.airResistance = options?.airResistance ?? 0.1; // Standardwert, z. B. 0.1
-    this.weight = options?.weight ?? 1; // Standardwert, z. B. 1
+
+  constructor(
+    options: {
+      id: ProjectileIdentifier;
+      name: string;
+    } & Partial<ProjectileDescription>
+  ) {
+    this.id = options.id;
+    this.name = options.name;
+    this.shortName = options.shortName ?? null;
+    this.description = options.description ?? null;
+    this.maxLifetime = options.maxLifetime ?? this.maxLifetime;
+    this.speed = options.speed ?? this.speed;
+    this.strength = options.strength ?? this.strength;
+    this.radius = options.radius ?? this.radius;
+    this.airResistance = options.airResistance ?? this.airResistance;
+    this.weight = options.weight ?? this.weight;
     this.features = {
-      smoke: options?.features?.smoke ?? false,
-      fire: options?.features?.fire ?? false,
-      explosion: options?.features?.explosion ?? false,
-      dust: options?.features?.dust ?? false
+      smoke: options.features?.smoke ?? false,
+      fire: options.features?.fire ?? false,
+      explosion: options.features?.explosion ?? false,
+      dust: options.features?.dust ?? false
     };
-    this.maxLifetime = options?.maxLifetime ?? 5; // Standard 5 Sekunden, anpassbar
+    this.maxLifetime = options.maxLifetime ?? this.maxLifetime;
   }
 
   async setup() {

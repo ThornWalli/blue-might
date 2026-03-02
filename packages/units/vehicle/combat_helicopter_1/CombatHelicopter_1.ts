@@ -39,6 +39,7 @@ import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/An
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 import TransportUnitModule from '@blue-might/app/lib/classes/unitModule/Transport';
+import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 
 import baseGlb from './assets/combat_helicopter_1.glb?url';
 
@@ -156,7 +157,7 @@ export default class CombatHelicopter_1
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.default(),
+                weapon: new weapons.default(PROJECTILE_TYPE.MEDIUM_PROJECTILE),
                 maxAmmunition: 100,
                 ammunition: 100
               },

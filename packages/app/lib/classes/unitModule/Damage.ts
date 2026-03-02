@@ -86,9 +86,9 @@ export default class DamageUnitModule extends UnitModule<
       debug
     );
     //#region observables
-    this.observables.damage$ = new ReplaySubject<number>();
+    this.observables.damage$ = new ReplaySubject<number>(1);
     this.observables.damage$.next(this.state.damage);
-    this.observables.destroyed$ = new ReplaySubject<void>();
+    this.observables.destroyed$ = new ReplaySubject<void>(1);
     if (this.isDestroyed()) {
       this.observables.destroyed$.next();
     }

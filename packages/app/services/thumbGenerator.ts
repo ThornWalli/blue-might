@@ -27,6 +27,13 @@ import type Faction from '../lib/classes/Faction';
 import type Projectile from '../lib/classes/Projectile';
 import { loadGltf } from '../lib/utils/gltf';
 
+interface Options {
+  scale: number;
+  size: number;
+  view: ViewType;
+  ratio: number;
+}
+
 export type ViewType = 'isometric' | 'front' | 'side';
 
 class ThumbGenerator {
@@ -66,24 +73,27 @@ class ThumbGenerator {
     key: string,
     obj: Object3D,
     {
+      scale,
       size,
       ratio,
       view
-    }: {
-      size: number;
+    }: Omit<Options, 'scale' | 'view' | 'ratio'> & {
+      scale?: number;
       view?: ViewType;
       ratio?: number;
     }
   ) {
+    scale = scale ?? 1;
     view = view ?? 'isometric';
     ratio = ratio ?? 1;
-    key = key ?? `object_${size}_${ratio}_${view}`;
+    key = key ?? `object_${scale}_${size}_${ratio}_${view}`;
 
     if (this.imageCache.has(key)) {
       return Promise.resolve(this.imageCache.get(key) as Promise<string>);
     }
 
     return this.addQueue(key, obj, {
+      scale,
       size,
       view,
       ratio
@@ -92,17 +102,27 @@ class ThumbGenerator {
 
   async getFromProjectile(
     type: string,
-    { size, view, ratio }: { size: number; view: ViewType; ratio?: number }
+    {
+      scale,
+      size,
+      view,
+      ratio
+    }: Omit<Options, 'scale' | 'view' | 'ratio'> & {
+      scale?: number;
+      view?: ViewType;
+      ratio?: number;
+    }
   ) {
     const ProjectileClass = projectiles[type];
     if (!ProjectileClass) {
       throw new Error(`Unknown projectile type: ${type}`);
     }
 
+    scale = scale ?? 1;
     view = view ?? 'isometric';
     ratio = ratio ?? 1;
 
-    const key = `projectile_${type}_${size}_${view}`;
+    const key = `projectile_${scale}_${type}_${size}_${view}`;
 
     if (this.imageCache.has(key)) {
       return Promise.resolve(this.imageCache.get(key) as Promise<string>);
@@ -114,6 +134,7 @@ class ThumbGenerator {
     const gltf = await loadGltf(await projectile.getGlb());
 
     return this.addQueue(key, gltf.object, {
+      scale,
       size,
       view,
       ratio
@@ -125,21 +146,23 @@ class ThumbGenerator {
     {
       faction,
       action,
+      scale,
       size,
       ratio,
       view
-    }: {
+    }: Omit<Options, 'scale' | 'view' | 'ratio'> & {
       faction?: Faction;
       action?: string;
-      size: number;
-      ratio?: number;
+      scale?: number;
       view?: ViewType;
+      ratio?: number;
     }
   ) {
+    scale = scale ?? 1;
     action = action ?? 'idle';
     view = view ?? 'isometric';
     ratio = ratio ?? 1;
-    const key = `${type}_${action}_${faction?.id ?? 'neutral'}_${size}_${ratio}_${view}`;
+    const key = `${type}_${action}_${faction?.id ?? 'neutral'}_${scale}_${size}_${ratio}_${view}`;
 
     if (this.imageCache.has(key)) {
       return Promise.resolve(this.imageCache.get(key) as Promise<string>);
@@ -154,6 +177,7 @@ class ThumbGenerator {
     const obj = unit.root;
 
     const result = await this.addQueue(key, obj, {
+      scale,
       size,
       view,
       ratio
@@ -164,11 +188,7 @@ class ThumbGenerator {
     return result;
   }
 
-  private async addQueue(
-    key: string,
-    obj: Object3D,
-    { size, view, ratio }: { size: number; view: ViewType; ratio: number }
-  ) {
+  private async addQueue(key: string, obj: Object3D, options: Options) {
     const resolvers = Promise.withResolvers<string>();
     const promise = resolvers.promise;
 
@@ -178,9 +198,7 @@ class ThumbGenerator {
       key,
       resolve: resolvers.resolve,
       obj,
-      view,
-      size,
-      ratio
+      ...options
     });
 
     if (!this.queueRunning) {
@@ -195,6 +213,7 @@ class ThumbGenerator {
       this.queueRunning = true;
       const { resolve, obj, view, size, ratio } = this.queue.shift()!;
       this.setSize(size, size * ratio);
+
       this.updatePreview(obj, view).then(() => {
         window.requestAnimationFrame(async () => {
           const src = await this.getDataUrl();
@@ -208,14 +227,11 @@ class ThumbGenerator {
     }
   }
 
-  private queue: {
+  private queue: ({
     key: string;
     resolve: (value: string) => void;
-    size: number;
-    ratio: number;
     obj: Object3D;
-    view: ViewType;
-  }[] = [];
+  } & Options)[] = [];
   private queueRunning = false;
 
   setSize(width: number, height: number) {

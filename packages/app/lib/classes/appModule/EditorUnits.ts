@@ -98,13 +98,15 @@ export default class EditorUnitsAppModule extends AppModule<
     this.state.unitKey = unitKey;
     this.observables.unitKey$.next(unitKey);
 
+    if (this.state.ghostUnit) {
+      this.state.ghostUnit?.destroy();
+      this.state.ghostUnit = null;
+    }
+
     if (unitKey) {
       this.state.ghostUnit = await this.createUnit(unitKey);
       this.state.ghostUnit.modules.collision.disableCollision();
       disableRaycaster(this.state.ghostUnit.root);
-    } else {
-      this.state.ghostUnit?.destroy();
-      this.state.ghostUnit = null;
     }
 
     this.setMove(!!unitKey);

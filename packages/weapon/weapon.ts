@@ -70,7 +70,7 @@ export class GatlingGun extends Weapon {
       id: options?.id ?? 'gatling_gun',
       name: options?.name ?? 'Gatling Gun',
       description: options?.description ?? 'A rapid-fire gun.',
-      spreadAmount: options?.spreadAmount ?? 0.125,
+      spreadAmount: options?.spreadAmount ?? 0.2,
       perSeconds: options?.perSeconds ?? 15,
       projectile: options?.projectile ?? PROJECTILE_TYPE.LIGHT_PROJECTILE,
       shootType: options?.shootType ?? WEAPON_SHOOT_TYPE.AUTO

@@ -6,9 +6,18 @@
       '--cols': cols
     }">
     <div class="controls">
-      <bm-form-field label="view">
+      <bm-form-field label="View">
         <bm-select v-model="view" :options="viewOptions" />
       </bm-form-field>
+      <bm-form-field label="Faction">
+        <bm-select v-model="faction" :options="factionOptions" />
+      </bm-form-field>
+
+      <!-- <bm-form-field label="Scale">
+        <bm-textfield
+          v-model="scale"
+          :el-attrs="{ type: 'number', step: 1, min: 1 }" />
+      </bm-form-field> -->
 
       <bm-form-field label="Width">
         <bm-textfield v-model="width" />
@@ -47,7 +56,6 @@ import BmButton from '../../Button.vue';
 
 const $props = defineProps<{
   app: App;
-  faction?: FactionIdentifier;
 }>();
 
 const viewOptions = ref<
@@ -57,10 +65,29 @@ const viewOptions = ref<
   }[]
 >([
   { label: 'Isometric', value: 'isometric' },
-  { label: 'Front', value: 'front' }
+  { label: 'Front', value: 'front' },
+  { label: 'Side', value: 'side' }
 ]);
 
 const view = ref<ViewType>(viewOptions.value[0]!.value);
+const scale = ref(1);
+
+const factionOptions = ref<
+  {
+    label: string;
+    value: FactionIdentifier;
+  }[]
+>(
+  $props.app.modules.map
+    .getMap()
+    ?.modules.faction.getFactions()
+    .map(faction => ({
+      label: faction.name,
+      value: faction.id
+    })) ?? []
+);
+
+const faction = ref<FactionIdentifier>(factionOptions.value[0]!.value);
 
 const thumbs = ref<
   {
@@ -77,11 +104,10 @@ function render() {
   const newThumbs: { url: string; key: string }[] = [];
   const u = Object.values(units);
 
-  const faction =
+  const faction_ =
     $props.app.modules.map
       .getMap()
-      ?.modules.faction.getFactionById($props.faction ?? 'neutral') ||
-    undefined;
+      ?.modules.faction.getFactionById(faction.value ?? 'neutral') || undefined;
 
   return Promise.all(
     u
@@ -91,7 +117,8 @@ function render() {
           .getFromUnit(key, {
             size: Number(width.value),
             view: view.value,
-            faction
+            faction: faction_,
+            scale: scale.value
           })
           .then(url => newThumbs.push({ url, key }))
       )
@@ -177,6 +204,11 @@ async function onClickDownload() {
   & .controls {
     display: flex;
     flex-direction: column;
+    gap: var(--bm-spacing-small);
   }
+}
+
+:deep(.bm-form-field label) {
+  width: 80px;
 }
 </style>
