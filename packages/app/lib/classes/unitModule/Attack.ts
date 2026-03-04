@@ -51,13 +51,15 @@ export interface AttackUnitModuleObservables extends UnitModuleObservables {
 
 export interface AttackUnitModuleOptions extends UnitModuleOptions {
   /**
-   * The radius of the attack range. Defaults to 4.
+   * The radius of the attack range.
+   * @default 6
    */
   radius: number;
   /**
-   * Wenn nicht gesetzt, wird 1/2 vom Radius verwendet.
+   * The radius of the attack area.
+   * @default radius / 2
    */
-  attackRadius?: number;
+  attackRadius: number;
   changeByDistance: boolean;
   followTarget: boolean;
   attackTypes: ATTACK_TYPE[];
@@ -106,11 +108,13 @@ export default class AttackUnitModule extends UnitModule<
     state: AttackUnitModuleState,
     debug: boolean
   ) {
+    const radius = options.radius ?? 6;
     super(
       unit,
       {
         ...options,
-        radius: options.radius ?? 6,
+        radius: radius,
+        attackRadius: options.attackRadius ?? radius / 2,
         followTarget: options.followTarget ?? false,
         attackTypes: options.attackTypes ?? []
       },
@@ -225,7 +229,7 @@ export default class AttackUnitModule extends UnitModule<
 
     if (this.options.followTarget && this.state.targetUnit) {
       const pathfinding = unit.modules.pathfinding;
-      const attackRadius = this.options.attackRadius ?? this.options.radius / 2;
+      const attackRadius = this.options.attackRadius;
 
       this.state.followStartPosition =
         this.state.followStartPosition || unit.getPosition().clone();
@@ -263,7 +267,7 @@ export default class AttackUnitModule extends UnitModule<
           // Normalisiere den Winkelunterschied auf -PI bis PI (verhindert Springen bei 360°-Übergängen)
           deltaYaw = ((deltaYaw + Math.PI) % (2 * Math.PI)) - Math.PI;
 
-          const rotationSpeed = 0.1; // Passe an: 0.1 = 10% pro Frame; höher = schneller, niedriger = langsamer
+          const rotationSpeed = 0.01; // Passe an: 0.1 = 10% pro Frame; höher = schneller, niedriger = langsamer
           const interpolatedYaw = currentYaw + deltaYaw * rotationSpeed;
 
           unit.setYaw(interpolatedYaw);

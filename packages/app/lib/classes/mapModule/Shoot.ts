@@ -46,7 +46,7 @@ export interface ShootDescription {
   isActive: boolean;
   enableSmoke?: boolean;
   position: Vector3;
-  targetPosition: Vector3 | null;
+  targetObject: Object3D | null;
   /**
    * Lebensdauer in Sekunden
    */
@@ -126,7 +126,7 @@ export default class ShootModule extends MapModule<
   async createShoot(
     sourcePosition: Vector3,
     sourceDirection: Vector3 = new Vector3(0, 0, 1),
-    targetPosition: Vector3 | null,
+    targetObj: Object3D | null,
     slot: WeaponSlot,
     {
       enableSpread,
@@ -171,7 +171,7 @@ export default class ShootModule extends MapModule<
         startPosition: new Vector3(),
         velocity: new Vector3(),
         position: new Vector3(),
-        targetPosition: targetPosition ?? null,
+        targetObject: targetObj ?? null,
         lifetime: projectile.maxLifetime,
         isActive: false
       };
@@ -227,12 +227,16 @@ export default class ShootModule extends MapModule<
         continue;
       }
 
+      const targetPosition = shoot.targetObject
+        ? getPositionFromObject(shoot.targetObject)
+        : null;
+
       shoot.projectile.update({
         ...animationLoopValue,
         gravity: this.gravity,
         velocity: shoot.velocity,
         position: shoot.position,
-        targetPosition: shoot.targetPosition ?? null
+        targetPosition
       });
 
       shoot.object.position.copy(shoot.position);
@@ -397,19 +401,25 @@ export default class ShootModule extends MapModule<
   createDebugVisualizePath(
     position: Vector3,
     direction: Vector3,
-    projectile: Projectile
+    projectile: Projectile,
+    targetPosition?: Vector3 | null // Optional: Für Homing-Projektille, falls relevant
   ) {
     const points: Vector3[] = [];
     const simPosition = position.clone();
     const simVelocity = direction.clone().multiplyScalar(projectile.speed);
+    let simLifetime = projectile.maxLifetime;
 
     // Simuliere die Flugbahn für eine bestimmte Anzahl von Schritten
-    const simulationSteps = 200;
-    const timeStep = 0.05; // Fester Zeitschritt für die Simulation
+    const simulationSteps = 1000; // Erhöht für längere Simulationen
+    const timeStep = 0.016; // Kleinerer, fester Zeitschritt für bessere Genauigkeit (ähnlich typischem delta)
 
     for (let i = 0; i < simulationSteps; i++) {
-      // Wende die gleiche Physik wie in der update-Methode an
-      simVelocity.add(this.gravity.clone().multiplyScalar(timeStep));
+      // Wende die gleiche Physik wie in der update-Methode an (mit Gewicht!)
+      const gravityEffect = this.gravity
+        .clone()
+        .multiplyScalar(timeStep)
+        .multiplyScalar(projectile.weight);
+      simVelocity.add(gravityEffect);
       const drag = simVelocity
         .clone()
         .multiplyScalar(this.airResistance * timeStep);
@@ -418,7 +428,48 @@ export default class ShootModule extends MapModule<
       simPosition.add(simVelocity.clone().multiplyScalar(timeStep));
       points.push(simPosition.clone());
 
-      // Stoppe die Simulation, wenn das Projektil unter den Boden fällt
+      // Optional: Simuliere Homing-Richtungskorrektur (nur für Homing-Projektille)
+      if (targetPosition && projectile.id === 'air_homing_missile_1') {
+        // Passe den Typ an deine Homing-Projektille an
+        const dx = targetPosition.x - simPosition.x;
+        const dy = targetPosition.y - simPosition.y;
+        const dz = targetPosition.z - simPosition.z;
+        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        if (distance > 0) {
+          const homingAccuracy = 0.25; // Gleicher Wert wie in AirHomingMissile_1
+          const targetDirX = dx / distance;
+          const targetDirY = dy / distance;
+          const targetDirZ = dz / distance;
+          const currentSpeed = simVelocity.length();
+          if (currentSpeed > 0) {
+            const currentDirX = simVelocity.x / currentSpeed;
+            const currentDirY = simVelocity.y / currentSpeed;
+            const currentDirZ = simVelocity.z / currentSpeed;
+            const newDirX =
+              currentDirX + (targetDirX - currentDirX) * homingAccuracy;
+            const newDirY =
+              currentDirY + (targetDirY - currentDirY) * homingAccuracy;
+            const newDirZ =
+              currentDirZ + (targetDirZ - currentDirZ) * homingAccuracy;
+            const newDirLength = Math.sqrt(
+              newDirX * newDirX + newDirY * newDirY + newDirZ * newDirZ
+            );
+            simVelocity.x = (newDirX / newDirLength) * projectile.speed;
+            simVelocity.y = (newDirY / newDirLength) * projectile.speed;
+            simVelocity.z = (newDirZ / newDirLength) * projectile.speed;
+          }
+        }
+      }
+
+      // Lebensdauer reduzieren (wie in der echten Update)
+      simLifetime -= timeStep;
+
+      // Stoppe bei ablaufender Lebensdauer (priorität vor y < 0)
+      if (simLifetime <= 0) {
+        break;
+      }
+
+      // Zusätzliche Stop-Bedingung: Unter dem Boden (aber nicht primär)
       if (simPosition.y < 0) {
         break;
       }
@@ -442,4 +493,11 @@ function setSpread(
     (Math.random() - 0.5) * spread
   );
   direction.add(tempVector).normalize();
+}
+
+function getPositionFromObject(object: Object3D): Vector3 {
+  const position = (object.userData._position =
+    object.userData._position ?? new Vector3());
+  object.getWorldPosition(position);
+  return position;
 }

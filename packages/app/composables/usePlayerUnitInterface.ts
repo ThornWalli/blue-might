@@ -61,12 +61,10 @@ export default function usePlayerUnitInterface(app: App) {
 
   const unitDamage = ref<{
     destroyed: boolean;
-    max: number;
     value: number;
     level: number;
   }>({
     destroyed: false,
-    max: 0,
     value: 0,
     level: 0
   });
@@ -381,7 +379,6 @@ export default function usePlayerUnitInterface(app: App) {
               vehicle?.modules.damage.observables.damage$.pipe(
                 map(() => ({
                   destroyed: vehicle?.modules.damage.isDestroyed(),
-                  max: vehicle?.modules.damage.getMaxDamage(),
                   value: vehicle?.modules.damage.getDamageValue(),
                   level: vehicle?.modules.damage.getDamageLevel()
                 }))

@@ -30,6 +30,7 @@ export default abstract class BaseNavigator {
     map: Map,
     grid: Grid,
     options: {
+      subGridSize?: number;
       gridSize: number;
       size: Vector2;
     },
@@ -123,12 +124,16 @@ export default abstract class BaseNavigator {
             allowDiagonals: true,
             cornerCutting: true
           });
+
           easystar.setGrid(matrix);
           easystar.findPath(s.x, s.y, e.x, e.y, path => resolve(path || []));
           easystar.calculate();
         });
       }
 
+      // nodePath = simplifyPath(nodePath);
+      nodePath = optimizePath(nodePath);
+      console.log('Optimized Path:', [...nodePath]);
       let waypoints = nodePath.map(n => {
         const p = this.grid.toWorldPosition(n.x, n.y);
         return new Vector3(
@@ -186,11 +191,16 @@ function createEasyStarInstance(
   }
 ) {
   const easystar = new EasyStar.js();
+
   if (options.allowDiagonals) {
     easystar.enableDiagonals();
+  } else {
+    easystar.disableDiagonals();
   }
   if (options.cornerCutting) {
     easystar.enableCornerCutting();
+  } else {
+    easystar.disableCornerCutting();
   }
 
   easystar.setAcceptableTiles(acceptableTiles);
@@ -199,4 +209,67 @@ function createEasyStarInstance(
   });
 
   return easystar;
+}
+
+/**
+ * Begradigt Pfad (Reduziert Treppen) und optimiert diesen.
+ * Verwendet den Ramer-Douglas-Peucker Algorithmus, um Punkte zu entfernen, die innerhalb einer Toleranz liegen.
+ */
+function optimizePath(
+  path: { x: number; y: number }[]
+): { x: number; y: number }[] {
+  if (path.length < 3) return path;
+
+  const tolerance = 1;
+
+  function perpendicularDistance(
+    point: { x: number; y: number },
+    lineStart: { x: number; y: number },
+    lineEnd: { x: number; y: number }
+  ): number {
+    const dx = lineEnd.x - lineStart.x;
+    const dy = lineEnd.y - lineStart.y;
+    const mag = Math.sqrt(dx * dx + dy * dy);
+    if (mag === 0) return 0;
+    return (
+      Math.abs(
+        dy * point.x -
+          dx * point.y +
+          lineEnd.x * lineStart.y -
+          lineEnd.y * lineStart.x
+      ) / mag
+    );
+  }
+
+  function rdp(
+    points: { x: number; y: number }[],
+    epsilon: number
+  ): { x: number; y: number }[] {
+    if (points.length < 3) return points;
+
+    let maxDist = 0;
+    let index = 0;
+
+    for (let i = 1; i < points.length - 1; i++) {
+      const dist = perpendicularDistance(
+        points[i]!,
+        points[0]!,
+        points[points.length - 1]!
+      );
+      if (dist > maxDist) {
+        maxDist = dist;
+        index = i;
+      }
+    }
+
+    if (maxDist > epsilon) {
+      const left = rdp(points.slice(0, index + 1), epsilon);
+      const right = rdp(points.slice(index), epsilon);
+      return left.slice(0, -1).concat(right);
+    } else {
+      return [points[0]!, points[points.length - 1]!];
+    }
+  }
+
+  return rdp(path, tolerance);
 }

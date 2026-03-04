@@ -1,4 +1,8 @@
-import type { UnitConstructorOptions } from '@blue-might/app/lib/classes/Unit';
+import type {
+  UnitConstructorOptions,
+  UnitObservables,
+  UnitState
+} from '@blue-might/app/lib/classes/Unit';
 import TankUnitModule from '@blue-might/app/lib/classes/unitModule/Tank';
 import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';
 
@@ -22,11 +26,13 @@ export type TankUnitModuleList = (typeof TankUnitModule)[] &
 export default class TankUnit<
   Modules extends TankUnitModules = TankUnitModules,
   ModuleList extends TankUnitModuleList = TankUnitModuleList,
-  Options extends TankUnitOptions = TankUnitOptions
-> extends GroundVehicleUnit<Modules, ModuleList, Options> {
+  Options extends TankUnitOptions = TankUnitOptions,
+  Observables extends UnitObservables = UnitObservables,
+  State extends UnitState = UnitState
+> extends GroundVehicleUnit<Modules, ModuleList, Options, Observables, State> {
   static override TYPE = UNIT_TYPE.TANK;
   constructor(
-    options: UnitConstructorOptions<Options>,
+    options: UnitConstructorOptions<Options, State>,
     moduleList?: ModuleList
   ) {
     moduleList = (moduleList || []) as ModuleList;

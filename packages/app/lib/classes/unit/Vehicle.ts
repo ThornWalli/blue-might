@@ -1,4 +1,8 @@
-import type { UnitConstructorOptions } from '../Unit';
+import type {
+  UnitConstructorOptions,
+  UnitObservables,
+  UnitState
+} from '../Unit';
 import PatrolUnitModule from '../unitModule/Patrol';
 import PlayerUnitModule from '../unitModule/Player';
 import { setDestroyedMaterials } from '../../utils/material';
@@ -27,10 +31,12 @@ export type VehicleUnitModuleList = (
 export default class VehicleUnit<
   Modules extends VehicleUnitModules = VehicleUnitModules,
   ModuleList extends VehicleUnitModuleList = VehicleUnitModuleList,
-  Options extends VehicleUnitOptions = VehicleUnitOptions
-> extends MovableUnit<Modules, ModuleList, Options> {
+  Options extends VehicleUnitOptions = VehicleUnitOptions,
+  Observables extends UnitObservables = UnitObservables,
+  State extends UnitState = UnitState
+> extends MovableUnit<Modules, ModuleList, Options, Observables, State> {
   constructor(
-    options: UnitConstructorOptions<Options>,
+    options: UnitConstructorOptions<Options, State>,
     moduleList?: ModuleList
   ) {
     moduleList = (moduleList || []) as ModuleList;

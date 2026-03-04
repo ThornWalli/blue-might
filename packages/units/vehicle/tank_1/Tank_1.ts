@@ -10,13 +10,17 @@ import TankUnit, {
   type TankUnitOptions
 } from '@blue-might/app/lib/classes/unit/vehicle/Tank';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { Mesh, SkinnedMesh } from 'three';
+import { Mesh, SkinnedMesh, Vector2 } from 'three';
+import TransportUnitModule from '@blue-might/app/lib/classes/unitModule/Transport';
+import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/tank_1.glb?url';
 
 export type Options = TankUnitOptions;
-export type Modules = TankUnitModules;
-export type ModuleList = TankUnitModuleList;
+export interface Modules extends TankUnitModules {
+  transport: TransportUnitModule;
+}
+export type ModuleList = TankUnitModuleList & [typeof TransportUnitModule];
 
 export interface RawUnitDescription_Tank_1<
   O extends UnitOptions = Options
@@ -33,12 +37,17 @@ export default class Tank_1<
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList?: ModuleList
   ) {
+    moduleList = addModules(moduleList, [TransportUnitModule]);
     super(
       {
         ...options,
         name: 'Tank',
         moduleOptions: {
           ...options?.moduleOptions,
+          transport: {
+            entryPosition: new Vector2(0.25, 0.25),
+            maxSlots: 4
+          },
           collision: {
             ...options?.moduleOptions?.collision,
             targets: [

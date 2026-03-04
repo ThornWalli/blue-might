@@ -1,7 +1,8 @@
 import type {
   RawUnitDescription,
   UnitConstructorOptions,
-  UnitOptions
+  UnitOptions,
+  UnitState
 } from '@blue-might/app/lib/classes/Unit';
 import type {
   SetupContext,
@@ -29,10 +30,10 @@ import {
 } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 
+import type { UnitObservables } from './../../../app/lib/classes/Unit';
 import baseGlb from './assets/combat_tank_1.glb?url';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface State extends WeaponSupportState {}
+interface State extends UnitState, WeaponSupportState {}
 
 export interface CombatTankOptions
   extends TankUnitOptions, WeaponSupportOptions {
@@ -53,16 +54,16 @@ export interface RawUnitDescription_CombatTank_1<
 }
 
 export default class CombatTank_1
-  extends TankUnit<CombatTankModules, CombatTankModuleList, CombatTankOptions>
+  extends TankUnit<
+    CombatTankModules,
+    CombatTankModuleList,
+    CombatTankOptions,
+    UnitObservables,
+    State
+  >
   implements WeaponUnitInterface<State>
 {
   static override KEY = 'combat_tank_1';
-
-  state: State = {
-    weaponActive: false,
-    weaponVelocity: [new Vector2(0, 0)],
-    weaponTargetRotation: [new Vector2(0, 0)]
-  };
 
   objects: {
     head?: Object3D;
@@ -72,7 +73,10 @@ export default class CombatTank_1
   }[] = [];
 
   constructor(
-    options: Omit<UnitConstructorOptions<CombatTankOptions>, 'name'> = {},
+    options: Omit<
+      UnitConstructorOptions<CombatTankOptions, State>,
+      'name'
+    > = {},
     moduleList?: CombatTankModuleList
   ) {
     moduleList = addModules(moduleList, [
@@ -85,6 +89,11 @@ export default class CombatTank_1
       {
         ...options,
         name: 'Combat Tank',
+        state: {
+          weaponActive: false,
+          weaponVelocity: [new Vector2(0, 0)],
+          weaponTargetRotation: [new Vector2(0, 0)]
+        },
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [
@@ -98,7 +107,10 @@ export default class CombatTank_1
         moduleOptions: {
           ...options.moduleOptions,
           damage: {
-            maxDamage: 2
+            maxDamage: 5
+          },
+          attack: {
+            radius: 10
           },
           weapon: {
             autoAimFn: (options: AutoAimFnOptions) =>

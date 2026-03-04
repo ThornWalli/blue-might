@@ -29,10 +29,26 @@ declare module '../../Unit' {
 export type GroundVehicleUnitModuleObservables = MovableUnitModuleObservables;
 
 export interface GroundVehicleUnitModuleOptions extends MovableUnitModuleOptions {
+  /**
+   * The maximum speed of the vehicle.
+   */
   maxSpeed: number;
+  /**
+   * The acceleration of the vehicle.
+   */
   acceleration: number;
+  /**
+   * The turn speed of the vehicle.
+   */
   turnSpeed: number;
+  /**
+   * The turning movement speed of the vehicle.
+   */
   turnMovementSpeed: number;
+
+  /**
+   * The friction (drag) of the vehicle.
+   */
   friction: number;
 }
 
@@ -58,10 +74,10 @@ export default class GroundVehicleUnitModule<
       {
         ...options,
         maxSpeed: options.maxSpeed ?? 1,
-        acceleration: options.acceleration ?? 1 / 3,
-        turnSpeed: options.turnSpeed ?? 1 / 2,
-        turnMovementSpeed: options.turnMovementSpeed ?? 1 / 3,
-        friction: options.friction ?? 0.92
+        acceleration: options.acceleration ?? 1,
+        turnSpeed: options.turnSpeed ?? 1,
+        turnMovementSpeed: options.turnMovementSpeed ?? 1,
+        friction: options.friction ?? 1
       },
       {
         ...state,

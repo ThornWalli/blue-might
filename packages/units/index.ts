@@ -21,6 +21,8 @@ export { default as Tower_1 } from './building/tower_1/Tower_1';
 export { default as Lighthouse_1 } from './building/lighthouse_1/Lighthouse_1';
 export { default as Factory_1 } from './building/factory_1/Factory_1';
 export { default as FactoryChimney_1 } from './building/factory_chimney_1/FactoryChimney_1';
+export { default as CoolingTower_1 } from './building/cooling_tower_1/CoolingTower_1';
+export { default as Radar_1 } from './building/radar_1/Radar_1';
 //#endregion
 
 //#region supply

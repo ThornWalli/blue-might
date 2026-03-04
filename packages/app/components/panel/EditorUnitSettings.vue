@@ -39,7 +39,10 @@
       <bm-dialog ref="unitDebugDialog">
         <template #header>Unit Debug</template>
         <template #default>
-          <bm-dialog-editor-unit-debug :unit="unit" :app="$props.app" />
+          <bm-dialog-editor-unit-debug
+            :model-value="unit.moduleDebug"
+            :app="$props.app"
+            @update:model-value="unit.setModuleDebug($event)" />
         </template>
       </bm-dialog>
     </teleport>

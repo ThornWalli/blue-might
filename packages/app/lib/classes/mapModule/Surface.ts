@@ -202,7 +202,7 @@ export default class SurfaceModule extends MapModule<
     const { width, height } = textures.backgroundTexture!;
 
     // Pathfinder cells
-    const cellSize = 8;
+    const cellSize = 3;
     let tileMap: (TILE_TYPE | undefined)[][] = Array.from(
       { length: height * cellSize },
       () => Array.from({ length: width / (1 / cellSize) }, () => undefined)
@@ -745,9 +745,10 @@ export default class SurfaceModule extends MapModule<
   getSurfaceHeightAt(
     x: number,
     z: number,
-    unitFilter: (unit: Unit) => boolean = () => true,
+    unitFilter?: (unit: Unit) => boolean,
     options?: { raycaster?: boolean; raycasterDistance?: number }
   ): number {
+    unitFilter = unitFilter ?? (() => true);
     if (options?.raycaster) {
       return this.performRaycastForSurfaceHeight(
         x,

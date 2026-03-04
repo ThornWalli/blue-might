@@ -6,6 +6,8 @@ import type { RawUnitDescription_Tower_1 } from './building/tower_1/Tower_1';
 import type { RawUnitDescription_ControlTower_1 } from './building/control_tower_1/ControlTower_1';
 import type { RawUnitDescription_Factory_1 } from './building/factory_1/Factory_1';
 import type { RawUnitDescription_FactoryChimney_1 } from './building/factory_chimney_1/FactoryChimney_1';
+import type { RawUnitDescription_CoolingTower_1 } from './building/cooling_tower_1/CoolingTower_1';
+import type { RawUnitDescription_Radar_1 } from './building/radar_1/Radar_1';
 import type { RawUnitDescription_House_1 } from './building/house_1/House_1';
 import type { RawUnitDescription_House_2 } from './building/house_2/House_2';
 import type { RawUnitDescription_WindTurbine_1 } from './building/wind_turbine_1/WindTurbine_1';
@@ -40,6 +42,7 @@ import type Tower_1 from './building/tower_1/Tower_1';
 import type ControlTower_1 from './building/control_tower_1/ControlTower_1';
 import type Factory_1 from './building/factory_1/Factory_1';
 import type FactoryChimney_1 from './building/factory_chimney_1/FactoryChimney_1';
+import type CoolingTower_1 from './building/cooling_tower_1/CoolingTower_1';
 import type House_1 from './building/house_1/House_1';
 import type House_2 from './building/house_2/House_2';
 import type LandingPortSupplyStation_1 from './building/landing_port_supply_station_1/LandingPortSupplyStation_1';
@@ -68,6 +71,7 @@ import type Signal_1 from './building/signal_1/Signal_1';
 import type Helicopter_1 from './vehicle/helicopter_1/Helicopter_1';
 import type Scientist_1 from './vehicle/scientist_1/Scientist_1';
 import type Civilian_1 from './vehicle/civilian_1/Civilian_1';
+import type Radar_1 from './building/radar_1/Radar_1';
 
 export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_LandingPortSupplyStation_1<O>
@@ -89,6 +93,8 @@ export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_ControlTower_1<O>
   | RawUnitDescription_Factory_1<O>
   | RawUnitDescription_FactoryChimney_1<O>
+  | RawUnitDescription_CoolingTower_1<O>
+  | RawUnitDescription_Radar_1<O>
   | RawUnitDescription_Lighthouse_1<O>
   | RawUnitDescription_Flag_1<O>
   | RawUnitDescription_LandingPort_1<O>
@@ -112,6 +118,8 @@ export type Units =
   | ControlTower_1
   | Factory_1
   | FactoryChimney_1
+  | CoolingTower_1
+  | Radar_1
   | House_1
   | House_2
   | WindTurbine_1

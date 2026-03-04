@@ -10,7 +10,8 @@ import Unit, {
   type UnitModuleList,
   type UnitModules,
   type UnitObservables,
-  type UnitOptions
+  type UnitOptions,
+  type UnitState
 } from '../Unit';
 import BuildingUnitModule from '../unitModule/Building';
 
@@ -28,11 +29,12 @@ export default class BuildingUnit<
   Modules extends BuildingUnitModules = BuildingUnitModules,
   ModuleList extends BuildingUnitModuleList = BuildingUnitModuleList,
   Options extends BuildingUnitOptions = BuildingUnitOptions,
-  Observables extends BuildingUnitObservables = BuildingUnitObservables
-> extends Unit<Modules, ModuleList, Options, Observables> {
+  Observables extends BuildingUnitObservables = BuildingUnitObservables,
+  State extends UnitState = UnitState
+> extends Unit<Modules, ModuleList, Options, Observables, State> {
   static override TYPE = UNIT_TYPE.BUILDING;
   constructor(
-    options: UnitConstructorOptions<Options>,
+    options: UnitConstructorOptions<Options, State>,
     moduleList?: ModuleList
   ) {
     moduleList = (moduleList || []) as ModuleList;

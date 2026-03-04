@@ -1,6 +1,10 @@
 import { GROUND_ADJUSTMENT_MODE, UNIT_TYPE } from '../../../types/unit';
 import { addModules } from '../../Module';
-import type { UnitConstructorOptions } from '../../Unit';
+import type {
+  UnitConstructorOptions,
+  UnitObservables,
+  UnitState
+} from '../../Unit';
 import SeaVehicleUnitModule from '../../unitModule/movable/SeaVehicle';
 import VehicleUnit, {
   type VehicleUnitModuleList,
@@ -19,11 +23,13 @@ export type SeaVehicleUnitModuleList = (typeof SeaVehicleUnitModule)[] &
 export default class SeaVehicleUnit<
   Modules extends SeaVehicleUnitModules = SeaVehicleUnitModules,
   ModuleList extends SeaVehicleUnitModuleList = SeaVehicleUnitModuleList,
-  Options extends SeaVehicleUnitOptions = SeaVehicleUnitOptions
-> extends VehicleUnit<Modules, ModuleList, Options> {
+  Options extends SeaVehicleUnitOptions = SeaVehicleUnitOptions,
+  Observables extends UnitObservables = UnitObservables,
+  State extends UnitState = UnitState
+> extends VehicleUnit<Modules, ModuleList, Options, Observables, State> {
   static override TYPE = UNIT_TYPE.SEA_VEHICLE;
   constructor(
-    options: UnitConstructorOptions<Options>,
+    options: UnitConstructorOptions<Options, State>,
     moduleList?: ModuleList
   ) {
     moduleList = (moduleList || []) as ModuleList;

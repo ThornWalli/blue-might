@@ -6,7 +6,6 @@ import type {
 } from '@blue-might/app/lib/classes/Unit';
 import type { SetupContext } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import type { Object3D } from 'three';
 import { Mesh, SkinnedMesh, LoopRepeat, LoopOnce, Vector2 } from 'three';
 import HelicopterUnit, {
   type HelicopterUnitModuleList,
@@ -56,12 +55,6 @@ export default class Helicopter_1 extends HelicopterUnit<
     rotor_run: { clampWhenFinished: false, loop: LoopRepeat, duration: 0.25 },
     rotor_off: { clampWhenFinished: false, loop: LoopRepeat, duration: 0 }
   };
-
-  private objects: {
-    barrels: Object3D[];
-    barrelTargets: Object3D[];
-    barrelTargetShoots: Object3D[];
-  }[] = [];
 
   constructor(
     options: Omit<UnitConstructorOptions<HelicopterOptions>, 'name'> = {},

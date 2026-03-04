@@ -1,7 +1,9 @@
 import type {
   RawUnitDescription,
   UnitConstructorOptions,
-  UnitOptions
+  UnitObservables,
+  UnitOptions,
+  UnitState
 } from '@blue-might/app/lib/classes/Unit';
 import type {
   SetupContext,
@@ -32,8 +34,7 @@ import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/combat_ship_1.glb?url';
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface State extends WeaponSupportState {}
+interface State extends UnitState, WeaponSupportState {}
 
 export interface CombatShipOptions
   extends SeaVehicleUnitOptions, WeaponSupportOptions {
@@ -58,17 +59,13 @@ export default class CombatShip_1
   extends SeaVehicleUnit<
     CombatShipModules,
     CombatShipModuleList,
-    CombatShipOptions
+    CombatShipOptions,
+    UnitObservables,
+    State
   >
   implements WeaponUnitInterface<State>
 {
   static override KEY = 'combat_ship_1';
-
-  state: State = {
-    weaponActive: false,
-    weaponVelocity: [new Vector2(0, 0)],
-    weaponTargetRotation: [new Vector2(0, 0)]
-  };
 
   private objects: {
     barrels: Object3D[];
@@ -77,7 +74,10 @@ export default class CombatShip_1
   }[] = [];
 
   constructor(
-    options: Omit<UnitConstructorOptions<CombatShipOptions>, 'name'> = {},
+    options: Omit<
+      UnitConstructorOptions<CombatShipOptions, State>,
+      'name'
+    > = {},
     moduleList?: CombatShipModuleList
   ) {
     moduleList = addModules(moduleList, [
@@ -89,6 +89,11 @@ export default class CombatShip_1
       {
         ...options,
         name: 'Boat',
+        state: {
+          weaponActive: false,
+          weaponVelocity: [new Vector2(0, 0)],
+          weaponTargetRotation: [new Vector2(0, 0)]
+        },
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [

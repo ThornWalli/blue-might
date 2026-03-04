@@ -2,7 +2,8 @@ import type {
   RawUnitDescription,
   UnitConstructorOptions,
   UnitObservables,
-  UnitOptions
+  UnitOptions,
+  UnitState
 } from '@blue-might/app/lib/classes/Unit';
 import {
   type SetupContext,
@@ -40,7 +41,7 @@ import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/missile_launcher_1.glb?url';
 
-interface State extends WeaponSupportState {
+interface State extends UnitState, WeaponSupportState {
   opened: boolean;
   opening: boolean;
 }
@@ -77,21 +78,14 @@ export default class MissileLauncher_1
     MissileLauncherModules,
     MissileLauncherModuleList,
     MissileLauncherOptions,
-    MissileLauncherObservables
+    MissileLauncherObservables,
+    State
   >
   implements WeaponUnitInterface<State>
 {
   static override KEY = 'missile_launcher_1';
   closeTimeout: number = 0;
   reopen = false;
-
-  state: State = {
-    opened: false,
-    opening: false,
-    weaponActive: false,
-    weaponVelocity: [new Vector2(0, 0)],
-    weaponTargetRotation: [new Vector2(0, 0)]
-  };
 
   objects: {
     head?: Object3D;
@@ -101,7 +95,10 @@ export default class MissileLauncher_1
   }[] = [];
 
   constructor(
-    options: Omit<UnitConstructorOptions<MissileLauncherOptions>, 'name'> = {},
+    options: Omit<
+      UnitConstructorOptions<MissileLauncherOptions, State>,
+      'name'
+    > = {},
     moduleList?: MissileLauncherModuleList
   ) {
     moduleList = addModules(moduleList, [
@@ -113,6 +110,13 @@ export default class MissileLauncher_1
       {
         ...options,
         name: 'MissileLauncher',
+        state: {
+          opened: false,
+          opening: false,
+          weaponActive: false,
+          weaponVelocity: [new Vector2(0, 0)],
+          weaponTargetRotation: [new Vector2(0, 0)]
+        },
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [

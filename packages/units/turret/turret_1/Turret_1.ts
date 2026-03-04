@@ -2,7 +2,9 @@
 import type {
   RawUnitDescription,
   UnitConstructorOptions,
-  UnitOptions
+  UnitObservables,
+  UnitOptions,
+  UnitState
 } from '@blue-might/app/lib/classes/Unit';
 import {
   type WeaponSupportOptions,
@@ -42,8 +44,8 @@ import baseGlb from './assets/turret_1.glb?url';
 //#endregion
 
 //#region definitions
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface State extends WeaponSupportState {}
+
+interface State extends UnitState, WeaponSupportState {}
 
 export interface TurretOptions
   extends TurretBuildingUnitOptions, WeaponSupportOptions {
@@ -68,16 +70,16 @@ export interface RawUnitDescription_Turret_1<
 //#endregion
 
 export default class Turret_1
-  extends TurretBuildingUnit<TurretModules, TurretModuleList, TurretOptions>
+  extends TurretBuildingUnit<
+    TurretModules,
+    TurretModuleList,
+    TurretOptions,
+    UnitObservables,
+    State
+  >
   implements WeaponUnitInterface<State>
 {
   static override KEY = 'turret_1';
-
-  state: State = {
-    weaponActive: false,
-    weaponVelocity: [new Vector2(0, 0)],
-    weaponTargetRotation: [new Vector2(0, 0)]
-  };
 
   objects: {
     head?: Object3D;
@@ -87,7 +89,7 @@ export default class Turret_1
   }[] = [];
 
   constructor(
-    options: Omit<UnitConstructorOptions<TurretOptions>, 'name'> = {},
+    options: Omit<UnitConstructorOptions<TurretOptions, State>, 'name'> = {},
     moduleList?: TurretModuleList
   ) {
     moduleList = addModules(moduleList, [
@@ -99,6 +101,11 @@ export default class Turret_1
       {
         ...options,
         name: 'Turret',
+        state: {
+          weaponActive: false,
+          weaponVelocity: [new Vector2(0, 0)],
+          weaponTargetRotation: [new Vector2(0, 0)]
+        },
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [

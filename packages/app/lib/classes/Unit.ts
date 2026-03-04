@@ -85,17 +85,20 @@ export interface ModuleStates extends Record<any, UnitModuleState> {}
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface ModuleDebug extends Record<any, boolean> {}
 
-export type UnitConstructorOptions<Options extends UnitOptions = UnitOptions> =
-  Partial<
-    Exclude<UnitDescription<Options>, 'options' | 'position' | 'rotation'> & {
-      preview?: boolean;
-      id?: UnitIdentifier;
-      position: Vector3;
-      rotation: Euler;
-      options: Options;
-      moduleStates: Partial<ModuleStates>;
-    }
-  >;
+export type UnitConstructorOptions<
+  Options extends UnitOptions = UnitOptions,
+  State extends UnitState = UnitState
+> = Partial<
+  Exclude<UnitDescription<Options>, 'options' | 'position' | 'rotation'> & {
+    preview?: boolean;
+    id?: UnitIdentifier;
+    position: Vector3;
+    rotation: Euler;
+    state: State;
+    options: Options;
+    moduleStates: Partial<ModuleStates>;
+  }
+>;
 
 export interface UnitModules {
   animation: AnimationUnitModule;
@@ -117,11 +120,14 @@ export interface UnitObservables {
   map$: ReplaySubject<Map | null>;
 }
 
+export type UnitState = Record<string, any>;
+
 export default class Unit<
   Modules extends UnitModules = UnitModules,
   ModuleList extends UnitModuleList = UnitModuleList,
   Options extends UnitOptions = UnitOptions,
-  Observables extends UnitObservables = UnitObservables
+  Observables extends UnitObservables = UnitObservables,
+  State extends UnitState = UnitState
 > implements UnitDescription<Options> {
   getTileType() {
     return TILE_TYPE.UNIT;
@@ -155,6 +161,8 @@ export default class Unit<
   id: UnitIdentifier;
   name: string;
   observables: Observables = {} as Observables;
+
+  state: State;
   modules: Modules = {} as Modules;
   moduleList: ModuleList;
   subscription = new Subscription();
@@ -191,11 +199,12 @@ export default class Unit<
       position,
       rotation,
       options,
+      state,
       moduleOptions,
       moduleStates,
       moduleDebug,
       visible
-    }: UnitConstructorOptions<Options> = {},
+    }: UnitConstructorOptions<Options, State> = {},
     moduleList: unknown[] = []
   ) {
     this.position = position ?? new Vector3(0, 0, 0);
@@ -219,6 +228,8 @@ export default class Unit<
 
     this.debug = debug ?? false;
     this.preview = preview ?? false;
+
+    this.state = state ?? ({} as State);
 
     this.moduleDebug = { ...this.moduleDebug, ...moduleDebug };
 
@@ -289,7 +300,7 @@ export default class Unit<
   }
 
   setModuleDebug(debug: Partial<ModuleDebug>) {
-    this.moduleDebug = { ...this.moduleDebug, ...debug };
+    this.moduleDebug = { ...debug };
   }
 
   get key(): string {

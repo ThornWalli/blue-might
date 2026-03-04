@@ -81,7 +81,6 @@
                   <svg-icon-heart class="heart" />
                 </template>
               </bm-control-item>
-
               <bm-control-item
                 indicator
                 label="Damage"
@@ -93,7 +92,7 @@
                       : CONTROL_ITEM_STATUS.NORMAL
                 "
                 :value="
-                  Math.round((unitDamage.value / unitDamage.max) * 100)
+                  Math.round(unitDamage.value * 100)
                     .toString()
                     .padStart(padLength - 1, '\u00A0') + '%'
                 " />

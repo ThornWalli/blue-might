@@ -23,12 +23,14 @@
       <div>
         <h2>Targets</h2>
         <div class="units">
-          <bm-fieldset label="Attack">
+          <bm-fieldset
+            v-if="targets.some(t => t.type === 'attack')"
+            label="Attack">
             <table>
               <thead>
                 <tr>
+                  <th></th>
                   <th>Name</th>
-                  <th class="spacer"></th>
                   <th>Failed</th>
                   <th>Completes</th>
                   <th>Count</th>
@@ -38,6 +40,9 @@
                 <tr
                   v-for="target in targets.filter(t => t.type === 'attack')"
                   :key="target.name">
+                  <td class="thumb">
+                    <img :src="target.thumb" alt="Target Image" />
+                  </td>
                   <td>{{ target.name }}</td>
                   <td>{{ target.failed }}</td>
                   <td>{{ target.completes }}</td>
@@ -46,7 +51,9 @@
               </tbody>
             </table>
           </bm-fieldset>
-          <bm-fieldset label="Rescue">
+          <bm-fieldset
+            v-if="targets.some(t => t.type === 'rescue')"
+            label="Rescue">
             <table>
               <thead>
                 <tr>
@@ -240,7 +247,7 @@ function onSubmit(e: Event) {
 
   & .units {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(1, 1fr);
     gap: var(--bm-spacing-medium);
     font-family: var(--font-family-base);
     font-size: 12px;

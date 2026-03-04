@@ -3,7 +3,11 @@ import {
   UNIT_TYPE
 } from '@blue-might/app/lib/types/unit';
 
-import type { UnitConstructorOptions } from '../../Unit';
+import type {
+  UnitConstructorOptions,
+  UnitObservables,
+  UnitState
+} from '../../Unit';
 import HelicopterUnitModule from '../../unitModule/movable/airVehicle/Helicopter';
 import { addModules } from '../../Module';
 
@@ -24,11 +28,13 @@ export type HelicopterUnitModuleList = (typeof HelicopterUnitModule)[] &
 export default class HelicopterUnit<
   Modules extends HelicopterUnitModules = HelicopterUnitModules,
   ModuleList extends HelicopterUnitModuleList = HelicopterUnitModuleList,
-  Options extends HelicopterUnitOptions = HelicopterUnitOptions
-> extends AirVehicleUnit<Modules, ModuleList, Options> {
+  Options extends HelicopterUnitOptions = HelicopterUnitOptions,
+  Observables extends UnitObservables = UnitObservables,
+  State extends UnitState = UnitState
+> extends AirVehicleUnit<Modules, ModuleList, Options, Observables, State> {
   static override TYPE = UNIT_TYPE.HELICOPTER;
   constructor(
-    options: UnitConstructorOptions<Options>,
+    options: UnitConstructorOptions<Options, State>,
     moduleList?: ModuleList
   ) {
     moduleList = (moduleList || []) as ModuleList;

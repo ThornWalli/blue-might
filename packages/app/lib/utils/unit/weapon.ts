@@ -142,7 +142,7 @@ export function autoAimFunction(
   if (isYawInRange && isPitchInRange && horizontalDistance >= 0.9) {
     state.weaponTargetRotation[index]!.set(targetYaw, targetPitch);
 
-    const rotationThreshold = 0.01;
+    const rotationThreshold = 0.02; // Verringert für schnellere Reaktion
     let isRotationComplete = false;
 
     if (head) {

@@ -114,7 +114,7 @@ export default class PathfindingModule extends MapModule<
     await super.afterSetup();
 
     // Erstelle gemeinsames Grid mit niedriger Grid-Size (1/3)
-    const gridSize = 1 / 8;
+    const gridSize = 1 / 3;
     const size = new Vector2(
       this.map.modules.surface.state.terrainWidth,
       this.map.modules.surface.state.terrainHeight
@@ -127,8 +127,21 @@ export default class PathfindingModule extends MapModule<
       (x, y) => {
         const type = tileTypeMap[y]?.[x] ?? TILE_TYPE.BLOCKED;
         return type;
+      },
+      (x, y) => {
+        // Neu: Höhe-Funktion übergeben
+        const worldPos = this.grid!.toWorldPosition(x, y); // Temporär Grid verwenden, aber Höhe aus Surface holen
+        return this.map.modules.surface.getDepthAt(worldPos.x, worldPos.y);
       }
     );
+    // this.grid = new Grid(
+    //   size.clone().divideScalar(gridSize).round(),
+    //   gridSize,
+    //   (x, y) => {
+    //     const type = tileTypeMap[y]?.[x] ?? TILE_TYPE.BLOCKED;
+    //     return type;
+    //   }
+    // );
     console.log('GRID', this.grid);
     await this.grid.setup();
     if (this.debug) {

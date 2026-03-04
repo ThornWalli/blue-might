@@ -2,7 +2,9 @@ import { combineLatest, filter } from 'rxjs';
 import type {
   RawUnitDescription,
   UnitConstructorOptions,
-  UnitOptions
+  UnitObservables,
+  UnitOptions,
+  UnitState
 } from '@blue-might/app/lib/classes/Unit';
 import type {
   SetupContext,
@@ -48,8 +50,7 @@ function getVectors() {
   return [vector, vector] as Vector2[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface State extends WeaponSupportState {}
+interface CombatHelicopterState extends UnitState, WeaponSupportState {}
 
 export interface CombatHelicopterOptions
   extends HelicopterUnitOptions, WeaponSupportOptions {
@@ -78,17 +79,13 @@ export default class CombatHelicopter_1
   extends HelicopterUnit<
     CombatHelicopterModules,
     CombatHelicopterModuleList,
-    CombatHelicopterOptions
+    CombatHelicopterOptions,
+    UnitObservables,
+    CombatHelicopterState
   >
-  implements WeaponUnitInterface<State>
+  implements WeaponUnitInterface<CombatHelicopterState>
 {
   static override KEY = 'combat_helicopter_1';
-
-  state: State = {
-    weaponActive: false,
-    weaponVelocity: getVectors(),
-    weaponTargetRotation: getVectors()
-  };
 
   animationSettings: Record<string, AnimationSetting> = {
     land_gears: { clampWhenFinished: true, loop: LoopOnce, duration: 2 },
@@ -104,7 +101,10 @@ export default class CombatHelicopter_1
   }[] = [];
 
   constructor(
-    options: Omit<UnitConstructorOptions<CombatHelicopterOptions>, 'name'> = {},
+    options: Omit<
+      UnitConstructorOptions<CombatHelicopterState, CombatHelicopterOptions>,
+      'name'
+    > = {},
     moduleList?: CombatHelicopterModuleList
   ) {
     moduleList = addModules(moduleList, [
@@ -116,7 +116,11 @@ export default class CombatHelicopter_1
       {
         ...options,
         name: 'Combat Helicopter',
-
+        state: {
+          weaponActive: false,
+          weaponVelocity: getVectors(),
+          weaponTargetRotation: getVectors()
+        },
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [

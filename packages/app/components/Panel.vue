@@ -1,3 +1,4 @@
+e
 <template>
   <div
     class="bm-panel"
@@ -51,7 +52,10 @@ export enum PANEL_POSITION {
   flex-direction: column;
   gap: var(--bm-spacing-medium);
   max-width: 100%;
+  max-height: 100%;
   padding: var(--bm-spacing-medium);
+
+  /* overflow: auto; */
   pointer-events: auto;
 
   &.style-type-transparent {

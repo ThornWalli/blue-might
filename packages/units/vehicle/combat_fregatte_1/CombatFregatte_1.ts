@@ -2,7 +2,9 @@
 import type {
   RawUnitDescription,
   UnitConstructorOptions,
-  UnitOptions
+  UnitObservables,
+  UnitOptions,
+  UnitState
 } from '@blue-might/app/lib/classes/Unit';
 import type {
   SetupContext,
@@ -43,8 +45,8 @@ import baseGlb from './assets/combat_fregatte_1.glb?url';
 //#endregion
 
 //#region definitions
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface State extends WeaponSupportState {}
+
+interface CombatFregatte extends UnitState, WeaponSupportState {}
 
 export interface CombatFregatteOptions
   extends SeaVehicleUnitOptions, WeaponSupportOptions {
@@ -70,17 +72,13 @@ export default class CombatFregatte_1
   extends SeaVehicleUnit<
     CombatFregatteModules,
     CombatFregatteModuleList,
-    CombatFregatteOptions
+    CombatFregatteOptions,
+    UnitObservables,
+    CombatFregatte
   >
-  implements WeaponUnitInterface<State>
+  implements WeaponUnitInterface<CombatFregatte>
 {
   static override KEY = 'combat_fregatte_1';
-
-  state: State = {
-    weaponActive: false,
-    weaponVelocity: [new Vector2(0, 0), new Vector2(0, 0)],
-    weaponTargetRotation: [new Vector2(0, 0), new Vector2(0, 0)]
-  };
 
   private objects: {
     barrels: Object3D[];
@@ -89,7 +87,10 @@ export default class CombatFregatte_1
   }[] = [];
 
   constructor(
-    options: Omit<UnitConstructorOptions<CombatFregatteOptions>, 'name'> = {},
+    options: Omit<
+      UnitConstructorOptions<CombatFregatte, CombatFregatteOptions>,
+      'name'
+    > = {},
     moduleList?: CombatFregatteModuleList
   ) {
     moduleList = addModules(moduleList, [
@@ -101,6 +102,11 @@ export default class CombatFregatte_1
       {
         ...options,
         name: 'Fregatte',
+        state: {
+          weaponActive: false,
+          weaponVelocity: [new Vector2(0, 0), new Vector2(0, 0)],
+          weaponTargetRotation: [new Vector2(0, 0), new Vector2(0, 0)]
+        },
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [

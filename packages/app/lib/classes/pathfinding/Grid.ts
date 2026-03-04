@@ -2,7 +2,7 @@ import { Subject } from 'rxjs';
 import type { Object3D, Sphere } from 'three';
 import { Box3, Vector2 } from 'three';
 
-import type { TILE_TYPE } from '../../utils/pathfinding';
+import { TILE_TYPE } from '../../utils/pathfinding';
 import type Unit from '../Unit';
 
 export class GridNode {
@@ -40,6 +40,7 @@ export class GridNode {
 }
 
 type GetTileTypeFunction = (x: number, y: number) => TILE_TYPE;
+type GetTerrainHeightFunction = (x: number, y: number) => number;
 
 export default class Grid {
   resetNodes(nodes: GridNode[]) {
@@ -60,6 +61,8 @@ export default class Grid {
   private nodes: GridNode[] = [];
 
   private getTileType: GetTileTypeFunction;
+  private getTerrainHeight: GetTerrainHeightFunction;
+  private readonly MAX_HEIGHT_DIFF = 0.01; // Schwellenwert für Höhenunterschied (anpassbar)
 
   observables: {
     update$: Subject<void>;
@@ -70,16 +73,21 @@ export default class Grid {
   constructor(
     size: Vector2,
     cellSize: number,
-    getTileType: GetTileTypeFunction
+    getTileType: GetTileTypeFunction,
+    getTerrainHeight: GetTerrainHeightFunction
   ) {
     this.size = size;
     this.cellSize = cellSize;
     this.getTileType = getTileType;
+    this.getTerrainHeight = getTerrainHeight;
   }
 
   setup() {
     this.nodes = this.createNodes();
     this.matrix = this.createMatrix();
+    this.nodes.forEach(node => {
+      this.updateNode(node.x, node.y);
+    });
   }
 
   createNodes() {
@@ -129,6 +137,28 @@ export default class Grid {
     const node = this.getNode(x, z);
     node.type = tileType;
     this.matrix[z]![x] = node.type;
+
+    // Neu: Überprüfe Höhenunterschiede zu Nachbarn, um Klippen zu blockieren
+    const currentHeight = this.getTerrainHeight(x, z);
+    let maxDiff = 0;
+    const neighbors = [
+      { dx: 0, dy: 1 }, // oben
+      { dx: 0, dy: -1 }, // unten
+      { dx: 1, dy: 0 }, // rechts
+      { dx: -1, dy: 0 } // links
+    ];
+    for (const { dx, dy } of neighbors) {
+      const nx = x + dx;
+      const ny = z + dy;
+      if (nx >= 0 && nx < this.width && ny >= 0 && ny < this.height) {
+        const neighborHeight = this.getTerrainHeight(nx, ny);
+        maxDiff = Math.max(maxDiff, Math.abs(currentHeight - neighborHeight));
+      }
+    }
+    if (maxDiff > this.MAX_HEIGHT_DIFF) {
+      node.type = TILE_TYPE.BLOCKED; // Blockiere Zelle bei zu großem Höhenunterschied
+      this.matrix[z]![x] = node.type;
+    }
   }
 
   updateNodeByUnit(x: number, z: number, unit: Unit, reset: boolean = false) {
@@ -143,6 +173,29 @@ export default class Grid {
     )[0];
     node.type = tileTypeUnit?.getTileType() ?? node.initialType;
     this.matrix[z]![x] = node.type;
+
+    // Neu: Überprüfe Höhenunterschiede zu Nachbarn, um Klippen zu blockieren
+    const currentHeight = this.getTerrainHeight(x, z);
+    let maxDiff = 0;
+    const neighbors = [
+      { dx: 0, dy: 1 }, // oben
+      { dx: 0, dy: -1 }, // unten
+      { dx: 1, dy: 0 }, // rechts
+      { dx: -1, dy: 0 } // links
+    ];
+    for (const { dx, dy } of neighbors) {
+      const nx = x + dx;
+      const ny = z + dy;
+      if (nx >= 0 && nx < this.width && ny >= 0 && ny < this.height) {
+        const neighborHeight = this.getTerrainHeight(nx, ny);
+        maxDiff = Math.max(maxDiff, Math.abs(currentHeight - neighborHeight));
+      }
+    }
+
+    if (maxDiff > this.MAX_HEIGHT_DIFF) {
+      node.type = TILE_TYPE.BLOCKED; // Blockiere Zelle bei zu großem Höhenunterschied
+      this.matrix[z]![x] = node.type;
+    }
   }
 
   //#endregion

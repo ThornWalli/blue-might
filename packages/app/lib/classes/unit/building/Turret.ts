@@ -1,6 +1,10 @@
 import { GROUND_ADJUSTMENT_MODE, UNIT_TYPE } from '../../../types/unit';
 import { addModules } from '../../Module';
-import type { UnitConstructorOptions } from '../../Unit';
+import type {
+  UnitConstructorOptions,
+  UnitObservables,
+  UnitState
+} from '../../Unit';
 import PlayerUnitModule from '../../unitModule/Player';
 import type {
   BuildingUnitModuleList,
@@ -21,11 +25,13 @@ export default class TurretBuildingUnit<
   Modules extends TurretBuildingUnitModules = TurretBuildingUnitModules,
   ModuleList extends TurretBuildingUnitModuleList =
     TurretBuildingUnitModuleList,
-  Options extends TurretBuildingUnitOptions = TurretBuildingUnitOptions
-> extends BuildingUnit<Modules, ModuleList, Options> {
+  Options extends TurretBuildingUnitOptions = TurretBuildingUnitOptions,
+  Observables extends UnitObservables = UnitObservables,
+  State extends UnitState = UnitState
+> extends BuildingUnit<Modules, ModuleList, Options, Observables, State> {
   static override TYPE = UNIT_TYPE.SEA_VEHICLE;
   constructor(
-    options: UnitConstructorOptions<Options>,
+    options: UnitConstructorOptions<Options, State>,
     moduleList?: ModuleList
   ) {
     moduleList = (moduleList || []) as ModuleList;

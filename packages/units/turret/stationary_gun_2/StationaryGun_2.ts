@@ -1,4 +1,8 @@
-import type { UnitConstructorOptions } from '@blue-might/app/lib/classes/Unit';
+import type {
+  UnitConstructorOptions,
+  UnitObservables,
+  UnitState
+} from '@blue-might/app/lib/classes/Unit';
 import type { SetupContext } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Vector2, Vector3, Mesh, SkinnedMesh, Object3D } from 'three';
@@ -21,7 +25,7 @@ import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/stationary_gun_2.glb?url';
 
-interface State {
+interface State extends UnitState {
   active: boolean;
   velocity: Vector2;
   maxBarrelAngleX: number;
@@ -53,21 +57,11 @@ export type ModuleList = BuildingUnitModuleList &
 export default class StationaryGun_2 extends BuildingUnit<
   Modules,
   ModuleList,
-  Options
+  Options,
+  UnitObservables,
+  State
 > {
   static override KEY = 'stationary_gun_2';
-
-  state: State = {
-    active: false,
-    velocity: new Vector2(0, 0),
-    maxBarrelAngleX: 0.2,
-    minBarrelAngleX: -0.6,
-    targetRotationY: -0.6,
-    targetRotationX: 0,
-    rotationSpeed: 0.05,
-    sourcePositions: [new Vector3()],
-    lastShootTime: 0
-  };
 
   objects: {
     head?: Object3D;
@@ -81,7 +75,7 @@ export default class StationaryGun_2 extends BuildingUnit<
   };
 
   constructor(
-    options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
+    options: Omit<UnitConstructorOptions<Options, State>, 'name'> = {},
     moduleList?: ModuleList
   ) {
     moduleList = addModules(moduleList, [
@@ -94,6 +88,17 @@ export default class StationaryGun_2 extends BuildingUnit<
       {
         ...options,
         name: 'StationaryGun 1',
+        state: {
+          active: false,
+          velocity: new Vector2(0, 0),
+          maxBarrelAngleX: 0.2,
+          minBarrelAngleX: -0.6,
+          targetRotationY: -0.6,
+          targetRotationX: 0,
+          rotationSpeed: 0.05,
+          sourcePositions: [new Vector3()],
+          lastShootTime: 0
+        },
         moduleOptions: {
           ...options.moduleOptions,
           weapon: {

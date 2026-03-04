@@ -31,14 +31,6 @@ const map: Partial<MapDescription> = {
           collision: true,
           pathfinding: false,
           patrol: false
-        },
-        moduleOptions: {
-          damage: {
-            maxDamage: 1000
-          },
-          movable: {
-            active: true
-          }
         }
       }
     }

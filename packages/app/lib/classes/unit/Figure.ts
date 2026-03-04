@@ -1,4 +1,9 @@
-import type { UnitConstructorOptions, UnitOptions } from '../Unit';
+import type {
+  UnitConstructorOptions,
+  UnitObservables,
+  UnitOptions,
+  UnitState
+} from '../Unit';
 import PatrolUnitModule from '../unitModule/Patrol';
 import {
   GROUND_ADJUSTMENT_MODE,
@@ -33,11 +38,13 @@ export type FigureUnitModuleList = (
 export default class FigureUnit<
   Modules extends FigureUnitModules = FigureUnitModules,
   ModuleList extends FigureUnitModuleList = FigureUnitModuleList,
-  Options extends FigureUnitOptions = FigureUnitOptions
-> extends MovableUnit<Modules, ModuleList, Options> {
+  Options extends FigureUnitOptions = FigureUnitOptions,
+  Observables extends UnitObservables = UnitObservables,
+  State extends UnitState = UnitState
+> extends MovableUnit<Modules, ModuleList, Options, Observables, State> {
   static override TYPE = UNIT_TYPE.FIGURE;
   constructor(
-    options: UnitConstructorOptions<Options>,
+    options: UnitConstructorOptions<Options, State>,
     moduleList?: ModuleList
   ) {
     moduleList = (moduleList || []) as ModuleList;

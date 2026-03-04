@@ -9,8 +9,8 @@ import type {
 } from 'three';
 
 import type { FactionDescription, FactionIdentifier } from '../classes/Faction';
-import type { ModuleDebug, ModuleOptions, ModuleStates } from '../classes/Map';
-import type { RawUnitDescription } from '../classes/Unit';
+import type { ModuleOptions, ModuleStates } from '../classes/Map';
+import type { ModuleDebug, RawUnitDescription } from '../classes/Unit';
 
 export interface Textures {
   heightMap: Texture<ImageBitmap>;
@@ -92,6 +92,7 @@ export interface RawPlayerOptions<
   position: V3;
   rotation?: E;
   faction: FactionIdentifier;
+  unitDebug?: Partial<ModuleDebug>;
 }
 
 export type PlayerOptions<UD extends UnitDescriptions = UnitDescriptions> =

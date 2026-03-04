@@ -49,6 +49,12 @@
         key="editor-unit-patrol"
         :app="app"
         @close="setMode(EDITOR_MODE.DEFAULT)" />
+      <bm-panel-editor-unit-info
+        v-if="isMode(EDITOR_MODE.DEFAULT)"
+        key="editor-unit-info"
+        :app="app"
+        :mode="mode"
+        @mode="setMode($event)" />
       <bm-panel-editor-unit-settings
         v-if="isMode(EDITOR_MODE.DEFAULT)"
         key="editor-unit-settings"
@@ -74,6 +80,7 @@ import BmPanelEditorUnitsControls from '../panel/EditorUnitsControls.vue';
 import BmPanelEditorGeneral from '../panel/EditorGeneral.vue';
 import BmPanelEditorUnitPatrol from '../panel/EditorUnitPatrol.vue';
 import BmPanelEditorPlayer from '../panel/EditorPlayer.vue';
+import BmPanelEditorUnitInfo from '../panel/EditorUnitInfo.vue';
 import BmPanelEditorUnitSettings from '../panel/EditorUnitSettings.vue';
 import BmPanelEditorMission from '../panel/EditorMission.vue';
 

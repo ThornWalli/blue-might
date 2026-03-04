@@ -12,11 +12,23 @@
         :options="unitOptions"
         @update:model-value="onUpdateUnit" />
     </bm-form-field>
+    <bm-button label="Unit Debug" @click="onClickUnitDebug" />
     <bm-button label="Set start position" @click="onClickSetStartPosition" />
     <bm-button
       :label="`Set rotation (${getCompassDisplayValue(playerOptions.rotation?.y ?? 0)})`"
       @click="onClickSetRotation" />
+
     <bm-button label="Close" @click="onClickClose" />
+    <teleport to="body">
+      <bm-dialog ref="playerUnitDebugDialog">
+        <template #header>Unit Debug</template>
+        <template #default>
+          <bm-dialog-editor-player-unit-debug
+            v-model="playerOptions.unitDebug"
+            :app="$props.app" />
+        </template>
+      </bm-dialog>
+    </teleport>
   </bm-panel>
 </template>
 
@@ -36,8 +48,11 @@ import BmPanel from '../Panel.vue';
 import BmButton from '../Button.vue';
 import BmSelect from '../Select.vue';
 import BmFormField from '../FormField.vue';
+import BmDialog from '../Dialog.vue';
+import BmDialogEditorPlayerUnitDebug from '../dialog/EditorPlayerUnitDebug.vue';
 
 const playerOptions = ref<Raw<PlayerOptions>>({} as Raw<PlayerOptions>);
+const playerUnitDebugDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 
 const $props = defineProps<{
   app: AppEditor;
@@ -144,6 +159,10 @@ function onClickSetRotation() {
       )
     });
   }
+}
+
+function onClickUnitDebug() {
+  playerUnitDebugDialog.value?.context?.open();
 }
 
 function onClickClose() {

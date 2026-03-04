@@ -100,8 +100,9 @@ export default class EditorPatrolAppModule extends AppModule<
       }
 
       worldPath.forEach((point, index) => {
+        const size = 0.25;
         const marker = new Mesh(
-          new BoxGeometry(0.1, 0.1, 0.1),
+          new BoxGeometry(size, size, size),
           new MeshBasicMaterial({
             color: getMarkerColor(this.state.index === index)
           })
@@ -123,6 +124,26 @@ export default class EditorPatrolAppModule extends AppModule<
     }
   }
 
+  moveLastItemUp() {
+    if (this.state.unit && 'patrol' in this.state.unit.modules) {
+      const path = this.getPath();
+      const lastItem = path.shift();
+      if (lastItem) path.push(lastItem);
+      this.state.unit.modules.patrol.setPath(path);
+      this.observables.path$.next(this.getPath());
+    }
+  }
+
+  moveLastItemDown() {
+    if (this.state.unit && 'patrol' in this.state.unit.modules) {
+      const path = this.getPath();
+      const lastItem = path.pop();
+      if (lastItem) path.unshift(lastItem);
+      this.state.unit.modules.patrol.setPath(path);
+      this.observables.path$.next(this.getPath());
+    }
+  }
+
   setUnit(unit: Units | null) {
     if (this.state.unit === unit) return;
 
@@ -137,6 +158,7 @@ export default class EditorPatrolAppModule extends AppModule<
     }
 
     this.updateLine(this.getPath());
+    this.observables.path$.next(this.getPath());
   }
 
   getPath() {

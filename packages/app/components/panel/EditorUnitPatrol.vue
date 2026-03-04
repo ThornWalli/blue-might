@@ -27,7 +27,10 @@
               @change="editorPatrolModule?.setIndex(index)" />
             <label :for="`patrol-path-${index}`">
               <div class="indicator"></div>
-              <span>{{ p[0].toFixed(2) }} / {{ p[1].toFixed(2) }}</span>
+              <span>
+                <span>{{ `#${index + 1}` }}</span> {{ p[0].toFixed(2) }} /
+                {{ p[1].toFixed(2) }}
+              </span>
             </label>
             <bm-button
               :icon="ICON.CHEVRON_UP"
@@ -58,16 +61,30 @@
               @click="onClickAddAfter" />
           </div>
         </template>
-        <bm-button
-          v-if="path.length < 1"
-          label="Add first point"
-          @click="onClickAdd" />
-        <bm-button
-          v-else
-          :icon="ICON.PLUS"
-          label="Add"
-          hide-label
-          @click="onClickAdd" />
+        <div class="controls">
+          <bm-button
+            v-if="path.length < 1"
+            label="Add first point"
+            @click="onClickAdd" />
+          <bm-button
+            v-else
+            :icon="ICON.PLUS"
+            label="Add"
+            hide-label
+            @click="onClickAdd" />
+          <div>
+            <bm-button
+              :icon="ICON.ARROW_UP"
+              label="Up last item"
+              hide-label
+              @click="onClickLastItemUp" />
+            <bm-button
+              :icon="ICON.ARROW_DOWN"
+              label="Down last item"
+              hide-label
+              @click="onClickLastItemDown" />
+          </div>
+        </div>
         <hr />
         <div class="controls">
           <div>
@@ -119,7 +136,7 @@ const patrolModule = computed(() => {
 });
 
 const editorPatrolModule = $props.app.modules.editorPatrol;
-const path = ref<PatrolPath>(editorPatrolModule.getPath() ?? []);
+const path = ref<PatrolPath>([]);
 
 const subscription = new Subscription();
 
@@ -131,7 +148,7 @@ onMounted(() => {
   );
   subscription.add(
     editorPatrolModule.observables.path$.subscribe(p => {
-      path.value = p;
+      path.value = Array.from(p);
     })
   );
   subscription.add(
@@ -272,6 +289,18 @@ async function onClickPaste() {
   }
 }
 
+function onClickLastItemUp() {
+  if (editorPatrolModule) {
+    editorPatrolModule.moveLastItemUp();
+  }
+}
+
+function onClickLastItemDown() {
+  if (editorPatrolModule) {
+    editorPatrolModule.moveLastItemDown();
+  }
+}
+
 function onUpdatePatrolActive(active: boolean) {
   editorPatrolModule.setActive(active);
 }
@@ -280,6 +309,8 @@ function onUpdatePatrolActive(active: boolean) {
 <style lang="postcss" scoped>
 .bm-panel-editor-unit-patrol {
   width: 280px;
+  max-height: 100%;
+  overflow: auto;
 
   & .items {
     display: flex;
@@ -354,6 +385,15 @@ function onUpdatePatrolActive(active: boolean) {
     height: 16px;
     background-color: var(--color-gray-very-dark);
     border: solid #303030 2px;
+
+    & + span {
+      display: flex;
+
+      & span {
+        flex: 1;
+        text-align: left;
+      }
+    }
   }
 }
 

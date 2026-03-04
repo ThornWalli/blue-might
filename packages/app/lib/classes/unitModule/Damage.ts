@@ -143,6 +143,7 @@ export default class DamageUnitModule extends UnitModule<
 
   takeDamage(amount: number) {
     if (!this.options.enabled) return;
+    console.log('takeDamage', amount, this.state.damage, this.canDamage());
     this.setDamage(this.state.damage + amount);
   }
 
@@ -153,6 +154,7 @@ export default class DamageUnitModule extends UnitModule<
   setDamage(value: number, force?: boolean) {
     if (!force && !this.canDamage()) return;
     this.state.damage = Math.min(this.options.maxDamage, Math.max(0, value));
+    console.log('setDamage', this.state.damage, value);
     this.observables.damage$.next(this.state.damage);
     if (this.isDestroyed()) {
       this.state.burnTimeLeft = this.options.fireTime;
@@ -186,11 +188,14 @@ export default class DamageUnitModule extends UnitModule<
   }
 
   public canDamage() {
-    return this.options.enabled && this.state.damage < DAMAGE_LEVEL.DESTROYED;
+    console.log(this.state.damage);
+    return (
+      this.options.enabled && this.getDamageValue() < DAMAGE_LEVEL.DESTROYED
+    );
   }
 
   public isDestroyed() {
-    return this.state.damage >= this.options.maxDamage;
+    return this.getDamageValue() >= DAMAGE_LEVEL.DESTROYED;
   }
 
   private spawnSmoke(type: SMOKE_TYPE = SMOKE_TYPE.MEDIUM) {

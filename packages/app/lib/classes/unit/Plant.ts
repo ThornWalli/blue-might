@@ -10,7 +10,8 @@ import Unit, {
   type UnitModuleList,
   type UnitModules,
   type UnitObservables,
-  type UnitOptions
+  type UnitOptions,
+  type UnitState
 } from '../Unit';
 import PlantUnitModule from '../unitModule/Plant';
 
@@ -27,11 +28,12 @@ export default class PlantUnit<
   Modules extends PlantUnitModules = PlantUnitModules,
   ModuleList extends PlantUnitModuleList = PlantUnitModuleList,
   Options extends PlantUnitOptions = PlantUnitOptions,
-  Observables extends PlantUnitObservables = PlantUnitObservables
-> extends Unit<Modules, ModuleList, Options, Observables> {
+  Observables extends PlantUnitObservables = PlantUnitObservables,
+  State extends UnitState = UnitState
+> extends Unit<Modules, ModuleList, Options, Observables, State> {
   static override TYPE = UNIT_TYPE.PLANT;
   constructor(
-    options: UnitConstructorOptions<Options>,
+    options: UnitConstructorOptions<Options, State>,
     moduleList?: ModuleList
   ) {
     moduleList = (moduleList || []) as ModuleList;

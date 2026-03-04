@@ -310,7 +310,7 @@ export default class WeaponUnitModule<
           .createShoot(
             this.state.sourcePositions[index]!,
             this.state.sourceDirections[index]!,
-            target?.getPosition(),
+            target?.getRoot(),
             weaponSlot,
             {
               enableSpread: weapon.spreadAmount > 0,

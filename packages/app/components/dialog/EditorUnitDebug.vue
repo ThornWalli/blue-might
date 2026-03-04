@@ -14,67 +14,63 @@
 </template>
 
 <script lang="ts" setup>
-import { inject, onMounted, onUnmounted, reactive } from 'vue';
+import { inject, ref } from 'vue';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
 import type { ModuleDebug } from '@blue-might/app/lib/classes/Unit';
-import { Subscription } from 'rxjs';
 
 import BmToggle from '../Toggle.vue';
 import BmButton from '../Button.vue';
 import type { DialogContext } from '../base/Dialog.vue';
 
-const moduleDebug: ModuleDebug = reactive({
-  animation: false,
-  attack: false,
-  building: false,
-  collision: false,
-  damage: false,
-  faction: false,
-  figure: false,
-  figureMovable: false,
-  groundVehicle: false,
-  helicopter: false,
-  landingPort: false,
-  movable: false,
-  pathfinding: false,
-  patrol: false,
-  player: false,
-  rescue: false,
-  seaVehicle: false,
-  selection: false,
-  supply: false,
-  transport: false,
-  weapon: false
-});
 const dialog = inject<DialogContext>('dialog')!;
 
 const $props = defineProps<{
   app: AppEditor;
+  modelValue: Partial<ModuleDebug>;
 }>();
-const editorUnitDebug = $props.app.modules.editorUnitDebug;
+
+const $emit = defineEmits<{
+  (e: 'update:modelValue', value: ModuleDebug): void;
+}>();
 
 function onSubmit(e: Event) {
   e.preventDefault();
-  editorUnitDebug.setModuleDebug(moduleDebug);
+  $emit(
+    'update:modelValue',
+    Object.fromEntries(
+      Object.entries(moduleDebug.value).filter(([_, v]) => v)
+    ) as ModuleDebug
+  );
   dialog.close();
 }
+
+const moduleDebug = ref<ModuleDebug>({
+  animation: $props.modelValue.animation ?? false,
+  attack: $props.modelValue.attack ?? false,
+  building: $props.modelValue.building ?? false,
+  collision: $props.modelValue.collision ?? false,
+  damage: $props.modelValue.damage ?? false,
+  faction: $props.modelValue.faction ?? false,
+  figure: $props.modelValue.figure ?? false,
+  figureMovable: $props.modelValue.figureMovable ?? false,
+  groundVehicle: $props.modelValue.groundVehicle ?? false,
+  helicopter: $props.modelValue.helicopter ?? false,
+  landingPort: $props.modelValue.landingPort ?? false,
+  movable: $props.modelValue.movable ?? false,
+  pathfinding: $props.modelValue.pathfinding ?? false,
+  patrol: $props.modelValue.patrol ?? false,
+  player: $props.modelValue.player ?? false,
+  rescue: $props.modelValue.rescue ?? false,
+  seaVehicle: $props.modelValue.seaVehicle ?? false,
+  selection: $props.modelValue.selection ?? false,
+  supply: $props.modelValue.supply ?? false,
+  transport: $props.modelValue.transport ?? false,
+  weapon: $props.modelValue.weapon ?? false
+});
 
 function onReset() {
   dialog.close();
 }
-
-const subscription = new Subscription();
-onMounted(() => {
-  subscription.add(
-    editorUnitDebug.observables.moduleDebug$.subscribe(debug => {
-      Object.assign(moduleDebug, debug);
-    })
-  );
-});
-
-onUnmounted(() => {
-  subscription.unsubscribe();
-});
 </script>
 
 <style lang="postcss" scoped>

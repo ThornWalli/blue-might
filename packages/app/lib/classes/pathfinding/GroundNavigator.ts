@@ -2,8 +2,17 @@ import { TILE_TYPE, type TILE_TYPE_COSTS } from '../../utils/pathfinding';
 import BaseNavigator from '../abstract/BaseNavigator';
 
 export default class GroundNavigator extends BaseNavigator {
-  protected getHeightAt(x: number, z: number): number {
-    return this.map.modules.surface.getSurfaceHeightAt(x, z);
+  protected getHeightAt(
+    x: number,
+    z: number,
+    options?: { raycaster?: boolean; raycasterDistance?: number }
+  ): number {
+    return this.map.modules.surface.getSurfaceHeightAt(
+      x,
+      z,
+      undefined,
+      options
+    );
   }
 
   getAcceptableTiles() {

@@ -190,11 +190,33 @@ export default class PathfindingUnitModule extends UnitModule<
 
       const dist = Math.hypot(dx, dz);
 
-      const stopDist = 0.08;
-      const yawDeadzone = 0.1;
-      const maxTurnFactor = 0.5;
+      /**
+       * The stopping distance of the vehicle.
+       */
+      const stopDist = 0.04;
+      /**
+       * The yaw deadzone of the vehicle. (Erhöht für weniger Zickzack)
+       */
+      const yawDeadzone = 0.01; // Von 1/3 auf 0.5 erhöht
+      /**
+       * The maximum turning factor of the vehicle. (Reduziert für sanftere Drehungen)
+       */
+      const maxTurnFactor = 0.6; // Von 1 auf 0.6 reduziert
 
-      const turnFactor = Math.min(Math.abs(diff) / 1.0, maxTurnFactor);
+      // Neu: Integral-Term für Stabilität (ähnlich wie bei Helicopter)
+      const integralGain = 0.01; // Kleiner Wert für langsame Akkumulation
+      this.yawIntegral = (this.yawIntegral || 0) + diff * delta * integralGain;
+      this.yawIntegral = Math.max(
+        -maxTurnFactor,
+        Math.min(maxTurnFactor, this.yawIntegral)
+      ); // Begrenze Integral
+
+      const proportional = Math.min(Math.abs(diff) / 1.0, maxTurnFactor);
+      const turnFactor = Math.min(
+        proportional + Math.abs(this.yawIntegral),
+        maxTurnFactor
+      );
+
       const turnLeft = diff > yawDeadzone ? turnFactor : 0;
       const turnRight = diff < -yawDeadzone ? turnFactor : 0;
 

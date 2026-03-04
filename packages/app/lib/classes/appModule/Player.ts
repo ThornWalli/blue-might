@@ -148,7 +148,8 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
         faction: {
           faction: playerOptions.faction
         }
-      }
+      },
+      moduleDebug: playerOptions.unitDebug
     });
     player.modules.vehicle.setVehicleUnit(unit as VehicleUnits);
     map.modules.units.add(unit);
