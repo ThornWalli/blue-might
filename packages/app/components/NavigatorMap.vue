@@ -84,6 +84,7 @@ const $props = defineProps<{
   center?: Vector2;
   controls?: boolean;
   debug?: boolean;
+  shadow?: boolean;
 }>();
 
 const subscription = new Subscription();
@@ -94,6 +95,7 @@ const unitCanvasEl = ref<HTMLCanvasElement | null>(null);
 
 const map = ref<Map>();
 const currentPlayer = ref<Player>();
+const radarRadius = ref(0);
 
 /**
  * Gibt an, ob die Karte auf den Spieler zentriert ist oder ob der Spieler manuell verschoben hat.
@@ -128,6 +130,8 @@ watchEffect(() => {
 
   updateFrameState();
   renderBackground();
+  preRenderRadarShadow(radarRadius.value);
+  renderRadarShadow();
 });
 
 type Format = 'landscape' | 'portrait' | 'square';
@@ -219,6 +223,17 @@ onMounted(() => {
         currentPlayer.value = player;
       })
     );
+    subscription.add(
+      app.modules.player.observables.currentPlayer$
+        .pipe(
+          switchMap(player => player?.modules.vehicle.observables.currentUnit$)
+        )
+        .subscribe(unit => {
+          if ('radar' in unit.modules) {
+            radarRadius.value = unit.modules.radar.getRadius();
+          }
+        })
+    );
   }
 
   subscription.add(
@@ -238,6 +253,8 @@ onMounted(() => {
 
   subscription.add(
     map$.subscribe(m => {
+      preShadowCanvas = null;
+
       const { backgroundTexture } = m.modules.surface.getTextures();
       map.value = m;
       units = m.modules.units.getUnits();
@@ -258,6 +275,8 @@ onMounted(() => {
       );
 
       renderBackground();
+      preRenderRadarShadow(radarRadius.value);
+      renderRadarShadow();
     })
   );
 
@@ -266,6 +285,7 @@ onMounted(() => {
 
 let animationFrameId: number;
 onUnmounted(() => {
+  destroyed.value = true;
   subscription.unsubscribe();
   cancelAnimationFrame(animationFrameId);
 });
@@ -278,11 +298,130 @@ const dimension = new Vector2(
 );
 function loop() {
   if (destroyed.value) return;
+  animationFrameId = requestAnimationFrame(loop);
   dimension.set(mapEl.value?.clientWidth || 0, mapEl.value?.clientHeight || 0);
   // updateFrameState();
   renderUnits();
-  animationFrameId = requestAnimationFrame(loop);
+
+  renderRadarShadow();
 }
+
+//#region shadow
+
+const shadowCanvas = document.createElement('canvas');
+const shadowCtx = shadowCanvas.getContext('2d')!;
+shadowCtx.imageSmoothingEnabled = false;
+let preShadowCanvas: HTMLCanvasElement | null = null;
+
+function preRenderRadarShadow(radius: number) {
+  if (
+    !$props.shadow ||
+    !canvasEl.value ||
+    canvasEl.value.width < 1 ||
+    !map.value
+  )
+    return;
+
+  const pixelDensity = localScale.value;
+
+  preShadowCanvas = document.createElement('canvas');
+  const canvas = preShadowCanvas;
+  preShadowCanvas.width = canvasEl.value.width;
+  preShadowCanvas.height = canvasEl.value.height;
+
+  const ctx = canvas.getContext('2d')!;
+  if (orientation.value === 'landscape') {
+    const ratio = scaledMapSize.value.x / scaledMapSize.value.y;
+    shadowCanvas.width = canvasEl.value.offsetHeight * ratio * pixelDensity;
+    shadowCanvas.height = canvasEl.value.offsetHeight * pixelDensity;
+  } else if (orientation.value === 'portrait') {
+    const ratio = scaledMapSize.value.y / scaledMapSize.value.x;
+    shadowCanvas.width = canvasEl.value.offsetWidth * pixelDensity;
+    shadowCanvas.height = canvasEl.value.offsetWidth * ratio * pixelDensity;
+  } else {
+    shadowCanvas.width = canvasEl.value.offsetWidth * pixelDensity;
+    shadowCanvas.height = canvasEl.value.offsetHeight * pixelDensity;
+  }
+
+  shadowCtx.fillStyle = 'rgba(0, 0, 0, 1)';
+  shadowCtx.fillRect(0, 0, shadowCanvas.width, shadowCanvas.height);
+
+  shadowCtx.globalCompositeOperation = 'destination-out';
+
+  // Spielerposition normalisieren (0-1 relativ zur Kartengröße) und klammern
+  const playerPos = new Vector2(playerPosition.value.x, playerPosition.value.z);
+  const normalizedPos = playerPos.clone().divide(mapSize.value);
+  normalizedPos.x = Math.max(-1, Math.min(1, normalizedPos.x)); // Klammern auf 0-1
+  normalizedPos.y = Math.max(-1, Math.min(1, normalizedPos.y));
+
+  // Auf shadowCanvas-Dimensionen skalieren
+  const shadowPos = new Vector2(shadowCanvas.width, shadowCanvas.height)
+    .divideScalar(2)
+    .add(
+      normalizedPos
+        .clone()
+        .multiply(new Vector2(shadowCanvas.width, shadowCanvas.height))
+    );
+  const normalizedRadius =
+    (radius / Math.max(mapSize.value.x, mapSize.value.y)) *
+    Math.max(shadowCanvas.width, shadowCanvas.height);
+
+  // Arc zeichnen
+  shadowCtx.beginPath();
+  shadowCtx.arc(shadowPos.x, shadowPos.y, normalizedRadius, 0, Math.PI * 2);
+  shadowCtx.fill();
+
+  shadowCtx.globalCompositeOperation = 'source-over';
+
+  // Rest bleibt gleich: Dimension und Position für das Zeichnen auf dem Hauptcanvas
+  const dimension = new Vector2(
+    shadowCtx.canvas.width,
+    shadowCtx.canvas.height
+  );
+  if (orientation.value === 'landscape') {
+    const scale = canvas.height / dimension.y;
+    dimension.setX(dimension.x * scale);
+    dimension.setY(dimension.y * scale);
+  } else if (orientation.value === 'portrait') {
+    const scale = canvas.width / dimension.x;
+    dimension.setX(dimension.x * scale);
+    dimension.setY(dimension.y * scale);
+  } else {
+    dimension.multiplyScalar(canvas.width / dimension.x);
+  }
+
+  const position = new Vector2(0, 0);
+  position
+    .sub(dimension.clone().divideScalar(2).multiplyScalar(localScale.value))
+    .add(new Vector2(canvas.width / 2, canvas.height / 2))
+    .add(
+      pan.value
+        .clone()
+        .multiply(dimension.clone().multiplyScalar(localScale.value))
+    );
+
+  ctx.drawImage(
+    shadowCanvas,
+    0,
+    0,
+    shadowCanvas.width,
+    shadowCanvas.height,
+    position.x,
+    position.y,
+    (shadowCanvas.width / pixelDensity) * localScale.value,
+    (shadowCanvas.height / pixelDensity) * localScale.value
+  );
+}
+
+function renderRadarShadow() {
+  const canvas = unitCanvasEl.value;
+  if (!canvas || !preShadowCanvas) return;
+
+  const ctx = canvas.getContext('2d')!;
+  ctx.drawImage(preShadowCanvas, 0, 0);
+}
+
+//#endregion
 
 function updateFrameState() {
   if (!mapSize.value) return;
@@ -301,13 +440,6 @@ function centerPlayer() {
     playerPos.clone().divide(mapSize.value).multiplyScalar(-1)
   );
   pan.value = localPosition.value;
-}
-
-function clamp(position: Vector2) {
-  return new Vector2(
-    Math.max(-minMax.value.x, Math.min(minMax.value.x, position.x)),
-    Math.max(-minMax.value.y, Math.min(minMax.value.y, position.y))
-  );
 }
 
 function renderBackground() {
@@ -537,6 +669,13 @@ function onClickFocusPlayer() {
 
   centerPlayer();
 }
+
+function clamp(position: Vector2) {
+  return new Vector2(
+    Math.max(-minMax.value.x, Math.min(minMax.value.x, position.x)),
+    Math.max(-minMax.value.y, Math.min(minMax.value.y, position.y))
+  );
+}
 </script>
 
 <style lang="postcss" scoped>
@@ -563,6 +702,7 @@ function onClickFocusPlayer() {
       position: absolute;
       top: 0;
       left: 0;
+      image-rendering: pixelated;
     }
   }
 

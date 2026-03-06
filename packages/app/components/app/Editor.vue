@@ -33,7 +33,7 @@
     </template>
     <template #[PANEL.TOP_LEFT]>
       <div class="panel-row">
-        <bm-panel-map key="map" :app="app" />
+        <bm-panel-map key="map" :app="app" :shadow="false" />
         <bm-panel-editor-grid key="editor-grid" :app="app" />
       </div>
     </template>

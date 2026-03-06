@@ -577,7 +577,7 @@ export default class HelicopterUnitModule<
         unit.setPosition(position, {
           raycaster: true
         });
-        console.log('Helicopter landed at y=', position.toArray());
+        // console.log('Helicopter landed at y=', position.toArray());
 
         if (targetUnit) {
           const landingPort = (

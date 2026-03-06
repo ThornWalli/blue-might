@@ -34,7 +34,19 @@ export default class House_1<
     super(
       {
         ...options,
-        name: 'House'
+        name: 'House',
+        moduleOptions: {
+          ...options.moduleOptions,
+
+          collision: {
+            ...options.moduleOptions?.collision,
+            targets: [
+              {
+                name: 'root'
+              }
+            ]
+          }
+        }
       },
       moduleList
     );

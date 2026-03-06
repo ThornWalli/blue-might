@@ -8,21 +8,30 @@ import type Unit from '../Unit';
 import type BaseApp from '../BaseApp';
 
 interface Observables extends AppModuleObservables {
+  type$: ReplaySubject<FOLLOW_TYPE | null>;
   followedUnit$: ReplaySubject<Unit | null>;
   focus$: ReplaySubject<Unit>;
 }
 
+export enum FOLLOW_TYPE {
+  PLAYER,
+  UNIT
+}
+
 interface State extends AppModuleState {
+  type: FOLLOW_TYPE | null;
   followedUnit: Unit | null;
 }
 export default class UnitFocusAppModule extends AppModule<State, Observables> {
   static override TYPE = 'unitFocus';
   constructor(app: BaseApp) {
     super(app, {
+      type: null,
       followedUnit: null
     });
 
     //#region observables
+    this.observables.type$ = new ReplaySubject<FOLLOW_TYPE | null>(1);
     this.observables.focus$ = new ReplaySubject<Unit>(1);
     this.observables.followedUnit$ = new ReplaySubject<Unit | null>(1);
     //#endregion
@@ -62,11 +71,31 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
     return this.state.followedUnit?.id === unit.id;
   }
 
-  followFocus(unit: Unit) {
-    this.state.followedUnit = unit;
-    this.setCameraFocusClamp(true);
-    this.observables.followedUnit$.next(unit);
-    this.focus(unit);
+  abort() {
+    this.state.type = null;
+    this.state.followedUnit = null;
+    this.setCameraFocusClamp(false);
+    this.observables.type$.next(null);
+    this.observables.followedUnit$.next(null);
+  }
+
+  followPlayer() {
+    this.state.type = FOLLOW_TYPE.PLAYER;
+    const unit = this.getCurrentUnit();
+    if (unit) {
+      this.followFocus(unit);
+    }
+  }
+
+  followUnit(unit: Unit) {
+    this.state.type = FOLLOW_TYPE.UNIT;
+    this.followFocus(unit);
+  }
+  focusPlayer() {
+    const unit = this.getCurrentUnit();
+    if (unit) {
+      this.followFocus(unit);
+    }
   }
 
   focus(unit: Unit) {
@@ -83,6 +112,22 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
     this.state.followedUnit = null;
     this.setCameraFocusClamp(false);
     this.observables.followedUnit$.next(null);
+  }
+
+  private getCurrentUnit() {
+    if ('player' in this.app.modules) {
+      return this.app.modules.player
+        .getCurrentPlayer()
+        .modules.vehicle.getCurrentUnit();
+    }
+    return null;
+  }
+
+  private followFocus(unit: Unit) {
+    this.state.followedUnit = unit;
+    this.setCameraFocusClamp(true);
+    this.observables.followedUnit$.next(unit);
+    this.focus(unit);
   }
 
   setCameraFocusClamp(value: boolean) {

@@ -129,32 +129,13 @@ export default class TransportUnitModule<
           if (slots.length >= this.options.maxSlots) {
             canProcess = false;
           }
-          console.log(
-            `Flight status: ${flightStatus}, Slots: ${slots.length}/${this.options.maxSlots}, CanProcess: ${canProcess}`
-          );
+          // console.log(
+          //   `Flight status: ${flightStatus}, Slots: ${slots.length}/${this.options.maxSlots}, CanProcess: ${canProcess}`
+          // );
           this.setCanProcess(canProcess);
         })
       );
     }
-
-    // this.subscription.add(
-    //   this.observables.targetUnit$.subscribe(async targetUnit => {
-    //     if (!targetUnit) {
-    //       if (this.getUnit().modules.pathfinding.isMoving()) {
-    //         this.getUnit().modules.pathfinding.abortMovement();
-    //       }
-    //       return;
-    //     }
-
-    //     await this.moveToUnit();
-
-    //     if (isRescue(targetUnit)) {
-    //       console.log('Target unit is a rescue unit');
-    //     } else if (isTransport(targetUnit)) {
-    //       console.log('Target unit is a transport unit');
-    //     }
-    //   })
-    // );
 
     if (this.debug) {
       this.subscription.add(

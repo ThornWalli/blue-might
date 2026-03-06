@@ -79,7 +79,7 @@ export default class FactionUnitModule extends UnitModule<
     return context.mesh;
   }
 
-  getFaction() {
+  public getFaction() {
     return (
       this.options.factionOverride ??
       this.getUnit()
@@ -88,16 +88,16 @@ export default class FactionUnitModule extends UnitModule<
     );
   }
 
-  getFactionId() {
+  public getFactionId() {
     return this.options.faction;
   }
 
-  setFaction(faction: FactionIdentifier | null) {
+  public setFaction(faction: FactionIdentifier | null) {
     this.options.faction = faction ?? FACTION.NEUTRAL;
     this.observables.faction$.next(this.options.faction);
   }
 
-  isFriendlyFaction(
+  public isFriendlyFaction(
     faction: Faction | FactionDescription | FactionIdentifier | undefined
   ) {
     if (faction && typeof faction !== 'string') {
@@ -113,7 +113,7 @@ export default class FactionUnitModule extends UnitModule<
     );
   }
 
-  setupFactionColors(object: Object3D) {
+  private setupFactionColors(object: Object3D) {
     this.subscription.add(
       this.getUnit()
         .observables.map$.pipe(

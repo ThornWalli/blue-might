@@ -235,46 +235,46 @@ export default class MovableUnitModule<
     }
   }
 
-  getFuel() {
+  public getFuel() {
     return this.state.fuel;
   }
 
-  setFuel(fuel: number) {
+  public setFuel(fuel: number) {
     this.state.fuel = Math.max(0, Math.min(fuel, this.options.maxFuel));
     this.observables.fuel$.next(this.state.fuel);
   }
 
-  getMaxFuel() {
+  public getMaxFuel() {
     return this.options.maxFuel;
   }
 
-  canTurnOn() {
+  public canTurnOn() {
     return !isUnitDestroyed(this.getUnit());
   }
 
-  isTurnOn() {
+  public isTurnOn() {
     return this.getActive() ?? false;
   }
 
-  turnOn() {
+  public turnOn() {
     if (this.canTurnOn()) {
       this.setActive(true);
     }
   }
 
-  turnOff() {
+  public turnOff() {
     this.setActive(false);
   }
 
-  getAIControls() {
+  public getAIControls() {
     return this._aiControls;
   }
 
-  hasAIControls() {
+  public hasAIControls() {
     return !!this._aiControls;
   }
 
-  setAutopilotControls(controls?: Partial<ControlState>) {
+  public setAutopilotControls(controls?: Partial<ControlState>) {
     this._aiControls = controls
       ? { ...getDefaultControls(), ...controls }
       : undefined;
@@ -287,13 +287,13 @@ export default class MovableUnitModule<
       this.turnOff();
     }
   }
-  clearAutopilotControls() {
+  public clearAutopilotControls() {
     if (!this._aiControls) return;
     this._aiControls = undefined;
     // this.turnOff(); // Stoppen, wenn AI entfernt
   }
 
-  getControls(): ControlState {
+  public getControls(): ControlState {
     const unit = this.getUnit() as U;
     const human = unit.modules.player
       .getPlayer()
@@ -345,54 +345,54 @@ export default class MovableUnitModule<
     };
   }
 
-  hasMinPower() {
+  public hasMinPower() {
     return this.state.rawPower >= this.options.minPower;
   }
 
-  getRawPower() {
+  public getRawPower() {
     return this.state.rawPower;
   }
 
-  getCurrentPower() {
+  public getCurrentPower() {
     return (
       Math.max(this.state.rawPower - this.getMinPower(), 0) /
       (this.getMaxPower() - this.getMinPower())
     );
   }
 
-  getMaxPower() {
+  public getMaxPower() {
     if (this.state.active) {
       return this.options.maxPower;
     }
     return 0;
   }
 
-  getMinPower() {
+  public getMinPower() {
     return this.options.minPower;
   }
 
-  getActive() {
+  public getActive() {
     return this.state.active;
   }
 
-  isActive(): boolean {
+  public isActive(): boolean {
     return this.state.active;
   }
 
-  setActive(value: boolean) {
+  public setActive(value: boolean) {
     if (this.state.active === value) return;
     this.state.active = value;
     this.observables.active$.next(this.state.active);
   }
 
-  getTmpDirection() {
+  public getTmpDirection() {
     return this._dir;
   }
-  setTmpDirection(x: number, y: number, z: number) {
+  public setTmpDirection(x: number, y: number, z: number) {
     this._dir.set(x, y, z);
   }
 
-  getVelocity() {
+  public getVelocity() {
     return this.state.velocity;
   }
 }

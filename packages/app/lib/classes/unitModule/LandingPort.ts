@@ -57,11 +57,11 @@ export default class LandingPortUnitModule extends UnitModule<
     //#endregion
   }
 
-  hasUnit(unit: AirVehicleUnit | null) {
+  public hasUnit(unit: AirVehicleUnit | null) {
     return this.state.landedUnit === unit;
   }
 
-  setLandedUnit(unit: AirVehicleUnit | null) {
+  public setLandedUnit(unit: AirVehicleUnit | null) {
     if (unit === this.state.landedUnit) return;
 
     this.state.landedUnit = unit;

@@ -91,7 +91,6 @@ export default class PlayerUnitModule extends UnitModule<
   }
 
   setCanLeave(canLeave: boolean) {
-    console.log('Setting canLeave to:', canLeave);
     this.state.canLeave = canLeave;
     this.observables.canLeave$.next(canLeave);
   }

@@ -306,11 +306,12 @@ export default class WeaponUnitModule<
         currentTime - (this.state.lastShootTime[index] ?? 0) >
         shootCooldown
       ) {
+        this.state.lastShootTime[index] = currentTime;
         shootModule
           .createShoot(
             this.state.sourcePositions[index]!,
             this.state.sourceDirections[index]!,
-            target?.getRoot(),
+            target,
             weaponSlot,
             {
               enableSpread: weapon.spreadAmount > 0,
@@ -330,8 +331,6 @@ export default class WeaponUnitModule<
               });
             }
           });
-
-        this.state.lastShootTime[index] = currentTime;
 
         if (
           !this.state.autoAimActive &&

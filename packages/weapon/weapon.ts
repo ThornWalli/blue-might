@@ -11,7 +11,7 @@ import {
 declare module '@blue-might/app/lib/types/weapon' {
   interface Weapon {
     DEFAULT: 'default';
-    AIR_SURFACE_MISSILE_1: 'air_surface_missile_1';
+    BASE_MISSILE_LAUNCHER: 'base_missile_launcher';
   }
 }
 
@@ -49,13 +49,13 @@ function getSecondsByType(type: Values<ProjectileTypes>): number {
   }
 }
 
-WEAPON.AIR_SURFACE_MISSILE_1 = 'air_surface_missile_1';
-export class AirSurfaceMissile_1 extends Weapon {
+WEAPON.BASE_MISSILE_LAUNCHER = 'base_missile_launcher';
+export class BaseMissileLauncher extends Weapon {
   constructor(options?: Partial<ConstructorParameters<typeof Weapon>[0]>) {
     super({
-      id: options?.id ?? WEAPON.AIR_SURFACE_MISSILE_1,
-      name: options?.name ?? 'Air Surface Missile 1',
-      description: options?.description ?? 'An air-to-surface missile.',
+      id: options?.id ?? WEAPON.BASE_MISSILE_LAUNCHER,
+      name: options?.name ?? 'Base Missile Launcher',
+      description: options?.description ?? 'A missile launcher.',
       spreadAmount: options?.spreadAmount ?? 0,
       perSeconds: options?.perSeconds ?? 0.25,
       projectile: options?.projectile ?? PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1,
@@ -80,10 +80,10 @@ export class GatlingGun extends Weapon {
 
 const weapons = {
   default: Default,
-  air_surface_missile_1: AirSurfaceMissile_1,
+  base_missile_launcher: BaseMissileLauncher,
   gatling_gun: GatlingGun
 };
 
 export { weapons };
 
-export type Weapons = Default | AirSurfaceMissile_1 | GatlingGun;
+export type Weapons = Default | BaseMissileLauncher | GatlingGun;

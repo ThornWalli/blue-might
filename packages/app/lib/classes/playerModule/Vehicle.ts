@@ -83,13 +83,16 @@ export default class VehiclePlayerModule extends PlayerModule<
   }
 
   toggleUnit() {
-    if (this.state.unit !== this.state.figureUnit) {
+    if (this.state.unit && this.state.unit !== this.state.figureUnit) {
       this.leaveUnit();
     } else {
       const unit =
         (this.player.app.modules.map
           .getMap()
-          ?.modules.units.getUnitsInRadius(this.getUnit()!.getPosition(), 1)
+          ?.modules.units.getUnitsInRadius(
+            this.getCurrentUnit().getPosition(),
+            1
+          )
           .filter(
             unit =>
               'player' in unit.modules &&
@@ -102,10 +105,10 @@ export default class VehiclePlayerModule extends PlayerModule<
   }
 
   enterUnit(unit: Units) {
-    if (this.state.unit !== this.state.figureUnit)
+    if (this.state.unit && this.state.unit !== this.state.figureUnit)
       throw new Error('Already in a vehicle unit');
 
-    const lastUnit = this.state.unit;
+    const lastUnit = this.getCurrentUnit();
 
     this.setVehicleUnit(unit);
 
@@ -154,17 +157,21 @@ export default class VehiclePlayerModule extends PlayerModule<
 
   setVehicleUnit(vehicle: Units | null) {
     if (this.state.unit === vehicle) return;
+    const last = this.state.unit;
+
+    if (last && 'player' in last.modules) {
+      last.modules.player.setPlayer(null);
+    }
     if (!vehicle) {
       this.state.unit = null;
       this.observables.unit$.next(null);
+      const currentUnit = this.getCurrentUnit();
+      if (currentUnit) {
+        this.observables.currentUnit$.next(currentUnit);
+      }
       return;
     }
     if (vehicle?.modules && 'player' in vehicle.modules) {
-      const last = this.state.unit;
-      if (last && 'player' in last.modules) {
-        last.modules.player.setPlayer(null);
-      }
-
       this.state.unit = vehicle;
 
       vehicle?.modules.player.setPlayer(this.player);

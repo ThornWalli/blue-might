@@ -31,7 +31,7 @@ export default class AirNavigator extends BaseNavigator {
   ) {
     super(NAVIGATOR_TYPE.AIR, map, grid, options, debug);
 
-    this.flightHeight = options.flightHeight ?? 1;
+    this.flightHeight = options.flightHeight ?? 1.5;
     this.vehicleType = options.vehicleType;
     this.runways = options.runways ?? [];
   }

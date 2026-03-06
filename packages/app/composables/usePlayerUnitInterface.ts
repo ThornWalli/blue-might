@@ -36,6 +36,7 @@ import type { App } from '../lib/types';
 import { getCompassDisplayValue } from '../lib/utils/compas';
 import type TransportUnitModule from '../lib/classes/unitModule/Transport';
 import thumbGenerator from '../services/thumbGenerator';
+import type { WARNING_TYPE } from '../lib/classes/unitModule/Radar';
 
 export interface TransportSlotInfoSlot {
   key: string;
@@ -48,7 +49,16 @@ export interface TransportSlotInfo {
   maxSlots: number;
 }
 
+const appMap = new Map<App, ReturnType<typeof create>>();
+
 export default function usePlayerUnitInterface(app: App) {
+  if (!appMap.has(app)) {
+    appMap.set(app, create(app));
+  }
+  return appMap.get(app) as ReturnType<typeof create>;
+}
+
+function create(app: App) {
   const subscription = new Subscription();
 
   if (!('player' in app.modules)) {
@@ -84,6 +94,7 @@ export default function usePlayerUnitInterface(app: App) {
   const unitRotation = ref<Euler>(new Euler(0, 0, 0));
   const position = ref<Vector3 | null>(null);
   const flightStatus = ref<FLIGHT_STATUS | null>(null);
+  const warnings = ref<WARNING_TYPE[]>([]);
   const powerInfo = ref<PowerInfo>({
     flightPower: 0,
     currentPower: 0,
@@ -139,7 +150,7 @@ export default function usePlayerUnitInterface(app: App) {
 
   onMounted(() => {
     const unit$ = playerModule.observables.currentPlayer$.pipe(
-      switchMap(player => player.modules.vehicle.observables.unit$)
+      switchMap(player => player.modules.vehicle.observables.currentUnit$)
     );
     const vehicle$ = unit$.pipe(map(unit => unit as VehicleUnits | null));
 
@@ -181,6 +192,21 @@ export default function usePlayerUnitInterface(app: App) {
           switchMap(player => player?.modules.life.observables.lifes$ ?? EMPTY)
         )
         .subscribe(lifes => (playerLifes.value = lifes))
+    );
+
+    subscription.add(
+      playerModule.observables.currentPlayer$
+        .pipe(
+          switchMap(p => p?.modules.vehicle.observables.currentUnit$ ?? EMPTY),
+          switchMap(unit =>
+            'radar' in unit.modules
+              ? unit.modules.radar.observables.warning$
+              : EMPTY
+          )
+        )
+        .subscribe(types => {
+          warnings.value = types;
+        })
     );
 
     //#region vehicle
@@ -378,9 +404,9 @@ export default function usePlayerUnitInterface(app: App) {
             vehicle =>
               vehicle?.modules.damage.observables.damage$.pipe(
                 map(() => ({
-                  destroyed: vehicle?.modules.damage.isDestroyed(),
-                  value: vehicle?.modules.damage.getDamageValue(),
-                  level: vehicle?.modules.damage.getDamageLevel()
+                  destroyed: vehicle.modules.damage.isDestroyed(),
+                  value: vehicle.modules.damage.getDamageValue(),
+                  level: vehicle.modules.damage.getDamageLevel()
                 }))
               ) ?? EMPTY
           )
@@ -394,10 +420,7 @@ export default function usePlayerUnitInterface(app: App) {
 
     subscription.add(
       helicopterModule$
-        .pipe(
-          filter(Boolean),
-          switchMap(({ observables }) => observables.flightStatus$ ?? EMPTY)
-        )
+        .pipe(switchMap(v => v?.observables.flightStatus$ ?? of(null)))
         .subscribe(s => (flightStatus.value = s))
     );
     subscription.add(
@@ -446,6 +469,7 @@ export default function usePlayerUnitInterface(app: App) {
     unitRotation,
     position,
     flightStatus,
+    warnings,
     powerInfo,
     autoAimActive,
     unitActive,

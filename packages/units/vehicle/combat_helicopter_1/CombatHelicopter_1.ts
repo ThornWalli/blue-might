@@ -166,7 +166,7 @@ export default class CombatHelicopter_1
                 ammunition: 100
               },
               {
-                weapon: new weapons.air_surface_missile_1({
+                weapon: new weapons.base_missile_launcher({
                   perSeconds: 1
                 }),
                 maxAmmunition: 400,
@@ -201,8 +201,8 @@ export default class CombatHelicopter_1
     //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ shoot: { projectile } }) => {
-          playSound(await projectile.getSfx(), 0.3);
+        async ({ shoot: { projectileInstance } }) => {
+          playSound(await projectileInstance.projectile.getSfx(), 0.3);
         }
       )
     );

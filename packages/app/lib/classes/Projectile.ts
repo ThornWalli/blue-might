@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable complexity */
 import type { Vector3 } from 'three/src/math/Vector3.js';
 
@@ -16,6 +17,53 @@ export type ProjectileUpdateContext = {
   targetPosition: Vector3 | null;
 } & AnimationLoopValue;
 
+export class ProjectileInstance<
+  P extends Projectile,
+  UpdateOptions extends object = any
+> {
+  projectile: P;
+  update: (context: ProjectileUpdateContext) => void;
+  updateOptions: UpdateOptions;
+
+  constructor({
+    projectile,
+    update,
+    reset,
+    updateOptions
+  }: {
+    projectile: P;
+    update: (context: ProjectileUpdateContext) => void;
+    reset: () => void;
+    updateOptions: UpdateOptions;
+  }) {
+    this.projectile = projectile;
+    this.update = update;
+    this.reset = reset;
+    this.updateOptions = updateOptions;
+  }
+
+  protected applyPhysics(context: ProjectileUpdateContext) {
+    const { delta, gravity, velocity, position } = context;
+
+    velocity.add(
+      gravity
+        .clone()
+        .multiplyScalar(delta)
+        .multiplyScalar(this.projectile.weight)
+    );
+    // Luftwiderstand aus eigener Eigenschaft
+    const drag = velocity
+      .clone()
+      .multiplyScalar(this.projectile.airResistance * delta);
+    velocity.sub(drag);
+    // Position
+    position.add(velocity.clone().multiplyScalar(delta));
+  }
+
+  reset() {
+    // empty
+  }
+}
 export default abstract class Projectile implements ProjectileDescription {
   static KEY: string;
   id: ProjectileIdentifier;
@@ -112,19 +160,23 @@ export default abstract class Projectile implements ProjectileDescription {
     return this.features.dust;
   }
 
-  abstract update(context: ProjectileUpdateContext): void;
+  abstract update(
+    this: ProjectileInstance<this>,
+    context: ProjectileUpdateContext
+  ): void;
+  abstract reset(this: ProjectileInstance<this>): void;
 
-  protected applyPhysics(context: ProjectileUpdateContext) {
-    const { delta, gravity, velocity, position } = context;
+  getUpdateOptions(): any {
+    return {};
+  }
 
-    velocity.add(
-      gravity.clone().multiplyScalar(delta).multiplyScalar(this.weight)
-    );
-    // Luftwiderstand aus eigener Eigenschaft
-    const drag = velocity.clone().multiplyScalar(this.airResistance * delta);
-    velocity.sub(drag);
-    // Position
-    position.add(velocity.clone().multiplyScalar(delta));
+  create(): ProjectileInstance<this> {
+    return new ProjectileInstance({
+      projectile: this,
+      update: this.update,
+      reset: this.reset,
+      updateOptions: this.getUpdateOptions()
+    });
   }
 
   toDescription(): ProjectileDescription {

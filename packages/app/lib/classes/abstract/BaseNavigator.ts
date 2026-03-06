@@ -133,7 +133,7 @@ export default abstract class BaseNavigator {
 
       // nodePath = simplifyPath(nodePath);
       nodePath = optimizePath(nodePath);
-      console.log('Optimized Path:', [...nodePath]);
+
       let waypoints = nodePath.map(n => {
         const p = this.grid.toWorldPosition(n.x, n.y);
         return new Vector3(

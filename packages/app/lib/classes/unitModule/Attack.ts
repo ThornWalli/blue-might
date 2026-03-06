@@ -272,14 +272,16 @@ export default class AttackUnitModule extends UnitModule<
 
           unit.setYaw(interpolatedYaw);
 
-          // Stoppe Interpolation, wenn nah genug am Ziel (verhindert Endlosschleifen)
+          // Stoppe Interpolation, wenn nah genug am Ziel.
+          // Toleranz: 0.01 Radiant ≈ 0.57°
           if (Math.abs(deltaYaw) < 0.01) {
-            // Toleranz: 0.01 Radiant ≈ 0.57°
-            this.state.targetYaw = null; // Reset für nächstes Ziel
+            // Reset für nächstes Ziel
+            this.state.targetYaw = null;
           }
         }
 
-        return; // Keine weitere Bewegung
+        // Keine weitere Bewegung
+        return;
       }
 
       // Reset targetYaw, wenn nicht mehr in Reichweite
@@ -287,14 +289,13 @@ export default class AttackUnitModule extends UnitModule<
 
       // Nur bewegen, wenn nicht in Reichweite und nicht bereits bewegend
       if (!pathfinding.isMoving()) {
-        // Zielposition: Auf der Linie zum Ziel, in attackRadius Entfernung (erhöhe Abstand, um Schleifen zu vermeiden)
         const direction = new Vector3()
           .subVectors(this.state.targetUnit.getPosition(), unit.getPosition())
           .normalize();
         const targetPosition = this.state.targetUnit
           .getPosition()
           .clone()
-          .sub(direction.multiplyScalar(attackRadius)); // Erhöht auf attackRadius statt *0.5, um weiter weg zu bleiben
+          .sub(direction.multiplyScalar(attackRadius));
 
         // console.log(
         //   'Starting movement to:',
@@ -470,6 +471,7 @@ export default class AttackUnitModule extends UnitModule<
     ) {
       result = false;
     }
+
     return result && !isDestroyed && !isFriend;
   }
 

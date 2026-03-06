@@ -2,6 +2,7 @@ import {
   GROUND_ADJUSTMENT_MODE,
   UNIT_TYPE
 } from '@blue-might/app/lib/types/unit';
+import RadarUnitModule from '@blue-might/app/lib/classes/unitModule/Radar';
 
 import type {
   UnitConstructorOptions,
@@ -21,9 +22,13 @@ export type HelicopterUnitOptions = AirVehicleUnitOptions;
 
 export type HelicopterUnitModules = AirVehicleUnitModules & {
   helicopter: HelicopterUnitModule;
+  radar: RadarUnitModule;
 };
 
-export type HelicopterUnitModuleList = (typeof HelicopterUnitModule)[] &
+export type HelicopterUnitModuleList = (
+  | typeof HelicopterUnitModule
+  | typeof RadarUnitModule
+)[] &
   AirVehicleUnitModuleList;
 export default class HelicopterUnit<
   Modules extends HelicopterUnitModules = HelicopterUnitModules,
@@ -38,7 +43,10 @@ export default class HelicopterUnit<
     moduleList?: ModuleList
   ) {
     moduleList = (moduleList || []) as ModuleList;
-    moduleList = addModules(moduleList, [HelicopterUnitModule]);
+    moduleList = addModules(moduleList, [
+      HelicopterUnitModule,
+      RadarUnitModule
+    ]);
     super(options, moduleList);
     this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.FLIGHT);
   }

@@ -62,7 +62,7 @@ const links = ref([
     href: {
       name: 'map',
       params: {
-        map: $route.params.map ?? 'extended_map.zip'
+        map: $route.params.map ?? 'default.zip'
       }
     }
   },
@@ -71,7 +71,7 @@ const links = ref([
     href: {
       name: 'editor-map',
       params: {
-        map: $route.params.map ?? 'extended_map.zip'
+        map: $route.params.map ?? 'default.zip'
       }
     }
   },
@@ -80,7 +80,7 @@ const links = ref([
     href: {
       name: 'debug-map',
       params: {
-        map: $route.params.map ?? 'extended_map.zip'
+        map: $route.params.map ?? 'default.zip'
       }
     }
   }
@@ -92,7 +92,7 @@ const missionLinks = ref([
     href: {
       name: 'map',
       params: {
-        map: 'extended_map.zip'
+        map: 'default.zip'
       }
     }
   },

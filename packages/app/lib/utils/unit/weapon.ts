@@ -97,6 +97,7 @@ export function autoAimFunction(
   const maxAngle = weaponAngles[index]!.max;
 
   const targetPosition = target.getPosition();
+
   const delta = targetPosition.clone().sub(sourcePosition);
   const horizontalDistance = Math.sqrt(delta.x ** 2 + delta.z ** 2);
   const verticalDistance = delta.y;

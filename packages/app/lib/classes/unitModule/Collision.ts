@@ -10,7 +10,7 @@ import {
   Vector3
 } from 'three';
 import { OBB } from 'three/examples/jsm/math/OBB.js';
-import { ReplaySubject } from 'rxjs';
+import { merge, ReplaySubject } from 'rxjs';
 
 import UnitModule, {
   type UnitModuleObservables,
@@ -83,6 +83,7 @@ export default class CollisionUnitModule<
   private localOBBs: OBB[] = [];
   private worldOBBs: OBB[] = [];
   private debugHelpers: (LineSegments | Box3Helper | null)[] = [];
+  private lastCollision: { type: COLLISION_TYPE; target: Unit } | null = null;
 
   constructor(unit: Unit, options: Options, state: State, debug?: boolean) {
     super(
@@ -130,28 +131,32 @@ export default class CollisionUnitModule<
       this.refreshDebugHelpers();
     }
 
+    const unit = this.getUnit();
     this.subscription.add(
-      this.getUnit().observables.position$.subscribe(() => {
-        this.refreshWorldOBBs();
-        if (this.debug) {
-          this.refreshDebugHelpers();
+      merge(unit.observables.position$, unit.observables.rotation$).subscribe(
+        () => {
+          this.refreshWorldOBBs();
+          if (this.debug) {
+            this.refreshDebugHelpers();
+          }
         }
-      })
+      )
     );
   }
 
-  getCollisionType() {
+  private getCollisionType() {
     return this.options.type;
   }
-  getWorldOBBs() {
+
+  private getWorldOBBs() {
     return this.worldOBBs;
   }
 
-  isEnabled() {
+  private isEnabled() {
     return this.state.enabled;
   }
 
-  enableCollision() {
+  public enableCollision() {
     this.state.enabled = true;
     this.getCollisionObjects().forEach(({ obj }) => {
       obj.traverse(child => {
@@ -160,7 +165,7 @@ export default class CollisionUnitModule<
     });
   }
 
-  disableCollision() {
+  public disableCollision() {
     this.state.enabled = false;
     this.getCollisionObjects().forEach(({ obj }) => {
       obj.traverse(child => {
@@ -169,7 +174,7 @@ export default class CollisionUnitModule<
     });
   }
 
-  getTargets(): { obj: Object3D; parentRotation?: boolean }[] {
+  private getTargets(): { obj: Object3D; parentRotation?: boolean }[] {
     const result: { obj: Object3D; parentRotation?: boolean }[] = [];
     this.options.targets.forEach(targetConfig => {
       const obj = this.getUnit().root.getObjectByName(targetConfig.name);
@@ -196,7 +201,7 @@ export default class CollisionUnitModule<
     return result;
   }
 
-  setupLocalOBBs() {
+  private setupLocalOBBs() {
     const objects = this.getCollisionObjects();
     this.localOBBs = objects.map(({ obj }) => {
       obj.updateMatrixWorld(true);
@@ -217,7 +222,7 @@ export default class CollisionUnitModule<
     });
   }
 
-  refreshWorldOBBs() {
+  public refreshWorldOBBs() {
     const unit = this.getUnit();
     const objects = this.getCollisionObjects();
 
@@ -256,9 +261,7 @@ export default class CollisionUnitModule<
     });
   }
 
-  lastCollision: { type: COLLISION_TYPE; target: Unit } | null = null;
-
-  checkCollision(box?: Box3 | Sphere) {
+  public checkCollision(box?: Box3 | Sphere) {
     if (!this.options.enabled) return COLLISION_TYPE.NONE;
 
     const unit = this.getUnit();
@@ -313,6 +316,28 @@ export default class CollisionUnitModule<
     return COLLISION_TYPE.NONE;
   }
 
+  public getWorldOBB() {
+    return this.worldOBBs[0] || new OBB();
+  }
+
+  public getCollisionObjects() {
+    const objs = this.getTargets();
+    if (!objs.length) {
+      objs.push({ obj: this.getUnit().root });
+    }
+    objs.forEach(({ obj }) => {
+      obj.userData[OBJECT_USER_DATA.COLLISION_TYPE] = this.options.type;
+    });
+
+    return objs;
+  }
+
+  public getDefaultCollisionObject(): Object3D | undefined {
+    const target = this.options.targets.find(target => target.default);
+    if (!target) return;
+    return this.getUnit().root.getObjectByName(target?.name)!;
+  }
+
   //#region debug
   createDebugHelpers() {
     const unit = this.getUnit();
@@ -346,26 +371,4 @@ export default class CollisionUnitModule<
   }
 
   //#endregion
-
-  getWorldOBB() {
-    return this.worldOBBs[0] || new OBB();
-  }
-
-  getCollisionObjects() {
-    const objs = this.getTargets();
-    if (!objs.length) {
-      objs.push({ obj: this.getUnit().root });
-    }
-    objs.forEach(({ obj }) => {
-      obj.userData[OBJECT_USER_DATA.COLLISION_TYPE] = this.options.type;
-    });
-
-    return objs;
-  }
-
-  getDefaultCollisionObject(): Object3D | undefined {
-    const target = this.options.targets.find(target => target.default);
-    if (!target) return;
-    return this.getUnit().root.getObjectByName(target?.name)!;
-  }
 }

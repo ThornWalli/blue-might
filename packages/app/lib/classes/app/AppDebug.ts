@@ -55,7 +55,7 @@ export default class AppDebug extends BaseApp<
           )
         )
         .subscribe(vehicle => {
-          this.modules.unitFocus.followFocus(vehicle);
+          this.modules.unitFocus.followUnit(vehicle);
         })
     );
   }

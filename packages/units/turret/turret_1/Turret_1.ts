@@ -169,8 +169,8 @@ export default class Turret_1
     //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ shoot: { projectile } }) => {
-          playSound(await projectile.getSfx(), 0.3);
+        async ({ shoot: { projectileInstance } }) => {
+          playSound(await projectileInstance.projectile.getSfx(), 0.3);
         }
       )
     );

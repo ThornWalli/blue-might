@@ -1,6 +1,8 @@
-import Projectile, {
-  type ProjectileUpdateContext
+import type {
+  ProjectileInstance,
+  ProjectileUpdateContext
 } from '@blue-might/app/lib/classes/Projectile';
+import Projectile from '@blue-might/app/lib/classes/Projectile';
 import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 
 PROJECTILE_TYPE.DEFAULT = 'default';
@@ -28,8 +30,15 @@ export default class Default extends Projectile {
     });
   }
 
-  override update(context: ProjectileUpdateContext) {
+  override update(
+    this: ProjectileInstance<Default>,
+    context: ProjectileUpdateContext
+  ) {
     this.applyPhysics(context);
+  }
+
+  override reset(): void {
+    // empty
   }
 
   override getGlb() {

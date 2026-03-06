@@ -44,7 +44,7 @@ export default class AppPlayground extends BaseApp<
       this.modules.player.observables.currentPlayer$
         .pipe(
           switchMap(
-            player => player.modules.vehicle?.observables.unit$ ?? EMPTY
+            player => player.modules.vehicle?.observables.currentUnit$ ?? EMPTY
           ),
           filter(Boolean),
           switchMap(
@@ -53,7 +53,7 @@ export default class AppPlayground extends BaseApp<
           )
         )
         .subscribe(vehicle => {
-          this.modules.unitFocus.followFocus(vehicle);
+          this.modules.unitFocus.followUnit(vehicle);
         })
     );
 

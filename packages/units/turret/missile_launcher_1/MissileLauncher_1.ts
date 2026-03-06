@@ -151,7 +151,7 @@ export default class MissileLauncher_1
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.air_surface_missile_1({
+                weapon: new weapons.base_missile_launcher({
                   perSeconds: 0.5,
                   projectile: PROJECTILE_TYPE.AIR_HOMING_MISSILE_1
                 })
@@ -186,8 +186,8 @@ export default class MissileLauncher_1
     // //#region barrel target shoot
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
-        async ({ shoot: { projectile } }) => {
-          playSound(await projectile.getSfx(), 0.3);
+        async ({ shoot: { projectileInstance } }) => {
+          playSound(await projectileInstance.projectile.getSfx(), 0.3);
         }
       )
     );

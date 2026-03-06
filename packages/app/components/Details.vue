@@ -27,7 +27,6 @@ defineProps<{
     gap: var(--bm-spacing-medium);
     align-items: center;
     width: 100%;
-    margin-bottom: var(--bm-spacing-medium);
     font-family: var(--font-family-bit-font);
     font-size: var(--font-size-bit-font);
     line-height: var(--line-height-bit-font);
@@ -53,6 +52,7 @@ defineProps<{
     display: flex;
     flex-direction: column;
     gap: var(--bm-spacing-small);
+    margin-top: var(--bm-spacing-medium);
   }
 }
 </style>

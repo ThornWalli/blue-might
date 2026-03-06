@@ -465,12 +465,11 @@ export default class Unit<
     return this.rotation;
   }
 
-  setRotation(rotation: Euler) {
-    this.setYaw(rotation.y); // Nur Heading
-
-    this.setPitch(rotation.x); // Pitch
-    this.setRoll(rotation.z); // Roll
-  }
+  // setRotation(rotation: Euler) {
+  //   this.setYaw(rotation.y); // Nur Heading
+  //   this.setPitch(rotation.x); // Pitch
+  //   this.setRoll(rotation.z); // Roll
+  // }
 
   private updateMeshTransform() {
     // 1. Position setzen
@@ -847,9 +846,22 @@ export default class Unit<
     const lastYaw = this.rotation.y;
     if (lastYaw === yaw) return;
 
+    const unit = this as unknown as Unit<
+      UnitModules & {
+        movable: MovableUnitModule;
+        patrol: PatrolUnitModule;
+      }
+    >;
+
     this.rotation.y = yaw;
 
-    if (this.modules.collision.checkCollision() >= COLLISION_TYPE.BLOCKED) {
+    const isAutopilot = unit.modules.movable?.hasAIControls() ?? false;
+    const isPatrol = unit.modules.patrol?.state.active ?? false;
+
+    if (
+      !(isPatrol || isAutopilot) &&
+      this.modules.collision.checkCollision() >= COLLISION_TYPE.BLOCKED
+    ) {
       this.rotation.y = lastYaw;
     }
 

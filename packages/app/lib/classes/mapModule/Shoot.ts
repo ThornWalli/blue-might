@@ -8,6 +8,7 @@ import {
   Sphere,
   Vector3
 } from 'three';
+import { Subject } from 'rxjs';
 
 import MapModule, {
   type MapModuleObservables,
@@ -20,6 +21,8 @@ import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import { loadGltf } from '../../utils/gltf';
 import type Projectile from '../Projectile';
 import type { WeaponSlot } from '../WeaponSlot';
+import type Map from '../Map';
+import type { ProjectileInstance } from '../Projectile';
 
 import { SMOKE_TYPE } from './../unitModule/Damage';
 
@@ -31,22 +34,25 @@ declare module '../Map' {
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface Options extends MapModuleOptions {}
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface Observables extends MapModuleObservables {}
+
+interface Observables extends MapModuleObservables {
+  addShoot$: Subject<ShootDescription>;
+  removeShoot$: Subject<ShootDescription>;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface State extends MapModuleState {}
 
-export interface ShootDescription {
+export interface ShootDescription<P extends Projectile = Projectile> {
   slot: WeaponSlot;
-  projectile: Projectile;
+  projectileInstance: ProjectileInstance<P>;
   object: Object3D;
   ignoredObjects: Object3D[];
   startPosition: Vector3;
   isActive: boolean;
   enableSmoke?: boolean;
   position: Vector3;
-  targetObject: Object3D | null;
+  targetUnit: Unit | null;
   /**
    * Lebensdauer in Sekunden
    */
@@ -88,6 +94,23 @@ export default class ShootModule extends MapModule<
     [key: string]: Object3D;
   } = {};
 
+  constructor(map: Map, options: Options, state: State, debug: boolean) {
+    super(
+      map,
+      {
+        ...options
+      },
+      {
+        ...state
+      },
+      debug
+    );
+    //#region observables
+    this.observables.addShoot$ = new Subject<ShootDescription>();
+    this.observables.removeShoot$ = new Subject<ShootDescription>();
+    //#endregion
+  }
+
   override destroy() {
     Object.values(this.shootByProjectile).forEach(obj => {
       disposeObject3D(obj);
@@ -126,7 +149,7 @@ export default class ShootModule extends MapModule<
   async createShoot(
     sourcePosition: Vector3,
     sourceDirection: Vector3 = new Vector3(0, 0, 1),
-    targetObj: Object3D | null,
+    targetUnit: Unit | null,
     slot: WeaponSlot,
     {
       enableSpread,
@@ -151,12 +174,14 @@ export default class ShootModule extends MapModule<
 
     // Versuche, ein Objekt aus dem Pool wiederzuverwenden
     let shootDesc = this.shoots.find(
-      s => !s.isActive && s.projectile.id === projectile.id
+      s => !s.isActive && s.projectileInstance.projectile.id === projectile.id
     );
 
     if (shootDesc) {
       shootDesc.lifetime = projectile.maxLifetime;
       shootDesc.object.visible = true;
+      shootDesc.targetUnit = targetUnit ?? null;
+      shootDesc.projectileInstance.reset();
     } else {
       // Erstelle ein neues Objekt, wenn der Pool leer ist
       const newShootObject = this.shootByProjectile[projectile.id]!.clone();
@@ -165,13 +190,13 @@ export default class ShootModule extends MapModule<
       this.addToScene(object);
       shootDesc = {
         slot,
-        projectile,
+        projectileInstance: projectile.create(),
         object,
         ignoredObjects: [],
         startPosition: new Vector3(),
         velocity: new Vector3(),
         position: new Vector3(),
-        targetObject: targetObj ?? null,
+        targetUnit: targetUnit ?? null,
         lifetime: projectile.maxLifetime,
         isActive: false
       };
@@ -199,6 +224,8 @@ export default class ShootModule extends MapModule<
     shootDesc.ignoredObjects = ignoredObjects ?? [];
     shootDesc.startPosition.copy(sourcePosition);
 
+    this.observables.addShoot$.next(shootDesc);
+
     return shootDesc;
   }
 
@@ -219,6 +246,8 @@ export default class ShootModule extends MapModule<
         continue;
       }
 
+      const projectile = shoot.projectileInstance.projectile;
+
       shoot.lifetime -= delta;
 
       if (shoot.lifetime < 0) {
@@ -227,11 +256,11 @@ export default class ShootModule extends MapModule<
         continue;
       }
 
-      const targetPosition = shoot.targetObject
-        ? getPositionFromObject(shoot.targetObject)
+      const targetPosition = shoot.targetUnit
+        ? getPositionFromObject(shoot.targetUnit?.getRoot())
         : null;
 
-      shoot.projectile.update({
+      shoot.projectileInstance.update({
         ...animationLoopValue,
         gravity: this.gravity,
         velocity: shoot.velocity,
@@ -250,7 +279,7 @@ export default class ShootModule extends MapModule<
       const obj = shoot.object;
       const oldPosition = this.temp.vector.copy(obj.position);
 
-      if (shoot.projectile.hasSmoke() && shoot.enableSmoke) {
+      if (projectile.hasSmoke() && shoot.enableSmoke) {
         // Smoke nur alle 2 Frames hinzufügen, um Overhead zu reduzieren
         if (this.raycastFrameCounter % 2 === 0) {
           this.map.modules.effect.addSmoke(shoot.object.position.clone(), {
@@ -295,10 +324,10 @@ export default class ShootModule extends MapModule<
             hit = true;
 
             // Effekte nur bei Hit hinzufügen
-            if (shoot.projectile.hasExplosion()) {
+            if (projectile.hasExplosion()) {
               this.map.modules.effect.addExplosion(point, 1);
             }
-            if (shoot.projectile.hasDust()) {
+            if (projectile.hasDust()) {
               if (intersection.object.name === 'water') {
                 console.log('WATER HIT');
                 this.map.modules.effect.addWaterCone(
@@ -314,14 +343,14 @@ export default class ShootModule extends MapModule<
                 );
               }
             }
-            if (shoot.projectile.hasSmoke()) {
+            if (projectile.hasSmoke()) {
               this.map.modules.effect.addSmoke(point);
             }
-            if (shoot.projectile.hasFire()) {
+            if (projectile.hasFire()) {
               this.map.modules.effect.addFire(point);
             }
 
-            if (shoot.projectile.radius > 0) {
+            if (projectile.radius > 0) {
               this.hitByProjectileRadius(shoot, point);
             } else {
               if (intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]) {
@@ -340,7 +369,7 @@ export default class ShootModule extends MapModule<
       // Wasser-Check immer machen, aber vereinfacht
       if (!hit && obj.position.y <= this.map.modules.surface.getWaterLevel()) {
         hit = true;
-        if (shoot.projectile.hasExplosion()) {
+        if (projectile.hasExplosion()) {
           const position = new Vector3()
             .copy(obj.position)
             .setY(
@@ -358,6 +387,7 @@ export default class ShootModule extends MapModule<
       if (hit || distanceFromStart > 50) {
         shoot.isActive = false;
         shoot.object.visible = false;
+        this.observables.removeShoot$.next(shoot);
       }
     }
 
@@ -368,7 +398,7 @@ export default class ShootModule extends MapModule<
   }
 
   private hitByProjectileRadius(shoot: ShootDescription, position: Vector3) {
-    const projectileRadius = shoot.projectile.radius || 0;
+    const projectileRadius = shoot.projectileInstance.projectile.radius || 0;
     if (projectileRadius > 0) {
       this.temp.hitSphere.set(position, projectileRadius);
       const hitUnits: { unit: Unit; distance: number }[] = [];
@@ -395,7 +425,7 @@ export default class ShootModule extends MapModule<
     // const damageMultiplier = Math.max(0, 1 - distance / maxRadius); // Voller Schaden bei 0, 0 bei maxRadius
     // const adjustedDamage = baseDamage * damageMultiplier;
     // console.log(`Hit unit ${unit.id} with ${adjustedDamage} damage`);
-    unit.modules.damage.hit(shoot.projectile);
+    unit.modules.damage.hit(shoot.projectileInstance.projectile);
   }
 
   createDebugVisualizePath(
