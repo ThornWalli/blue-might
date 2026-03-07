@@ -267,7 +267,7 @@ export default class EditorUnitsAppModule extends AppModule<
         new Vector3(position.x, 0, position.y),
         radius
       );
-    units?.forEach(unit => unit.destroy());
+    units?.forEach(({ unit }) => unit.destroy());
   }
 
   async createUnit(unitKey: string) {

@@ -14,6 +14,7 @@ import { addModules } from '../Module';
 import FigureMovableUnitModule from '../unitModule/movable/FigureMovable';
 import FigureUnitModule from '../unitModule/Figure';
 import { disableSurfaceDetection } from '../../utils/object';
+import RadarUnitModule from '../unitModule/Radar';
 
 import MovableUnit, {
   type MovableUnitModuleList,
@@ -24,12 +25,14 @@ import MovableUnit, {
 export interface FigureUnitOptions extends UnitOptions {}
 
 export type FigureUnitModules = MovableUnitModules & {
+  radar: RadarUnitModule;
   figureMovable: FigureMovableUnitModule;
   figure: FigureUnitModule;
   patrol: PatrolUnitModule;
 };
 
 export type FigureUnitModuleList = (
+  | typeof RadarUnitModule
   | typeof FigureMovableUnitModule
   | typeof FigureUnitModule
   | typeof PatrolUnitModule
@@ -49,6 +52,7 @@ export default class FigureUnit<
   ) {
     moduleList = (moduleList || []) as ModuleList;
     moduleList = addModules(moduleList, [
+      RadarUnitModule,
       FigureMovableUnitModule,
       FigureUnitModule,
       PatrolUnitModule
@@ -59,6 +63,9 @@ export default class FigureUnit<
         ...options,
         moduleOptions: {
           ...options.moduleOptions,
+          radar: {
+            radius: 3
+          },
           collision: {
             ...options.moduleOptions?.collision,
             enabled: false

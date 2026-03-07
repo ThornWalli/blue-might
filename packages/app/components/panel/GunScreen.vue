@@ -49,7 +49,7 @@ onMounted(() => {
         )
       )
       .subscribe(u => {
-        unit.value = u?.modules.weapon.hasSlots() ? markRaw(u) : null;
+        unit.value = u?.modules.weapon?.hasSlots() ? markRaw(u) : null;
       })
   );
 });

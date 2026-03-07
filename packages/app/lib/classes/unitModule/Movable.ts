@@ -329,6 +329,10 @@ export default class MovableUnitModule<
         ai?.landing_gear ?? human?.landing_gear ?? false,
       [ControlAction.SWITCH_WEAPON]:
         ai?.switchWeapon ?? human?.switchWeapon ?? false,
+
+      [ControlAction.SWITCH_TARGET]:
+        ai?.switchTarget ?? human?.switchTarget ?? false,
+
       [ControlAction.LANDING]: ai?.landing ?? human?.landing ?? false,
       [ControlAction.MODIFIER]: ai?.modifier ?? human?.modifier ?? false,
       [ControlAction.ROTATE_LEFT]: ai?.rotateLeft ?? human?.rotateLeft ?? false,

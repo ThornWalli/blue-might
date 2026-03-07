@@ -12,8 +12,6 @@ import HelicopterUnit, {
   type HelicopterUnitModules,
   type HelicopterUnitOptions
 } from '@blue-might/app/lib/classes/unit/vehicle/Helicopter';
-import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
-import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/Animation';
 import { addModules } from '@blue-might/app/lib/classes/Module';
@@ -26,15 +24,10 @@ export interface HelicopterOptions extends HelicopterUnitOptions {
 }
 
 export interface HelicopterModules extends HelicopterUnitModules {
-  attack: AttackUnitModule;
   transport: TransportUnitModule;
 }
 export type HelicopterModuleList = HelicopterUnitModuleList &
-  [
-    | typeof AttackUnitModule
-    | typeof WeaponUnitModule
-    | typeof TransportUnitModule
-  ];
+  [typeof TransportUnitModule];
 
 export interface RawUnitDescription_Helicopter_1<
   O extends UnitOptions = HelicopterOptions
@@ -60,11 +53,7 @@ export default class Helicopter_1 extends HelicopterUnit<
     options: Omit<UnitConstructorOptions<HelicopterOptions>, 'name'> = {},
     moduleList?: HelicopterModuleList
   ) {
-    moduleList = addModules(moduleList, [
-      AttackUnitModule,
-      WeaponUnitModule,
-      TransportUnitModule
-    ]);
+    moduleList = addModules(moduleList, [TransportUnitModule]);
     super(
       {
         ...options,
@@ -77,6 +66,9 @@ export default class Helicopter_1 extends HelicopterUnit<
 
         moduleOptions: {
           ...options.moduleOptions,
+          radar: {
+            radius: 12
+          },
           movable: {
             ...options.moduleOptions?.movable,
             maxFuel: 200

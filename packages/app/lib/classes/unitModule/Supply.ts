@@ -1,29 +1,23 @@
 /* eslint-disable complexity */
-import { ReplaySubject, Subscription } from 'rxjs';
-import type { Object3D } from 'three';
-import {
-  Mesh,
-  MeshLambertMaterial,
-  Sphere,
-  SphereGeometry,
-  Vector3
-} from 'three';
+import { distinctUntilChanged, map, ReplaySubject, Subscription } from 'rxjs';
+import { Sphere, type Object3D } from 'three';
+import { Mesh, MeshLambertMaterial, SphereGeometry, Vector3 } from 'three';
+import type { Units } from '@blue-might/units';
 
 import UnitModule, {
   type UnitModuleObservables,
   type UnitModuleOptions,
   type UnitModuleState
 } from '../UnitModule';
-import AirVehicleUnit from '../unit/vehicle/AirVehicle';
+import type AirVehicleUnit from '../unit/vehicle/AirVehicle';
 import type { AnimationLoopValue } from '../Renderer';
-import VehicleUnit, { type VehicleUnitModules } from '../unit/Vehicle';
-import type Unit from '../Unit';
+import type VehicleUnit from '../unit/Vehicle';
+import type { VehicleUnitModules } from '../unit/Vehicle';
 import { disposeObject3D } from '../../utils/object';
-import SeaVehicleUnit from '../unit/vehicle/SeaVehicle';
 import { intersect } from '../../utils/intersect';
+import { isVehicle } from '../../utils/unit';
 
 import type WeaponUnitModule from './Weapon';
-import GroundVehicleUnitModule from './movable/GroundVehicle';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -37,12 +31,13 @@ declare module '../Unit' {
   }
 }
 export interface SupplyUnitModuleObservables extends UnitModuleObservables {
+  targetUnits$: ReplaySubject<VehicleUnit[]>;
   unit$: ReplaySubject<VehicleUnit | null>;
-  target$: ReplaySubject<Unit | null>;
+  target$: ReplaySubject<Units | null>;
 }
 export interface SupplyUnitModuleOptions extends UnitModuleOptions {
   changeByDistance: boolean;
-  radius: number;
+  supplyRadius: number;
   sphereTarget: {
     name: string;
   };
@@ -53,6 +48,7 @@ export interface SupplyUnitModuleOptions extends UnitModuleOptions {
   };
 }
 export interface SupplyUnitModuleState extends UnitModuleState {
+  targetUnits: VehicleUnit[];
   /**
    * The unit that is currently using the landing port.
    */
@@ -61,7 +57,7 @@ export interface SupplyUnitModuleState extends UnitModuleState {
       weapon: WeaponUnitModule;
     } & VehicleUnitModules
   > | null;
-  target: Unit | null;
+  target: Units | null;
 }
 
 export default class SupplyUnitModule extends UnitModule<
@@ -75,7 +71,7 @@ export default class SupplyUnitModule extends UnitModule<
   >
 > {
   static override TYPE = 'supply';
-  private sphere: Sphere;
+  private supplySphere: Sphere;
   private debugSphere: Mesh | null = null;
   private supply = {
     speed: 0.1,
@@ -99,7 +95,7 @@ export default class SupplyUnitModule extends UnitModule<
       unit,
       {
         ...options,
-        radius: options.radius ?? 1,
+        supplyRadius: options.supplyRadius ?? 1,
         allowedType: {
           air: options.allowedType?.air ?? true,
           sea: options.allowedType?.sea ?? true,
@@ -108,20 +104,22 @@ export default class SupplyUnitModule extends UnitModule<
       },
       {
         ...state,
-
+        targetUnits: [],
         unit: null
       },
       debug
     );
 
     //#region observables
+    this.observables.targetUnits$ = new ReplaySubject<VehicleUnit[]>(1);
+    this.observables.targetUnits$.next([]);
     this.observables.unit$ = new ReplaySubject<VehicleUnit | null>(1);
     this.observables.unit$.next(null);
-    this.observables.target$ = new ReplaySubject<Unit | null>(1);
+    this.observables.target$ = new ReplaySubject<Units | null>(1);
     this.observables.target$.next(null);
     //#endregion
 
-    this.sphere = new Sphere(new Vector3(), this.options.radius);
+    this.supplySphere = new Sphere(new Vector3(), this.options.supplyRadius);
   }
 
   override destroy() {
@@ -132,6 +130,35 @@ export default class SupplyUnitModule extends UnitModule<
     }
 
     super.destroy();
+  }
+
+  override async setup() {
+    await super.setup();
+
+    const unit = this.getUnit();
+
+    if ('radar' in unit.modules) {
+      this.subscription.add(
+        unit.modules.radar.observables.units$
+          .pipe(
+            map(
+              units =>
+                units
+                  .filter(({ unit }) => isVehicle(unit))
+                  .map(({ unit }) => unit) as VehicleUnit[]
+            ),
+            distinctUntilChanged(
+              (a, b) => a.map(u => u.id).join() === b.map(u => u.id).join()
+            )
+          )
+          .subscribe(units => {
+            this.state.targetUnits = units;
+            this.observables.targetUnits$.next(units);
+          })
+      );
+    } else {
+      console.error('No radar module found');
+    }
   }
 
   override async afterSetup() {
@@ -157,7 +184,7 @@ export default class SupplyUnitModule extends UnitModule<
 
         const worldPos =
           sphereTargetObj?.getWorldPosition(new Vector3()) ?? position;
-        this.sphere.center.copy(worldPos);
+        this.supplySphere.center.copy(worldPos);
         this.debugSphere?.position.copy(worldPos);
       })
     );
@@ -167,15 +194,22 @@ export default class SupplyUnitModule extends UnitModule<
     //#region  supply
     if (this.state.unit) {
       const unit = this.state.unit;
-      const weaponModule = unit.modules.weapon;
-      const movableModule = unit.modules.movable;
+      const weaponModule =
+        'weapon' in unit.modules ? unit.modules.weapon : null;
+      const movableModule =
+        'movable' in unit.modules ? unit.modules.movable : null;
       if (this.supply.progress >= 1) {
-        weaponModule.getSlots().forEach(slot => {
-          if (slot.ammunition < slot.maxAmmunition) {
-            slot.ammunition += Math.ceil(this.supply.weaponSpeed);
-          }
-        });
-        if (movableModule.getFuel() < movableModule.getMaxFuel()) {
+        if (weaponModule) {
+          weaponModule.getSlots().forEach(slot => {
+            if (slot.ammunition < slot.maxAmmunition) {
+              slot.ammunition += Math.ceil(this.supply.weaponSpeed);
+            }
+          });
+        }
+        if (
+          movableModule &&
+          movableModule.getFuel() < movableModule.getMaxFuel()
+        ) {
           movableModule.setFuel(
             movableModule.getFuel() +
               movableModule.getMaxFuel() * this.supply.fuelConsumptionRatio
@@ -195,22 +229,13 @@ export default class SupplyUnitModule extends UnitModule<
     if (!this.options.changeByDistance && this.state.target) {
       return;
     }
-    const unit = this.getUnit();
-    const unitsInRadius = (
-      unit
-        .getMap()
-        ?.modules.units.chunkManager.getUnitsInRadius(
-          this.sphere.center,
-          this.options.radius
-        ) ?? []
-    ).filter(u => u !== unit && this.isInstanceOf(u)) as VehicleUnit[];
 
     const intersectingUnits: VehicleUnit[] = [];
-    for (const targetUnit of unitsInRadius) {
+    for (const targetUnit of this.state.targetUnits) {
       const intersected = intersect({
         unit: targetUnit,
-        sphere: this.sphere,
-        radius: this.options.radius
+        sphere: this.supplySphere,
+        radius: this.options.supplyRadius
       });
       if (intersected) {
         intersectingUnits.push(intersected);
@@ -224,23 +249,7 @@ export default class SupplyUnitModule extends UnitModule<
       this.setSupplyUnit(intersectingUnits[0]);
     }
 
-    //#region debug
-    (this.debugSphere?.material as MeshLambertMaterial)?.color.set(0x00ff00);
-    if (intersectingUnits.length) {
-      (this.debugSphere?.material as MeshLambertMaterial)?.color.set(0xff0000);
-    }
-    //#endregion
-  }
-
-  private isInstanceOf(unit: Unit): boolean {
-    if (unit instanceof AirVehicleUnit) {
-      return this.options.allowedType.air ?? false;
-    } else if (unit instanceof SeaVehicleUnit) {
-      return this.options.allowedType.sea ?? false;
-    } else if (unit instanceof GroundVehicleUnitModule) {
-      return this.options.allowedType.ground ?? false;
-    }
-    return unit instanceof VehicleUnit;
+    this.updateDebug(intersectingUnits);
   }
 
   hasSupplyUnit(unit: AirVehicleUnit | null) {
@@ -261,15 +270,6 @@ export default class SupplyUnitModule extends UnitModule<
     this.observables.unit$.next(unit);
   }
 
-  private setupDebug() {
-    const debugSphere = new Mesh(
-      new SphereGeometry(this.sphere.radius, 16, 16),
-      new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
-    );
-    this.debugSphere = debugSphere;
-    this.getUnit().getMap()?.app.getScene().add(this.debugSphere);
-  }
-
   private setTarget(target?: VehicleUnit | null) {
     this.state.target = target ?? null;
     if (target) {
@@ -279,8 +279,8 @@ export default class SupplyUnitModule extends UnitModule<
           if (
             !intersect({
               unit: target,
-              sphere: this.sphere,
-              radius: this.options.radius
+              sphere: this.supplySphere,
+              radius: this.options.supplyRadius
             })
           ) {
             this.setTarget(undefined);
@@ -299,4 +299,26 @@ export default class SupplyUnitModule extends UnitModule<
     this.observables.target$.next(this.state.target);
     console.log('New attack target:', target);
   }
+
+  //#region debug
+
+  private setupDebug() {
+    const debugSphere = new Mesh(
+      new SphereGeometry(this.supplySphere.radius, 16, 16),
+      new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
+    );
+    this.debugSphere = debugSphere;
+    this.getUnit().getMap()?.app.getScene().add(this.debugSphere);
+  }
+
+  private updateDebug(units: Units[]) {
+    if (!this.debugSphere) return;
+    const material = this.debugSphere.material as MeshLambertMaterial;
+    material.color.set(0x00ff00);
+    if (units.length) {
+      material.color.set(0xff0000);
+    }
+  }
+
+  //#endregion
 }

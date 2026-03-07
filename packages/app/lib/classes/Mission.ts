@@ -25,6 +25,7 @@ export default class Mission {
     optional: boolean;
     unit: UnitIdentifier;
   }[];
+  private targetIds: UnitIdentifier[];
   constructor(description: MissionDescription) {
     this.name = description.name;
     this.objective = description.objective;
@@ -32,6 +33,7 @@ export default class Mission {
     this.situationReport = description.situationReport;
     this.missionObjectives = description.missionObjectives;
     this.targets = description.targets ?? [];
+    this.targetIds = this.targets.map(target => target.unit);
   }
 
   public getName() {
@@ -72,10 +74,14 @@ export default class Mission {
   public getTargets() {
     return this.targets;
   }
+  public getTargetIds() {
+    return this.targetIds;
+  }
   public setTargets(
     targets: { type: TargetType; unit: UnitIdentifier; optional: boolean }[]
   ) {
     this.targets = targets;
+    this.targetIds = this.targets.map(target => target.unit);
   }
 
   public getTarget(unitId: UnitIdentifier) {

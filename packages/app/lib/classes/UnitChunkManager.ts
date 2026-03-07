@@ -1,5 +1,6 @@
 import type { Camera } from 'three';
 import { Box3, Frustum, Matrix4, Vector3 } from 'three';
+import { ReplaySubject, Subject } from 'rxjs';
 
 import type Unit from './Unit';
 
@@ -20,17 +21,30 @@ class Chunk {
 }
 
 export default class UnitChunkManager {
-  size: number;
+  readonly size: number;
   chunks: Map<string, Chunk> = new Map();
   worldChunks: Map<string, Vector3> = new Map();
+
+  readonly observables = {
+    chunks$: new ReplaySubject<Map<string, Chunk>>(),
+    add$: new Subject<{ chunk: Chunk; unit: Unit }>()
+  };
 
   constructor(size: number = 1) {
     this.size = size;
   }
 
+  destroy() {
+    Object.values(this.observables).forEach(obs => {
+      obs.complete();
+      obs.unsubscribe();
+    });
+  }
+
   getChunkKey(position: Vector3) {
     return position
       .clone()
+      .add(new Vector3(this.size / 2, this.size / 2, this.size / 2))
       .divide(new Vector3(this.size, this.size, this.size))
       .floor() // GEÄNDERT: floor statt round für konsistente Chunks
       .toArray()
@@ -39,17 +53,21 @@ export default class UnitChunkManager {
 
   assignToChunk(unit: Unit) {
     this.removeFromChunk(unit);
-    const key = this.getChunkKey(unit.getPosition()); // GEÄNDERT: getChunkKey verwenden!
+    const key = this.getChunkKey(unit.getPosition());
 
     if (!this.chunks.has(key)) {
       const position = unit
         .getPosition()
         .clone()
+        .add(new Vector3(this.size / 2, this.size / 2, this.size / 2))
+
         .divide(new Vector3(this.size, this.size, this.size))
         .floor()
         .multiply(new Vector3(this.size, this.size, this.size));
+
       this.worldChunks.set(key, position);
       this.chunks.set(key, new Chunk(position));
+      this.observables.chunks$.next(this.chunks);
     }
 
     // const mesh = unit.root;
@@ -62,6 +80,10 @@ export default class UnitChunkManager {
     // });
 
     this.chunks.get(key)!.units.add(unit);
+    this.observables.add$.next({
+      chunk: this.chunks.get(key)!,
+      unit
+    });
 
     unit.currentChunkKey = key;
   }
@@ -170,7 +192,7 @@ export default class UnitChunkManager {
   //   return visibleChunkKeys;
   // }
 
-  getUnitsInRadius(position: Vector3, radius: number): Unit[] {
+  getUnitsInRadius(position: Vector3, radius: number) {
     const unitsInRadius: { unit: Unit; distance: number }[] = [];
     const chunkSize = this.size;
 
@@ -182,20 +204,15 @@ export default class UnitChunkManager {
       .split(',')
       .map(Number) as [number, number, number];
 
-    // Berechne den Radius in Chunks (um alle potenziell relevanten Chunks abzudecken)
     const chunkRadius = Math.ceil(radius / chunkSize);
 
-    // Durchlaufe alle Chunks im Würfel um das Zentrum (Bounding-Box des Kreises, jetzt 3D)
     for (let dx = -chunkRadius; dx <= chunkRadius; dx++) {
       for (let dy = -chunkRadius; dy <= chunkRadius; dy++) {
-        // NEU: y-Schleife hinzufügen
         for (let dz = -chunkRadius; dz <= chunkRadius; dz++) {
-          // NEU: z-Schleife (falls 3D)
           const chunkX = centerChunkX + dx;
-          const chunkY = centerChunkY + dy; // NEU: y berücksichtigen
+          const chunkY = centerChunkY + dy;
           const chunkZ = centerChunkZ + dz;
 
-          // Erstelle eine temporäre Position für diesen Chunk und hole den Key
           const chunkPos = new Vector3(
             chunkX * chunkSize,
             chunkY * chunkSize,
@@ -205,7 +222,6 @@ export default class UnitChunkManager {
 
           const chunk = this.chunks.get(chunkKey);
           if (chunk) {
-            // Filtere Units im Chunk, die tatsächlich im Radius liegen
             chunk.units.forEach(unit => {
               const unitPos = unit.getPosition();
               const distance = position.distanceTo(unitPos);
@@ -217,7 +233,14 @@ export default class UnitChunkManager {
         }
       }
     }
+
     unitsInRadius.sort((a, b) => a.distance - b.distance);
-    return unitsInRadius.map(entry => entry.unit);
+
+    return unitsInRadius.map(entry => {
+      return {
+        unit: entry.unit,
+        distance: entry.distance
+      };
+    });
   }
 }

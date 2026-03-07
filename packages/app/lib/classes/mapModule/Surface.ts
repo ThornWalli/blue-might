@@ -103,12 +103,12 @@ export default class SurfaceModule extends MapModule<
 
   private heightMap = new globalThis.Map<string, number>();
   private listener: IntersectionListener | undefined;
-
   private textures: Textures = {
     heightMap: new Texture(),
     backgroundTexture: new Texture(),
     foregroundTexture: new Texture()
   };
+  size = new Vector2();
 
   constructor(
     map: Map,
@@ -200,6 +200,8 @@ export default class SurfaceModule extends MapModule<
     }
 
     const { width, height } = textures.backgroundTexture!;
+
+    this.size.set(width, height);
 
     // Pathfinder cells
     const cellSize = 3;
@@ -760,13 +762,13 @@ export default class SurfaceModule extends MapModule<
 
     const testUnits = this.map.modules.units
       .getUnitsInRadius(new Vector3(x, 0, z), 0.1)
-      .filter(u => (isBuilding(u) || isPlant(u)) && unitFilter(u));
+      .filter(({ unit: u }) => (isBuilding(u) || isPlant(u)) && unitFilter(u));
 
-    testUnits.sort((a, b) => a.getPosition().y - b.getPosition().y);
+    testUnits.sort((a, b) => a.unit.getPosition().y - b.unit.getPosition().y);
 
     if (testUnits.length > 0) {
       // Bounding-Box der ersten Unit berechnen und minY abrufen
-      const unit = testUnits[0]!;
+      const unit = testUnits[0]!.unit;
       const box = new Box3().setFromObject(
         unit.modules.collision.getDefaultCollisionObject() ?? unit.root
       );

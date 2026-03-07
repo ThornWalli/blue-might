@@ -15,12 +15,8 @@ import {
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import type { Object3D } from 'three';
 import { Vector2, Mesh, SkinnedMesh } from 'three';
-import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
-import WeaponUnitModule, {
-  type AutoAimFnOptions
-} from '@blue-might/app/lib/classes/unitModule/Weapon';
-import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
+import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { playSound } from '@blue-might/weapon/utils';
 import {
   autoAimFunction,
@@ -37,7 +33,6 @@ import type {
   TurretBuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/building/Turret';
 import TurretBuildingUnit from '@blue-might/app/lib/classes/unit/building/Turret';
-import { addModules } from '@blue-might/app/lib/classes/Module';
 import { GatlingGun } from '@blue-might/weapon/weapon';
 
 import baseGlb from './assets/turret_1.glb?url';
@@ -52,14 +47,9 @@ export interface TurretOptions
   rotationSpeed: number;
 }
 
-export interface TurretModules extends TurretBuildingUnitModules {
-  attack: AttackUnitModule;
-  weapon: WeaponUnitModule;
-  player: PlayerUnitModule;
-}
+export type TurretModules = TurretBuildingUnitModules;
 
-export type TurretModuleList = TurretBuildingUnitModuleList &
-  [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
+export type TurretModuleList = TurretBuildingUnitModuleList;
 
 export interface RawUnitDescription_Turret_1<
   O extends UnitOptions = TurretOptions
@@ -92,11 +82,6 @@ export default class Turret_1
     options: Omit<UnitConstructorOptions<TurretOptions, State>, 'name'> = {},
     moduleList?: TurretModuleList
   ) {
-    moduleList = addModules(moduleList, [
-      AttackUnitModule,
-      WeaponUnitModule,
-      PlayerUnitModule
-    ]);
     super(
       {
         ...options,

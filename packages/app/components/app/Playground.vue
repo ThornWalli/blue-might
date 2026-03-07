@@ -25,15 +25,18 @@
     <template #[PANEL.BOTTOM_RIGHT]>
       <bm-panel-unit-preview key="unit-preview" :app="app" />
     </template>
+    <template #background>
+      <bm-head-up-indicator :app="app" />
+    </template>
     <template #foreground>
-      <bm-display-warning :messages="hudMessages" />
+      <bm-head-up-display-warning :app="app" />
       <bm-message v-if="messageType" :key="messageType" :type="messageType" />
     </template>
   </bm-app-layout>
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref, watchEffect } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import {
   EMPTY,
   filter,
@@ -46,11 +49,6 @@ import {
   combineLatest
 } from 'rxjs';
 import { ControlAction } from '@blue-might/app/lib/classes/playerModule/Controls';
-import { WARNING_TYPE } from '@blue-might/app/lib/classes/unitModule/Radar';
-import usePlayerUnitInterface from '@blue-might/app/composables/usePlayerUnitInterface';
-import { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
-import { isVehicle } from '@blue-might/app/lib/utils/unit';
-import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 
 import type AppPlayground from '../../lib/classes/app/AppPlayground';
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
@@ -61,19 +59,11 @@ import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
 import BmPanelSecondaryScreen from '../panel/GunScreen.vue';
 import BmPanelMap from '../panel/NavigatorMap.vue';
 import BmMessage, { MESSAGE_TYPE } from '../Message.vue';
-import BmDisplayWarning, {
-  HUD_MESSAGE_TYPE
-} from '../HeadUpDisplayMessage.vue';
+import BmHeadUpDisplayWarning from '../HeadUpDisplayMessage.vue';
+import BmHeadUpIndicator from '../HeadUpIndicator.vue';
 
 const messageType = ref<MESSAGE_TYPE | null>(null);
 const generalEl = ref<InstanceType<typeof BmPanelGeneral> | null>(null);
-const hudMessages = ref<HUD_MESSAGE_TYPE[]>([
-  HUD_MESSAGE_TYPE.READY,
-  HUD_MESSAGE_TYPE.LANDED,
-  HUD_MESSAGE_TYPE.LOW_FUEL,
-  HUD_MESSAGE_TYPE.DESTROYED,
-  HUD_MESSAGE_TYPE.INCOMING_MISSILE
-]);
 
 const $props = defineProps<{
   app: AppPlayground;
@@ -88,35 +78,6 @@ onMounted(() => {
 
 onUnmounted(() => {
   subscription.unsubscribe();
-});
-
-const { unit, unitDamage, hasFuelWarning, flightStatus, powerInfo, warnings } =
-  usePlayerUnitInterface($props.app);
-
-watchEffect(() => {
-  const messages = [];
-  if (warnings.value.length) {
-    if (warnings.value.includes(WARNING_TYPE.MISSILE)) {
-      messages.push(HUD_MESSAGE_TYPE.INCOMING_MISSILE);
-    }
-  } else if (unitDamage.value.destroyed) {
-    messages.push(HUD_MESSAGE_TYPE.DESTROYED);
-  } else if (hasFuelWarning.value) {
-    messages.push(HUD_MESSAGE_TYPE.LOW_FUEL);
-  } else if (isVehicle(unit.value)) {
-    if (unitDamage.value.level >= DAMAGE_LEVEL.DAMAGED) {
-      messages.push(HUD_MESSAGE_TYPE.DAMAGE);
-    }
-    if (FLIGHT_STATUS.LANDED === flightStatus.value) {
-      messages.push(HUD_MESSAGE_TYPE.LANDED);
-    } else if (
-      powerInfo.value.currentPower >= powerInfo.value.idlePower &&
-      powerInfo.value.currentPower <= powerInfo.value.minPower
-    ) {
-      messages.push(HUD_MESSAGE_TYPE.ENGINE_START);
-    }
-  }
-  hudMessages.value = messages;
 });
 
 function setupMessages(app: AppPlayground) {

@@ -1,7 +1,7 @@
 /* eslint-disable complexity */
 
 import { lerp } from 'three/src/math/MathUtils.js';
-import type { Euler, Object3D, Vector2 } from 'three';
+import { Euler, Quaternion, type Object3D, type Vector2 } from 'three';
 
 import { ControlAction } from '../../classes/playerModule/Controls';
 import type { UnitModules } from '../../classes/Unit';
@@ -83,7 +83,8 @@ export function autoAimFunction(
   state: {
     weaponTargetRotation: Vector2[];
   },
-  getRotation: (index: number) => Euler
+  getRotation: (index: number) => Euler,
+  getPitchRoll?: (index: number) => Euler
 ): boolean {
   const { target, sourcePosition, index, weapon } = options;
 
@@ -97,53 +98,70 @@ export function autoAimFunction(
   const maxAngle = weaponAngles[index]!.max;
 
   const targetPosition = target.getPosition();
-
   const delta = targetPosition.clone().sub(sourcePosition);
-  const horizontalDistance = Math.sqrt(delta.x ** 2 + delta.z ** 2);
-  const verticalDistance = delta.y;
-  const rotation = getRotation(index).clone();
 
+  // Vollständige Rotation der Unit kombinieren (Yaw + Pitch + Roll)
+  const yawEuler = getRotation(index).clone(); // Euler(0, yaw, 0)
+  const pitchRollEuler = getPitchRoll
+    ? getPitchRoll(index).clone()
+    : new Euler(0, 0, 0); // Euler(pitch, 0, roll)
+
+  // Kombiniere zu Quaternion: Zuerst Yaw, dann Pitch/Roll
+  const fullRotation = new Quaternion()
+    .setFromEuler(yawEuler)
+    .multiply(new Quaternion().setFromEuler(pitchRollEuler));
+
+  // Delta-Vektor in lokalen Raum der Unit transformieren
+  const deltaLocal = delta
+    .clone()
+    .applyQuaternion(fullRotation.clone().invert());
+
+  // Berücksichtige Revert (falls nötig, z. B. für bestimmte Waffen)
   if (weaponAngles[index]?.revert) {
-    rotation.y += Math.PI;
+    deltaLocal.x = -deltaLocal.x; // Spiegelung für revert
+    deltaLocal.z = -deltaLocal.z;
   }
-  // Yaw immer direkt berechnen (keine Ballistik nötig)
-  const targetYaw = normalizeAngle(Math.atan2(delta.x, delta.z) - rotation.y);
 
-  const isYawInRange = targetYaw >= minAngle.y && targetYaw <= maxAngle.y;
+  // Zielwinkel basierend auf lokalem Vektor berechnen
+  const targetYaw = normalizeAngle(Math.atan2(deltaLocal.x, deltaLocal.z));
+  const horizontalLocal = Math.sqrt(deltaLocal.x ** 2 + deltaLocal.z ** 2);
+  const verticalLocal = deltaLocal.y;
 
-  // Pitch: Direkte Linie für nahe Ziele, sonst vereinfachte Ballistik
+  // Pitch-Berechnung (direkt oder ballistisch)
   let targetPitch: number;
   const isBallistic =
     weapon.projectile.airResistance > 0 || weapon.projectile.weight > 0;
-  if (horizontalDistance < 1.0 || !isBallistic) {
-    // Direkte Linie für Nahbereich oder gerade fliegende Projektille (z.B. Raketen)
-    targetPitch = -Math.atan2(verticalDistance, horizontalDistance);
+  if (horizontalLocal < 1.0 || !isBallistic) {
+    // Direkte Linie für Nahbereich oder gerade Projektille
+    targetPitch = -Math.atan2(verticalLocal, horizontalLocal);
   } else {
-    // Ballistische Elevation für Projektille mit Gravitation/Luftwiderstand
+    // Ballistische Elevation (vereinfacht, basierend auf lokalem Vektor)
     const g = Math.abs(shootModule.gravity.y);
-    const v = weapon.projectile.speed * (1 - shootModule.airResistance);
+    const v =
+      weapon.projectile.speed *
+      (1 - shootModule.airResistance * weapon.projectile.airResistance);
     const discriminant =
-      v ** 4 -
-      g * (g * horizontalDistance ** 2 + 2 * verticalDistance * v ** 2);
+      v ** 4 - g * (g * horizontalLocal ** 2 + 2 * verticalLocal * v ** 2);
     if (discriminant >= 0) {
       const sqrtDisc = Math.sqrt(discriminant);
-      // Verwende den niedrigeren Winkel für flachere Flugbahn (low-angle)
-      targetPitch = -Math.atan((v ** 2 - sqrtDisc) / (g * horizontalDistance));
+      targetPitch = -Math.atan((v ** 2 - sqrtDisc) / (g * horizontalLocal));
     } else {
-      targetPitch = -Math.atan2(verticalDistance, horizontalDistance);
+      targetPitch = -Math.atan2(verticalLocal, horizontalLocal);
     }
   }
 
-  targetPitch = Math.max(minAngle.x, Math.min(maxAngle.x, targetPitch));
-  const isPitchInRange = targetPitch >= minAngle.x && targetPitch <= maxAngle.x;
+  // Winkel auf Bereiche begrenzen
+  targetPitch = Math.max(minAngle.y, Math.min(maxAngle.y, targetPitch));
+  const isYawInRange = targetYaw >= minAngle.x && targetYaw <= maxAngle.x;
+  const isPitchInRange = targetPitch >= minAngle.y && targetPitch <= maxAngle.y;
   // console.log(
   //   `Yaw: ${targetYaw.toFixed(3)}, Pitch: ${targetPitch.toFixed(3)}, Rotation.y: ${rotation.y.toFixed(3)}, Dist: ${horizontalDistance.toFixed(2)}`
   // );
 
-  if (isYawInRange && isPitchInRange && horizontalDistance >= 0.9) {
+  if (isYawInRange && isPitchInRange && horizontalLocal >= 0.9) {
     state.weaponTargetRotation[index]!.set(targetYaw, targetPitch);
 
-    const rotationThreshold = 0.02; // Verringert für schnellere Reaktion
+    const rotationThreshold = 0.08; // Verringert für schnellere Reaktion
     let isRotationComplete = false;
 
     if (head) {

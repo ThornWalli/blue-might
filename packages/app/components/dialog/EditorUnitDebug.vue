@@ -65,7 +65,8 @@ const moduleDebug = ref<ModuleDebug>({
   selection: $props.modelValue.selection ?? false,
   supply: $props.modelValue.supply ?? false,
   transport: $props.modelValue.transport ?? false,
-  weapon: $props.modelValue.weapon ?? false
+  weapon: $props.modelValue.weapon ?? false,
+  radar: $props.modelValue.radar ?? false
 });
 
 function onReset() {

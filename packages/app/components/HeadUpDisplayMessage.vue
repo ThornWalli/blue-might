@@ -74,9 +74,55 @@
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  messages: HUD_MESSAGE_TYPE[];
+import { ref, watchEffect } from 'vue';
+
+import usePlayerUnitInterface from '../composables/usePlayerUnitInterface';
+import { WARNING_TYPE } from '../lib/classes/unitModule/Radar';
+import { DAMAGE_LEVEL } from '../lib/classes/unitModule/Damage';
+import { isVehicle } from '../lib/utils/unit';
+import { FLIGHT_STATUS } from '../lib/classes/unitModule/movable/airVehicle/Helicopter';
+import type { App } from '../lib/types';
+
+const $props = defineProps<{
+  app: App;
 }>();
+
+const messages = ref<HUD_MESSAGE_TYPE[]>([
+  HUD_MESSAGE_TYPE.READY,
+  HUD_MESSAGE_TYPE.LANDED,
+  HUD_MESSAGE_TYPE.LOW_FUEL,
+  HUD_MESSAGE_TYPE.DESTROYED,
+  HUD_MESSAGE_TYPE.INCOMING_MISSILE
+]);
+
+const { unit, unitDamage, hasFuelWarning, flightStatus, powerInfo, warnings } =
+  usePlayerUnitInterface($props.app);
+
+watchEffect(() => {
+  const messages_ = [];
+  if (warnings.value.length) {
+    if (warnings.value.includes(WARNING_TYPE.MISSILE)) {
+      messages_.push(HUD_MESSAGE_TYPE.INCOMING_MISSILE);
+    }
+  } else if (unitDamage.value.destroyed) {
+    messages_.push(HUD_MESSAGE_TYPE.DESTROYED);
+  } else if (hasFuelWarning.value) {
+    messages_.push(HUD_MESSAGE_TYPE.LOW_FUEL);
+  } else if (isVehicle(unit.value)) {
+    if (unitDamage.value.level >= DAMAGE_LEVEL.DAMAGED) {
+      messages_.push(HUD_MESSAGE_TYPE.DAMAGE);
+    }
+    if (FLIGHT_STATUS.LANDED === flightStatus.value) {
+      messages_.push(HUD_MESSAGE_TYPE.LANDED);
+    } else if (
+      powerInfo.value.currentPower >= powerInfo.value.idlePower &&
+      powerInfo.value.currentPower <= powerInfo.value.minPower
+    ) {
+      messages_.push(HUD_MESSAGE_TYPE.ENGINE_START);
+    }
+  }
+  messages.value = messages_;
+});
 </script>
 
 <script lang="ts">

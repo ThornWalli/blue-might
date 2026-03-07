@@ -5,7 +5,10 @@ import type {
   UnitObservables,
   UnitState
 } from '../../Unit';
+import AttackUnitModule from '../../unitModule/Attack';
 import PlayerUnitModule from '../../unitModule/Player';
+import RadarUnitModule from '../../unitModule/Radar';
+import WeaponUnitModule from '../../unitModule/Weapon';
 import type {
   BuildingUnitModuleList,
   BuildingUnitModules,
@@ -16,10 +19,18 @@ import BuildingUnit from '../Building';
 export type TurretBuildingUnitOptions = BuildingUnitOptions;
 
 export type TurretBuildingUnitModules = BuildingUnitModules & {
+  radar: RadarUnitModule;
+  attack: AttackUnitModule;
   player: PlayerUnitModule;
+  weapon: WeaponUnitModule;
 };
 
-export type TurretBuildingUnitModuleList = (typeof PlayerUnitModule)[] &
+export type TurretBuildingUnitModuleList = (
+  | typeof RadarUnitModule
+  | typeof AttackUnitModule
+  | typeof PlayerUnitModule
+  | typeof WeaponUnitModule
+)[] &
   BuildingUnitModuleList;
 export default class TurretBuildingUnit<
   Modules extends TurretBuildingUnitModules = TurretBuildingUnitModules,
@@ -35,7 +46,12 @@ export default class TurretBuildingUnit<
     moduleList?: ModuleList
   ) {
     moduleList = (moduleList || []) as ModuleList;
-    moduleList = addModules(moduleList, [PlayerUnitModule]);
+    moduleList = addModules(moduleList, [
+      RadarUnitModule,
+      AttackUnitModule,
+      PlayerUnitModule,
+      WeaponUnitModule
+    ]);
     super(options, moduleList);
     this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.GROUND);
   }

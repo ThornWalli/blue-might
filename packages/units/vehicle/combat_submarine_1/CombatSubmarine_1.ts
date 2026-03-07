@@ -25,7 +25,6 @@ import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import WeaponUnitModule, {
   type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
-import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
 import { playSound } from '@blue-might/weapon/utils';
@@ -44,10 +43,9 @@ export interface CombatSubmarineOptions
 export interface CombatSubmarineModules extends SeaVehicleUnitModules {
   attack: AttackUnitModule;
   weapon: WeaponUnitModule;
-  player: PlayerUnitModule;
 }
 export type CombatSubmarineModuleList = SeaVehicleUnitModuleList &
-  [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
+  [typeof AttackUnitModule | typeof WeaponUnitModule];
 
 export interface RawUnitDescription_CombatSubmarine_1<
   O extends UnitOptions = CombatSubmarineOptions
@@ -80,11 +78,7 @@ export default class CombatSubmarine_1
     > = {},
     moduleList?: CombatSubmarineModuleList
   ) {
-    moduleList = addModules(moduleList, [
-      AttackUnitModule,
-      WeaponUnitModule,
-      PlayerUnitModule
-    ]);
+    moduleList = addModules(moduleList, [AttackUnitModule, WeaponUnitModule]);
     super(
       {
         ...options,

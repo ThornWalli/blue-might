@@ -47,7 +47,7 @@ export default class SeaSupplyStation_1 extends BuildingUnit<
           ...options.moduleOptions,
           supply: {
             ...options.moduleOptions?.supply,
-            radius: 2,
+            supplyRadius: 2,
             sphereTarget: {
               name: 'head'
             },

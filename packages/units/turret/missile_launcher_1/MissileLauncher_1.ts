@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 import type {
   RawUnitDescription,
   UnitConstructorOptions,
@@ -14,20 +15,10 @@ import {
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import type { Object3D } from 'three';
 import { Vector2, Mesh, SkinnedMesh, LoopOnce } from 'three';
-import BuildingUnit, {
-  type BuildingUnitModuleList,
-  type BuildingUnitModules,
-  type BuildingUnitOptions
-} from '@blue-might/app/lib/classes/unit/Building';
-import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
-import WeaponUnitModule, {
-  type AutoAimFnOptions
-} from '@blue-might/app/lib/classes/unitModule/Weapon';
-import AttackUnitModule, {
-  ATTACK_TYPE
-} from '@blue-might/app/lib/classes/unitModule/Attack';
+import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/Weapon';
+import { ATTACK_TYPE } from '@blue-might/app/lib/classes/unitModule/Attack';
 import {
   autoAimFunction,
   updateControls
@@ -37,7 +28,11 @@ import { playSound } from '@blue-might/weapon/utils';
 import { lerp } from 'three/src/math/MathUtils.js';
 import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
-import { addModules } from '@blue-might/app/lib/classes/Module';
+import TurretBuildingUnit, {
+  type TurretBuildingUnitModuleList,
+  type TurretBuildingUnitModules,
+  type TurretBuildingUnitOptions
+} from '@blue-might/app/lib/classes/unit/building/Turret';
 
 import baseGlb from './assets/missile_launcher_1.glb?url';
 
@@ -52,18 +47,13 @@ interface MissileLauncherObservables extends UnitObservables {
 }
 
 export interface MissileLauncherOptions
-  extends BuildingUnitOptions, WeaponSupportOptions {
+  extends TurretBuildingUnitOptions, WeaponSupportOptions {
   rotationSpeed: number;
 }
 
-export interface MissileLauncherModules extends BuildingUnitModules {
-  attack: AttackUnitModule;
-  weapon: WeaponUnitModule;
-  player: PlayerUnitModule;
-}
+export type MissileLauncherModules = TurretBuildingUnitModules;
 
-export type MissileLauncherModuleList = BuildingUnitModuleList &
-  [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
+export type MissileLauncherModuleList = TurretBuildingUnitModuleList;
 
 export interface RawUnitDescription_MissileLauncher_1<
   O extends UnitOptions = MissileLauncherOptions
@@ -74,7 +64,7 @@ export interface RawUnitDescription_MissileLauncher_1<
 const CLOSE_DELAY = 1000;
 
 export default class MissileLauncher_1
-  extends BuildingUnit<
+  extends TurretBuildingUnit<
     MissileLauncherModules,
     MissileLauncherModuleList,
     MissileLauncherOptions,
@@ -101,11 +91,6 @@ export default class MissileLauncher_1
     > = {},
     moduleList?: MissileLauncherModuleList
   ) {
-    moduleList = addModules(moduleList, [
-      AttackUnitModule,
-      WeaponUnitModule,
-      PlayerUnitModule
-    ]);
     super(
       {
         ...options,
@@ -129,6 +114,9 @@ export default class MissileLauncher_1
         },
         moduleOptions: {
           ...options.moduleOptions,
+          radar: {
+            radius: options.moduleOptions?.radar?.radius ?? 15
+          },
           attack: {
             ...options.moduleOptions?.attack,
             radius: options.moduleOptions?.attack?.radius ?? 15,

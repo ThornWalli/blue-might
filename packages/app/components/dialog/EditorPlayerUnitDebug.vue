@@ -47,7 +47,8 @@ const moduleDebug: ModuleDebug = reactive({
   selection: false,
   supply: false,
   transport: false,
-  weapon: false
+  weapon: false,
+  radar: false
 });
 const dialog = inject<DialogContext>('dialog')!;
 

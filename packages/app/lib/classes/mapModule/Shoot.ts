@@ -291,14 +291,17 @@ export default class ShootModule extends MapModule<
       }
 
       let hit = false;
+      const INTERSECTION_SPHERE_RADIUS = 1.0;
 
       // Sphere-Check für grobe Kollision (immer machen, aber Raycast nur wenn shouldRaycast)
-      this.temp.sphere.set(obj.position, 1.5);
+      this.temp.sphere.set(obj.position, INTERSECTION_SPHERE_RADIUS);
       let needsRaycast = false;
       for (const target of allPossibleTargets) {
         if (
           target !== obj &&
-          this.temp.sphere.intersectsSphere(new Sphere(target.position, 3.0)) // Ziel-Radius erhöht auf 3.0
+          this.temp.sphere.intersectsSphere(
+            new Sphere(target.position, INTERSECTION_SPHERE_RADIUS)
+          )
         ) {
           needsRaycast = true;
           break;

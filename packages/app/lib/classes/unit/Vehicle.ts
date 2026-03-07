@@ -8,6 +8,7 @@ import PlayerUnitModule from '../unitModule/Player';
 import { setDestroyedMaterials } from '../../utils/material';
 import { addModules } from '../Module';
 import type { SetupContext } from '../../types/unit';
+import RadarUnitModule from '../unitModule/Radar';
 
 import MovableUnit, {
   type MovableUnitModuleList,
@@ -19,11 +20,13 @@ import MovableUnit, {
 export interface VehicleUnitOptions extends MovableUnitOptions {}
 
 export type VehicleUnitModules = MovableUnitModules & {
+  radar: RadarUnitModule;
   patrol: PatrolUnitModule;
   player: PlayerUnitModule;
 };
 
 export type VehicleUnitModuleList = (
+  | typeof RadarUnitModule
   | typeof PatrolUnitModule
   | typeof PlayerUnitModule
 )[] &
@@ -40,7 +43,11 @@ export default class VehicleUnit<
     moduleList?: ModuleList
   ) {
     moduleList = (moduleList || []) as ModuleList;
-    moduleList = addModules(moduleList, [PatrolUnitModule, PlayerUnitModule]);
+    moduleList = addModules(moduleList, [
+      RadarUnitModule,
+      PatrolUnitModule,
+      PlayerUnitModule
+    ]);
     super(options, moduleList);
   }
   override async setup(context: SetupContext) {

@@ -51,7 +51,7 @@ export default class SeaLandingPortSupplyStation_1 extends LandingPortUnit<
           },
           supply: {
             ...options.moduleOptions?.supply,
-            radius: 0.5,
+            supplyRadius: 0.5,
             sphereTarget: {
               name: 'base'
             },

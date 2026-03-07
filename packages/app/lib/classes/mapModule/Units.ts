@@ -11,8 +11,21 @@ import {
   throttleTime,
   toArray
 } from 'rxjs';
-import type { Object3D, Vector3Tuple } from 'three';
-import { Euler, Group, Mesh, SkinnedMesh, Vector3 } from 'three';
+import {
+  BoxGeometry,
+  InstancedMesh,
+  Matrix4,
+  Object3D,
+  type Vector3Tuple
+} from 'three';
+import {
+  Euler,
+  Group,
+  Mesh,
+  MeshLambertMaterial,
+  SkinnedMesh,
+  Vector3
+} from 'three';
 import * as units from '@blue-might/units';
 import type { Units } from '@blue-might/units';
 
@@ -25,7 +38,7 @@ import UnitChunkManager from '../UnitChunkManager';
 import type { AnimationLoopValue } from '../Renderer';
 import type Map from '../Map';
 import type { IntersectionListener } from '../rendererModule/Intersection';
-import { OBJECT_USER_DATA } from '../../utils/object';
+import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import BuildingUnit from '../unit/Building';
 import type { RawUnitDescription, UnitDescription } from '../Unit';
 import { getUnitMap } from '../../utils/unit';
@@ -59,6 +72,8 @@ interface State extends MapModuleState {
   destroyedUnits: Units[];
 }
 
+const CHUNK_SIZE = 32;
+
 export default class UnitsModule extends MapModule<
   Options,
   State,
@@ -66,7 +81,7 @@ export default class UnitsModule extends MapModule<
 > {
   static override TYPE = 'units';
 
-  chunkManager: UnitChunkManager = new UnitChunkManager();
+  chunkManager: UnitChunkManager;
 
   root: Group;
   listener: IntersectionListener;
@@ -84,6 +99,9 @@ export default class UnitsModule extends MapModule<
       },
       debug
     );
+
+    this.chunkManager = new UnitChunkManager(CHUNK_SIZE);
+
     //#region observables
     this.observables.addUnit$ = new Subject<Unit>();
     this.observables.removeUnit$ = new Subject<Unit>();
@@ -156,6 +174,10 @@ export default class UnitsModule extends MapModule<
     );
 
     this.listener.addMeshes(this.getUnits().map(unit => unit.root));
+
+    if (this.debug) {
+      this.setupDebug();
+    }
   }
 
   async setupUnits(units: Unit[]) {
@@ -304,6 +326,55 @@ export default class UnitsModule extends MapModule<
       )
     };
   }
+
+  //#region debug
+
+  private setupDebug() {
+    this.subscription.add(
+      this.chunkManager.observables.chunks$.subscribe(() => {
+        this.updateDebug();
+      })
+    );
+  }
+
+  private debugMesh: InstancedMesh | null = null;
+  private debugHelper: Object3D | null = null;
+  private updateDebug() {
+    if (this.debugMesh) {
+      disposeObject3D(this.debugMesh);
+    }
+
+    this.debugMesh = new InstancedMesh(
+      new BoxGeometry(
+        this.chunkManager.size,
+        this.chunkManager.size,
+        this.chunkManager.size
+      ),
+      new MeshLambertMaterial({ color: 0x00ff00, wireframe: true }),
+      this.chunkManager.chunks.size
+    );
+    this.addToScene(this.debugMesh);
+
+    const empty = new Matrix4().makeScale(0, 0, 0);
+    const mesh = this.debugMesh;
+    for (let i = 0; i < mesh.count; i++) {
+      mesh.setMatrixAt(i, empty);
+    }
+    let debugHelper = this.debugHelper!;
+    if (!this.debugHelper) {
+      debugHelper = this.debugHelper = new Object3D();
+    }
+    this.chunkManager.chunks.values().forEach((chunk, index) => {
+      const position = chunk.position;
+      debugHelper.updateMatrix();
+      debugHelper.matrix.makeTranslation(position.x, position.y, position.z);
+      mesh.setMatrixAt(index, debugHelper.matrix);
+    });
+
+    this.debugMesh.instanceMatrix.needsUpdate = true;
+  }
+
+  //#endregion
 }
 
 function getMeshes(obj: Object3D): Mesh[] {

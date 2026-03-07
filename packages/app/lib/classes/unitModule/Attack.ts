@@ -1,12 +1,13 @@
 /* eslint-disable complexity */
+import { Mesh, MeshLambertMaterial, SphereGeometry, Vector3 } from 'three';
 import {
-  Mesh,
-  MeshLambertMaterial,
-  Sphere,
-  SphereGeometry,
-  Vector3
-} from 'three';
-import { ReplaySubject, Subscription } from 'rxjs';
+  distinctUntilChanged,
+  ReplaySubject,
+  Subscription,
+  map,
+  switchMap,
+  EMPTY
+} from 'rxjs';
 import type { Units } from '@blue-might/units';
 
 import UnitModule, {
@@ -19,6 +20,7 @@ import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D } from '../../utils/object';
 import { getUnitDistance, isUnitDestroyed, isVehicle } from '../../utils/unit';
 import type { UnitModules } from '../Unit';
+import { ControlAction } from '../playerModule/Controls';
 
 import type PatrolUnitModule from './Patrol';
 import type WeaponUnitModule from './Weapon';
@@ -46,6 +48,7 @@ export enum ATTACK_TYPE {
 }
 
 export interface AttackUnitModuleObservables extends UnitModuleObservables {
+  targetUnits$: ReplaySubject<{ unit: Unit; distance: number }[]>;
   targetUnit$: ReplaySubject<Unit | null>;
 }
 
@@ -57,40 +60,38 @@ export interface AttackUnitModuleOptions extends UnitModuleOptions {
   radius: number;
   /**
    * The radius of the attack area.
-   * @default radius / 2
+   * @default 4/5
    */
-  attackRadius: number;
+  attackRadiusRatio: number;
   changeByDistance: boolean;
+  /**
+   * Whether the unit should follow the target.
+   * @default true
+   */
   followTarget: boolean;
   attackTypes: ATTACK_TYPE[];
 }
 
 export interface AttackUnitModuleState extends UnitModuleState {
-  targetUnit: Unit | null;
+  targetUnits: { unit: Unit; distance: number }[];
+  targetIndex: number;
   followStartPosition: Vector3 | null;
-  targetYaw: number | null; // Neu: Speichere den Ziel-Yaw für Interpolation
+  targetYaw: number | null;
 }
 
 export default class AttackUnitModule extends UnitModule<
   AttackUnitModuleOptions,
   AttackUnitModuleState,
   AttackUnitModuleObservables,
-  Unit<
-    {
-      weapon: WeaponUnitModule;
-      player: PlayerUnitModule;
-      patrol: PatrolUnitModule;
-    } & UnitModules
-  >
+  Units
 > {
   static override TYPE = 'attack';
 
-  private sphere: Sphere;
   private debugObjects?: {
     radiusSphere: Mesh;
     attackRadiusSphere: Mesh | null;
   } | null;
-  private resumeTimeout: NodeJS.Timeout | null = null; // Neuer Timeout für Patrol-Resume mit Delay
+  private resumeTimeout: number | null = null;
 
   setFollowTarget(enabled: boolean) {
     this.options.followTarget = enabled;
@@ -108,31 +109,38 @@ export default class AttackUnitModule extends UnitModule<
     state: AttackUnitModuleState,
     debug: boolean
   ) {
-    const radius = options.radius ?? 6;
     super(
       unit,
       {
         ...options,
-        radius: radius,
-        attackRadius: options.attackRadius ?? radius / 2,
-        followTarget: options.followTarget ?? false,
+        radius: options.radius ?? 6,
+        attackRadiusRatio: options.attackRadiusRatio ?? 4 / 5,
+        followTarget: options.followTarget ?? true,
         attackTypes: options.attackTypes ?? []
       },
-      { ...state, followStartPosition: null, targetYaw: null },
+      {
+        ...state,
+        targetUnits: [],
+        targetIndex: -1,
+        followStartPosition: null,
+        targetYaw: null
+      },
       debug
     );
 
     //#region observables
+    this.observables.targetUnits$ = new ReplaySubject<
+      { unit: Unit; distance: number }[]
+    >(1);
     this.observables.targetUnit$ = new ReplaySubject<Unit | null>(1);
     //#endregion
-
-    this.sphere = new Sphere(new Vector3(), this.options.radius);
   }
 
   override async setup() {
     await super.setup();
 
     const unit = this.getUnit();
+
     this.subscription.add(
       unit.modules.damage.observables.destroyed$.subscribe(() => {
         this.unitSubscription?.unsubscribe();
@@ -141,28 +149,80 @@ export default class AttackUnitModule extends UnitModule<
         this.subscription.unsubscribe();
       })
     );
+
     this.subscription.add(
       unit.observables.position$.subscribe(position => {
-        this.sphere.center.copy(position);
+        // this.sphere.center.copy(position);
         Object.values(this.debugObjects ?? {}).forEach(debugObject =>
-          debugObject?.position.copy(this.sphere.center)
+          debugObject?.position.copy(position)
         );
       })
     );
 
-    this.subscription.add(
-      unit.modules.player.observables.player$.subscribe(player => {
-        if (isVehicle(this.getUnit())) {
-          this.setFollowTarget(!player);
-        } else {
-          this.setFollowTarget(false);
-        }
-      })
-    );
+    if ('player' in unit.modules) {
+      const player$ = unit.modules.player.observables.player$;
+      this.subscription.add(
+        player$.subscribe(player => {
+          if (isVehicle(this.getUnit())) {
+            this.setFollowTarget(!player);
+          } else {
+            this.setFollowTarget(false);
+          }
+        })
+      );
+
+      this.subscription.add(
+        player$
+          .pipe(
+            switchMap(
+              player => player?.modules.controls.observables.controls$ ?? EMPTY
+            )
+          )
+          .subscribe(controls => {
+            if (controls[ControlAction.SWITCH_TARGET]) {
+              this.switchTarget();
+            }
+          })
+      );
+    }
+
+    if ('radar' in unit.modules) {
+      this.subscription.add(
+        unit.modules.radar.observables.units$
+          .pipe(
+            map(units =>
+              units.filter(({ unit }) => this.isAttackAllowed(unit))
+            ),
+            distinctUntilChanged(
+              (a, b) =>
+                a.map(u => u.unit.id).join() === b.map(u => u.unit.id).join()
+            )
+          )
+          .subscribe(v => {
+            // Wenn targetUnits ändert, wird index auf 0 gesetzt
+            this.state.targetUnits = v;
+            this.state.targetIndex = -1;
+            this.observables.targetUnits$.next(v);
+            this.observables.targetUnit$.next(null);
+          })
+      );
+    } else {
+      console.error('No radar module found');
+    }
 
     if (this.debug) {
       this.setupDebug();
     }
+  }
+
+  getTargetUnit() {
+    return this.state.targetUnits[this.state.targetIndex]?.unit ?? null;
+  }
+
+  switchTarget() {
+    if (this.state.targetUnits.length === 0) return;
+    const index = (this.state.targetIndex + 1) % this.state.targetUnits.length;
+    this.setTargetUnit(index);
   }
 
   override destroy() {
@@ -190,7 +250,7 @@ export default class AttackUnitModule extends UnitModule<
     if (
       this.destroyed ||
       isUnitDestroyed(unit) ||
-      !unit.modules.weapon?.isAutoAimActive()
+      ('weapon' in unit.modules && !unit.modules.weapon?.isAutoAimActive())
     ) {
       return;
     }
@@ -200,42 +260,42 @@ export default class AttackUnitModule extends UnitModule<
     this.lastUpdateTime = time;
 
     // Wenn bereits ein Ziel vorhanden und die Option "changeByDistance" deaktiviert ist wird nicht automatisch ein neues Ziel gesucht.
-    if (this.options.changeByDistance || !this.state.targetUnit) {
-      const unitsInRadius = (
-        unit
-          .getMap()
-          ?.modules.units.chunkManager.getUnitsInRadius(
-            unit.getPosition(),
-            this.options.radius
-          ) ?? []
-      ).filter(u => u !== unit && this.isAttackAllowed(u));
+    if (this.options.changeByDistance || !this.getTargetUnit()) {
+      // const intersectingUnits: Unit[] = [];
 
-      const intersectingUnits: Unit[] = [];
-
-      for (const targetUnit of unitsInRadius) {
-        const intersected = this.intersect(targetUnit);
-        if (intersected) {
-          intersectingUnits.push(intersected);
-        }
+      let u: Unit | null = null;
+      // Unit with smallest distance
+      if (this.state.targetIndex < 0 && this.state.targetUnits[0]) {
+        u = this.setTargetUnit(0);
       }
 
-      this.updateRadiusDebug(intersectingUnits);
+      // TODO: ist das so alles richtig mit dem TargetIndex?
 
-      const result = intersectingUnits.shift();
-      if (result && this.state.targetUnit !== result) {
-        this.setTargetUnit(result);
-      }
+      // if (
+      //   this.state.targetUnits[0] &&
+      //   this.state.targetUnits[0].distance < this.options.radius
+      // ) {
+      //   intersectingUnits.push(this.state.targetUnits[0].unit);
+      // }
+
+      this.updateRadiusDebug(u);
+
+      // const result = intersectingUnits.shift();
+      // if (result && this.state.targetUnit !== result) {
+      //   this.setTargetUnit(result);
+      // }
     }
 
-    if (this.options.followTarget && this.state.targetUnit) {
+    const targetUnit = this.getTargetUnit();
+    if (this.options.followTarget && targetUnit) {
       const pathfinding = unit.modules.pathfinding;
-      const attackRadius = this.options.attackRadius;
+      const attackRadius = this.getAttackRadius();
 
       this.state.followStartPosition =
         this.state.followStartPosition || unit.getPosition().clone();
 
       // Berechne Distanz zum Ziel
-      const distance = getUnitDistance(unit, this.state.targetUnit);
+      const distance = getUnitDistance(unit, targetUnit);
 
       // Neue Prüfung: Stoppe Bewegung, wenn bereits in Reichweite
 
@@ -251,7 +311,7 @@ export default class AttackUnitModule extends UnitModule<
         // Richte die Unit animiert zum Ziel aus (nur wenn stillstehend)
         if (!pathfinding.isMoving()) {
           const direction = new Vector3()
-            .subVectors(this.state.targetUnit.getPosition(), unit.getPosition())
+            .subVectors(targetUnit.getPosition(), unit.getPosition())
             .normalize();
           const targetYaw = Math.atan2(direction.x, direction.z);
 
@@ -290,9 +350,9 @@ export default class AttackUnitModule extends UnitModule<
       // Nur bewegen, wenn nicht in Reichweite und nicht bereits bewegend
       if (!pathfinding.isMoving()) {
         const direction = new Vector3()
-          .subVectors(this.state.targetUnit.getPosition(), unit.getPosition())
+          .subVectors(targetUnit.getPosition(), unit.getPosition())
           .normalize();
-        const targetPosition = this.state.targetUnit
+        const targetPosition = targetUnit
           .getPosition()
           .clone()
           .sub(direction.multiplyScalar(attackRadius));
@@ -308,49 +368,47 @@ export default class AttackUnitModule extends UnitModule<
     }
   }
 
-  private intersect(unit: Unit) {
-    const collisionModule = unit.modules.collision;
-    if (collisionModule) {
-      // Hole die Welt-Bounding Box der Ziel-Unit
-      collisionModule.refreshWorldOBBs();
-      const targetBox = collisionModule.getWorldOBB();
-      if (targetBox.intersectsSphere(this.sphere)) {
-        return unit;
-      }
-    } else {
-      // Fallback: Prüfe Distanz zur Position, wenn kein Kollisionsmodul vorhanden
-      const distance = getUnitDistance(this.getUnit(), unit);
-      if (distance <= this.options.radius) {
-        return unit;
-      }
-    }
-  }
-
   isTargetOuterRange() {
-    if (!this.state.targetUnit || !this.state.followStartPosition) return false;
+    const targetUnit = this.getTargetUnit();
+    if (!targetUnit || !this.state.followStartPosition) return false;
     const distance = this.state.followStartPosition.distanceTo(
-      this.state.targetUnit.getPosition()
+      targetUnit.getPosition()
     );
     return distance > this.options.radius;
   }
 
   hasTarget() {
-    return !!this.state.targetUnit;
+    return !!this.getTargetUnit();
   }
 
   getTarget() {
-    return this.state.targetUnit;
+    return this.getTargetUnit();
+  }
+
+  isCurrentTarget(unit: Unit) {
+    return this.getTargetUnit()?.equals(unit);
   }
 
   private unitSubscription: Subscription | null = null;
-  private setTargetUnit(target?: Unit | null) {
-    if (this.state.targetUnit === target) return;
+  private setTargetUnit(targetIndex: number | null) {
+    if (this.state.targetIndex === targetIndex) return this.getTargetUnit();
+
+    if (targetIndex === null || targetIndex === -1) {
+      this.state.targetIndex = -1;
+      return null;
+    }
 
     const unit = this.getUnit();
-    const patrolModule = unit.modules.patrol;
-    this.state.targetUnit = target ?? null;
+    const patrolModule = 'patrol' in unit.modules ? unit.modules.patrol : null;
+    this.state.targetIndex = targetIndex;
 
-    if (target) {
+    if (!this.state.targetUnits[targetIndex]!.unit) {
+      throw new Error(`Target unit at index ${targetIndex} not found`);
+    }
+
+    const targetUnit = this.state.targetUnits[targetIndex]!.unit;
+
+    if (targetUnit) {
       // Clear any existing resume timeout when setting a new target
       if (this.resumeTimeout) {
         clearTimeout(this.resumeTimeout);
@@ -364,12 +422,14 @@ export default class AttackUnitModule extends UnitModule<
       this.unitSubscription?.unsubscribe();
       this.unitSubscription = new Subscription();
       this.unitSubscription.add(
-        target.observables.position$.subscribe(() => {
-          const stillInRange = this.intersect(target);
+        targetUnit.observables.position$.subscribe(() => {
+          const stillInRange = this.state.targetUnits.find(
+            ({ unit }) => unit === targetUnit
+          );
           const outerDistance = this.isTargetOuterRange();
           if (outerDistance || !stillInRange) {
             // console.log('Target out of range or lost');
-            this.setTargetUnit(undefined);
+            this.setTargetUnit(null);
             this.unitSubscription?.unsubscribe();
             this.subscription.remove(this.unitSubscription!);
             if (this.state.followStartPosition) {
@@ -404,11 +464,18 @@ export default class AttackUnitModule extends UnitModule<
           }
         })
       );
+
       this.unitSubscription.add(
-        target.modules.damage.observables.destroyed$.subscribe(() => {
-          this.setTargetUnit(undefined);
+        targetUnit.modules.damage.observables.destroyed$.subscribe(() => {
           this.unitSubscription?.unsubscribe();
           this.subscription.remove(this.unitSubscription!);
+
+          // !!!! wird vermutlich niht gebraucht, weil schon mit ausstausch der targetUnits Unit weg ist.
+          //     debugger;
+          //     // Ziel zerstört, nächstes Ziel auswählen
+          //     const nextTargetIndex = this.state.targetUnits.length ? 0 : null;
+          //     this.state.targetIndex = -1;
+          //     this.setTargetUnit(nextTargetIndex);
         })
       );
 
@@ -418,7 +485,7 @@ export default class AttackUnitModule extends UnitModule<
       if (this.resumeTimeout) {
         clearTimeout(this.resumeTimeout);
       }
-      this.resumeTimeout = setTimeout(() => {
+      this.resumeTimeout = window.setTimeout(() => {
         if (!patrolModule?.state.active) {
           patrolModule?.resumePatrol();
         }
@@ -432,11 +499,20 @@ export default class AttackUnitModule extends UnitModule<
       }
     }
 
-    this.observables.targetUnit$.next(this.state.targetUnit);
-    console.log('New attack target:', target);
+    this.observables.targetUnit$.next(targetUnit);
+    console.log('New attack target:', targetUnit, targetIndex);
+
+    return targetUnit;
   }
 
-  private isAttackAllowed(target: Unit): boolean {
+  getFollowRadius() {
+    return this.options.radius;
+  }
+  getAttackRadius() {
+    return this.options.attackRadiusRatio * this.options.radius;
+  }
+
+  public isAttackAllowed(target: Unit): boolean {
     const unit = this.getUnit();
 
     const isDestroyed = target.modules.damage?.isDestroyed();
@@ -478,20 +554,13 @@ export default class AttackUnitModule extends UnitModule<
   private setupDebug() {
     this.debugObjects = {
       radiusSphere: new Mesh(
-        new SphereGeometry(this.sphere.radius, 16, 16),
+        new SphereGeometry(this.options.radius, 16, 16),
         new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
       ),
-      attackRadiusSphere:
-        this.options.followTarget && this.state.targetUnit
-          ? new Mesh(
-              new SphereGeometry(
-                this.options.attackRadius ?? this.options.radius / 2,
-                16,
-                16
-              ),
-              new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
-            )
-          : null
+      attackRadiusSphere: new Mesh(
+        new SphereGeometry(this.getAttackRadius(), 16, 16),
+        new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
+      )
     };
     this.getUnit()
       .getMap()
@@ -499,12 +568,12 @@ export default class AttackUnitModule extends UnitModule<
       .add(...Object.values(this.debugObjects).filter(o => o !== null));
   }
 
-  updateRadiusDebug(units: Units[]) {
+  updateRadiusDebug(unit: Unit | null) {
     const radiusSphere = this.debugObjects?.radiusSphere;
     if (radiusSphere) {
       const color = (radiusSphere.material as MeshLambertMaterial)?.color;
       color.set(0x00ff00);
-      if (units.length) {
+      if (unit) {
         color.set(0xff0000);
       }
     }

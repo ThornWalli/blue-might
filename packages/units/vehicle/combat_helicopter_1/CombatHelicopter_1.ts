@@ -135,9 +135,15 @@ export default class CombatHelicopter_1
           ],
           rotationSpeed: options.options?.rotationSpeed ?? 0.25
         },
-
         moduleOptions: {
           ...options.moduleOptions,
+          radar: {
+            radius: 12
+          },
+          attack: {
+            radius: 10,
+            attackRadiusRatio: 8 / 10
+          },
           movable: {
             ...options.moduleOptions?.movable,
             maxFuel: 200
@@ -157,7 +163,8 @@ export default class CombatHelicopter_1
                   barrels: obj.barrels
                 })),
                 this.state,
-                () => this.getRotation()
+                () => this.getRotation(),
+                () => this.getPitchRoll()
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ReplaySubject, Subscription } from 'rxjs';
 import type { Object3D, Scene, Vector3Tuple, EulerTuple } from 'three';
-import { Euler, Quaternion, Vector3, Group } from 'three';
+import { Euler, Quaternion, Vector3, Group, Box3 } from 'three';
 
 import {
   disposeObject3D,
@@ -176,8 +176,6 @@ export default class Unit<
   groundAdjustmentMode: GROUND_ADJUSTMENT_MODE = GROUND_ADJUSTMENT_MODE.GROUND;
   position: Vector3 = new Vector3(0, 0, 0);
   rotation: Euler = new Euler(0, 0, 0);
-  playerPitch = 0;
-  playerRoll = 0;
 
   moduleOptions: Partial<ModuleOptions>;
   moduleStates: Partial<ModuleStates>;
@@ -349,21 +347,23 @@ export default class Unit<
     this.observables.ready$.next();
   }
 
-  pitchWrapper!: Group;
-  rollWrapper!: Group;
+  /**
+   * Wrapper für die Pitch- und Roll-Bewegung. Alle Objekte, die von der Pitch- und Roll-Bewegung beeinflusst werden sollen, müssen hier angehängt werden.
+   */
+  pitchRollWrapper!: Group;
+  /**
+   * Wrapper für die Gelände-Neigung (Terrain-Tilt). Alle Objekte, die von der Gelände-Neigung beeinflusst werden sollen, müssen hier angehängt werden.
+   */
   tiltWrapper!: Group;
   setupRoot(name: string) {
     const root = new Group();
 
-    this.pitchWrapper = new Group(); // player pitch
-    this.pitchWrapper.name = `${name}_pitchWrapper`;
-    this.rollWrapper = new Group(); // player roll
-    this.rollWrapper.name = `${name}_rollWrapper`;
-    this.tiltWrapper = new Group(); // NEW: terrain tilt
+    this.pitchRollWrapper = new Group();
+    this.pitchRollWrapper.name = `${name}_pitchRollWrapper`;
+    this.tiltWrapper = new Group();
     this.tiltWrapper.name = `${name}_tiltWrapper`;
 
-    this.tiltWrapper.add(this.pitchWrapper);
-    this.pitchWrapper.add(this.rollWrapper);
+    this.tiltWrapper.add(this.pitchRollWrapper);
 
     root.add(this.tiltWrapper);
 
@@ -388,7 +388,6 @@ export default class Unit<
     for (const module of new Set(Object.values(this.modules))) {
       await module.afterSetup();
     }
-    // Override in subclasses
   }
 
   async addToScene(scene: Scene) {
@@ -400,7 +399,7 @@ export default class Unit<
   }
 
   addToRoot(object: Object3D) {
-    this.rollWrapper.add(object);
+    this.pitchRollWrapper.add(object);
     setMainObjectRecursive(object, this.root);
   }
   private destroyed = false;
@@ -483,10 +482,6 @@ export default class Unit<
       new Euler(this._tilt.x, 0, this._tilt.z)
     );
     this.tiltWrapper.setRotationFromQuaternion(terrainQuat);
-
-    // 4. Spieler Pitch/Roll
-    this.pitchWrapper.rotation.x = this.playerPitch; // wir speichern sie gleich!
-    this.rollWrapper.rotation.z = this.playerRoll;
   }
 
   getForwardXZFromYaw(target = new Vector3()): Vector3 {
@@ -614,6 +609,12 @@ export default class Unit<
     this.observables.position$.next(desired);
     this.updateMeshTransform();
     return true;
+  }
+
+  getSize() {
+    const root = this.root;
+    const box = new Box3().setFromObject(root);
+    return box.getSize(new Vector3());
   }
 
   //#region visibility
@@ -887,15 +888,19 @@ export default class Unit<
 
   //#endregion
 
+  getPitchRoll() {
+    return this.pitchRollWrapper.rotation;
+  }
+
   //#region pitch
 
   getPitch() {
-    return this.pitchWrapper.rotation.x;
+    return this.pitchRollWrapper.rotation.x;
   }
 
   setPitch(p: number) {
-    this.playerPitch = p;
     this.updateMeshTransform();
+    this.pitchRollWrapper.rotation.x = p;
   }
 
   //#endregion
@@ -903,12 +908,12 @@ export default class Unit<
   //#region roll
 
   getRoll() {
-    return this.rollWrapper.rotation.z;
+    return this.pitchRollWrapper.rotation.z;
   }
 
   setRoll(r: number) {
-    this.playerRoll = r;
     this.updateMeshTransform();
+    this.pitchRollWrapper.rotation.z = r;
   }
 
   //#endregion

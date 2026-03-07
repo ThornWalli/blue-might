@@ -94,12 +94,12 @@ export default class VehiclePlayerModule extends PlayerModule<
             1
           )
           .filter(
-            unit =>
+            ({ unit }) =>
               'player' in unit.modules &&
               !isFigure(unit) &&
               unit !== this.state.figureUnit
           )
-          .shift() as Units) ?? null;
+          .shift()?.unit as Units) ?? null;
       this.enterUnit(unit);
     }
   }

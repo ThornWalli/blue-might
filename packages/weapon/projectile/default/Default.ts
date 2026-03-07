@@ -21,7 +21,7 @@ export default class Default extends Projectile {
       speed: options.speed ?? 10,
       strength: options.strength ?? 0.1,
       radius: options.radius ?? 0.5,
-      airResistance: options.airResistance ?? 0.1,
+      airResistance: options.airResistance ?? 0.0,
       weight: options.weight ?? 1,
       features: options.features ?? {
         ...(options.features ?? {}),

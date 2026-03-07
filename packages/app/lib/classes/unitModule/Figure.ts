@@ -2,6 +2,7 @@ import type { Subscription } from 'rxjs';
 import {
   combineLatest,
   concatMap,
+  distinctUntilChanged,
   EMPTY,
   filter,
   from,
@@ -9,13 +10,7 @@ import {
   ReplaySubject,
   switchMap
 } from 'rxjs';
-import {
-  Mesh,
-  MeshLambertMaterial,
-  Sphere,
-  SphereGeometry,
-  Vector3
-} from 'three';
+import { Mesh, MeshLambertMaterial, SphereGeometry } from 'three';
 import type { Units } from '@blue-might/units';
 
 import UnitModule, {
@@ -25,7 +20,6 @@ import UnitModule, {
 } from '../UnitModule';
 import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import type { AnimationLoopValue } from '../Renderer';
-import { intersect } from '../../utils/intersect';
 import { canRescue, isRescue, isUnitDestroyed } from '../../utils/unit';
 import type FigureUnit from '../unit/Figure';
 
@@ -42,6 +36,7 @@ declare module '../Unit' {
 }
 
 interface Observables extends UnitModuleObservables {
+  targetUnits$: ReplaySubject<Units[]>;
   targetUnit$: ReplaySubject<Units | null>;
   needRescue$: ReplaySubject<boolean>;
   rescueUnit$: ReplaySubject<Units | null>;
@@ -49,13 +44,13 @@ interface Observables extends UnitModuleObservables {
 }
 
 export interface FigureUnitModuleOptions extends UnitModuleOptions {
-  targetRadius: number;
   /**
    * Wenn gesetzt, benötigt die Figur Rettung (z.B. bei Wasser- oder Luftfahrzeugen).
    */
   needRescue: boolean;
 }
 export interface FigureUnitModuleState extends UnitModuleState {
+  targetUnits: Units[];
   targetUnit: Units | null;
   rescueUnit: Units | null;
 }
@@ -66,7 +61,6 @@ export default class FigureUnitModule extends UnitModule<
 > {
   static override TYPE = 'figure';
 
-  sphere: Sphere;
   debugSphere: Mesh | null = null;
 
   constructor(
@@ -79,13 +73,14 @@ export default class FigureUnitModule extends UnitModule<
       unit,
       {
         ...options,
-        targetRadius: options.targetRadius ?? 3,
         needRescue: options?.needRescue ?? false
       },
-      { ...state },
+      { ...state, targetUnits: [] },
       debug
     );
     //#region observables
+    this.observables.targetUnits$ = new ReplaySubject<Units[]>(1);
+    this.observables.targetUnits$.next([]);
     this.observables.targetUnit$ = new ReplaySubject<Units | null>(1);
     this.observables.needRescue$ = new ReplaySubject<boolean>(1);
     this.observables.needRescue$.next(this.options.needRescue);
@@ -93,8 +88,6 @@ export default class FigureUnitModule extends UnitModule<
     this.observables.rescueUnit$.next(this.state.rescueUnit);
     this.observables.rescueComplete$ = new ReplaySubject<boolean>(1);
     //#endregion
-
-    this.sphere = new Sphere(new Vector3(), this.options.targetRadius);
   }
   override destroy() {
     this.destroyDebug();
@@ -104,6 +97,8 @@ export default class FigureUnitModule extends UnitModule<
 
   override async setup() {
     await super.setup();
+
+    const unit = this.getUnit();
 
     /**
      * Wenn die Rettungseinheit zerstört wird, wird auch die Figur zerstört.
@@ -165,6 +160,30 @@ export default class FigureUnitModule extends UnitModule<
           }
         })
     );
+
+    if ('radar' in unit.modules) {
+      this.subscription.add(
+        unit.modules.radar.observables.units$
+          .pipe(
+            map(units =>
+              units
+                .filter(
+                  ({ unit }) => filterTransport(unit) || filterRescue(unit)
+                )
+                .map(({ unit }) => unit)
+            ),
+            distinctUntilChanged(
+              (a, b) => a.map(u => u.id).join() === b.map(u => u.id).join()
+            )
+          )
+          .subscribe(units => {
+            this.state.targetUnits = units;
+            this.observables.targetUnits$.next(units);
+          })
+      );
+    } else {
+      console.error('No radar module found');
+    }
   }
 
   private async moveToUnit() {
@@ -204,12 +223,6 @@ export default class FigureUnitModule extends UnitModule<
           })
       );
     }
-
-    this.subscription.add(
-      this.getUnit().observables.position$.subscribe(position => {
-        this.sphere.center.copy(position);
-      })
-    );
   }
 
   private lastUpdateTime = 0;
@@ -219,36 +232,21 @@ export default class FigureUnitModule extends UnitModule<
     if ((time - this.lastUpdateTime) / 1000 < 1) {
       return;
     }
+
     this.lastUpdateTime = time;
 
-    const unit = this.getUnit();
-    const unitsInRadius = (unit
-      .getMap()
-      ?.modules.units.chunkManager.getUnitsInRadius(
-        this.sphere.center,
-        this.options.targetRadius
-      ) ?? []) as Units[];
+    const rescueUnit = this.state.targetUnits.filter(filterRescue)[0];
+    const availableTransportUnits =
+      this.state.targetUnits.filter(filterTransport);
 
-    const rescueUnit = unitsInRadius.find(u => isRescue(u));
-    const availableTransportUnits = unitsInRadius.filter(
-      u =>
-        'transport' in u.modules &&
-        u.modules.transport.getCanProcess() &&
-        u.modules.transport.hasFreeSlots()
-    );
     const filteredUnits = new Set(
       [rescueUnit, ...availableTransportUnits].filter(u => u !== undefined)
     );
 
     const intersectingUnits: Units[] = [];
     for (const targetUnit of filteredUnits) {
-      const intersected = intersect({
-        unit: targetUnit,
-        sphere: this.sphere,
-        radius: this.options.targetRadius
-      });
-      if (intersected && !isUnitDestroyed(intersected)) {
-        intersectingUnits.push(intersected);
+      if (targetUnit && !isUnitDestroyed(targetUnit)) {
+        intersectingUnits.push(targetUnit);
         break;
       }
     }
@@ -287,9 +285,44 @@ export default class FigureUnitModule extends UnitModule<
     this.observables.targetUnit$.next(unit);
   }
 
+  private getRadius() {
+    const unit = this.getUnit();
+    if ('radar' in unit.modules) {
+      const radarModule = unit.modules.radar;
+      return radarModule.getRadius();
+    }
+    return 0;
+  }
+
+  getNeedRescue() {
+    return this.options.needRescue;
+  }
+
+  setNeedRescue(needRescue: boolean) {
+    this.options.needRescue = needRescue;
+    this.observables.needRescue$.next(needRescue);
+  }
+
+  setRescueUnit(unit: Units) {
+    this.state.rescueUnit = unit;
+    this.observables.rescueComplete$.next(true);
+  }
+  isRescueComplete() {
+    return !!this.state.rescueUnit;
+  }
+
+  override getOptions() {
+    return {
+      ...super.getOptions(),
+      needRescue: this.getNeedRescue()
+    };
+  }
+
+  //#region debug
+
   private setupDebug() {
     const debugSphere = new Mesh(
-      new SphereGeometry(this.sphere.radius, 16, 16),
+      new SphereGeometry(this.getRadius(), 16, 16),
       new MeshLambertMaterial({
         opacity: 0.2,
         transparent: true,
@@ -318,27 +351,17 @@ export default class FigureUnitModule extends UnitModule<
     }
   }
 
-  getNeedRescue() {
-    return this.options.needRescue;
-  }
+  //#endregion
+}
 
-  setNeedRescue(needRescue: boolean) {
-    this.options.needRescue = needRescue;
-    this.observables.needRescue$.next(needRescue);
-  }
+function filterRescue(u: Units): boolean {
+  return isRescue(u);
+}
 
-  setRescueUnit(unit: Units) {
-    this.state.rescueUnit = unit;
-    this.observables.rescueComplete$.next(true);
-  }
-  isRescueComplete() {
-    return !!this.state.rescueUnit;
-  }
-
-  override getOptions() {
-    return {
-      ...super.getOptions(),
-      needRescue: this.getNeedRescue()
-    };
-  }
+function filterTransport(u: Units): boolean {
+  return (
+    'transport' in u.modules &&
+    u.modules.transport.getCanProcess() &&
+    u.modules.transport.hasFreeSlots()
+  );
 }

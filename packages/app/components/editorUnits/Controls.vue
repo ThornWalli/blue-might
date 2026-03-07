@@ -2,7 +2,6 @@
   <base-sticky-wrapper
     class="bm-editor-units-controls"
     :app="app"
-    :translate="['300%', '-50%']"
     :target="target">
     <div>
       <bm-button
@@ -72,11 +71,14 @@ onUnmounted(() => {
 <style lang="postcss" scoped>
 .bm-editor-units-controls {
   & > div {
-    position: relative;
+    position: absolute;
+    top: 50%;
+    left: 100%;
     display: flex;
     flex-direction: column;
     gap: var(--bm-spacing-small);
     pointer-events: auto;
+    transform: translateY(-50%);
   }
 }
 </style>

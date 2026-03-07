@@ -16,7 +16,6 @@ import TankUnit, {
 } from '@blue-might/app/lib/classes/unit/vehicle/Tank';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import { Object3D, Vector2, Mesh, SkinnedMesh } from 'three';
-import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/Weapon';
@@ -42,10 +41,9 @@ export interface CombatTankOptions
 export interface CombatTankModules extends TankUnitModules {
   attack: AttackUnitModule;
   weapon: WeaponUnitModule;
-  player: PlayerUnitModule;
 }
 export type CombatTankModuleList = TankUnitModuleList &
-  [typeof AttackUnitModule | typeof WeaponUnitModule | typeof PlayerUnitModule];
+  [typeof AttackUnitModule | typeof WeaponUnitModule];
 
 export interface RawUnitDescription_CombatTank_1<
   O extends UnitOptions = CombatTankOptions
@@ -79,11 +77,7 @@ export default class CombatTank_1
     > = {},
     moduleList?: CombatTankModuleList
   ) {
-    moduleList = addModules(moduleList, [
-      AttackUnitModule,
-      WeaponUnitModule,
-      PlayerUnitModule
-    ]);
+    moduleList = addModules(moduleList, [AttackUnitModule, WeaponUnitModule]);
 
     super(
       {
