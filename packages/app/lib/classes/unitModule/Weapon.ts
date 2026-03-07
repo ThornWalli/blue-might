@@ -359,6 +359,7 @@ export default class WeaponUnitModule<
 
   private updateAutoAIM() {
     if (this.state.autoAimActive) {
+      console.log('Auto-Aim active:', this.getUnit(), this.state.autoAimTarget);
       const target = this.state.autoAimTarget;
       if (target) {
         this.getSlots().forEach(weaponSlot => {

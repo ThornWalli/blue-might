@@ -139,17 +139,19 @@ export default class SeaVehicleUnitModule<
       this.destroyedTimeout = Date.now() + 5000;
     }
 
-    const sinkSpeed =
+    const sinkSpeed = () =>
       unit
         .getMap()
         ?.modules.surface.getHeightAt(
           unit.getPosition().x,
           unit.getPosition().z
         ) ?? 1.0;
-
-    if (unit.modules.damage.isDestroyed() && unit.getPosition().y > sinkSpeed) {
+    if (
+      unit.modules.damage.isDestroyed() &&
+      unit.getPosition().y > sinkSpeed()
+    ) {
       const pos = unit.getPosition().clone();
-      pos.y += sinkSpeed * delta;
+      pos.y += sinkSpeed() * delta;
 
       unit.setPosition(pos);
 

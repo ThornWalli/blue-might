@@ -152,8 +152,8 @@ export function autoAimFunction(
 
   // Winkel auf Bereiche begrenzen
   targetPitch = Math.max(minAngle.y, Math.min(maxAngle.y, targetPitch));
-  const isYawInRange = targetYaw >= minAngle.x && targetYaw <= maxAngle.x;
-  const isPitchInRange = targetPitch >= minAngle.y && targetPitch <= maxAngle.y;
+  const isYawInRange = targetYaw >= minAngle.y && targetYaw <= maxAngle.y;
+  const isPitchInRange = targetPitch >= minAngle.x && targetPitch <= maxAngle.x;
   // console.log(
   //   `Yaw: ${targetYaw.toFixed(3)}, Pitch: ${targetPitch.toFixed(3)}, Rotation.y: ${rotation.y.toFixed(3)}, Dist: ${horizontalDistance.toFixed(2)}`
   // );

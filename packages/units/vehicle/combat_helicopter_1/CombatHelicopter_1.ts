@@ -125,11 +125,11 @@ export default class CombatHelicopter_1
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [
             {
-              min: new Vector2(-Math.PI / 2, -0.15),
+              min: new Vector2(-0.15, -Math.PI / 2),
               max: new Vector2(Math.PI / 2, Math.PI / 2)
             },
             {
-              min: new Vector2(-Math.PI / 2, -0.15),
+              min: new Vector2(-0.15, -Math.PI / 2),
               max: new Vector2(Math.PI / 2, Math.PI / 2)
             }
           ],
@@ -326,16 +326,16 @@ export default class CombatHelicopter_1
         barrelObjY.rotation.y += velocity.x;
 
         barrelObjX.rotation.x = Math.max(
-          this.options.weaponAngles[index]!.min.y,
+          this.options.weaponAngles[index]!.min.x,
           Math.min(
-            this.options.weaponAngles[index]!.max.y,
+            this.options.weaponAngles[index]!.max.x,
             barrelObjX.rotation.x
           )
         );
         barrelObjY.rotation.y = Math.max(
-          this.options.weaponAngles[index]!.min.x,
+          this.options.weaponAngles[index]!.min.y,
           Math.min(
-            this.options.weaponAngles[index]!.max.x,
+            this.options.weaponAngles[index]!.max.y,
             barrelObjY.rotation.y
           )
         );

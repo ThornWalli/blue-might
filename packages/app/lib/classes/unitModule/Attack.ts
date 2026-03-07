@@ -199,11 +199,13 @@ export default class AttackUnitModule extends UnitModule<
             )
           )
           .subscribe(v => {
+            console.log('Radar detected target units:', this.getUnit(), v);
             // Wenn targetUnits ändert, wird index auf 0 gesetzt
             this.state.targetUnits = v;
+            const last = this.state.targetIndex > -1;
             this.state.targetIndex = -1;
+            if (last) this.observables.targetUnit$.next(null);
             this.observables.targetUnits$.next(v);
-            this.observables.targetUnit$.next(null);
           })
       );
     } else {
@@ -395,6 +397,7 @@ export default class AttackUnitModule extends UnitModule<
 
     if (targetIndex === null || targetIndex === -1) {
       this.state.targetIndex = -1;
+      this.observables.targetUnit$.next(null);
       return null;
     }
 

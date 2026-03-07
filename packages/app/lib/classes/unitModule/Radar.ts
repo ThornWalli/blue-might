@@ -63,7 +63,7 @@ export default class RadarUnitModule extends UnitModule<
   ) {
     super(
       unit,
-      { ...options, radius: options.radius ?? 6 },
+      { ...options, radius: options.radius ?? 10 },
       {
         ...state,
         warnings: [],
