@@ -97,6 +97,7 @@ function create(app: App) {
   const position = ref<Vector3 | null>(null);
   const flightStatus = ref<FLIGHT_STATUS | null>(null);
   const warnings = ref<WARNING_TYPE[]>([]);
+  const hasAimTarget = ref<boolean>(false);
   const powerInfo = ref<PowerInfo>({
     flightPower: 0,
     currentPower: 0,
@@ -205,7 +206,7 @@ function create(app: App) {
           switchMap(p => p?.modules.vehicle.observables.currentUnit$ ?? EMPTY),
           switchMap(unit =>
             'radar' in unit.modules
-              ? unit.modules.radar.observables.warning$
+              ? unit.modules.radar.observables.warnings$
               : EMPTY
           )
         )
@@ -331,6 +332,16 @@ function create(app: App) {
     //#endregion
 
     //#region weapon
+
+    subscription.add(
+      weaponModule$
+        .pipe(
+          switchMap(weaponModule => weaponModule.observables.autoAimTarget$)
+        )
+        .subscribe(v => {
+          hasAimTarget.value = !!v;
+        })
+    );
 
     subscription.add(
       weaponModule$
@@ -475,6 +486,7 @@ function create(app: App) {
     position,
     flightStatus,
     warnings,
+    hasAimTarget,
     powerInfo,
     weaponAutopilot,
     unitActive,

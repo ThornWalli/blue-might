@@ -41,6 +41,7 @@ export class GridNode {
 
 type GetTileTypeFunction = (x: number, y: number) => TILE_TYPE;
 type GetTerrainHeightFunction = (x: number, y: number) => number;
+type GetWaterLevelFunction = () => number;
 
 export default class Grid {
   resetNodes(nodes: GridNode[]) {
@@ -62,6 +63,7 @@ export default class Grid {
 
   private getTileType: GetTileTypeFunction;
   private getTerrainHeight: GetTerrainHeightFunction;
+  private getWaterLevel: GetWaterLevelFunction;
   private readonly MAX_HEIGHT_DIFF = 0.01; // Schwellenwert für Höhenunterschied (anpassbar)
 
   observables: {
@@ -74,12 +76,14 @@ export default class Grid {
     size: Vector2,
     cellSize: number,
     getTileType: GetTileTypeFunction,
-    getTerrainHeight: GetTerrainHeightFunction
+    getTerrainHeight: GetTerrainHeightFunction,
+    getWaterLevel: GetWaterLevelFunction
   ) {
     this.size = size;
     this.cellSize = cellSize;
     this.getTileType = getTileType;
     this.getTerrainHeight = getTerrainHeight;
+    this.getWaterLevel = getWaterLevel;
   }
 
   setup() {
@@ -155,7 +159,10 @@ export default class Grid {
         maxDiff = Math.max(maxDiff, Math.abs(currentHeight - neighborHeight));
       }
     }
-    if (maxDiff > this.MAX_HEIGHT_DIFF) {
+    if (
+      currentHeight < Math.abs((-9 + this.getWaterLevel()) / 10) &&
+      maxDiff > this.MAX_HEIGHT_DIFF
+    ) {
       node.type = TILE_TYPE.BLOCKED; // Blockiere Zelle bei zu großem Höhenunterschied
       this.matrix[z]![x] = node.type;
     }

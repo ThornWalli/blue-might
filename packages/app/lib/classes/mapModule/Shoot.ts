@@ -252,8 +252,7 @@ export default class ShootModule extends MapModule<
       shoot.lifetime -= delta;
 
       if (shoot.lifetime < 0) {
-        shoot.isActive = false;
-        shoot.object.visible = false;
+        this.removeShoot(shoot);
         continue;
       }
 
@@ -390,9 +389,7 @@ export default class ShootModule extends MapModule<
 
       const distanceFromStart = obj.position.distanceTo(shoot.startPosition);
       if (hit || distanceFromStart > MAX_SHOOT_DISTANCE) {
-        shoot.isActive = false;
-        shoot.object.visible = false;
-        this.observables.removeShoot$.next(shoot);
+        this.removeShoot(shoot);
       }
     }
 
@@ -400,6 +397,12 @@ export default class ShootModule extends MapModule<
     if (this.raycastFrameCounter > 10) {
       this.raycastFrameCounter = 0;
     }
+  }
+
+  private removeShoot(shoot: ShootDescription) {
+    shoot.isActive = false;
+    shoot.object.visible = false;
+    this.observables.removeShoot$.next(shoot);
   }
 
   private hitByProjectileRadius(shoot: ShootDescription, position: Vector3) {

@@ -77,6 +77,15 @@
             <div>Landed</div>
           </div>
         </div>
+        <div
+          v-if="messages.includes(HUD_MESSAGE_TYPE.AIM_TARGET)"
+          :key="HUD_MESSAGE_TYPE.AIM_TARGET"
+          class="message-aim-target">
+          <div class="content">
+            <div>Aim Target</div>
+            <div>Press "Space" for Shoot</div>
+          </div>
+        </div>
       </div>
     </div>
   </transition>
@@ -104,8 +113,15 @@ const messages = ref<HUD_MESSAGE_TYPE[]>([
   HUD_MESSAGE_TYPE.INCOMING_MISSILE
 ]);
 
-const { unit, unitDamage, hasFuelWarning, flightStatus, powerInfo, warnings } =
-  usePlayerUnitInterface($props.app);
+const {
+  unit,
+  unitDamage,
+  hasFuelWarning,
+  flightStatus,
+  powerInfo,
+  warnings,
+  hasAimTarget
+} = usePlayerUnitInterface($props.app);
 
 watchEffect(() => {
   const messages_ = [];
@@ -134,6 +150,10 @@ watchEffect(() => {
     if (FLIGHT_STATUS.LANDED === flightStatus.value) {
       messages_.push(HUD_MESSAGE_TYPE.LANDED);
     }
+
+    if (hasAimTarget.value) {
+      messages_.push(HUD_MESSAGE_TYPE.AIM_TARGET);
+    }
   }
   messages.value = messages_;
 });
@@ -148,7 +168,8 @@ export enum HUD_MESSAGE_TYPE {
   READY,
   LANDED,
   ENGINE_STARTED,
-  ENGINE_START
+  ENGINE_START,
+  AIM_TARGET
 }
 </script>
 
@@ -234,6 +255,17 @@ export enum HUD_MESSAGE_TYPE {
     color: #fff;
     border: solid 4px #f00;
     animation: blink 1s infinite steps(1);
+
+    & .content {
+      padding: var(--bm-spacing-medium) var(--bm-spacing-large);
+      background: #f00;
+    }
+  }
+
+  & .message-aim-target {
+    padding: var(--bm-spacing-small);
+    color: #fff;
+    border: solid 4px #f00;
 
     & .content {
       padding: var(--bm-spacing-medium) var(--bm-spacing-large);

@@ -96,6 +96,9 @@ export default class WeaponUnitModule<
     } & UnitModules
   >
 > extends UnitModule<Options, State, Obervables, U> {
+  hasAutopilotShoot() {
+    return this.options.autopilot.shoot;
+  }
   static override TYPE = 'weapon';
 
   slots: WeaponSlot[];

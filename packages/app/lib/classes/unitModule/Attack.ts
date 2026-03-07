@@ -199,7 +199,6 @@ export default class AttackUnitModule extends UnitModule<
             )
           )
           .subscribe(v => {
-            console.log('Radar detected target units:', this.getUnit(), v);
             // Wenn targetUnits ändert, wird index auf 0 gesetzt
             this.state.targetUnits = v;
             const last = this.state.targetIndex > -1;

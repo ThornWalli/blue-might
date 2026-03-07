@@ -132,7 +132,8 @@ export default class PathfindingModule extends MapModule<
         // Neu: Höhe-Funktion übergeben
         const worldPos = this.grid!.toWorldPosition(x, y); // Temporär Grid verwenden, aber Höhe aus Surface holen
         return this.map.modules.surface.getDepthAt(worldPos.x, worldPos.y);
-      }
+      },
+      () => this.map.modules.surface.getWaterLevel()
     );
     // this.grid = new Grid(
     //   size.clone().divideScalar(gridSize).round(),

@@ -306,7 +306,7 @@ export default class SeaVehicleUnitModule<
       );
 
       const terrainHeight = Math.max(seaLevel, test ?? seaLevel);
-      if (terrainHeight > newPos.y) {
+      if (!aiActive && terrainHeight > newPos.y) {
         // Boot ist auf oder über Terrain – blockiere Bewegung (simuliert Auflaufen)
         // Änderung: Statt komplett zu stoppen, reduziere Geschwindigkeit stark, um Rückwärtsfahren zu erlauben
         velocity.multiplyScalar(0.1); // Sehr langsam, aber erlaubt Bewegung

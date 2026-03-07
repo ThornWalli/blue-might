@@ -57,7 +57,7 @@ export function updateControls(
     velocity.x -= value;
   }
 
-  if (unit.modules.weapon.isAutoAimActive()) return;
+  if (unit.modules.weapon.hasAutopilotShoot()) return;
   if (controls[ControlAction.FIRE_PRIMARY]) {
     unit.modules.weapon.shoot();
   } else {

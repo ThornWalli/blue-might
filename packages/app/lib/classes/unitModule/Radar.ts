@@ -27,7 +27,7 @@ declare module '../Unit' {
 }
 
 export interface RadarUnitObservables extends UnitModuleObservables {
-  warning$: ReplaySubject<WARNING_TYPE[]>;
+  warnings$: ReplaySubject<WARNING_TYPE[]>;
   units$: ReplaySubject<{ unit: Units; distance: number }[]>;
 }
 
@@ -73,7 +73,7 @@ export default class RadarUnitModule extends UnitModule<
     );
 
     //#region observables
-    this.observables.warning$ = new ReplaySubject<WARNING_TYPE[]>(1);
+    this.observables.warnings$ = new ReplaySubject<WARNING_TYPE[]>(1);
     this.observables.units$ = new ReplaySubject<
       { unit: Units; distance: number }[]
     >(1);
@@ -88,6 +88,7 @@ export default class RadarUnitModule extends UnitModule<
       map$
         .pipe(
           switchMap(map => map?.modules.shoot.observables.addShoot$ ?? EMPTY),
+          // Filtere Schüsse, die auf diese Einheit zielen und von einem Raketenwerfer stammen
           filter(shoot => shoot.targetUnit?.equal(unit) ?? false),
           filter(
             shoot =>
@@ -99,7 +100,7 @@ export default class RadarUnitModule extends UnitModule<
         .subscribe(shoot => {
           this.state.warnings.push(WARNING_TYPE.MISSILE);
           this.state.shoots.add(shoot);
-          this.observables.warning$.next(this.getWarningTypes());
+          this.observables.warnings$.next(this.state.warnings);
         })
     );
 
@@ -109,15 +110,17 @@ export default class RadarUnitModule extends UnitModule<
           switchMap(
             map => map?.modules.shoot.observables.removeShoot$ ?? EMPTY
           ),
-          filter(shoot => shoot.targetUnit?.equal(unit) ?? false)
+          // Filtere nur bekannte Schüsse, die auf diese Einheit zielen
+          filter(shoot => this.state.shoots.has(shoot))
         )
         .subscribe(shoot => {
-          this.state.warnings.splice(
-            this.state.warnings.findIndex(w => w === WARNING_TYPE.MISSILE),
-            1
-          );
           this.state.shoots.delete(shoot);
-          this.observables.warning$.next(this.getWarningTypes());
+          if (this.state.shoots.size === 0) {
+            this.state.warnings = this.state.warnings.filter(
+              w => w !== WARNING_TYPE.MISSILE
+            );
+          }
+          this.observables.warnings$.next(this.state.warnings);
         })
     );
   }
@@ -147,14 +150,6 @@ export default class RadarUnitModule extends UnitModule<
     this.state.units = units;
     this.observables.units$.next(units);
     this.updateRadiusDebug(position, units);
-  }
-
-  getWarningTypes() {
-    const warnings: WARNING_TYPE[] = [];
-    if (this.state.warnings.includes(WARNING_TYPE.MISSILE)) {
-      warnings.push(WARNING_TYPE.MISSILE);
-    }
-    return warnings;
   }
 
   getRadius() {
