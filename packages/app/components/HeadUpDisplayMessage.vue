@@ -52,11 +52,12 @@
           </div>
         </div>
         <div
-          v-else-if="messages.includes(HUD_MESSAGE_TYPE.LANDED)"
-          :key="HUD_MESSAGE_TYPE.LANDED"
-          class="message-landed">
+          v-else-if="messages.includes(HUD_MESSAGE_TYPE.ENGINE_STARTED)"
+          :key="HUD_MESSAGE_TYPE.ENGINE_STARTED"
+          class="message-engine-started">
           <div class="content">
-            <div>Landed</div>
+            <div>Engine Starting…</div>
+            <div>Holding "R"</div>
           </div>
         </div>
         <div
@@ -64,8 +65,16 @@
           :key="HUD_MESSAGE_TYPE.ENGINE_START"
           class="message-engine-start">
           <div class="content">
-            <div>Engine Starting…</div>
-            <div>Holding "R"</div>
+            <div>Start Engine</div>
+            <div>Press "P"</div>
+          </div>
+        </div>
+        <div
+          v-if="messages.includes(HUD_MESSAGE_TYPE.LANDED)"
+          :key="HUD_MESSAGE_TYPE.LANDED"
+          class="message-landed">
+          <div class="content">
+            <div>Landed</div>
           </div>
         </div>
       </div>
@@ -112,13 +121,18 @@ watchEffect(() => {
     if (unitDamage.value.level >= DAMAGE_LEVEL.DAMAGED) {
       messages_.push(HUD_MESSAGE_TYPE.DAMAGE);
     }
-    if (FLIGHT_STATUS.LANDED === flightStatus.value) {
-      messages_.push(HUD_MESSAGE_TYPE.LANDED);
+
+    if (powerInfo.value.currentPower === 0) {
+      messages_.push(HUD_MESSAGE_TYPE.ENGINE_START);
     } else if (
       powerInfo.value.currentPower >= powerInfo.value.idlePower &&
       powerInfo.value.currentPower <= powerInfo.value.minPower
     ) {
-      messages_.push(HUD_MESSAGE_TYPE.ENGINE_START);
+      messages_.push(HUD_MESSAGE_TYPE.ENGINE_STARTED);
+    }
+
+    if (FLIGHT_STATUS.LANDED === flightStatus.value) {
+      messages_.push(HUD_MESSAGE_TYPE.LANDED);
     }
   }
   messages.value = messages_;
@@ -133,6 +147,7 @@ export enum HUD_MESSAGE_TYPE {
   DAMAGE,
   READY,
   LANDED,
+  ENGINE_STARTED,
   ENGINE_START
 }
 </script>
@@ -191,7 +206,8 @@ export enum HUD_MESSAGE_TYPE {
     }
   }
 
-  & .message-engine-start {
+  & .message-engine-start,
+  & .message-engine-started {
     padding: var(--bm-spacing-small);
     color: black;
     border: solid 4px yellow;
@@ -227,12 +243,13 @@ export enum HUD_MESSAGE_TYPE {
 
   & > div {
     position: absolute;
-    top: calc(6 / 8 * 100%);
-    left: 50%;
+    bottom: 164px;
+    left: 0;
     display: flex;
     flex-direction: column;
     gap: var(--bm-spacing-medium);
-    transform: translate(-50%, -50%);
+    align-items: center;
+    width: 100%;
 
     & > div {
       & .content {

@@ -21,6 +21,10 @@ import type { UnitModules } from './../Unit';
 import type AttackUnitModule from './Attack';
 import type PlayerUnitModule from './Player';
 
+export interface WeaponAutopilotOptions {
+  aim: boolean;
+  shoot: boolean;
+}
 declare module '../Unit' {
   interface ModuleStates {
     weapon: Partial<WeaponUnitModuleState>;
@@ -42,7 +46,8 @@ export interface WeaponUnitModuleObservables extends UnitModuleObservables {
     shoot: ShootDescription;
   }>;
   cooldown$: Subject<{ index: number }>;
-  autoAimActive$: ReplaySubject<boolean>;
+  autopilot$: ReplaySubject<WeaponAutopilotOptions>;
+  autopilotActive$: ReplaySubject<boolean>;
   autoAimTarget$: ReplaySubject<Unit | null>;
 }
 
@@ -56,7 +61,7 @@ export type AutoAimFn = (options: AutoAimFnOptions) => boolean;
 
 export interface WeaponUnitModuleOptions extends UnitModuleOptions {
   autoAimFn: AutoAimFn;
-  autoAimActive?: boolean;
+  autopilot: WeaponAutopilotOptions;
   slots: Exclude<WeaponSlotDescription, 'index'>[];
 }
 
@@ -66,10 +71,8 @@ export interface WeaponUnitModuleState extends UnitModuleState {
   sourcePositions: Vector3[];
   sourceDirections: Vector3[];
   barrelTargets: Object3D[];
-  autoAimActive: boolean;
+  autopilotActive: boolean;
   autoAimTarget: Unit | null;
-  autoAimFollowTarget: boolean;
-  autoAimAutoShoot: boolean;
   currentSlot: number;
 }
 
@@ -101,7 +104,11 @@ export default class WeaponUnitModule<
       unit,
       {
         ...options,
-        slots: options.slots ?? []
+        slots: options.slots ?? [],
+        autopilot: options.autopilot ?? {
+          aim: false,
+          shoot: false
+        }
       },
       {
         ...state,
@@ -110,9 +117,7 @@ export default class WeaponUnitModule<
         sourcePositions: state.sourcePositions ?? [],
         sourceDirections: state.sourceDirections ?? [],
         barrelTargets: state.barrelTargets ?? [],
-        autoAimActive: options.autoAimActive ?? state.autoAimActive ?? false,
-        autoAimFollowTarget: state.autoAimFollowTarget ?? false,
-        autoAimAutoShoot: state.autoAimAutoShoot ?? true,
+        autopilotActive: options.autopilot?.aim || options.autopilot?.shoot,
         autoAimTarget: state.autoAimTarget ?? null,
         currentSlot: state.currentSlot ?? 0
       },
@@ -141,8 +146,10 @@ export default class WeaponUnitModule<
       shoot: ShootDescription;
     }>();
     this.observables.cooldown$ = new Subject<{ index: number }>();
-    this.observables.autoAimActive$ = new ReplaySubject<boolean>();
-    this.observables.autoAimActive$.next(this.state.autoAimActive);
+    this.observables.autopilot$ = new ReplaySubject<WeaponAutopilotOptions>();
+    this.observables.autopilot$.next(this.options.autopilot);
+    this.observables.autopilotActive$ = new ReplaySubject<boolean>();
+    this.observables.autopilotActive$.next(this.state.autopilotActive);
     this.observables.autoAimTarget$ = new ReplaySubject<Unit | null>();
     //#endregion
   }
@@ -187,7 +194,10 @@ export default class WeaponUnitModule<
 
       this.subscription.add(
         playerUnitModule.observables.player$.subscribe(player => {
-          this.getUnit().modules.weapon.setAutoAimActive(!player);
+          this.getUnit().modules.weapon.setAutopilot({
+            aim: true,
+            shoot: !player
+          });
         })
       );
     }
@@ -282,7 +292,7 @@ export default class WeaponUnitModule<
       .filter(
         slot =>
           slot &&
-          (this.state.autoAimActive || slot.active) &&
+          slot.active &&
           !this.ignoredSlots.has(slot) &&
           slot.ammunition > 0
       )
@@ -333,7 +343,7 @@ export default class WeaponUnitModule<
           });
 
         if (
-          !this.state.autoAimActive &&
+          !this.state.autopilotActive &&
           weaponSlot.weapon.shootType === WEAPON_SHOOT_TYPE.SINGLE
         ) {
           this.ignoredSlots.add(weaponSlot);
@@ -358,22 +368,24 @@ export default class WeaponUnitModule<
   }
 
   private updateAutoAIM() {
-    if (this.state.autoAimActive) {
-      console.log('Auto-Aim active:', this.getUnit(), this.state.autoAimTarget);
+    if (this.state.autopilotActive) {
       const target = this.state.autoAimTarget;
       if (target) {
         this.getSlots().forEach(weaponSlot => {
           const index = weaponSlot.index;
 
           const sourcePosition = this.state.sourcePositions[index]!;
-          const shoot = this.options.autoAimFn({
-            target,
-            sourcePosition,
-            weapon: weaponSlot.weapon,
-            index
-          });
 
-          if (this.state.autoAimAutoShoot) {
+          const shoot = this.options.autopilot?.aim
+            ? this.options.autoAimFn({
+                target,
+                sourcePosition,
+                weapon: weaponSlot.weapon,
+                index
+              })
+            : true;
+
+          if (this.options.autopilot?.shoot) {
             if (shoot) {
               this.shoot();
             } else {
@@ -413,21 +425,24 @@ export default class WeaponUnitModule<
   }
 
   isAutoAimActive() {
-    return this.state.autoAimActive;
+    return this.state.autopilotActive;
   }
 
-  setAutoAimActive(value: boolean) {
-    if (this.state.autoAimActive === value) return;
-    this.state.autoAimActive = value;
-    this.observables.autoAimActive$.next(value);
+  setAutopilot(value: Partial<WeaponAutopilotOptions>) {
+    this.options.autopilot = {
+      aim: value.aim ?? false,
+      shoot: value.shoot ?? false
+    };
+    this.observables.autopilot$.next(this.options.autopilot);
+    this.setAutopilotActive(
+      this.options.autopilot.aim || this.options.autopilot.shoot
+    );
   }
 
-  isAutoAimFollowTarget() {
-    return this.state.autoAimFollowTarget;
-  }
-
-  isAutoAimAutoShoot() {
-    return this.state.autoAimAutoShoot;
+  private setAutopilotActive(value: boolean) {
+    if (this.state.autopilotActive === value) return;
+    this.state.autopilotActive = value;
+    this.observables.autopilotActive$.next(value);
   }
 
   getAutoAimTarget() {

@@ -18,7 +18,7 @@
           }}</slot>
         </div>
       </div>
-      <div v-html="value"></div>
+      <div v-if="!hideValue" v-html="value"></div>
     </div>
   </component>
 </template>
@@ -32,6 +32,7 @@ const $props = defineProps<{
   indicatorStatus?: CONTROL_ITEM_STATUS;
   label: string;
   labelPad?: number;
+  hideValue?: boolean;
   value: string;
   blink?: boolean;
 }>();

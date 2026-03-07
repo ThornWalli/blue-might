@@ -19,7 +19,9 @@ import type { Vector3 } from 'three';
 import { Euler } from 'three';
 import type { VehicleUnits } from '@blue-might/units';
 
-import WeaponUnitModule from '../lib/classes/unitModule/Weapon';
+import WeaponUnitModule, {
+  type WeaponAutopilotOptions
+} from '../lib/classes/unitModule/Weapon';
 import type AirVehicleUnit from '../lib/classes/unit/vehicle/AirVehicle';
 import type { FLIGHT_STATUS } from '../lib/classes/unitModule/movable/airVehicle/Helicopter';
 import type { PowerInfo } from '../lib/classes/unitModule/Movable';
@@ -102,7 +104,10 @@ function create(app: App) {
     minPower: 0,
     idlePower: 0
   });
-  const autoAimActive = ref<boolean>(false);
+  const weaponAutopilot = ref<WeaponAutopilotOptions>({
+    aim: false,
+    shoot: false
+  });
   const unitActive = ref<boolean>(false);
   const weaponSlots = ref<({ thumb: string } & WeaponSlot)[]>([]);
   const fuelWarningMinValue = ref<number>(0.4);
@@ -358,8 +363,8 @@ function create(app: App) {
 
     subscription.add(
       weaponModule$
-        .pipe(switchMap(({ observables }) => observables.autoAimActive$))
-        .subscribe(v => (autoAimActive.value = v))
+        .pipe(switchMap(({ observables }) => observables.autopilot$))
+        .subscribe(v => (weaponAutopilot.value = v))
     );
 
     subscription.add(
@@ -471,7 +476,7 @@ function create(app: App) {
     flightStatus,
     warnings,
     powerInfo,
-    autoAimActive,
+    weaponAutopilot,
     unitActive,
     weaponSlots,
     fuelInfo,

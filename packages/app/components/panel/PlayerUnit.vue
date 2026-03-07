@@ -8,7 +8,7 @@
     <div class="frames grid-row grid-row-start">
       <div class="secondary">
         <div v-if="isAirVehicle">
-          <bm-details label="Air Control" open>
+          <bm-details label="Air Control">
             <div class="grid-row">
               <div class="grid-col grid-col-full grid-col-v">
                 <div class="attitude-indicator">
@@ -52,20 +52,49 @@
         </div>
         <div v-if="weaponSlots.length > 0">
           <bm-details label="Weapons" open>
-            <bm-control-item
-              button
-              indicator
-              label="AIM"
-              :value="
-                (autoAimActive ? 'On' : 'Off').padStart(padLength, '\u00A0')
-              "
-              :indicator-status="
-                autoAimActive
-                  ? CONTROL_ITEM_STATUS.NORMAL
-                  : CONTROL_ITEM_STATUS.INACTIVE
-              "
-              @click="onClickAimActive" />
+            <div class="grid-row">
+              <bm-control-item
+                button
+                indicator
+                label="Auto AIM"
+                hide-value
+                :value="
+                  (weaponAutopilot.aim ? 'On' : 'Off').padStart(
+                    padLength,
+                    '\u00A0'
+                  )
+                "
+                :indicator-status="
+                  weaponAutopilot.aim
+                    ? CONTROL_ITEM_STATUS.NORMAL
+                    : CONTROL_ITEM_STATUS.INACTIVE
+                "
+                @click="
+                  onClickWeaponAutopilot($event, { aim: !weaponAutopilot.aim })
+                " />
 
+              <bm-control-item
+                button
+                indicator
+                label="Auto Shoot"
+                hide-value
+                :value="
+                  (weaponAutopilot.shoot ? 'On' : 'Off').padStart(
+                    padLength,
+                    '\u00A0'
+                  )
+                "
+                :indicator-status="
+                  weaponAutopilot.shoot
+                    ? CONTROL_ITEM_STATUS.NORMAL
+                    : CONTROL_ITEM_STATUS.INACTIVE
+                "
+                @click="
+                  onClickWeaponAutopilot($event, {
+                    shoot: !weaponAutopilot.shoot
+                  })
+                " />
+            </div>
             <bm-control-item
               v-for="(slot, index) in weaponSlots"
               :key="index"
@@ -224,7 +253,9 @@
 <script lang="ts" setup>
 import { computed } from 'vue';
 import AirVehicleUnit from '@blue-might/app/lib/classes/unit/vehicle/AirVehicle';
-import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
+import WeaponUnitModule, {
+  type WeaponAutopilotOptions
+} from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 import { MAX_AIR_VEHICLE_ALTITUDE } from '@blue-might/app/lib/classes/unitModule/movable/AirVehicle';
 import usePlayerUnitInterface, {
@@ -250,7 +281,7 @@ const {
   unitGears,
   compassValue,
   powerInfo,
-  autoAimActive,
+  weaponAutopilot,
   unitActive,
   weaponSlots,
   fuelInfo,
@@ -290,15 +321,23 @@ function onClickUnitActive(e: Event) {
   }
 }
 
-function onClickAimActive(e: Event) {
+function onClickWeaponAutopilot(
+  e: Event,
+  options: Partial<WeaponAutopilotOptions>
+) {
   (e.target as HTMLButtonElement).blur();
-  autoAimActive.value = !autoAimActive.value;
+  weaponAutopilot.value = {
+    ...weaponAutopilot.value,
+    ...options
+  };
   const vehicle = player.value?.modules.vehicle;
   if (!vehicle) return;
-  const gunModule = vehicle.getCurrentUnit()!.getModuleByType(WeaponUnitModule);
+  const weaponModule = vehicle
+    .getCurrentUnit()!
+    .getModuleByType(WeaponUnitModule);
 
-  if (gunModule) {
-    gunModule.setAutoAimActive(autoAimActive.value);
+  if (weaponModule) {
+    weaponModule.setAutopilot(weaponAutopilot.value);
   }
 }
 

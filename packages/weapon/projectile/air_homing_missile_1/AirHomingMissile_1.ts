@@ -23,14 +23,16 @@ export default class AirHomingMissile_1 extends Projectile {
   /**
    * Gibt an, wie genau die Rakete ihr Ziel ansteuert.
    * 0 = keine Lenkung, 1 = sofortige Ausrichtung
+   * @default 0.05
    */
-  private homingAccuracy: number = 1 / 3;
+  private homingAccuracy: number = 0.05;
 
   /**
    * Gibt an, wie lange die Rakete lenkt (in Sekunden).
    * Nach Ablauf dieser Zeit fliegt sie geradeaus weiter.
+   * @default Infinity
    */
-  private homingDuration: number = 2;
+  private homingDuration: number = Infinity;
 
   constructor({
     homingAccuracy,

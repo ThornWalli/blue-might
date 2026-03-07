@@ -18,7 +18,6 @@
           app.modules.editorMission.setTarget('attack', optional)
         " />
       <bm-toggle
-        v-if="canRescue"
         :model-value="optional"
         label="Optional"
         @update:model-value="

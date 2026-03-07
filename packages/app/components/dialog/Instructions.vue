@@ -63,18 +63,18 @@
         <div class="grid-col grid-col-start">
           <div class="keys right">
             <bm-key-cap value="P" direction="right" description="Power" />
+            <bm-key-cap value="G" direction="right" description="Get in/out" />
+          </div>
+          <div class="keys right">
             <bm-key-cap
               value="X"
               direction="right"
               description="Switch Weapon" />
-            <bm-key-cap value="Space" direction="right" description="Fire" />
-          </div>
-          <div class="keys right">
-            <bm-key-cap value="G" direction="right" description="Get in/out" />
             <bm-key-cap
-              value="L"
+              value="T"
               direction="right"
-              description="Landing Gears" />
+              description="Switch Target" />
+            <bm-key-cap value="Space" direction="right" description="Fire" />
           </div>
         </div>
       </div>

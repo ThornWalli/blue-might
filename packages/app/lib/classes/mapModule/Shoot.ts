@@ -84,6 +84,7 @@ export default class ShootModule extends MapModule<
 
   private temp = {
     sphere: new Sphere(),
+    sphere2: new Sphere(),
     vector: new Vector3(),
     gravity: new Vector3(),
     drag: new Vector3(),
@@ -291,17 +292,17 @@ export default class ShootModule extends MapModule<
       }
 
       let hit = false;
-      const INTERSECTION_SPHERE_RADIUS = 1.0;
+      const MAX_SHOOT_DISTANCE = 16;
+      const INTERSECTION_SPHERE_RADIUS = 1 / 2;
 
       // Sphere-Check für grobe Kollision (immer machen, aber Raycast nur wenn shouldRaycast)
       this.temp.sphere.set(obj.position, INTERSECTION_SPHERE_RADIUS);
       let needsRaycast = false;
       for (const target of allPossibleTargets) {
+        this.temp.sphere2.set(target.position, INTERSECTION_SPHERE_RADIUS);
         if (
           target !== obj &&
-          this.temp.sphere.intersectsSphere(
-            new Sphere(target.position, INTERSECTION_SPHERE_RADIUS)
-          )
+          this.temp.sphere.intersectsSphere(this.temp.sphere2)
         ) {
           needsRaycast = true;
           break;
@@ -309,6 +310,7 @@ export default class ShootModule extends MapModule<
       }
 
       if (needsRaycast) {
+        console.log('Performing raycast for shoot');
         const direction = this.temp.drag.copy(shoot.velocity).normalize();
         raycaster.set(oldPosition, direction);
 
@@ -387,7 +389,7 @@ export default class ShootModule extends MapModule<
       }
 
       const distanceFromStart = obj.position.distanceTo(shoot.startPosition);
-      if (hit || distanceFromStart > 50) {
+      if (hit || distanceFromStart > MAX_SHOOT_DISTANCE) {
         shoot.isActive = false;
         shoot.object.visible = false;
         this.observables.removeShoot$.next(shoot);
