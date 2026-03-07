@@ -1,1 +1,0 @@
-import e from"./DBbuAC2g.js";import{e as o,f as r,o as t}from"./Bppxz8ZP.js";import"./ZRurxIpd.js";import"./Cpj98o6Y.js";import"./Cjtd9YKe.js";const f=o({__name:"index",setup(p){return(a,m)=>(t(),r(e))}});export{f as default};
