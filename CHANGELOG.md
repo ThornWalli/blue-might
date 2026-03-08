@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.87](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.86...v1.0.0-beta.87) (2026-03-08)
+
+
+### Bug Fixes
+
+* **update:** many updates ([48e8f67](https://github.com/ThornWalli/blue-might/commit/48e8f67bf24cad42867d9ebfb1d75352637386bf))
+
 # [1.0.0-beta.86](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.85...v1.0.0-beta.86) (2026-03-08)
 
 
