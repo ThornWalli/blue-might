@@ -2,27 +2,27 @@ packages:
   - packages/**
 
 catalog:
-  '@commitlint/cli': 20.4.2
-  '@commitlint/config-conventional': 20.4.2
+  '@commitlint/cli': 20.4.3
+  '@commitlint/config-conventional': 20.4.3
   '@fullhuman/postcss-purgecss': 8.0.0
   '@nuxt/eslint': 1.15.2
   '@nuxtjs/critters': 0.9.0
   '@nuxtjs/robots': 5.7.1
   '@nuxtjs/sitemap': 7.6.0
-  '@types/node': 25.3.3
+  '@types/node': 25.3.5
   '@types/pathfinding': 0.1.0
   '@types/three': 0.183.1
-  '@types/web': 0.0.339
+  '@types/web': 0.0.340
   '@typescript-eslint/eslint-plugin': 8.56.1
   change-case: 5.4.4
   consola: 3.4.2
   dotenv-mono: 1.5.1
-  eslint: 10.0.2
+  eslint: 10.0.3
   eslint-config-prettier: 10.1.8
   eslint-plugin-prettier: 5.5.5
   eslint-plugin-security: 4.0.0
   husky: 9.1.7
-  lint-staged: 16.3.1
+  lint-staged: 16.3.2
   nuxt: 4.3.1
   pathe: 2.0.3
   pathfinding: 0.4.18
@@ -40,7 +40,7 @@ catalog:
   stylelint-config-recess-order: 7.6.1
   stylelint-config-standard: 40.0.0
   stylelint-prettier: 5.0.3
-  svgo: 4.0.0
+  svgo: 4.0.1
   three: 0.183.2
   tsx: 4.21.0
   typescript: 5.9.3
@@ -51,7 +51,7 @@ catalog:
   vite-plugin-markdown: 2.2.0
   vite-plugin-mkcert: 1.17.10
   vite-plugin-node-polyfills: 0.25.0
-  vite-svg-loader: 5.1.0
+  vite-svg-loader: 5.1.1
   vitest: 4.0.18
   vue: 3.5.29
   vue-eslint-parser: 10.4.0
