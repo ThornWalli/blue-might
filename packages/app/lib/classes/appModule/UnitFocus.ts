@@ -58,12 +58,15 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
       this.subscription.add(
         this.app.modules.player.observables.currentPlayer$
           .pipe(
-            switchMap(player => player.modules.vehicle.observables.currentUnit$)
+            switchMap(player =>
+              player ? player.modules.vehicle.observables.currentUnit$ : EMPTY
+            ),
+            filter(Boolean)
           )
           .subscribe(unit => {
-            if (unit) {
+            window.setTimeout(() => {
               this.app.renderer.modules.camera.setViewByUnit(unit);
-            }
+            });
           })
       );
     }
@@ -108,7 +111,6 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
   }
 
   abort() {
-    this.state.followedUnit = null;
     this.setCameraFocusClamp(false);
     this.observables.type$.next(null);
     this.observables.followedUnit$.next(null);
@@ -152,7 +154,10 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
   }
 
   private getCurrentUnit() {
-    if ('player' in this.app.modules) {
+    if (
+      'player' in this.app.modules &&
+      this.app.modules.player.hasCurrentPlayer()
+    ) {
       return this.app.modules.player
         .getCurrentPlayer()
         .modules.vehicle.getCurrentUnit();

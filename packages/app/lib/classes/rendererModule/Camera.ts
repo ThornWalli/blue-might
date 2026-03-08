@@ -72,7 +72,6 @@ export default class CameraRendererModule extends RendererModule<
     );
 
     this.addCamera(CameraType.MAIN, camera);
-    this.updateCamera();
   }
 
   updateCamera(options?: {
@@ -90,7 +89,7 @@ export default class CameraRendererModule extends RendererModule<
     camera.zoom = (orbitControls?.object as PerspectiveCamera)?.zoom || 1;
 
     if (options) {
-      updateCameraDefault(camera, orbitControls, {
+      updateCameraDefault(camera, {
         ...options,
         view: (options.view ?? this.state.view) as Exclude<
           CAMERA_VIEW,
@@ -129,24 +128,34 @@ export default class CameraRendererModule extends RendererModule<
       camera.updateProjectionMatrix();
     }
   }
+  setView(view: CAMERA_VIEW) {
+    if (view === this.state.view) return;
+    this.state.view = view;
+    this.observables.view$.next(view);
+    if (view === CAMERA_VIEW.FREE) {
+      this.renderer.modules.controls.setEnableOrbitControls(true);
+    } else {
+      this.renderer.modules.controls.setEnableOrbitControls(false);
+    }
+  }
 
   setViewByUnit(unit: Unit, view: CAMERA_VIEW = this.state.view) {
     const camera = this.getCamera();
     if (!camera) return;
 
-    if (view === CAMERA_VIEW.FREE) {
-      this.renderer.modules.controls.setEnableOrbitControls(true);
-    } else {
-      this.renderer.modules.controls.setEnableOrbitControls(false);
+    this.setView(view);
+
+    if (view !== CAMERA_VIEW.FREE) {
+      const position = unit.getPosition();
+      const quaternion = unit.root.quaternion.clone();
+
       this.updateCamera({
-        position: unit.getPosition(),
-        quaternion: unit.root.quaternion.clone(),
+        position,
+        quaternion,
         view,
         lerpFactor: 1
       });
     }
-
-    this.observables.view$.next(view);
   }
 
   setCameraClamp(value: boolean) {
@@ -175,7 +184,6 @@ export default class CameraRendererModule extends RendererModule<
 
 function updateCameraDefault(
   camera: Camera,
-  orbitControls: OrbitControls | null,
   options: {
     position: Vector3;
     quaternion?: Quaternion;
@@ -198,7 +206,6 @@ function updateCameraDefault(
     default:
     case CAMERA_VIEW.BACK:
       cameraOffset.set(0, 2.5, -5);
-      // cameraOffset = new Vector3(0, 0.8, -3);
       applyRotation = true; // Standard: Offset rotieren
       break;
     case CAMERA_VIEW.BACK_NEAR:
@@ -223,8 +230,6 @@ function updateCameraDefault(
 
   camera.position.lerp(idealPosition, lerpFactor);
   camera.lookAt(position.clone().add(targetOffset));
-
-  orbitControls?.target.copy(position);
 }
 
 function updateCameraFallback(

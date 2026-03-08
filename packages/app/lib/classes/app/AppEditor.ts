@@ -19,6 +19,7 @@ import EditorUnitSettingsAppModule from '../appModule/EditorUnitSettings';
 import EditorMapSettingsAppModule from '../appModule/EditorMapSettings';
 import EditorUnitDebugAppModule from '../appModule/EditorUnitDebug';
 import EditorMissionAppModule from '../appModule/EditorMission';
+import { CAMERA_VIEW } from '../rendererModule/Camera';
 
 interface AppEditorObservables extends AppObservables {
   mode$: ReplaySubject<EDITOR_MODE>;
@@ -97,6 +98,8 @@ export default class AppEditor extends BaseApp<
     //#region observables
     this.observables.mode$ = new ReplaySubject<EDITOR_MODE>(1);
     //#endregion
+
+    this.renderer.modules.camera.setView(CAMERA_VIEW.FREE);
   }
 
   override async setup() {

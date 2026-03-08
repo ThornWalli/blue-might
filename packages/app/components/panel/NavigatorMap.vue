@@ -4,7 +4,10 @@
       :app="app"
       controls
       :shadow="app.getAppMode() === APP_MODE.PLAYGROUND" />
-    <bm-button :label="`View (${currentView})`" @click="onClickSwitchView()" />
+    <bm-button
+      v-if="app.getAppMode() !== APP_MODE.EDITOR"
+      :label="`View (${currentView})`"
+      @click="onClickSwitchView()" />
   </bm-panel>
 </template>
 

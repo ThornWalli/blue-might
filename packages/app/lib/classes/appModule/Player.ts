@@ -100,6 +100,9 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
     return this.state.players.find(player => player.id === id);
   }
 
+  hasCurrentPlayer() {
+    return !!this.state.currentPlayer;
+  }
   getCurrentPlayer() {
     if (!this.state.currentPlayer) {
       throw new Error('Current player is not set');
