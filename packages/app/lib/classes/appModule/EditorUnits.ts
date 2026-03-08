@@ -185,7 +185,6 @@ export default class EditorUnitsAppModule extends AppModule<
           if (this.state.ghostUnit) {
             this.placeUnit();
           } else {
-            // debugger;
             // if ('isMode' in this.app && !this.app.isMode(EDITOR_MODE.DEFAULT))
             //   return;
             console.log('selectUnit$', u);

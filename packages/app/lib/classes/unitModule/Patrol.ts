@@ -286,7 +286,6 @@ export default class PatrolUnitModule extends UnitModule<
     index: number,
     pathfinding: PathfindingUnitModule
   ) {
-    debugger;
     this.currentIndex = index;
 
     if (!this.state.active || index >= worldPath.length) {

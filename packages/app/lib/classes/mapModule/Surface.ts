@@ -455,7 +455,6 @@ export default class SurfaceModule extends MapModule<
         if (isFlying) {
           return groundHeight;
         }
-        // debugger;
         groundHeight = intersection.point.y;
         // groundHeight -= unit.modules.airVehicle.getGearsHeight();
       } else {
