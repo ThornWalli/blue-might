@@ -1,4 +1,13 @@
-import { EMPTY, map, merge, ReplaySubject, switchMap } from 'rxjs';
+import {
+  combineLatest,
+  EMPTY,
+  filter,
+  map,
+  merge,
+  ReplaySubject,
+  Subject,
+  switchMap
+} from 'rxjs';
 
 import AppModule, {
   type AppModuleObservables,
@@ -6,11 +15,13 @@ import AppModule, {
 } from '../AppModule';
 import type Unit from '../Unit';
 import type BaseApp from '../BaseApp';
+import { CAMERA_VIEW } from '../rendererModule/Camera';
 
 interface Observables extends AppModuleObservables {
   type$: ReplaySubject<FOLLOW_TYPE | null>;
   followedUnit$: ReplaySubject<Unit | null>;
-  focus$: ReplaySubject<Unit>;
+  focusedUnit$: ReplaySubject<Unit | null>;
+  focus$: Subject<Unit>;
 }
 
 export enum FOLLOW_TYPE {
@@ -20,6 +31,7 @@ export enum FOLLOW_TYPE {
 
 interface State extends AppModuleState {
   type: FOLLOW_TYPE | null;
+  focusedUnit: Unit | null;
   followedUnit: Unit | null;
 }
 export default class UnitFocusAppModule extends AppModule<State, Observables> {
@@ -27,12 +39,14 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
   constructor(app: BaseApp) {
     super(app, {
       type: null,
+      focusedUnit: null,
       followedUnit: null
     });
 
     //#region observables
     this.observables.type$ = new ReplaySubject<FOLLOW_TYPE | null>(1);
-    this.observables.focus$ = new ReplaySubject<Unit>(1);
+    this.observables.focus$ = new Subject<Unit>();
+    this.observables.focusedUnit$ = new ReplaySubject<Unit | null>(1);
     this.observables.followedUnit$ = new ReplaySubject<Unit | null>(1);
     //#endregion
   }
@@ -40,29 +54,51 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
   override async setup() {
     await super.setup();
 
+    if ('player' in this.app.modules) {
+      this.subscription.add(
+        this.app.modules.player.observables.currentPlayer$
+          .pipe(
+            switchMap(player => player.modules.vehicle.observables.currentUnit$)
+          )
+          .subscribe(unit => {
+            if (unit) {
+              this.app.renderer.modules.camera.setViewByUnit(unit);
+            }
+          })
+      );
+    }
+
     this.subscription.add(
-      this.observables.followedUnit$
+      this.app.renderer.modules.camera.observables.view$.subscribe(view => {
+        if (view === CAMERA_VIEW.FREE) {
+          this.abort();
+        } else {
+          this.focusPlayer();
+        }
+      })
+    );
+    this.subscription.add(
+      combineLatest([
+        this.observables.followedUnit$,
+        this.app.renderer.modules.camera.observables.view$
+      ])
         .pipe(
-          switchMap(unit => {
+          filter(([, view]) => view !== CAMERA_VIEW.FREE),
+          switchMap(([unit, view]) => {
             if (!unit) return EMPTY;
             return merge(
               unit.observables.position$,
               unit.observables.rotation$
-            ).pipe(map(() => unit));
+            ).pipe(map(() => ({ unit, view })));
           })
         )
-        .subscribe(unit => {
+        .subscribe(({ unit, view }) => {
           this.app.renderer.modules.camera.updateCamera({
-            position: unit.getPosition().clone(),
-            quaternion: unit.root.quaternion.clone(),
-            view: 'back',
+            position: unit.getPosition(),
+            quaternion: unit.root.quaternion,
+            view: view as Extract<keyof typeof CAMERA_VIEW, CAMERA_VIEW.FREE>,
             lerpFactor: 1
           });
-          // this.app.renderer.modules.camera.updateCamera({
-          //   position: unit.getPosition().clone(),
-          //   quaternion: unit.root.quaternion.clone(),
-          //   view: 'back'
-          // });
         })
     );
   }
@@ -72,7 +108,6 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
   }
 
   abort() {
-    this.state.type = null;
     this.state.followedUnit = null;
     this.setCameraFocusClamp(false);
     this.observables.type$.next(null);
@@ -99,18 +134,20 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
   }
 
   focus(unit: Unit) {
+    this.state.focusedUnit = unit;
     this.observables.focus$.next(unit);
     this.app.renderer.modules.camera.updateCamera({
       position: unit.getPosition().clone(),
       quaternion: unit.root.quaternion.clone(),
-      lerpFactor: 1,
-      view: 'back'
+      lerpFactor: 1
     });
   }
 
   unfocus() {
+    this.state.focusedUnit = null;
     this.state.followedUnit = null;
     this.setCameraFocusClamp(false);
+    this.observables.focusedUnit$.next(null);
     this.observables.followedUnit$.next(null);
   }
 
@@ -131,7 +168,7 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
   }
 
   setCameraFocusClamp(value: boolean) {
-    const { controls } = this.app.renderer.modules.controls;
+    const { orbitControls: controls } = this.app.renderer.modules.controls;
     if (!controls) return;
 
     controls.enableRotate = true;

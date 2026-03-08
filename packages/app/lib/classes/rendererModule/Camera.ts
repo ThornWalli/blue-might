@@ -1,12 +1,22 @@
 import type { Camera, Quaternion } from 'three';
 import { OrthographicCamera, PerspectiveCamera, Vector3 } from 'three';
-import { Subject } from 'rxjs';
+import { ReplaySubject, Subject } from 'rxjs';
+import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 import type Renderer from '../Renderer';
 import RendererModule, {
   type RendererModuleObservables,
   type RendererModuleState
 } from '../RendererModule';
+import type Unit from '../Unit';
+
+export enum CAMERA_VIEW {
+  FREE = 'free',
+  BACK = 'back',
+  BACK_NEAR = 'back_near',
+  SIDE = 'side',
+  BIRD = 'bird'
+}
 
 export enum CameraType {
   MAIN = 'main',
@@ -16,9 +26,12 @@ export enum CameraType {
 export interface Observables extends RendererModuleObservables {
   addCamera$: Subject<Camera>;
   removeCamera$: Subject<Camera>;
+  view$: ReplaySubject<CAMERA_VIEW>;
 }
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface State extends RendererModuleState {}
+
+export interface State extends RendererModuleState {
+  view: CAMERA_VIEW;
+}
 
 export default class CameraRendererModule extends RendererModule<
   State,
@@ -31,14 +44,17 @@ export default class CameraRendererModule extends RendererModule<
 
   private cameras: Map<string, Camera> = new Map(); // Map mit Camera als Wert
 
-  constructor(renderer: Renderer, state: State) {
+  constructor(renderer: Renderer, state: Partial<State>) {
     super(renderer, {
-      ...state
+      ...state,
+      view: state.view ?? CAMERA_VIEW.BACK
     });
 
     //#region observables
     this.observables.addCamera$ = new Subject<Camera>();
     this.observables.removeCamera$ = new Subject<Camera>();
+    this.observables.view$ = new ReplaySubject<CAMERA_VIEW>();
+    this.observables.view$.next(this.state.view);
     //#endregion
   }
 
@@ -63,57 +79,31 @@ export default class CameraRendererModule extends RendererModule<
     position: Vector3;
     quaternion?: Quaternion;
     lerpFactor?: number;
-    view?: 'back' | 'side';
+    view?: Exclude<CAMERA_VIEW, CAMERA_VIEW.FREE>;
   }) {
-    const { controls } = this.renderer.modules.controls;
+    console.log('Updating camera with options:', options);
+    const { orbitControls } = this.renderer.modules.controls;
 
     const camera = this.getCamera<PerspectiveCamera>();
 
     if (!camera) return;
-    camera.zoom = (controls?.object as PerspectiveCamera)?.zoom || 1;
+    camera.zoom = (orbitControls?.object as PerspectiveCamera)?.zoom || 1;
 
     if (options) {
-      const { position, quaternion } = options;
-      let { lerpFactor } = options;
-
-      let cameraOffset;
-      let applyRotation;
-      switch (options.view) {
-        case 'side':
-          cameraOffset = new Vector3(6, 1, 0);
-          applyRotation = false; // Für Side-Ansicht: Offset nicht rotieren, damit die Ansicht absolut (immer von rechts) ist
-          break;
-        default:
-        case 'back':
-          cameraOffset = new Vector3(0, 5, -5);
-          applyRotation = true; // Standard: Offset rotieren
-          break;
-      }
-
-      lerpFactor = lerpFactor ?? 0.1;
-
-      const offsetToApply =
-        applyRotation && quaternion
-          ? cameraOffset.clone().applyQuaternion(quaternion)
-          : cameraOffset;
-
-      const idealPosition = position.clone().add(offsetToApply);
-
-      camera.position.lerp(idealPosition, lerpFactor);
-      camera.lookAt(position);
-
-      controls?.target.copy(position);
+      updateCameraDefault(camera, orbitControls, {
+        ...options,
+        view: (options.view ?? this.state.view) as Exclude<
+          CAMERA_VIEW,
+          CAMERA_VIEW.FREE
+        >
+      });
     } else {
-      const distance = 20;
-      camera.position.set(distance, distance, distance);
-      camera.lookAt(0, 0, 0); // Explizit auf Zentrum schauen
-
-      controls?.target.set(0, 0, 0); // Target der Controls setzen
+      updateCameraFallback(camera, orbitControls);
     }
 
     camera.updateMatrix();
     camera.updateMatrixWorld();
-    controls?.update();
+    orbitControls?.update();
   }
 
   addCamera(type: CameraType, camera: PerspectiveCamera) {
@@ -140,17 +130,36 @@ export default class CameraRendererModule extends RendererModule<
     }
   }
 
-  setCameraClamp(value: boolean) {
-    const { controls } = this.renderer.modules.controls;
-    if (!controls) return;
-    if (value) {
-      controls.enableRotate = true;
-      controls.enablePan = true;
-      controls.enableZoom = true;
+  setViewByUnit(unit: Unit, view: CAMERA_VIEW = this.state.view) {
+    const camera = this.getCamera();
+    if (!camera) return;
+
+    if (view === CAMERA_VIEW.FREE) {
+      this.renderer.modules.controls.setEnableOrbitControls(true);
     } else {
-      controls.enableRotate = false;
-      controls.enablePan = false;
-      controls.enableZoom = false;
+      this.renderer.modules.controls.setEnableOrbitControls(false);
+      this.updateCamera({
+        position: unit.getPosition(),
+        quaternion: unit.root.quaternion.clone(),
+        view,
+        lerpFactor: 1
+      });
+    }
+
+    this.observables.view$.next(view);
+  }
+
+  setCameraClamp(value: boolean) {
+    const { orbitControls } = this.renderer.modules.controls;
+    if (!orbitControls) return;
+    if (value) {
+      orbitControls.enableRotate = true;
+      orbitControls.enablePan = true;
+      orbitControls.enableZoom = true;
+    } else {
+      orbitControls.enableRotate = false;
+      orbitControls.enablePan = false;
+      orbitControls.enableZoom = false;
     }
   }
 
@@ -162,4 +171,69 @@ export default class CameraRendererModule extends RendererModule<
     const dimension = this.renderer.getDimension();
     return dimension.x / dimension.y;
   }
+}
+
+function updateCameraDefault(
+  camera: Camera,
+  orbitControls: OrbitControls | null,
+  options: {
+    position: Vector3;
+    quaternion?: Quaternion;
+    lerpFactor?: number;
+    view: Exclude<CAMERA_VIEW, CAMERA_VIEW.FREE>;
+  }
+) {
+  const { position, quaternion } = options;
+  let { lerpFactor } = options;
+
+  let applyRotation;
+
+  const cameraOffset = new Vector3(0, 0, 0);
+  const targetOffset = new Vector3(0, 0, 0);
+  switch (options.view) {
+    case CAMERA_VIEW.SIDE:
+      cameraOffset.set(6, 1, 0);
+      applyRotation = false; // Für Side-Ansicht: Offset nicht rotieren, damit die Ansicht absolut (immer von rechts) ist
+      break;
+    default:
+    case CAMERA_VIEW.BACK:
+      cameraOffset.set(0, 2.5, -5);
+      // cameraOffset = new Vector3(0, 0.8, -3);
+      applyRotation = true; // Standard: Offset rotieren
+      break;
+    case CAMERA_VIEW.BACK_NEAR:
+      cameraOffset.set(0, 0.75, -1.25);
+      targetOffset.set(0, 0.5, 0);
+      applyRotation = true; // Standard: Offset rotieren
+      break;
+    case CAMERA_VIEW.BIRD:
+      cameraOffset.set(0, 10, 0);
+      applyRotation = true;
+      break;
+  }
+
+  lerpFactor = lerpFactor ?? 0.1;
+
+  const offsetToApply =
+    applyRotation && quaternion
+      ? cameraOffset.clone().applyQuaternion(quaternion)
+      : cameraOffset;
+
+  const idealPosition = position.clone().add(offsetToApply);
+
+  camera.position.lerp(idealPosition, lerpFactor);
+  camera.lookAt(position.clone().add(targetOffset));
+
+  orbitControls?.target.copy(position);
+}
+
+function updateCameraFallback(
+  camera: Camera,
+  orbitControls: OrbitControls | null
+) {
+  const distance = 20;
+  camera.position.set(distance, distance, distance);
+  camera.lookAt(0, 0, 0); // Explizit auf Zentrum schauen
+
+  orbitControls?.target.set(0, 0, 0); // Target der Controls setzen
 }

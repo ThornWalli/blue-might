@@ -1,5 +1,5 @@
 import type { Observable } from 'rxjs';
-import { switchMap, fromEvent, ReplaySubject } from 'rxjs';
+import { switchMap, fromEvent, ReplaySubject, filter } from 'rxjs';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { HasEventTargetAddRemove } from 'rxjs/internal/observable/fromEvent';
 
@@ -16,7 +16,7 @@ interface ControlOptions {
 }
 
 export interface Observables extends RendererModuleObservables {
-  controls$: ReplaySubject<OrbitControls>;
+  orbitControls$: ReplaySubject<OrbitControls | null>;
   options$: ReplaySubject<Partial<ControlOptions>>;
   change$: Observable<Event>;
 }
@@ -32,7 +32,7 @@ export default class ControlsRendererModule extends RendererModule<
 > {
   static override TYPE = 'controls';
 
-  controls?: OrbitControls;
+  orbitControls: OrbitControls | null = null;
 
   constructor(renderer: Renderer, state: State) {
     super(renderer, {
@@ -40,56 +40,74 @@ export default class ControlsRendererModule extends RendererModule<
     });
 
     //#region observables
-    this.observables.controls$ = new ReplaySubject<OrbitControls>(1);
+    this.observables.orbitControls$ = new ReplaySubject<OrbitControls | null>(
+      1
+    );
     this.observables.options$ = new ReplaySubject<Partial<ControlOptions>>(1);
-    this.observables.change$ = this.observables.controls$.pipe(
+    this.observables.change$ = this.observables.orbitControls$.pipe(
+      filter(Boolean),
       switchMap(controls =>
         fromEvent<Event>(controls as HasEventTargetAddRemove<Event>, 'change')
       )
     );
     //#endregion
   }
-
-  refresh() {
-    this.controls?.update();
-  }
-
-  override async setup() {
+  setupOrbitalControls() {
     const renderer = this.renderer;
-
-    this.controls = new OrbitControls(
+    this.orbitControls = new OrbitControls(
       renderer.modules.camera.getCamera(),
       renderer.getRenderer().domElement
     );
 
-    this.controls.dampingFactor = 0.05; // kleiner Wert = smoother
-    this.controls.zoomSpeed = 1.0;
-    this.controls.panSpeed = 1.0;
+    this.orbitControls.dampingFactor = 0.05; // kleiner Wert = smoother
+    this.orbitControls.zoomSpeed = 1.0;
+    this.orbitControls.panSpeed = 1.0;
 
     // WICHTIG: Target setzen (Mittelpunkt der Szene)
-    this.controls.target.set(0, 0, 0);
+    this.orbitControls.target.set(0, 0, 0);
 
     // Zoom-Limits um Near-Plane-Clipping zu verhindern
-    this.controls.minDistance = this.state.minDistance ?? 1;
-    this.controls.maxDistance = this.state.maxDistance ?? 200;
+    this.orbitControls.minDistance = this.state.minDistance ?? 1;
+    this.orbitControls.maxDistance = this.state.maxDistance ?? 200;
 
     // Enable damping für smoothere Bewegung
     // this.controls.enableDamping = true;
 
     this.enable();
-    this.controls.update();
+    this.orbitControls.update();
+  }
 
-    renderer.getRenderer().setAnimationLoop(() => {
-      if (this.controls?.enableDamping) {
-        this.controls.update();
+  removeOrbitControls() {
+    if (this.orbitControls) {
+      this.orbitControls.dispose();
+      this.orbitControls = null;
+    }
+  }
+
+  setEnableOrbitControls(value: boolean) {
+    if (value) {
+      this.setupOrbitalControls();
+    } else {
+      this.removeOrbitControls();
+    }
+  }
+
+  refresh() {
+    this.orbitControls?.update();
+  }
+
+  override async setup() {
+    this.renderer.getRenderer().setAnimationLoop(() => {
+      if (this.orbitControls?.enableDamping) {
+        this.orbitControls.update();
       }
     });
 
-    this.observables.controls$.next(this.controls);
+    this.observables.orbitControls$.next(this.orbitControls);
   }
 
   setControlsClamp(value: boolean) {
-    const { controls } = this.renderer.modules.controls;
+    const { orbitControls: controls } = this.renderer.modules.controls;
     if (!controls) return;
     if (value) {
       controls.enableRotate = false; // Kein Drehen
@@ -102,13 +120,13 @@ export default class ControlsRendererModule extends RendererModule<
     }
   }
   getControlsOptions() {
-    if (!this.controls) {
+    if (!this.orbitControls) {
       throw new Error('Controls not initialized');
     }
     return {
-      pan: this.controls.enablePan,
-      zoom: this.controls.enableZoom,
-      rotate: this.controls.enableRotate
+      pan: this.orbitControls.enablePan,
+      zoom: this.orbitControls.enableZoom,
+      rotate: this.orbitControls.enableRotate
     };
   }
 
@@ -117,8 +135,8 @@ export default class ControlsRendererModule extends RendererModule<
     zoom = true,
     rotate = true
   }: Partial<ControlOptions>) {
-    if (!this.controls) return;
-    const controls = this.controls;
+    if (!this.orbitControls) return;
+    const controls = this.orbitControls;
     controls.enablePan = pan;
     controls.enableZoom = zoom;
     controls.enableRotate = rotate;

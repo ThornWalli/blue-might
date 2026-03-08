@@ -1,5 +1,3 @@
-import { EMPTY, filter, map, switchMap } from 'rxjs';
-
 import PlayerAppModule from '../appModule/Player';
 import BaseApp, {
   type AppConfig,
@@ -39,23 +37,6 @@ export default class AppPlayground extends BaseApp<
 
   override async setup() {
     await super.setup();
-
-    this.subscription.add(
-      this.modules.player.observables.currentPlayer$
-        .pipe(
-          switchMap(
-            player => player.modules.vehicle?.observables.currentUnit$ ?? EMPTY
-          ),
-          filter(Boolean),
-          switchMap(
-            vehicle =>
-              vehicle?.observables.ready$.pipe(map(() => vehicle)) ?? EMPTY
-          )
-        )
-        .subscribe(vehicle => {
-          this.modules.unitFocus.followUnit(vehicle);
-        })
-    );
 
     this.subscription.add(
       this.modules.map.observables.beforeRestart$.subscribe(() => {

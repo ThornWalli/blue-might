@@ -4,21 +4,18 @@
       :app="app"
       controls
       :shadow="app.getAppMode() === APP_MODE.PLAYGROUND" />
-    <bm-button
-      :icon="unitFocused ? ICON.UNLOCKED : ICON.LOCKED"
-      :label="unitFocused ? 'Unlock' : 'Lock'"
-      @click="onClickFocusUnit" />
+    <bm-button :label="`View (${currentView})`" @click="onClickSwitchView()" />
   </bm-panel>
 </template>
 
 <script lang="ts" setup>
 import { markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import type Unit from '@blue-might/app/lib/classes/Unit';
-import { ICON } from '@blue-might/app/utils/icons';
 import { map, Subscription, switchMap } from 'rxjs';
 import type VehicleUnit from '@blue-might/app/lib/classes/unit/Vehicle';
 import type { App } from '@blue-might/app/lib/types';
 import { APP_MODE } from '@blue-might/app/lib/classes/BaseApp';
+import { CAMERA_VIEW } from '@blue-might/app/lib/classes/rendererModule/Camera';
 
 import BmPanel from '../Panel.vue';
 import BmNavigatorMap from '../NavigatorMap.vue';
@@ -36,6 +33,12 @@ const subscription = new Subscription();
 onMounted(() => {
   const app = $props.app;
   const followedUnit$ = app.modules.unitFocus.observables.followedUnit$;
+
+  subscription.add(
+    app.renderer.modules.camera.observables.view$.subscribe(view => {
+      currentView.value = view;
+    })
+  );
 
   if ('player' in app.modules) {
     const vehicle$ = app.modules.player.observables.currentPlayer$.pipe(
@@ -60,12 +63,18 @@ onUnmounted(() => {
   subscription.unsubscribe();
 });
 
-function onClickFocusUnit() {
+const currentView = ref<CAMERA_VIEW>(CAMERA_VIEW.FREE);
+const views = Object.values(CAMERA_VIEW);
+function onClickSwitchView() {
   const app = $props.app;
-  if (unitFocused.value) {
-    app.modules.unitFocus.abort();
-  } else {
-    app.modules.unitFocus.followUnit(unit.value!);
-  }
+
+  const playerModule = 'player' in app.modules ? app.modules.player : null;
+  const unit =
+    playerModule?.getCurrentPlayer().modules.vehicle.getCurrentUnit() ?? null;
+  if (!unit) return;
+  app.renderer.modules.camera.setViewByUnit(
+    unit,
+    views[(views.indexOf(currentView.value) + 1) % views.length]!
+  );
 }
 </script>

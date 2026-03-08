@@ -74,8 +74,8 @@ export default class LightModule extends MapModule<
   private lightDistance: number = 6;
 
   private updateLightPosition() {
-    if (!this.map.app.renderer?.modules.controls?.controls) return;
-    const controls = this.map.app.renderer?.modules.controls.controls;
+    if (!this.map.app.renderer?.modules.controls?.orbitControls) return;
+    const controls = this.map.app.renderer?.modules.controls.orbitControls;
     const camera = controls.object;
 
     const light = this.lights[0] as DirectionalLight;
