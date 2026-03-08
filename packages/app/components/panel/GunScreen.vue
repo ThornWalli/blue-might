@@ -7,9 +7,10 @@
     title="Gun Screen">
     <teleport to="#layout-background" :disabled="!fullscreen">
       <bm-gun-screen
+        indicators
         :app="$props.app"
         :unit="unit"
-        @fullscreen="fullscreen = $event" />
+        @fullscreen="setFullscreen" />
     </teleport>
   </bm-panel>
 </template>
@@ -27,9 +28,17 @@ import BmPanel from '../Panel.vue';
 import type AppPlayground from '../../lib/classes/app/AppPlayground';
 
 const fullscreen = ref(false);
+function setFullscreen(value: boolean) {
+  fullscreen.value = value;
+  $emit('fullscreen', value);
+}
 
 const $props = defineProps<{
   app: AppPlayground;
+}>();
+
+const $emit = defineEmits<{
+  (event: 'fullscreen', value: boolean): void;
 }>();
 
 const subscription = new Subscription();

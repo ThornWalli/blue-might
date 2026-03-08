@@ -1,11 +1,16 @@
 <template>
   <transition name="fade-very-short">
-    <div v-if="radarIndicators.length" class="bm-head-up-indicator">
+    <div
+      v-if="radarIndicators.length"
+      ref="rootEl"
+      class="bm-head-up-indicator">
       <base-sticky-wrapper
         v-for="indicator in radarIndicators"
         :key="indicator.id"
         :app="app"
+        :camera="camera"
         :target="indicator.object"
+        :dimension="dimension"
         class="indicator"
         :class="{
           [`${indicator.type}`]: true,
@@ -22,8 +27,8 @@
 </template>
 
 <script setup lang="ts">
-import { Vector2, type Object3D } from 'three';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { type Camera, Vector2, type Object3D } from 'three';
+import { onMounted, onUnmounted, ref, watch } from 'vue';
 import { EMPTY, map, Subscription, switchMap } from 'rxjs';
 
 import type AppPlayground from '../lib/classes/app/AppPlayground';
@@ -31,9 +36,14 @@ import type AppPlayground from '../lib/classes/app/AppPlayground';
 import BaseStickyWrapper, { getStickyBox } from './base/StickyWrapper.vue';
 
 const radarIndicators = ref<Indicator[]>([]);
+const dimension = ref<Vector2>(
+  new Vector2(window.innerWidth, window.innerHeight)
+);
+const rootEl = ref<HTMLDivElement | null>(null);
 
 const $props = defineProps<{
   app: AppPlayground;
+  camera?: Camera;
 }>();
 
 const subscription = new Subscription();
@@ -56,7 +66,7 @@ onMounted(() => {
         )
       )
       .subscribe(({ unit, units }) => {
-        radarIndicators.value = [];
+        const indicators: Indicator[] = [];
         const attackModule =
           'attack' in unit.modules ? unit.modules.attack : null;
 
@@ -69,9 +79,13 @@ onMounted(() => {
         const attackRadius = attackModule?.getAttackRadius() ?? 0;
         units.forEach(({ unit: u, distance }) => {
           const { width, height } = getStickyBox(
-            $props.app.renderer.modules.camera.getCamera(),
+            $props.camera ?? $props.app.renderer.modules.camera.getCamera(),
             u.position,
-            u.getSize()
+            u.getSize(),
+            new Vector2(
+              $props.app.renderer.el.offsetWidth,
+              $props.app.renderer.el.offsetHeight
+            )
           );
           const size = new Vector2(width, height);
           const isEnemy = attackModule?.isAttackAllowed(u);
@@ -79,7 +93,7 @@ onMounted(() => {
           if (isEnemy) {
             const canAttack = distance <= attackRadius;
             const currentTarget = attackModule?.isCurrentTarget(u) ?? false;
-            radarIndicators.value.push({
+            indicators.push({
               id: u.id,
               type: HUD_INDICATOR_TYPE.ENEMY_TARGET,
               size,
@@ -89,7 +103,7 @@ onMounted(() => {
               activeAttack: currentTarget
             });
           } else if (isMissionTarget) {
-            radarIndicators.value.push({
+            indicators.push({
               id: u.id,
               type: HUD_INDICATOR_TYPE.MISSION_TARGET,
               size,
@@ -97,7 +111,7 @@ onMounted(() => {
               distance: distance
             });
           } else {
-            // radarIndicators.value.push({
+            // indicators.push({
             //   id: u.id,
             //   type: HUD_INDICATOR_TYPE.FRIENDLY_TARGET,
             //   size,
@@ -106,9 +120,20 @@ onMounted(() => {
             // });
           }
         });
+
+        radarIndicators.value = indicators;
       })
   );
 });
+
+watch(
+  () => rootEl.value,
+  v => {
+    if (v) {
+      dimension.value = new Vector2(v.offsetWidth, v.offsetHeight);
+    }
+  }
+);
 
 onUnmounted(() => {
   subscription.unsubscribe();
@@ -163,6 +188,10 @@ export interface Indicator {
     height: auto;
     pointer-events: auto;
     border: dotted var(--background) 2px;
+
+    &.empty {
+      display: none;
+    }
 
     &::before {
       display: block;

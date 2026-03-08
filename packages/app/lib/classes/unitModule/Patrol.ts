@@ -36,15 +36,19 @@ interface Observables extends UnitModuleObservables {
   loop$: Subject<void>;
   abort$: Subject<void>;
   pause$: Subject<void>;
+  completed$: Subject<void>;
 }
 
 export interface PatrolUnitModuleOptions extends UnitModuleOptions {
   active: boolean;
   path: PatrolPath;
+  roundsLoop: boolean;
+  rounds: number;
 }
 
 export interface PatrolUnitModuleState extends UnitModuleState {
   active: boolean;
+  rounds: number;
 }
 
 export default class PatrolUnitModule extends UnitModule<
@@ -70,8 +74,13 @@ export default class PatrolUnitModule extends UnitModule<
   ) {
     super(
       unit,
-      { ...options, path: options.path ?? [] },
-      { ...state, active: options.active ?? false },
+      {
+        ...options,
+        path: options.path ?? [],
+        roundsLoop: options.roundsLoop ?? true,
+        rounds: options.rounds ?? 1
+      },
+      { ...state, active: options.active ?? false, rounds: 0 },
       debug
     );
 
@@ -84,6 +93,7 @@ export default class PatrolUnitModule extends UnitModule<
     this.observables.loop$ = new Subject<void>();
     this.observables.abort$ = new Subject<void>();
     this.observables.pause$ = new Subject<void>();
+    this.observables.completed$ = new Subject<void>();
     //#endregion
   }
 
@@ -213,6 +223,20 @@ export default class PatrolUnitModule extends UnitModule<
   hasPath(): boolean {
     return this.options.path.length > 0;
   }
+  getRounds() {
+    return this.options.rounds;
+  }
+  setRounds(rounds: number) {
+    this.options.rounds = rounds;
+    this.state.rounds = 0;
+  }
+
+  getRoundsLoop() {
+    return this.options.roundsLoop;
+  }
+  setRoundsLoop(loop: boolean) {
+    this.options.roundsLoop = loop;
+  }
 
   async startPatrol() {
     if (!this.hasPath()) {
@@ -262,6 +286,7 @@ export default class PatrolUnitModule extends UnitModule<
     index: number,
     pathfinding: PathfindingUnitModule
   ) {
+    debugger;
     this.currentIndex = index;
 
     if (!this.state.active || index >= worldPath.length) {
@@ -286,7 +311,7 @@ export default class PatrolUnitModule extends UnitModule<
         this.patrolFaileds++;
         if (this.patrolFaileds >= 10) {
           console.error('Patrol failed 10 times, stopping');
-          this.stopPatrol();
+          await this.stopPatrol();
           return;
         }
         window.clearTimeout(this.patrolRecursiveTimeout);
@@ -302,17 +327,29 @@ export default class PatrolUnitModule extends UnitModule<
     } catch (error) {
       console.error('Patrol move error:', error);
       this.patrolFaileds++;
-      this.stopPatrol();
+      await this.stopPatrol();
       return;
     }
 
-    // Rekursiver Aufruf für den nächsten Punkt
-    await this.patrolRecursive(worldPath, index + 1, pathfinding);
-
     // Nach einem vollen Loop: Starte von vorne (für unendliche Patrol)
+
     if (index === worldPath.length - 1) {
-      this.observables.loop$.next();
-      await this.patrolRecursive(worldPath, 0, pathfinding);
+      this.state.rounds++;
+      if (
+        !this.options.roundsLoop &&
+        this.state.rounds >= this.options.rounds
+      ) {
+        console.log('Completed patrol round:', this.state.rounds + 1);
+        await this.getUnit().modules.pathfinding.abortMovement();
+        this.state.active = false;
+        this.observables.completed$.next();
+      } else {
+        this.observables.loop$.next();
+        await this.patrolRecursive(worldPath, 0, pathfinding);
+      }
+    } else {
+      // Rekursiver Aufruf für den nächsten Punkt
+      await this.patrolRecursive(worldPath, index + 1, pathfinding);
     }
   }
 
@@ -330,6 +367,8 @@ export default class PatrolUnitModule extends UnitModule<
 
   override getOptions() {
     return {
+      rounds: this.options.rounds,
+      roundsLoop: this.options.roundsLoop,
       active: this.options.active,
       path: this.getPath()
     };

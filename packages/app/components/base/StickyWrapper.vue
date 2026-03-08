@@ -1,6 +1,9 @@
 <template>
   <div
     class="base-sticky-wrapper"
+    :class="{
+      empty
+    }"
     :style="{
       '--wrapper-translate-x': wrapperTranslate?.x ?? 0,
       '--wrapper-translate-y': wrapperTranslate?.y ?? 0,
@@ -23,14 +26,16 @@ import {
   type Object3D,
   Box3
 } from 'three';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 const wrapperTranslate = ref<Vector2>(new Vector2());
 const wrapperSize = ref<Vector2>(new Vector2());
 
 const $props = defineProps<{
   app: App;
+  camera?: Camera;
   target: StickyWrapperTarget;
+  dimension?: Vector2;
   size?: StickyWrapperSize;
 }>();
 
@@ -45,6 +50,13 @@ onMounted(() => {
 
 onUnmounted(() => {
   subscription.unsubscribe();
+});
+
+const empty = computed(() => {
+  return (
+    (wrapperSize.value.x === 0 && wrapperSize.value.y === 0) ||
+    (wrapperTranslate.value.x === 0 && wrapperTranslate.value.y === 0)
+  );
 });
 
 function updateControls() {
@@ -64,9 +76,11 @@ function updateControls() {
   }
   if (position) {
     const { x, y, width, height } = getStickyBox(
-      app.renderer.modules.camera.getCamera(),
+      $props.camera ?? app.renderer.modules.camera.getCamera(),
       position,
-      size
+      size,
+      $props.dimension ??
+        new Vector2(app.renderer.el.offsetWidth, app.renderer.el.offsetHeight)
     );
     wrapperTranslate.value.set(x, y);
     wrapperSize.value.set(width, height);
@@ -75,7 +89,12 @@ function updateControls() {
 </script>
 
 <script lang="ts">
-export function getStickyBox(camera: Camera, position: Vector3, size: Vector3) {
+export function getStickyBox(
+  camera: Camera,
+  position: Vector3,
+  size: Vector3,
+  dimension: Vector2
+) {
   camera.updateMatrix();
   camera.updateMatrixWorld();
 
@@ -141,8 +160,8 @@ export function getStickyBox(camera: Camera, position: Vector3, size: Vector3) {
   for (const corner of corners) {
     if (frustum.containsPoint(corner)) {
       const projectedCorner = corner.clone().project(camera);
-      const screenX = ((projectedCorner.x + 1) / 2) * window.innerWidth;
-      const screenY = (-(projectedCorner.y - 1) / 2) * window.innerHeight;
+      const screenX = ((projectedCorner.x + 1) / 2) * dimension.x;
+      const screenY = (-(projectedCorner.y - 1) / 2) * dimension.x;
       projected.push(new Vector2(screenX, screenY));
     }
   }
@@ -165,8 +184,8 @@ export function getStickyBox(camera: Camera, position: Vector3, size: Vector3) {
 
   if (frustum.containsPoint(position)) {
     position = position.clone().project(camera);
-    screenX = ((position.x + 1) / 2) * window.innerWidth;
-    screenY = (-(position.y - 1) / 2) * window.innerHeight;
+    screenX = ((position.x + 1) / 2) * dimension.x;
+    screenY = (-(position.y - 1) / 2) * dimension.y;
   }
 
   return {

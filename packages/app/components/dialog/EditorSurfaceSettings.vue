@@ -83,7 +83,7 @@
           <bm-form-field v-slot="{ id }" label="Water Opacity">
             <bm-textfield
               v-model="waterOptions.opacity"
-              :el-attrs="{ type: 'number', id }"
+              :el-attrs="{ type: 'number', id, min: 0, max: 1, step: '0.01' }"
               @update:model-value="
                 editorSurfaceModule.setWaterOptions({ opacity: $event })
               " />
@@ -107,7 +107,7 @@
             " />
           <bm-form-field label="Noise Size">
             <bm-textfield
-              :el-attrs="{ type: 'number', step: '1' }"
+              :el-attrs="{ type: 'number', min: 0, step: '1' }"
               :model-value="noiseOptions.size"
               @update:model-value="
                 editorSurfaceModule.setNoiseOptions({ size: $event })
@@ -116,7 +116,7 @@
 
           <bm-form-field label="Noise Intensity">
             <bm-textfield
-              :el-attrs="{ type: 'number', step: '0.01' }"
+              :el-attrs="{ type: 'number', min: 0, step: '0.01' }"
               :model-value="noiseOptions.intensity"
               @update:model-value="
                 editorSurfaceModule.setNoiseOptions({ intensity: $event })
@@ -125,7 +125,7 @@
 
           <bm-form-field label="Noise Opacity">
             <bm-textfield
-              :el-attrs="{ type: 'number', step: '0.01' }"
+              :el-attrs="{ type: 'number', min: 0, max: 1, step: '0.01' }"
               :model-value="noiseOptions.opacity"
               @update:model-value="
                 editorSurfaceModule.setNoiseOptions({ opacity: $event })

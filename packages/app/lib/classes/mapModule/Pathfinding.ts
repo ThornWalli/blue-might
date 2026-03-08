@@ -417,7 +417,7 @@ function getColorByTileType(type: TILE_TYPE): number {
     case TILE_TYPE.WATER:
       return 0x0000ff;
     case TILE_TYPE.BETON_ROAD:
-      return 0xd9d9d9;
+      return 0xa6a6a6;
     default:
       return 0xffffff;
   }

@@ -47,7 +47,7 @@ export default class EditorGridAppModule extends AppModule<State, Observables> {
     super(app, {
       gridActive: false,
       snapPosition: true,
-      gridSize: 8,
+      gridSize: 3,
       currentPosition: new Vector2()
     });
     //#region observables

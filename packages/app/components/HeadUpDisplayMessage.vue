@@ -70,14 +70,6 @@
           </div>
         </div>
         <div
-          v-if="messages.includes(HUD_MESSAGE_TYPE.LANDED)"
-          :key="HUD_MESSAGE_TYPE.LANDED"
-          class="message-landed">
-          <div class="content">
-            <div>Landed</div>
-          </div>
-        </div>
-        <div
           v-if="messages.includes(HUD_MESSAGE_TYPE.AIM_TARGET)"
           :key="HUD_MESSAGE_TYPE.AIM_TARGET"
           class="message-aim-target">
@@ -98,7 +90,6 @@ import usePlayerUnitInterface from '../composables/usePlayerUnitInterface';
 import { WARNING_TYPE } from '../lib/classes/unitModule/Radar';
 import { DAMAGE_LEVEL } from '../lib/classes/unitModule/Damage';
 import { isVehicle } from '../lib/utils/unit';
-import { FLIGHT_STATUS } from '../lib/classes/unitModule/movable/airVehicle/Helicopter';
 import type { App } from '../lib/types';
 
 const $props = defineProps<{
@@ -107,21 +98,13 @@ const $props = defineProps<{
 
 const messages = ref<HUD_MESSAGE_TYPE[]>([
   HUD_MESSAGE_TYPE.READY,
-  HUD_MESSAGE_TYPE.LANDED,
   HUD_MESSAGE_TYPE.LOW_FUEL,
   HUD_MESSAGE_TYPE.DESTROYED,
   HUD_MESSAGE_TYPE.INCOMING_MISSILE
 ]);
 
-const {
-  unit,
-  unitDamage,
-  hasFuelWarning,
-  flightStatus,
-  powerInfo,
-  warnings,
-  hasAimTarget
-} = usePlayerUnitInterface($props.app);
+const { unit, unitDamage, hasFuelWarning, powerInfo, warnings, hasAimTarget } =
+  usePlayerUnitInterface($props.app);
 
 watchEffect(() => {
   const messages_ = [];
@@ -147,10 +130,6 @@ watchEffect(() => {
       messages_.push(HUD_MESSAGE_TYPE.ENGINE_STARTED);
     }
 
-    if (FLIGHT_STATUS.LANDED === flightStatus.value) {
-      messages_.push(HUD_MESSAGE_TYPE.LANDED);
-    }
-
     if (hasAimTarget.value) {
       messages_.push(HUD_MESSAGE_TYPE.AIM_TARGET);
     }
@@ -166,7 +145,6 @@ export enum HUD_MESSAGE_TYPE {
   DESTROYED,
   DAMAGE,
   READY,
-  LANDED,
   ENGINE_STARTED,
   ENGINE_START,
   AIM_TARGET

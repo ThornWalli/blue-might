@@ -20,13 +20,16 @@
       </div>
     </template>
     <template #[PANEL.BOTTOM]>
-      <bm-panel-secondary-screen key="secondary-screen" :app="app" />
+      <bm-panel-gun-screen
+        key="gun-screen"
+        :app="app"
+        @fullscreen="onFullscreenGunScreen" />
     </template>
     <template #[PANEL.BOTTOM_RIGHT]>
       <bm-panel-unit-preview key="unit-preview" :app="app" />
     </template>
     <template #background>
-      <bm-head-up-indicator :app="app" />
+      <bm-head-up-indicator v-if="!hideIndicators" :app="app" />
     </template>
     <template #foreground>
       <bm-head-up-display-warning :app="app" />
@@ -56,7 +59,7 @@ import BmAppLayout, { PANEL } from '../AppLayout.vue';
 import BmPanelGeneral from '../panel/General.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
-import BmPanelSecondaryScreen from '../panel/GunScreen.vue';
+import BmPanelGunScreen from '../panel/GunScreen.vue';
 import BmPanelMap from '../panel/NavigatorMap.vue';
 import BmMessage, { MESSAGE_TYPE } from '../Message.vue';
 import BmHeadUpDisplayWarning from '../HeadUpDisplayMessage.vue';
@@ -79,6 +82,11 @@ onMounted(() => {
 onUnmounted(() => {
   subscription.unsubscribe();
 });
+
+const hideIndicators = ref(false);
+function onFullscreenGunScreen(value: boolean) {
+  hideIndicators.value = value;
+}
 
 function setupMessages(app: AppPlayground) {
   subscription.add(

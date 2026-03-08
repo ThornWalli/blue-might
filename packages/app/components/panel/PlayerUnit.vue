@@ -8,7 +8,7 @@
     <div class="frames grid-row grid-row-start">
       <div class="secondary">
         <div v-if="isAirVehicle">
-          <bm-details label="Air Control">
+          <bm-details label="Air Control" :open="weaponSlots.length < 1">
             <div class="grid-row">
               <div class="grid-col grid-col-full grid-col-v">
                 <div class="attitude-indicator">
@@ -42,6 +42,20 @@
                   :indicator-status="CONTROL_ITEM_STATUS.NORMAL"
                   :value="
                     MAX_AIR_VEHICLE_ALTITUDE.toFixed(2).padStart(
+                      padLength,
+                      '\u00A0'
+                    )
+                  " />
+                <bm-control-item
+                  indicator
+                  label="Status"
+                  :indicator-status="
+                    flightStatus === FLIGHT_STATUS.FLYING
+                      ? CONTROL_ITEM_STATUS.NORMAL
+                      : CONTROL_ITEM_STATUS.WARNING
+                  "
+                  :value="
+                    (flightStatus ? flightStatus : 'Unknown').padStart(
                       padLength,
                       '\u00A0'
                     )
@@ -262,6 +276,7 @@ import usePlayerUnitInterface, {
   type TransportSlotInfoSlot
 } from '@blue-might/app/composables/usePlayerUnitInterface';
 import type { App } from '@blue-might/app/lib/types';
+import { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
 
 import BmControlItem, { CONTROL_ITEM_STATUS } from '../element/ControlItem.vue';
 import BmPanel from '../Panel.vue';
@@ -269,7 +284,7 @@ import BmDetails from '../Details.vue';
 import BmAttitudeIndicator from '../AttitudeIndicator.vue';
 import SvgIconHeart from '../../assets/icons/heart.svg?component';
 
-const padLength = 9;
+const padLength = 10;
 
 const $props = defineProps<{
   app: App;
@@ -292,7 +307,8 @@ const {
   seaHeight,
   groundHeight,
   playerLifes,
-  transportSlotInfo
+  transportSlotInfo,
+  flightStatus
 } = usePlayerUnitInterface($props.app);
 
 const hasTransport = computed(() => {

@@ -19,12 +19,16 @@ interface Observables extends AppModuleObservables {
   index$: ReplaySubject<number>;
   path$: ReplaySubject<PatrolPath>;
   active$: ReplaySubject<boolean>;
+  rounds$: ReplaySubject<number>;
+  roundsLoop$: ReplaySubject<boolean>;
 }
 
 interface State extends AppModuleState {
   unit: Units | null;
   index: number;
   active: boolean;
+  rounds: number;
+  roundsLoop: boolean;
 }
 export default class EditorPatrolAppModule extends AppModule<
   State,
@@ -36,13 +40,17 @@ export default class EditorPatrolAppModule extends AppModule<
     super(app, {
       unit: null,
       index: 0,
-      active: false
+      active: false,
+      rounds: 1,
+      roundsLoop: false
     });
     //#region observables
     this.observables.unit$ = new ReplaySubject<Units | null>(1);
     this.observables.index$ = new ReplaySubject<number>(1);
     this.observables.path$ = new ReplaySubject<PatrolPath>(1);
     this.observables.active$ = new ReplaySubject<boolean>(1);
+    this.observables.rounds$ = new ReplaySubject<number>(1);
+    this.observables.roundsLoop$ = new ReplaySubject<boolean>(1);
     //#endregion
   }
 
@@ -124,6 +132,22 @@ export default class EditorPatrolAppModule extends AppModule<
     }
   }
 
+  setRounds(rounds: number) {
+    if (this.state.unit && 'patrol' in this.state.unit.modules) {
+      this.state.unit.modules.patrol.setRounds(rounds);
+      this.state.rounds = rounds;
+      this.observables.rounds$.next(rounds);
+    }
+  }
+
+  setRoundsLoop(loop: boolean) {
+    if (this.state.unit && 'patrol' in this.state.unit.modules) {
+      this.state.unit.modules.patrol.setRoundsLoop(loop);
+      this.state.roundsLoop = loop;
+      this.observables.roundsLoop$.next(loop);
+    }
+  }
+
   moveLastItemUp() {
     if (this.state.unit && 'patrol' in this.state.unit.modules) {
       const path = this.getPath();
@@ -155,6 +179,10 @@ export default class EditorPatrolAppModule extends AppModule<
     if (unit && 'patrol' in unit.modules) {
       this.state.active = unit.modules.patrol.options.active ?? false;
       this.observables.active$.next(this.state.active);
+      this.state.rounds = unit.modules.patrol.getRounds();
+      this.observables.rounds$.next(this.state.rounds);
+      this.state.roundsLoop = unit.modules.patrol.getRoundsLoop();
+      this.observables.roundsLoop$.next(this.state.roundsLoop);
     }
 
     this.updateLine(this.getPath());

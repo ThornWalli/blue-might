@@ -471,13 +471,6 @@ export default class AttackUnitModule extends UnitModule<
         targetUnit.modules.damage.observables.destroyed$.subscribe(() => {
           this.unitSubscription?.unsubscribe();
           this.subscription.remove(this.unitSubscription!);
-
-          // !!!! wird vermutlich niht gebraucht, weil schon mit ausstausch der targetUnits Unit weg ist.
-          //     debugger;
-          //     // Ziel zerstört, nächstes Ziel auswählen
-          //     const nextTargetIndex = this.state.targetUnits.length ? 0 : null;
-          //     this.state.targetIndex = -1;
-          //     this.setTargetUnit(nextTargetIndex);
         })
       );
 

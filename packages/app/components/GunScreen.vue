@@ -4,6 +4,10 @@
       <canvas ref="canvasEl"></canvas>
       <div class="effect"></div>
       <div class="target"></div>
+      <bm-head-up-indicator
+        v-if="fullscreen && indicators"
+        :app="$props.app"
+        :camera="camera" />
     </div>
     <div class="controls bottom">
       <button @click="onClickZoomIn">
@@ -21,7 +25,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import type { WebGLRenderer } from 'three';
 import { PerspectiveCamera, Vector2, Vector3 } from 'three';
 import {
@@ -35,8 +39,10 @@ import type { EffectComposer } from 'three/examples/jsm/postprocessing/EffectCom
 
 import type Unit from '../lib/classes/Unit';
 import type { UnitModules } from '../lib/classes/Unit';
-import type BaseApp from '../lib/classes/BaseApp';
 import icons, { ICON } from '../utils/icons';
+import type AppPlayground from '../lib/classes/app/AppPlayground';
+
+import BmHeadUpIndicator from './HeadUpIndicator.vue';
 
 const IconPlus = await icons[ICON.PLUS];
 const IconMinus = await icons[ICON.MINUS];
@@ -50,7 +56,8 @@ const canvasEl = ref<HTMLCanvasElement | null>(null);
 const fullscreen = ref(false);
 
 const $props = defineProps<{
-  app: BaseApp;
+  indicators?: boolean;
+  app: AppPlayground;
   unit: Unit<UnitModules & { weapon: WeaponUnitModule }>;
 }>();
 
@@ -63,7 +70,7 @@ const zoomFactor = ref(1.25);
 
 let renderer: WebGLRenderer;
 let composer: EffectComposer;
-let camera: PerspectiveCamera;
+const camera = ref<Raw<PerspectiveCamera>>();
 const resizeObserver = new ResizeObserver(() => {
   refresh();
 });
@@ -77,8 +84,8 @@ function refresh() {
     console.log('dimension', dimension);
     renderer.setSize(dimension.x, dimension.y);
     composer.setSize(dimension.x, dimension.y);
-    camera.aspect = dimension.x / dimension.y;
-    camera.updateProjectionMatrix();
+    camera.value!.aspect = dimension.x / dimension.y;
+    camera.value!.updateProjectionMatrix();
   }
 }
 
@@ -92,7 +99,9 @@ function setup() {
     rootEl.value!.offsetHeight
   );
 
-  camera = new PerspectiveCamera(60, dimension.x / dimension.y, 0.1, 2000);
+  camera.value = markRaw(
+    new PerspectiveCamera(60, dimension.x / dimension.y, 0.1, 2000)
+  );
 
   renderer = createRenderer(canvasEl.value!, dimension, {
     pixelated: appRenderer.getPixelated()
@@ -100,12 +109,13 @@ function setup() {
 
   setRendererShadow(renderer, DEFAULT_SHADOW_QUALITY);
 
-  composer = createComposer(renderer, scene, camera, dimension);
+  const c = camera.value!;
+  composer = createComposer(renderer, scene, c, dimension);
 
   const target = new Vector3();
   renderer.setAnimationLoop(() => {
     const unit = $props.unit;
-    renderer.render($props.app.getScene(), camera);
+    renderer.render($props.app.getScene(), c);
     const weaponModule = unit?.modules.weapon;
     if (weaponModule) {
       const index = weaponModule.getSlotIndex();
@@ -114,15 +124,15 @@ function setup() {
       const barrelTarget = weaponModule.getBarrelTargets()[index];
       if (unit && sourceDirection && sourcePosition && barrelTarget) {
         barrelTarget.getWorldPosition(target);
-        camera.position.copy(target);
-        camera.lookAt(
-          camera.position.x + sourceDirection.x,
-          camera.position.y + sourceDirection.y,
-          camera.position.z + sourceDirection.z
+        c.position.copy(target);
+        c.lookAt(
+          c.position.x + sourceDirection.x,
+          c.position.y + sourceDirection.y,
+          c.position.z + sourceDirection.z
         );
 
-        camera.fov = 60 / zoom.value; // Basis-FOV geteilt durch Zoom-Faktor
-        camera.updateProjectionMatrix(); // NEU: Projektionsmatrix aktualisieren
+        c.fov = 60 / zoom.value; // Basis-FOV geteilt durch Zoom-Faktor
+        c.updateProjectionMatrix(); // NEU: Projektionsmatrix aktualisieren
       }
     }
   });
@@ -185,6 +195,7 @@ function onClickFullscreen() {
     left: 0;
     width: 100%;
     height: 100%;
+    overflow: hidden;
 
     & canvas {
       position: absolute;

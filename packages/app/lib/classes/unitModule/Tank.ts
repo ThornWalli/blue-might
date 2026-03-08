@@ -9,9 +9,7 @@ import GroundVehicleUnitModule, {
 } from './movable/GroundVehicle';
 
 export type TankUnitModuleOptions = GroundVehicleUnitModuleOptions;
-export type TankUnitModuleState = GroundVehicleUnitModuleState & {
-  rotationVelocity: Vector3;
-};
+export type TankUnitModuleState = GroundVehicleUnitModuleState;
 
 export default class TankUnitModule extends GroundVehicleUnitModule<
   TankUnitModuleOptions,
@@ -29,13 +27,13 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
       {
         ...options,
         // maxSpeed: options.maxSpeed ?? 1,
-        acceleration: options.acceleration ?? 1 / 2
+        acceleration: options.acceleration ?? 1 / 2,
+        friction: options.friction ?? 0.9
         // turnSpeed: options.turnSpeed ?? 1 / 2
         // turnMovementSpeed: options.turnMovementSpeed ?? 1 / 3
       },
       {
-        ...state,
-        rotationVelocity: state.rotationVelocity ?? new Vector3(0, 0, 0)
+        ...state
       },
       debug
     );
@@ -62,11 +60,11 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
       !controls.moveLeft &&
       !controls.moveRight &&
       !controls.space &&
-      this.state.velocity.lengthSq() < eps &&
-      this.state.rotationVelocity.lengthSq() < eps
+      this.state.velocity.lengthSq() <= eps
     ) {
       return;
     }
+
     // 1. Beschleunigung durch Input
     let accel = 0;
     if (controls.moveForward) accel += acceleration;
@@ -102,7 +100,7 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
     if (speed > maxSpeed) {
       velocity.setLength(maxSpeed);
       speed = maxSpeed; // Wichtig: speed-Variable auch aktualisieren
-    } else if (speed < eps && accel === 0) {
+    } else if (speed <= eps && accel === 0) {
       // Nur auf 0 setzen, wenn keine Beschleunigung anliegt
       velocity.setScalar(0);
       speed = 0;

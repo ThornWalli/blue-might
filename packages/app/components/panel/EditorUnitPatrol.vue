@@ -8,6 +8,16 @@
         :model-value="patrolActive"
         label="Patrol Active"
         @update:model-value="onUpdatePatrolActive" />
+      <bm-toggle
+        :model-value="patrolLoop"
+        label="Patrol infinite loop"
+        @update:model-value="onUpdatePatrolLoop" />
+      <bm-form-field v-if="!patrolLoop" label="Patrol Rounds">
+        <bm-textfield
+          :model-value="patrolRounds"
+          :el-attrs="{ type: 'number', min: 1, step: '1' }"
+          @update:model-value="onUpdatePatrolRounds" />
+      </bm-form-field>
     </bm-fieldset>
     <bm-fieldset label="Path">
       <div class="items">
@@ -113,10 +123,14 @@ import BmPanel from '../Panel.vue';
 import BmFieldset from '../Fieldset.vue';
 import BmButton from '../Button.vue';
 import BmToggle from '../Toggle.vue';
+import BmFormField from '../FormField.vue';
+import BmTextfield from '../Textfield.vue';
 
 // type U = UnitModules & { patrol: PatrolUnitModule };
 const unit = ref<Raw<Unit> | null>(null);
 const patrolActive = ref(false);
+const patrolLoop = ref(false);
+const patrolRounds = ref(0);
 
 const currentIndex = ref<number | null>(0);
 
@@ -159,6 +173,16 @@ onMounted(() => {
   subscription.add(
     editorPatrolModule.observables.active$.subscribe(v => {
       patrolActive.value = v;
+    })
+  );
+  subscription.add(
+    editorPatrolModule.observables.rounds$.subscribe(v => {
+      patrolRounds.value = v;
+    })
+  );
+  subscription.add(
+    editorPatrolModule.observables.roundsLoop$.subscribe(v => {
+      patrolLoop.value = v;
     })
   );
 });
@@ -303,6 +327,13 @@ function onClickLastItemDown() {
 
 function onUpdatePatrolActive(active: boolean) {
   editorPatrolModule.setActive(active);
+}
+function onUpdatePatrolLoop(v: boolean) {
+  editorPatrolModule.setRoundsLoop(v);
+}
+
+function onUpdatePatrolRounds(rounds: number) {
+  editorPatrolModule.setRounds(rounds);
 }
 </script>
 
