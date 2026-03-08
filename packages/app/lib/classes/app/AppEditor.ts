@@ -98,12 +98,13 @@ export default class AppEditor extends BaseApp<
     //#region observables
     this.observables.mode$ = new ReplaySubject<EDITOR_MODE>(1);
     //#endregion
-
-    this.renderer.modules.camera.setView(CAMERA_VIEW.FREE);
   }
 
   override async setup() {
     await super.setup();
+
+    this.renderer.modules.camera.setView(CAMERA_VIEW.FREE);
+    this.renderer.modules.camera.updateCamera();
   }
 
   getMode() {

@@ -129,7 +129,6 @@ export default class CameraRendererModule extends RendererModule<
     }
   }
   setView(view: CAMERA_VIEW) {
-    if (view === this.state.view) return;
     this.state.view = view;
     this.observables.view$.next(view);
     if (view === CAMERA_VIEW.FREE) {
@@ -155,6 +154,11 @@ export default class CameraRendererModule extends RendererModule<
         view,
         lerpFactor: 1
       });
+    } else {
+      this.renderer.modules.controls.orbitControls?.target.copy(
+        unit.getPosition()
+      );
+      this.renderer.modules.controls.orbitControls?.update();
     }
   }
 
