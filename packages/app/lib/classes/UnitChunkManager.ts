@@ -99,10 +99,12 @@ export default class UnitChunkManager {
       }
     }
   }
-
+  visibleChunks: Set<string> = new Set();
   updateVisibility(camera: Camera) {
     // console.log('Updating chunk visibility...');
-    const visibleChunks = this.findVisibleChunks(camera);
+    const visibleChunks = (this.visibleChunks = this.findVisibleChunks(camera));
+    visibleChunks.add(this.getChunkKey(camera.position)); // WICHTIG: Immer den Ursprung hinzufügen, damit die Einheiten dort sichtbar bleiben
+
     const visibleUnits: Unit[] = [];
     const hideUnits: Unit[] = [];
 

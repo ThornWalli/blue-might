@@ -80,7 +80,6 @@ export default class CameraRendererModule extends RendererModule<
     lerpFactor?: number;
     view?: Exclude<CAMERA_VIEW, CAMERA_VIEW.FREE>;
   }) {
-    console.log('Updating camera with options:', options);
     const { orbitControls } = this.renderer.modules.controls;
 
     const camera = this.getCamera<PerspectiveCamera>();

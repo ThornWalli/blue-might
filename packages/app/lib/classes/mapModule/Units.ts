@@ -337,28 +337,48 @@ export default class UnitsModule extends MapModule<
     );
   }
 
-  private debugMesh: InstancedMesh | null = null;
+  private debugObjects: {
+    used: InstancedMesh;
+    unused: InstancedMesh;
+  } | null = null;
   private debugHelper: Object3D | null = null;
   private updateDebug() {
-    if (this.debugMesh) {
-      disposeObject3D(this.debugMesh);
+    if (this.debugObjects) {
+      Object.values(this.debugObjects).forEach(mesh => {
+        disposeObject3D(mesh);
+      });
     }
 
-    this.debugMesh = new InstancedMesh(
-      new BoxGeometry(
-        this.chunkManager.size,
-        this.chunkManager.size,
-        this.chunkManager.size
+    this.debugObjects = {
+      used: new InstancedMesh(
+        new BoxGeometry(
+          this.chunkManager.size,
+          this.chunkManager.size,
+          this.chunkManager.size
+        ),
+        new MeshLambertMaterial({ color: 0xff0000, wireframe: true }),
+        this.chunkManager.chunks.size
       ),
-      new MeshLambertMaterial({ color: 0x00ff00, wireframe: true }),
-      this.chunkManager.chunks.size
-    );
-    this.addToScene(this.debugMesh);
+      unused: new InstancedMesh(
+        new BoxGeometry(
+          this.chunkManager.size,
+          this.chunkManager.size,
+          this.chunkManager.size
+        ),
+        new MeshLambertMaterial({ color: 0x00ff00, wireframe: true }),
+        this.chunkManager.chunks.size
+      )
+    };
+
+    Object.values(this.debugObjects).forEach(mesh => {
+      this.addToScene(mesh);
+    });
 
     const empty = new Matrix4().makeScale(0, 0, 0);
-    const mesh = this.debugMesh;
-    for (let i = 0; i < mesh.count; i++) {
-      mesh.setMatrixAt(i, empty);
+
+    for (let i = 0; i < this.debugObjects.used.count; i++) {
+      this.debugObjects.used.setMatrixAt(i, empty);
+      this.debugObjects.unused.setMatrixAt(i, empty);
     }
     let debugHelper = this.debugHelper!;
     if (!this.debugHelper) {
@@ -368,10 +388,20 @@ export default class UnitsModule extends MapModule<
       const position = chunk.position;
       debugHelper.updateMatrix();
       debugHelper.matrix.makeTranslation(position.x, position.y, position.z);
-      mesh.setMatrixAt(index, debugHelper.matrix);
+      if (
+        this.chunkManager.visibleChunks.has(
+          this.chunkManager.getChunkKey(position)
+        )
+      ) {
+        this.debugObjects?.used.setMatrixAt(index, debugHelper.matrix);
+      } else {
+        this.debugObjects?.unused.setMatrixAt(index, debugHelper.matrix);
+      }
     });
 
-    this.debugMesh.instanceMatrix.needsUpdate = true;
+    Object.values(this.debugObjects).forEach(mesh => {
+      mesh.instanceMatrix.needsUpdate = true;
+    });
   }
 
   //#endregion
