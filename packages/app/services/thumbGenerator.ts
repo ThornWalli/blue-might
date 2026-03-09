@@ -237,7 +237,7 @@ class ThumbGenerator {
   setSize(width: number, height: number) {
     this.size.set(width, height);
 
-    const ratio = globalThis.devicePixelRatio || 1;
+    const ratio = Math.max(2, globalThis.devicePixelRatio || 1);
     this.renderer?.setSize(this.size.x * ratio, this.size.y * ratio, true);
   }
 
