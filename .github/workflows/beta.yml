@@ -75,9 +75,9 @@ jobs:
         run: |
           pnpm run --filter=@blue-might/frontend generate
         env:
-          WEBSITE_HOST: https://thornwalli.github.io
-          NUXT_PUBLIC_SITE_URL: https://thornwalli.github.io
-          BASE_URL: /blue-might/
+          WEBSITE_HOST: https://bluemight.lammpee.de
+          NUXT_PUBLIC_SITE_URL: https://bluemight.lammpee.de
+          BASE_URL: /
 
       - name: Archive Production Artifact
         uses: actions/upload-artifact@v7

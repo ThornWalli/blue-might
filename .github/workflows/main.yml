@@ -79,8 +79,8 @@ jobs:
           cp ./firebase.json ./artifact/firebase.json
           cp ./.firebaserc ./artifact/.firebaserc
         env:
-          NUXT_PUBLIC_SITE_URL: https://blue-might.lammpee.de
-          WEBSITE_HOST: https://blue-might.lammpee.de
+          WEBSITE_HOST: https://bluemight.lammpee.de
+          NUXT_PUBLIC_SITE_URL: https://bluemight.lammpee.de
 
       - name: Archive Production Artifact
         uses: actions/upload-artifact@v7
