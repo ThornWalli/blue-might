@@ -206,17 +206,26 @@ export default class WeaponUnitModule<
     }
   }
 
-  switchSlot() {
-    const currentSlot = this.state.currentSlot;
-    const slots = this.getSlots();
+  setSlotByIndex(index: number) {
+    const slot = this.getSlot(index);
+    if (slot) {
+      this.setSlot(slot);
+    }
+  }
 
-    // Deactivate the current slot
-    if (slots[currentSlot]) {
-      slots[currentSlot].active = false;
+  switchSlot() {
+    this.setSlotByIndex((this.state.currentSlot + 1) % this.getSlots().length);
+  }
+
+  setSlot(slot: WeaponSlot) {
+    const lastSlot = this.state.currentSlot;
+    const slots = this.getSlots();
+    if (slots[lastSlot]) {
+      slots[lastSlot].active = false;
     }
 
     // Move to the next slot
-    this.state.currentSlot = (currentSlot + 1) % slots.length;
+    this.state.currentSlot = slot.index;
 
     // Activate the new current slot
     if (slots[this.state.currentSlot]) {

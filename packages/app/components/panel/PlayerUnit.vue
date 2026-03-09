@@ -112,6 +112,7 @@
             <bm-control-item
               v-for="(slot, index) in weaponSlots"
               :key="index"
+              button
               indicator
               :indicator-status="
                 slot.active
@@ -131,7 +132,8 @@
                   : `${slot.ammunition}/${slot.maxAmmunition}`
                       .toString()
                       .padStart(padLength, '\u00A0')
-              ">
+              "
+              @click="onClickWeaponSlot($event, slot)">
               <template #after-indicator>
                 <img
                   v-if="slot.thumb"
@@ -277,6 +279,7 @@ import usePlayerUnitInterface, {
 } from '@blue-might/app/composables/usePlayerUnitInterface';
 import type { App } from '@blue-might/app/lib/types';
 import { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
+import type { WeaponSlot } from '@blue-might/app/lib/classes/WeaponSlot';
 
 import BmControlItem, { CONTROL_ITEM_STATUS } from '../element/ControlItem.vue';
 import BmPanel from '../Panel.vue';
@@ -323,7 +326,7 @@ const panelTitle = computed(
 
 //#region events
 function onClickUnitActive(e: Event) {
-  (e.target as HTMLButtonElement).blur();
+  blur(e);
   const vehicle = player.value?.modules.vehicle;
   if (!vehicle) return;
   const currentUnit = vehicle.getCurrentUnit();
@@ -336,12 +339,15 @@ function onClickUnitActive(e: Event) {
     }
   }
 }
+function blur(e: Event) {
+  ((e.target as HTMLElement)?.closest('button') as HTMLButtonElement).blur();
+}
 
 function onClickWeaponAutopilot(
   e: Event,
   options: Partial<WeaponAutopilotOptions>
 ) {
-  (e.target as HTMLButtonElement).blur();
+  blur(e);
   weaponAutopilot.value = {
     ...weaponAutopilot.value,
     ...options
@@ -357,7 +363,8 @@ function onClickWeaponAutopilot(
   }
 }
 
-function onClickGears() {
+function onClickGears(e: Event) {
+  blur(e);
   const vehicleUnit =
     player.value?.modules.vehicle.getCurrentUnit() as AirVehicleUnit;
   if (!(vehicleUnit instanceof AirVehicleUnit)) return;
@@ -372,6 +379,17 @@ async function onClickUnload(item: TransportSlotInfoSlot) {
   if (unit.value && 'transport' in unit.value.modules) {
     await unit.value.modules.transport.unloadById(item.id);
   }
+}
+
+const weaponModule = computed(() => {
+  const vehicle = player.value?.modules.vehicle;
+  if (!vehicle) return;
+  return vehicle.getCurrentUnit()!.getModuleByType(WeaponUnitModule);
+});
+
+function onClickWeaponSlot(e: Event, slot: { thumb: string } & WeaponSlot) {
+  blur(e);
+  weaponModule.value?.setSlot(slot);
 }
 //#endregion
 </script>
@@ -399,11 +417,11 @@ async function onClickUnload(item: TransportSlotInfoSlot) {
       background: #000;
 
       &.primary {
-        width: 212px;
+        width: 220px;
       }
 
       &.secondary {
-        width: 288px;
+        width: 300px;
       }
 
       & .bm-control-item {

@@ -203,7 +203,7 @@ function updateCameraDefault(
   const targetOffset = new Vector3(0, 0, 0);
   switch (options.view) {
     case CAMERA_VIEW.SIDE:
-      cameraOffset.set(6, 1, 0);
+      cameraOffset.set(5, 2, 0);
       applyRotation = false; // Für Side-Ansicht: Offset nicht rotieren, damit die Ansicht absolut (immer von rechts) ist
       break;
     default:
