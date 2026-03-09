@@ -1,5 +1,12 @@
 # Project Changelog
 
+# [1.0.0-beta.91](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.90...v1.0.0-beta.91) (2026-03-09)
+
+
+### Bug Fixes
+
+* **app:** ensure minimum device pixel ratio is 2 in setSize method ([4ef7d05](https://github.com/ThornWalli/blue-might/commit/4ef7d0598cdf0c12db46a99df695ececae16444e))
+
 # [1.0.0-beta.90](https://github.com/ThornWalli/blue-might/compare/v1.0.0-beta.89...v1.0.0-beta.90) (2026-03-08)
 
 
