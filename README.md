@@ -11,5 +11,5 @@
 
 ## Links
 
-- App: <https://thornwalli.github.io/blue-might/>
-- Editor: <https://thornwalli.github.io/blue-might/editor/>
+- [App](https://bluemight.lammpee.de/)
+- [Editor](https://bluemight.lammpee.de/editor/)
