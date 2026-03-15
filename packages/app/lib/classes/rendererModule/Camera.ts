@@ -81,6 +81,7 @@ export default class CameraRendererModule extends RendererModule<
     quaternion?: Quaternion;
     lerpFactor?: number;
     view?: Exclude<CAMERA_VIEW, CAMERA_VIEW.FREE>;
+    lookAt?: Vector3;
   }) {
     const { orbitControls } = this.renderer.modules.controls;
 
@@ -196,6 +197,7 @@ function updateCameraDefault(
     quaternion?: Quaternion;
     lerpFactor?: number;
     view: Exclude<CAMERA_VIEW, CAMERA_VIEW.FREE>;
+    lookAt?: Vector3;
   }
 ) {
   const { position, quaternion } = options;
@@ -236,7 +238,7 @@ function updateCameraDefault(
   const idealPosition = position.clone().add(offsetToApply);
 
   camera.position.lerp(idealPosition, lerpFactor);
-  camera.lookAt(position.clone().add(targetOffset));
+  camera.lookAt((options.lookAt ?? position).clone().add(targetOffset));
 }
 
 function updateCameraFallback(

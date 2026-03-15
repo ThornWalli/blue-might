@@ -199,6 +199,7 @@ export function autoAimFunction(
   };
 
   const setHorizontalAim = (v: number, withLerp = true) => {
+    v = Math.max(minAngle.y, Math.min(maxAngle.y, v));
     let result = 0;
     if (head) {
       result = head.rotation.y = withLerp
@@ -219,19 +220,19 @@ export function autoAimFunction(
 
   const isInYaw =
     Math.abs(targetYaw - ((head ? head : barrels[1])?.rotation.y ?? Infinity)) <
-    0.05;
+    1 / 4;
 
   if (isInYaw) {
     const projectileInstance = weapon.projectile.create();
     projectileInstance.updateOptions = weapon.projectile.getUpdateOptions();
 
     const pitchValidFn = (pitch: number) => {
+      setVerticalAim(pitch, false);
+
       weaponModule.updateSourcePosition(index);
       const [sourcePosition] = weaponModule.getSourcePositions();
       const [sourceDirection] = weaponModule.getSourceDirections();
       if (!sourcePosition || !sourceDirection) return false;
-
-      setVerticalAim(pitch, false);
 
       const isInPitch = simulateProjectile(
         projectileInstance,
@@ -259,7 +260,7 @@ export function autoAimFunction(
 
       let isInPitch = false;
 
-      for (let i = 0; i <= steps; i += 1) {
+      for (let i = 0; i <= steps; i++) {
         let pitch = 0;
         if (weaponAngles[index]?.revert) {
           pitch = minAngle.x + rangeStep * i;
@@ -275,6 +276,7 @@ export function autoAimFunction(
       }
       if (!isInPitch) {
         setVerticalAim(last, false);
+        weaponModule.updateSourcePosition(index);
       }
     }
   }

@@ -107,7 +107,7 @@
             " />
           <bm-form-field label="Noise Size">
             <bm-textfield
-              :el-attrs="{ type: 'number', min: 0, step: '1' }"
+              :el-attrs="{ type: 'number', min: 0, step: '0.1' }"
               :model-value="noiseOptions.size"
               @update:model-value="
                 editorSurfaceModule.setNoiseOptions({ size: $event })

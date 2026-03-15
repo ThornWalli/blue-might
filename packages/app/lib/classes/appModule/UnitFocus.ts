@@ -8,6 +8,7 @@ import {
   Subject,
   switchMap
 } from 'rxjs';
+import type { Units } from '@blue-might/units';
 
 import AppModule, {
   type AppModuleObservables,
@@ -19,9 +20,9 @@ import { CAMERA_VIEW } from '../rendererModule/Camera';
 
 interface Observables extends AppModuleObservables {
   type$: ReplaySubject<FOLLOW_TYPE | null>;
-  followedUnit$: ReplaySubject<Unit | null>;
-  focusedUnit$: ReplaySubject<Unit | null>;
-  focus$: Subject<Unit>;
+  followedUnit$: ReplaySubject<Units | null>;
+  focusedUnit$: ReplaySubject<Units | null>;
+  focus$: Subject<Units>;
 }
 
 export enum FOLLOW_TYPE {
@@ -31,8 +32,8 @@ export enum FOLLOW_TYPE {
 
 interface State extends AppModuleState {
   type: FOLLOW_TYPE | null;
-  focusedUnit: Unit | null;
-  followedUnit: Unit | null;
+  focusedUnit: Units | null;
+  followedUnit: Units | null;
 }
 export default class UnitFocusAppModule extends AppModule<State, Observables> {
   static override TYPE = 'unitFocus';
@@ -45,9 +46,9 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
 
     //#region observables
     this.observables.type$ = new ReplaySubject<FOLLOW_TYPE | null>(1);
-    this.observables.focus$ = new Subject<Unit>();
-    this.observables.focusedUnit$ = new ReplaySubject<Unit | null>(1);
-    this.observables.followedUnit$ = new ReplaySubject<Unit | null>(1);
+    this.observables.focus$ = new Subject<Units>();
+    this.observables.focusedUnit$ = new ReplaySubject<Units | null>(1);
+    this.observables.followedUnit$ = new ReplaySubject<Units | null>(1);
     //#endregion
   }
 
@@ -93,12 +94,14 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
             return merge(
               unit.observables.position$,
               unit.observables.rotation$
-            ).pipe(map(() => ({ unit, view })));
+            ).pipe(map(() => ({ unit: unit as Units, view })));
           })
         )
         .subscribe(({ unit, view }) => {
+          const position = unit.getPosition();
+
           this.app.renderer.modules.camera.updateCamera({
-            position: unit.getPosition(),
+            position,
             quaternion: unit.root.quaternion,
             view: view as Extract<keyof typeof CAMERA_VIEW, CAMERA_VIEW.FREE>,
             lerpFactor: 1

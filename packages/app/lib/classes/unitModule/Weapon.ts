@@ -279,12 +279,11 @@ export default class WeaponUnitModule<
     )
       return;
 
+    this.updateShoot(v);
+    this.updateAutoAIM(v);
     this.state.barrelTargets.forEach((_, index) => {
       this.updateSourcePosition(index);
     });
-
-    this.updateShoot(v);
-    this.updateAutoAIM(v);
     if (this.debug) {
       this.updateDebug(v);
     }
@@ -397,7 +396,7 @@ export default class WeaponUnitModule<
       const target = this.state.autoAimTarget;
       if (target) {
         if ((v.time - this.lastUpdateTime) / 10 < 1) {
-          return;
+          return false;
         }
         this.lastUpdateTime = v.time;
 
@@ -430,7 +429,9 @@ export default class WeaponUnitModule<
       } else {
         this.abortShoot();
       }
+      return true;
     }
+    return false;
   }
 
   registerBarrelTarget(object: Object3D) {

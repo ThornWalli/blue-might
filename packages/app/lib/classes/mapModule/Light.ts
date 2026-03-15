@@ -1,4 +1,9 @@
-import { AmbientLight, DirectionalLight, DirectionalLightHelper } from 'three';
+import {
+  AmbientLight,
+  DirectionalLight,
+  DirectionalLightHelper,
+  Object3D
+} from 'three';
 
 import MapModule, {
   type MapModuleObservables,
@@ -74,9 +79,9 @@ export default class LightModule extends MapModule<
   private lightDistance: number = 6;
 
   private updateLightPosition() {
-    if (!this.map.app.renderer?.modules.controls?.orbitControls) return;
+    // if (!this.map.app.renderer?.modules.controls?.orbitControls) return;
     const controls = this.map.app.renderer?.modules.controls.orbitControls;
-    const camera = controls.object;
+    const camera = controls?.object ?? new Object3D();
 
     const light = this.lights[0] as DirectionalLight;
 

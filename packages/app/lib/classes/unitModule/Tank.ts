@@ -27,10 +27,10 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
       {
         ...options,
         // maxSpeed: options.maxSpeed ?? 1,
-        acceleration: options.acceleration ?? 1 / 2,
-        friction: options.friction ?? 0.9
-        // turnSpeed: options.turnSpeed ?? 1 / 2
-        // turnMovementSpeed: options.turnMovementSpeed ?? 1 / 3
+        acceleration: options.acceleration ?? 2,
+        friction: options.friction ?? 0.75,
+        turnSpeed: options.turnSpeed ?? 1,
+        maxSpeed: options.maxSpeed ?? 2
       },
       {
         ...state
