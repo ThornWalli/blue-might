@@ -64,6 +64,20 @@ export class BaseMissileLauncher extends Weapon {
   }
 }
 
+export class TankGun extends Weapon {
+  constructor(options?: Partial<ConstructorParameters<typeof Weapon>[0]>) {
+    super({
+      id: options?.id ?? 'tank_gun',
+      name: options?.name ?? 'Tank Gun',
+      description: options?.description ?? 'A powerful tank gun.',
+      spreadAmount: options?.spreadAmount ?? 0,
+      perSeconds: options?.perSeconds ?? 1,
+      projectile: options?.projectile ?? PROJECTILE_TYPE.HEAVY_PROJECTILE,
+      shootType: options?.shootType ?? WEAPON_SHOOT_TYPE.SINGLE
+    });
+  }
+}
+
 export class GatlingGun extends Weapon {
   constructor(options?: Partial<ConstructorParameters<typeof Weapon>[0]>) {
     super({
@@ -81,6 +95,7 @@ export class GatlingGun extends Weapon {
 const weapons = {
   default: Default,
   base_missile_launcher: BaseMissileLauncher,
+  tank_gun: TankGun,
   gatling_gun: GatlingGun
 };
 

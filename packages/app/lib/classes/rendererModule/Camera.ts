@@ -27,6 +27,7 @@ export interface Observables extends RendererModuleObservables {
   addCamera$: Subject<Camera>;
   removeCamera$: Subject<Camera>;
   view$: ReplaySubject<CAMERA_VIEW>;
+  update$: Subject<Camera>;
 }
 
 export interface State extends RendererModuleState {
@@ -55,6 +56,7 @@ export default class CameraRendererModule extends RendererModule<
     this.observables.removeCamera$ = new Subject<Camera>();
     this.observables.view$ = new ReplaySubject<CAMERA_VIEW>();
     this.observables.view$.next(this.state.view);
+    this.observables.update$ = new Subject<Camera>();
     //#endregion
   }
 
@@ -102,6 +104,8 @@ export default class CameraRendererModule extends RendererModule<
     camera.updateMatrix();
     camera.updateMatrixWorld();
     orbitControls?.update();
+
+    this.observables.update$.next(camera);
   }
 
   addCamera(type: CameraType, camera: PerspectiveCamera) {

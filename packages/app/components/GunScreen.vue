@@ -1,5 +1,14 @@
 <template>
-  <div ref="rootEl" class="bm-gun-screen" :class="{ fullscreen }">
+  <div
+    ref="rootEl"
+    class="bm-gun-screen"
+    :class="{ fullscreen }"
+    :style="{
+      '--dimension-x': dimension.x,
+      '--dimension-y': dimension.y,
+      '--progress': cameraAngleProgress,
+      '--test-scale-count': 16
+    }">
     <div ref="screenEl" class="screen">
       <canvas ref="canvasEl"></canvas>
       <div class="effect"></div>
@@ -9,17 +18,22 @@
         :app="$props.app"
         :camera="camera" />
     </div>
-    <div class="controls bottom">
-      <button @click="onClickZoomIn">
-        <icon-plus />
-      </button>
-      <button @click="onClickZoomOut">
-        <icon-minus />
-      </button>
-      <button @click="onClickFullscreen">
-        <icon-arrows-pointing-in v-if="fullscreen" />
-        <icon-arrows-pointing-out v-else />
-      </button>
+    <div class="bottom">
+      <div class="angle">
+        X: {{ cameraAngles.x }}° | Y: {{ cameraAngles.y }}°
+      </div>
+      <div class="controls">
+        <button @click="onClickZoomIn">
+          <icon-plus />
+        </button>
+        <button @click="onClickZoomOut">
+          <icon-minus />
+        </button>
+        <button @click="onClickFullscreen">
+          <icon-arrows-pointing-in v-if="fullscreen" />
+          <icon-arrows-pointing-out v-else />
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -27,7 +41,7 @@
 <script lang="ts" setup>
 import { markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
 import type { WebGLRenderer } from 'three';
-import { PerspectiveCamera, Vector2, Vector3 } from 'three';
+import { MathUtils, PerspectiveCamera, Vector2, Vector3 } from 'three';
 import {
   createComposer,
   createRenderer,
@@ -36,6 +50,7 @@ import {
 } from '@blue-might/app/lib/classes/Renderer';
 import type WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import type { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+import { Subscription } from 'rxjs';
 
 import type Unit from '../lib/classes/Unit';
 import type { UnitModules } from '../lib/classes/Unit';
@@ -53,7 +68,15 @@ const rootEl = ref<HTMLDivElement | null>(null);
 const screenEl = ref<HTMLDivElement | null>(null);
 const canvasEl = ref<HTMLCanvasElement | null>(null);
 
+const cameraAngles = ref({
+  x: 0,
+  y: 0
+});
+const cameraAngleProgress = ref(0);
+
 const fullscreen = ref(false);
+
+const subscription = new Subscription();
 
 const $props = defineProps<{
   indicators?: boolean;
@@ -75,16 +98,17 @@ const resizeObserver = new ResizeObserver(() => {
   refresh();
 });
 
+const dimension = ref(new Vector2());
 function refresh() {
   if (renderer && composer) {
-    const dimension = new Vector2(
+    dimension.value = new Vector2(
       rootEl.value!.offsetWidth,
       rootEl.value!.offsetHeight
     );
     console.log('dimension', dimension);
-    renderer.setSize(dimension.x, dimension.y);
-    composer.setSize(dimension.x, dimension.y);
-    camera.value!.aspect = dimension.x / dimension.y;
+    renderer.setSize(dimension.value.x, dimension.value.y);
+    composer.setSize(dimension.value.x, dimension.value.y);
+    camera.value!.aspect = dimension.value.x / dimension.value.y;
     camera.value!.updateProjectionMatrix();
   }
 }
@@ -102,6 +126,37 @@ function setup() {
   camera.value = markRaw(
     new PerspectiveCamera(60, dimension.x / dimension.y, 0.1, 2000)
   );
+
+  function onUpdateCamera() {
+    if (camera.value) {
+      const dir = new Vector3();
+      camera.value.getWorldDirection(dir);
+
+      const unitDir = new Vector3();
+      $props.unit.root.getWorldDirection(unitDir);
+
+      const pitch = Math.asin(dir.y); // rad
+      const deg = MathUtils.radToDeg(pitch);
+
+      const yaw = Math.atan2(dir.x, dir.z); // rad
+      const degY = MathUtils.radToDeg(yaw);
+
+      const unitYaw = Math.atan2(unitDir.x, unitDir.z); // rad
+      const unitDegYaw = MathUtils.radToDeg(unitYaw);
+
+      // kurze, signierte Winkeldifferenz in Grad im Bereich [-180, 180]
+      const angleDiffDeg = (a: number, b: number) =>
+        ((a - b + 540) % 360) - 180;
+
+      const yawDiff = angleDiffDeg(degY, unitDegYaw);
+
+      cameraAngles.value = {
+        x: Math.abs(Math.round(deg)),
+        y: Math.round(yawDiff)
+      };
+      cameraAngleProgress.value = yawDiff / 180;
+    }
+  }
 
   renderer = createRenderer(canvasEl.value!, dimension, {
     pixelated: appRenderer.getPixelated()
@@ -133,6 +188,7 @@ function setup() {
 
         c.fov = 60 / zoom.value; // Basis-FOV geteilt durch Zoom-Faktor
         c.updateProjectionMatrix(); // NEU: Projektionsmatrix aktualisieren
+        onUpdateCamera();
       }
     }
   });
@@ -143,6 +199,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  subscription.unsubscribe();
   resizeObserver.disconnect();
   if (renderer) {
     renderer.setAnimationLoop(null);
@@ -171,6 +228,7 @@ function onClickFullscreen() {
 <style lang="postcss" scoped>
 .bm-gun-screen {
   position: relative;
+  color: lime;
   pointer-events: auto;
 
   &:not(.fullscreen) {
@@ -253,10 +311,17 @@ function onClickFullscreen() {
     }
   }
 
-  & .controls {
+  & .bottom {
     position: absolute;
     bottom: 0;
     left: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--bm-spacing-small);
+    width: 100%;
+  }
+
+  & .controls {
     display: flex;
     gap: var(--bm-spacing-small);
     justify-content: space-between;
@@ -282,6 +347,12 @@ function onClickFullscreen() {
   & svg {
     display: block;
     width: 16px;
+  }
+
+  & .angle {
+    width: 100%;
+    font-size: 12px;
+    text-align: center;
   }
 }
 </style>

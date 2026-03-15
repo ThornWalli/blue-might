@@ -86,7 +86,6 @@ export default class ShootModule extends MapModule<
     sphere: new Sphere(),
     sphere2: new Sphere(),
     vector: new Vector3(),
-    gravity: new Vector3(),
     drag: new Vector3(),
     hitSphere: new Sphere()
   };
@@ -237,7 +236,9 @@ export default class ShootModule extends MapModule<
     this.raycastFrameCounter++;
 
     // Baue die Liste der Ziele nur einmal pro Frame auf
-    const allPossibleTargets = [this.map.modules.surface.getRoot()];
+    const allPossibleTargets: Object3D[] = [
+      ...Object.values(this.map.modules.surface.backgroundMeshes ?? {})
+    ];
     this.map.modules.units
       .getUnits()
       .forEach(u => allPossibleTargets.push(u.getRoot()));
@@ -289,7 +290,6 @@ export default class ShootModule extends MapModule<
           });
         }
       }
-
       let hit = false;
       const MAX_SHOOT_DISTANCE = 16;
       const INTERSECTION_SPHERE_RADIUS = 1 / 2;
@@ -308,8 +308,18 @@ export default class ShootModule extends MapModule<
         }
       }
 
+      if (
+        obj.position.y <=
+        this.map.modules.surface.getSurfaceHeightAt(
+          obj.position.x,
+          obj.position.z
+        ) +
+          0.2
+      ) {
+        needsRaycast = true;
+      }
+
       if (needsRaycast) {
-        console.log('Performing raycast for shoot');
         const direction = this.temp.drag.copy(shoot.velocity).normalize();
         raycaster.set(oldPosition, direction);
 
@@ -321,9 +331,11 @@ export default class ShootModule extends MapModule<
           const intersection = intersections[0]!;
           const point = intersection.point;
           const normal = intersection.face?.normal;
-          const distanceToIntersection = oldPosition.distanceTo(point);
+          const distanceToIntersection =
+            shoot.object.position.distanceTo(point);
 
-          const moveDistance = shoot.velocity.length() * delta;
+          const moveDistance = shoot.object.position.length() * delta;
+
           if (distanceToIntersection <= moveDistance) {
             hit = true;
 
@@ -437,6 +449,7 @@ export default class ShootModule extends MapModule<
   }
 
   createDebugVisualizePath(
+    animationLoopValue: AnimationLoopValue,
     position: Vector3,
     direction: Vector3,
     projectile: Projectile,
@@ -445,69 +458,27 @@ export default class ShootModule extends MapModule<
     const points: Vector3[] = [];
     const simPosition = position.clone();
     const simVelocity = direction.clone().multiplyScalar(projectile.speed);
+
     let simLifetime = projectile.maxLifetime;
 
-    // Simuliere die Flugbahn für eine bestimmte Anzahl von Schritten
-    const simulationSteps = 1000; // Erhöht für längere Simulationen
-    const timeStep = 0.016; // Kleinerer, fester Zeitschritt für bessere Genauigkeit (ähnlich typischem delta)
+    const simulationSteps = 10000;
 
+    const instance = projectile.create();
     for (let i = 0; i < simulationSteps; i++) {
-      // Wende die gleiche Physik wie in der update-Methode an (mit Gewicht!)
-      const gravityEffect = this.gravity
-        .clone()
-        .multiplyScalar(timeStep)
-        .multiplyScalar(projectile.weight);
-      simVelocity.add(gravityEffect);
-      const drag = simVelocity
-        .clone()
-        .multiplyScalar(this.airResistance * timeStep);
-      simVelocity.sub(drag);
+      instance.update({
+        ...animationLoopValue,
+        gravity: this.gravity,
+        velocity: simVelocity,
+        position: simPosition,
+        targetPosition: targetPosition ?? null
+      });
 
-      simPosition.add(simVelocity.clone().multiplyScalar(timeStep));
       points.push(simPosition.clone());
-
-      // Optional: Simuliere Homing-Richtungskorrektur (nur für Homing-Projektille)
-      if (targetPosition && projectile.id === 'air_homing_missile_1') {
-        // Passe den Typ an deine Homing-Projektille an
-        const dx = targetPosition.x - simPosition.x;
-        const dy = targetPosition.y - simPosition.y;
-        const dz = targetPosition.z - simPosition.z;
-        const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-        if (distance > 0) {
-          const homingAccuracy = 0.25; // Gleicher Wert wie in AirHomingMissile_1
-          const targetDirX = dx / distance;
-          const targetDirY = dy / distance;
-          const targetDirZ = dz / distance;
-          const currentSpeed = simVelocity.length();
-          if (currentSpeed > 0) {
-            const currentDirX = simVelocity.x / currentSpeed;
-            const currentDirY = simVelocity.y / currentSpeed;
-            const currentDirZ = simVelocity.z / currentSpeed;
-            const newDirX =
-              currentDirX + (targetDirX - currentDirX) * homingAccuracy;
-            const newDirY =
-              currentDirY + (targetDirY - currentDirY) * homingAccuracy;
-            const newDirZ =
-              currentDirZ + (targetDirZ - currentDirZ) * homingAccuracy;
-            const newDirLength = Math.sqrt(
-              newDirX * newDirX + newDirY * newDirY + newDirZ * newDirZ
-            );
-            simVelocity.x = (newDirX / newDirLength) * projectile.speed;
-            simVelocity.y = (newDirY / newDirLength) * projectile.speed;
-            simVelocity.z = (newDirZ / newDirLength) * projectile.speed;
-          }
-        }
-      }
-
-      // Lebensdauer reduzieren (wie in der echten Update)
-      simLifetime -= timeStep;
-
-      // Stoppe bei ablaufender Lebensdauer (priorität vor y < 0)
+      simLifetime -= animationLoopValue.delta;
       if (simLifetime <= 0) {
         break;
       }
 
-      // Zusätzliche Stop-Bedingung: Unter dem Boden (aber nicht primär)
       if (simPosition.y < 0) {
         break;
       }

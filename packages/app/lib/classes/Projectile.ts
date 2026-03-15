@@ -42,22 +42,28 @@ export class ProjectileInstance<
     this.updateOptions = updateOptions;
   }
 
-  protected applyPhysics(context: ProjectileUpdateContext) {
-    const { delta, gravity, velocity, position } = context;
+  static processPhysics(
+    { weight, airResistance }: { weight: number; airResistance: number },
+    projectileContext: ProjectileUpdateContext
+  ) {
+    const { delta, gravity, velocity, position } = projectileContext;
 
-    velocity.add(
-      gravity
-        .clone()
-        .multiplyScalar(delta)
-        .multiplyScalar(this.projectile.weight)
-    );
-    // Luftwiderstand aus eigener Eigenschaft
-    const drag = velocity
-      .clone()
-      .multiplyScalar(this.projectile.airResistance * delta);
+    velocity.add(gravity.clone().multiplyScalar(delta).multiplyScalar(weight));
+
+    const drag = velocity.clone().multiplyScalar(airResistance * delta);
     velocity.sub(drag);
-    // Position
+
     position.add(velocity.clone().multiplyScalar(delta));
+  }
+
+  applyPhysics(context: ProjectileUpdateContext) {
+    ProjectileInstance.processPhysics(
+      {
+        weight: this.projectile.weight,
+        airResistance: this.projectile.airResistance
+      },
+      context
+    );
   }
 
   reset() {

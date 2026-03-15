@@ -52,10 +52,16 @@ export interface WeaponUnitModuleObservables extends UnitModuleObservables {
 }
 
 export type AutoAimFnOptions = {
+  attackModule: AttackUnitModule;
+  weaponModule: WeaponUnitModule;
   target: Unit;
   sourcePosition: Vector3;
   weapon: Weapon;
   index: number;
+  temps: {
+    position: Vector3;
+    velocity: Vector3;
+  };
 };
 export type AutoAimFn = (options: AutoAimFnOptions) => boolean;
 
@@ -265,7 +271,7 @@ export default class WeaponUnitModule<
     this.observables.active$.next(active);
   }
 
-  override async update(_v: AnimationLoopValue) {
+  override async update(v: AnimationLoopValue) {
     if (
       this.getUnit().preview ||
       this.destroyed ||
@@ -277,10 +283,10 @@ export default class WeaponUnitModule<
       this.updateSourcePosition(index);
     });
 
-    this.updateShoot(_v);
-    this.updateAutoAIM();
+    this.updateShoot(v);
+    this.updateAutoAIM(v);
     if (this.debug) {
-      this.updateDebug();
+      this.updateDebug(v);
     }
   }
 
@@ -377,23 +383,39 @@ export default class WeaponUnitModule<
       sourcePosition.set(0, 0.5, 0);
       sourceDirection.set(...DEFAULT_DIRECTION);
     }
+
+    return { sourcePosition, sourceDirection };
   }
 
-  private updateAutoAIM() {
+  autoAimTemps = {
+    position: new Vector3(),
+    velocity: new Vector3()
+  };
+  private lastUpdateTime = 0;
+  private updateAutoAIM(v: AnimationLoopValue) {
     if (this.state.autopilotActive) {
       const target = this.state.autoAimTarget;
       if (target) {
+        if ((v.time - this.lastUpdateTime) / 10 < 1) {
+          return;
+        }
+        this.lastUpdateTime = v.time;
+
         this.getSlots().forEach(weaponSlot => {
+          if (!weaponSlot.active) return;
           const index = weaponSlot.index;
 
           const sourcePosition = this.state.sourcePositions[index]!;
 
           const shoot = this.options.autopilot?.aim
             ? this.options.autoAimFn({
+                attackModule: this.getUnit().modules.attack,
+                weaponModule: this,
                 target,
                 sourcePosition,
                 weapon: weaponSlot.weapon,
-                index
+                index,
+                temps: this.autoAimTemps
               })
             : true;
 
@@ -479,9 +501,9 @@ export default class WeaponUnitModule<
 
   //#region debug
 
-  debugWeaponLines: Record<number, Line | null> = {};
+  private debugWeaponLines: Record<number, Line | null> = {};
 
-  updateDebug() {
+  updateDebug(v: AnimationLoopValue) {
     const shootModule = this.getUnit().getMap()?.modules.shoot;
     this.getSlots().forEach((weaponSlot, index) => {
       if (this.debugWeaponLines[index]) {
@@ -489,15 +511,21 @@ export default class WeaponUnitModule<
         disposeObject3D(this.debugWeaponLines[index]);
         this.debugWeaponLines[index] = null;
       }
-
-      const line = shootModule?.createDebugVisualizePath(
-        this.state.sourcePositions[index]!,
-        this.state.sourceDirections[index]!,
-        weaponSlot.weapon.projectile
-      );
-      if (line) {
-        this.debugWeaponLines[index] = line;
-        shootModule?.addToScene(line);
+      if (weaponSlot.active) {
+        let line;
+        if (this.state.sourcePositions[index]!) {
+          line = shootModule?.createDebugVisualizePath(
+            v,
+            this.state.sourcePositions[index]!,
+            this.state.sourceDirections[index]!,
+            weaponSlot.weapon.projectile,
+            this.state.autoAimTarget?.getPosition()
+          );
+        }
+        if (line) {
+          this.debugWeaponLines[index] = line;
+          shootModule?.addToScene(line);
+        }
       }
     });
   }

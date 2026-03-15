@@ -186,7 +186,8 @@ export interface Indicator {
   & .indicator {
     width: calc(var(--wrapper-size-x) * 1px);
     height: auto;
-    pointer-events: auto;
+
+    /* pointer-events: auto; */
     border: dotted var(--background) 2px;
 
     &.empty {

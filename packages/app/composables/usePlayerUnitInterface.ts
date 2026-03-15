@@ -35,7 +35,7 @@ import {
   isVehicle
 } from '../lib/utils/unit';
 import type { App } from '../lib/types';
-import { getCompassDisplayValue } from '../lib/utils/compas';
+import { getCompassDisplayValue } from '../lib/utils/compass';
 import type TransportUnitModule from '../lib/classes/unitModule/Transport';
 import thumbGenerator from '../services/thumbGenerator';
 import type { WARNING_TYPE } from '../lib/classes/unitModule/Radar';

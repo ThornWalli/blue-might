@@ -262,7 +262,7 @@ export default class SurfaceModule extends MapModule<
     if (this.options.water?.enabled) {
       return this.options.water.waterLevel ?? 0;
     } else {
-      return -1;
+      return 0;
     }
   }
 
@@ -674,10 +674,21 @@ export default class SurfaceModule extends MapModule<
       object.add(this.createWater(dimension)!);
     }
     object.position.copy(new Vector3(0, 9, 0));
+
+    this.backgroundMeshes = {
+      terrain: backgroundTerrain,
+      shadow: shadowTerrain
+    };
+
     // origin speichern, damit Abfragen korrekt transformieren
     this.state.origin.copy(object.position);
     return object;
   }
+
+  backgroundMeshes?: {
+    terrain: Mesh;
+    shadow: Mesh;
+  };
 
   private lastUpdateTime = 0;
   override update({ time }: AnimationLoopValue): void {

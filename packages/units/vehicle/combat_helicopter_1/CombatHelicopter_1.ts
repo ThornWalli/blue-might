@@ -125,10 +125,12 @@ export default class CombatHelicopter_1
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [
             {
+              revert: true,
               min: new Vector2(-0.15, -Math.PI / 2),
               max: new Vector2(Math.PI / 2, Math.PI / 2)
             },
             {
+              revert: true,
               min: new Vector2(-0.15, -Math.PI / 2),
               max: new Vector2(Math.PI / 2, Math.PI / 2)
             }

@@ -28,6 +28,7 @@ import {
   updateControls
 } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
+import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 
 import type { UnitObservables } from './../../../app/lib/classes/Unit';
 import baseGlb from './assets/combat_tank_1.glb?url';
@@ -85,12 +86,28 @@ export default class CombatTank_1
         name: 'Combat Tank',
         state: {
           weaponActive: false,
-          weaponVelocity: [new Vector2(0, 0)],
-          weaponTargetRotation: [new Vector2(0, 0)]
+          weaponVelocity: [
+            new Vector2(0, 0),
+            new Vector2(0, 0),
+            new Vector2(0, 0)
+          ],
+          weaponTargetRotation: [
+            new Vector2(0, 0),
+            new Vector2(0, 0),
+            new Vector2(0, 0)
+          ]
         },
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [
+            {
+              min: new Vector2((-Math.PI * 1) / 4, -Infinity),
+              max: new Vector2((Math.PI * 1) / 15, Infinity)
+            },
+            {
+              min: new Vector2((-Math.PI * 1) / 4, -Infinity),
+              max: new Vector2((Math.PI * 1) / 15, Infinity)
+            },
             {
               min: new Vector2((-Math.PI * 1) / 4, -Infinity),
               max: new Vector2((Math.PI * 1) / 15, Infinity)
@@ -122,9 +139,20 @@ export default class CombatTank_1
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.default('heavy_projectile'),
+                weapon: new weapons.tank_gun(),
+                maxAmmunition: 50,
+                ammunition: 50
+              },
+              {
+                weapon: new weapons.gatling_gun(),
                 maxAmmunition: 100,
                 ammunition: 100
+              },
+              {
+                weapon: new weapons.base_missile_launcher({
+                  perSeconds: 0.5,
+                  projectile: PROJECTILE_TYPE.AIR_HOMING_MISSILE_1
+                })
               }
             ],
             ...options.moduleOptions?.weapon
@@ -173,13 +201,29 @@ export default class CombatTank_1
     barrelWrapper.add(barrelObj);
     headObj.add(barrelWrapper);
 
-    this.objects.push({
-      head: headObj,
-      barrels: [barrelWrapper],
-      barrelTargets: [barrelTargetObj],
-      barrelTargetShoots: [barrelTargetObj]
-    });
+    this.objects.push(
+      {
+        head: headObj,
+        barrels: [barrelWrapper],
+        barrelTargets: [barrelTargetObj],
+        barrelTargetShoots: [barrelTargetObj]
+      },
+      {
+        head: headObj,
+        barrels: [barrelWrapper],
+        barrelTargets: [barrelTargetObj],
+        barrelTargetShoots: [barrelTargetObj]
+      },
+      {
+        head: headObj,
+        barrels: [barrelWrapper],
+        barrelTargets: [barrelTargetObj],
+        barrelTargetShoots: [barrelTargetObj]
+      }
+    );
 
+    this.modules.weapon.registerBarrelTarget(barrelTargetObj);
+    this.modules.weapon.registerBarrelTarget(barrelTargetObj);
     this.modules.weapon.registerBarrelTarget(barrelTargetObj);
 
     //#endregion

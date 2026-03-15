@@ -41,7 +41,7 @@ import type { PlayerOptions } from '@blue-might/app/lib/types/map';
 import { Euler, Vector3 } from 'three';
 import * as units from '@blue-might/units';
 import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';
-import { getCompassDisplayValue } from '@blue-might/app/lib/utils/compas';
+import { getCompassDisplayValue } from '@blue-might/app/lib/utils/compass';
 import type Faction from '@blue-might/app/lib/classes/Faction';
 
 import BmPanel from '../Panel.vue';

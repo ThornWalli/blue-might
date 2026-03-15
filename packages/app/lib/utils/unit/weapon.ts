@@ -1,7 +1,8 @@
 /* eslint-disable complexity */
 
 import { lerp } from 'three/src/math/MathUtils.js';
-import { Euler, Quaternion, type Object3D, type Vector2 } from 'three';
+import { type Vector2, type Object3D, Vector3, Box3 } from 'three';
+import { Euler, Quaternion } from 'three';
 
 import { ControlAction } from '../../classes/playerModule/Controls';
 import type { UnitModules } from '../../classes/Unit';
@@ -11,6 +12,9 @@ import type WeaponUnitModule from '../../classes/unitModule/Weapon';
 import type { WeaponSupportState } from '../../types/unit';
 import type ShootModule from '../../classes/mapModule/Shoot';
 import type { AutoAimFnOptions } from '../../classes/unitModule/Weapon';
+import type Projectile from '../../classes/Projectile';
+import type { ProjectileInstance } from '../../classes/Projectile';
+import type AttackUnitModule from '../../classes/unitModule/Attack';
 
 export abstract class WeaponUnitInterface<State extends WeaponSupportState> {
   state: State = {
@@ -39,9 +43,9 @@ export function updateControls(
   const velocity =
     unit.state.weaponVelocity[unit.modules.weapon.getSlotIndex()]!;
 
-  let value = 0.005;
+  let value = 0.0025;
   if (controls[ControlAction.MODIFIER]) {
-    value *= unit.state.weaponControlPrecision ?? 1 / 3;
+    value *= unit.state.weaponControlPrecision ?? 1 / 4;
   }
 
   if (controls[ControlAction.UP]) {
@@ -71,6 +75,53 @@ export function normalizeAngle(angle: number): number {
   return angle;
 }
 
+//#region aim
+
+const MAX_PROJECTILE_DISTANCE = 1 / 3;
+
+function simulateProjectile(
+  projectileInstance: ProjectileInstance<Projectile>,
+  attackModule: AttackUnitModule,
+  shootModule: ShootModule,
+  sourcePosition: Vector3,
+  sourceDirection: Vector3,
+  targetPosition: Vector3,
+  temps: {
+    position: Vector3;
+    velocity: Vector3;
+  }
+) {
+  temps.position.copy(sourcePosition);
+  temps.velocity
+    .copy(sourceDirection)
+    .multiplyScalar(projectileInstance.projectile.speed);
+
+  const delta = 0.016;
+  const maxSteps = 1000;
+
+  let time = 0;
+  for (let step = 0; step < maxSteps; step++) {
+    projectileInstance.update({
+      time,
+      delta,
+      gravity: shootModule.gravity,
+      velocity: temps.velocity,
+      position: temps.position,
+      targetPosition
+    });
+    time += delta;
+
+    const distance = temps.position.distanceTo(targetPosition);
+
+    if (distance < MAX_PROJECTILE_DISTANCE) {
+      return true;
+    } else if (distance > attackModule.getAttackRadius()) {
+      return false;
+    }
+  }
+  return false;
+}
+
 export function autoAimFunction(
   shootModule: ShootModule,
   options: AutoAimFnOptions,
@@ -86,7 +137,15 @@ export function autoAimFunction(
   getRotation: (index: number) => Euler,
   getPitchRoll?: (index: number) => Euler
 ): boolean {
-  const { target, sourcePosition, index, weapon } = options;
+  const {
+    target,
+    sourcePosition: unitSourcePosition,
+    index,
+    weapon,
+    attackModule,
+    weaponModule,
+    temps
+  } = options;
 
   const head = objects[index]?.head;
   const barrels = objects[index]?.barrels;
@@ -94,112 +153,139 @@ export function autoAimFunction(
     return false;
   }
 
-  const minAngle = weaponAngles[index]!.min;
-  const maxAngle = weaponAngles[index]!.max;
+  const originalMinAngle = weaponAngles[index]!.min;
+  const originalMaxAngle = weaponAngles[index]!.max;
 
-  const targetPosition = target.getPosition();
-  const delta = targetPosition.clone().sub(sourcePosition);
+  const minAngle = originalMinAngle.clone();
+  const maxAngle = originalMaxAngle.clone();
 
-  // Vollständige Rotation der Unit kombinieren (Yaw + Pitch + Roll)
-  const yawEuler = getRotation(index).clone(); // Euler(0, yaw, 0)
+  // center from target
+  const targetPosition = getCenter(target.root);
+
+  const delta = targetPosition.clone().sub(unitSourcePosition);
+  const yawEuler = getRotation(index).clone();
   const pitchRollEuler = getPitchRoll
     ? getPitchRoll(index).clone()
-    : new Euler(0, 0, 0); // Euler(pitch, 0, roll)
+    : new Euler(0, 0, 0);
 
-  // Kombiniere zu Quaternion: Zuerst Yaw, dann Pitch/Roll
   const fullRotation = new Quaternion()
     .setFromEuler(yawEuler)
     .multiply(new Quaternion().setFromEuler(pitchRollEuler));
 
-  // Delta-Vektor in lokalen Raum der Unit transformieren
   const deltaLocal = delta
     .clone()
     .applyQuaternion(fullRotation.clone().invert());
 
-  // Berücksichtige Revert (falls nötig, z. B. für bestimmte Waffen)
-  if (weaponAngles[index]?.revert) {
-    deltaLocal.x = -deltaLocal.x; // Spiegelung für revert
-    deltaLocal.z = -deltaLocal.z;
-  }
-
-  // Zielwinkel basierend auf lokalem Vektor berechnen
   const targetYaw = normalizeAngle(Math.atan2(deltaLocal.x, deltaLocal.z));
-  const horizontalLocal = Math.sqrt(deltaLocal.x ** 2 + deltaLocal.z ** 2);
-  const verticalLocal = deltaLocal.y;
 
-  // Pitch-Berechnung (direkt oder ballistisch)
-  let targetPitch: number;
-  const isBallistic =
-    weapon.projectile.airResistance > 0 || weapon.projectile.weight > 0;
-  if (horizontalLocal < 1.0 || !isBallistic) {
-    // Direkte Linie für Nahbereich oder gerade Projektille
-    targetPitch = -Math.atan2(verticalLocal, horizontalLocal);
-  } else {
-    // Ballistische Elevation (vereinfacht, basierend auf lokalem Vektor)
-    const g = Math.abs(shootModule.gravity.y);
-    const v =
-      weapon.projectile.speed *
-      (1 - shootModule.airResistance * weapon.projectile.airResistance);
-    const discriminant =
-      v ** 4 - g * (g * horizontalLocal ** 2 + 2 * verticalLocal * v ** 2);
-    if (discriminant >= 0) {
-      const sqrtDisc = Math.sqrt(discriminant);
-      targetPitch = -Math.atan((v ** 2 - sqrtDisc) / (g * horizontalLocal));
-    } else {
-      targetPitch = -Math.atan2(verticalLocal, horizontalLocal);
-    }
-  }
+  const withLerp = true;
 
-  // Winkel auf Bereiche begrenzen
-  targetPitch = Math.max(minAngle.y, Math.min(maxAngle.y, targetPitch));
-  const isYawInRange = targetYaw >= minAngle.y && targetYaw <= maxAngle.y;
-  const isPitchInRange = targetPitch >= minAngle.x && targetPitch <= maxAngle.x;
-  // console.log(
-  //   `Yaw: ${targetYaw.toFixed(3)}, Pitch: ${targetPitch.toFixed(3)}, Rotation.y: ${rotation.y.toFixed(3)}, Dist: ${horizontalDistance.toFixed(2)}`
-  // );
-
-  if (isYawInRange && isPitchInRange && horizontalLocal >= 0.9) {
-    state.weaponTargetRotation[index]!.set(targetYaw, targetPitch);
-
-    const rotationThreshold = 0.08; // Verringert für schnellere Reaktion
-    let isRotationComplete = false;
-
+  const setVerticalAim = (v: number, withLerp = true) => {
+    let result = 0;
     if (head) {
-      head.rotation.y = lerp(head.rotation.y, targetYaw, rotationSpeed);
-      barrels.forEach((barrel, i) => {
-        barrel!.rotation.x = lerp(
-          barrel!.rotation.x,
-          i === 0 ? targetPitch : targetPitch,
-          rotationSpeed
-        );
+      barrels.forEach(barrel => {
+        result = barrel.rotation.x = withLerp
+          ? lerp(barrel.rotation.x, v, rotationSpeed)
+          : v;
       });
-      const yawDiff = Math.abs(head.rotation.y - targetYaw);
-      const pitchDiff = Math.abs(barrels[0]!.rotation.x - targetPitch);
-      isRotationComplete =
-        yawDiff < rotationThreshold && pitchDiff < rotationThreshold;
     } else if (Array.isArray(barrels)) {
-      // Ship/Heli
-      const [barrelObjX, barrelObjY] = barrels;
-      if (barrelObjX && barrelObjY) {
-        barrelObjY.rotation.y = lerp(
-          barrelObjY.rotation.y,
-          targetYaw,
-          rotationSpeed
-        );
-        barrelObjX.rotation.x = lerp(
-          barrelObjX.rotation.x,
-          targetPitch,
-          rotationSpeed
-        );
-        const yawDiff = Math.abs(barrelObjY.rotation.y - targetYaw);
-        const pitchDiff = Math.abs(barrelObjX.rotation.x - targetPitch);
-        isRotationComplete =
-          yawDiff < rotationThreshold && pitchDiff < rotationThreshold;
+      const [barrelObjX] = barrels;
+      if (!barrelObjX) return false;
+      result = barrelObjX.rotation.x = withLerp
+        ? lerp(barrelObjX.rotation.x, v, rotationSpeed)
+        : v;
+    }
+    state.weaponTargetRotation[index]!.setX(result);
+  };
+
+  const setHorizontalAim = (v: number, withLerp = true) => {
+    let result = 0;
+    if (head) {
+      result = head.rotation.y = withLerp
+        ? lerp(head.rotation.y, v, rotationSpeed)
+        : v;
+    } else if (Array.isArray(barrels)) {
+      const [_, barrelObjY] = barrels;
+      if (!barrelObjY) return false;
+      result = barrelObjY.rotation.y = withLerp
+        ? lerp(barrelObjY.rotation.y, v, rotationSpeed)
+        : v;
+    }
+
+    state.weaponTargetRotation[index]!.setY(result);
+  };
+
+  setHorizontalAim(targetYaw, withLerp);
+
+  const isInYaw =
+    Math.abs(targetYaw - ((head ? head : barrels[1])?.rotation.y ?? Infinity)) <
+    0.05;
+
+  if (isInYaw) {
+    const projectileInstance = weapon.projectile.create();
+    projectileInstance.updateOptions = weapon.projectile.getUpdateOptions();
+
+    const pitchValidFn = (pitch: number) => {
+      weaponModule.updateSourcePosition(index);
+      const [sourcePosition] = weaponModule.getSourcePositions();
+      const [sourceDirection] = weaponModule.getSourceDirections();
+      if (!sourcePosition || !sourceDirection) return false;
+
+      setVerticalAim(pitch, false);
+
+      const isInPitch = simulateProjectile(
+        projectileInstance,
+        attackModule,
+        shootModule,
+        sourcePosition,
+        sourceDirection,
+        targetPosition,
+        temps
+      );
+
+      return isInPitch;
+    };
+
+    const last = state.weaponTargetRotation[index]?.x ?? 0;
+    /**
+     * Aktueller Pitch ist noch gültig?
+     */
+    if (pitchValidFn(state.weaponTargetRotation[index]?.x ?? 0)) {
+      return true;
+    } else {
+      const range = Math.abs(minAngle.x - maxAngle.x);
+      const steps = 25;
+      const rangeStep = range / steps;
+
+      let isInPitch = false;
+
+      for (let i = 0; i <= steps; i += 1) {
+        let pitch = 0;
+        if (weaponAngles[index]?.revert) {
+          pitch = minAngle.x + rangeStep * i;
+        } else {
+          pitch = maxAngle.x - rangeStep * i;
+        }
+
+        isInPitch = pitchValidFn(pitch);
+
+        if (isInPitch) {
+          return isInPitch;
+        }
+      }
+      if (!isInPitch) {
+        setVerticalAim(last, false);
       }
     }
-
-    return isRotationComplete;
   }
-
   return false;
+}
+
+//#endregion
+
+function getCenter(obj: Object3D): Vector3 {
+  const box = new Box3().setFromObject(obj);
+  const center = new Vector3();
+  box.getCenter(center);
+  return center;
 }

@@ -85,13 +85,9 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
         // Nur Reibung anwenden, wenn keine Beschleunigung stattfindet
         velocity.multiplyScalar(friction);
       }
-
-      if (controls.space) {
-        velocity.multiplyScalar(0.8);
-      }
     } else {
       // Beim Drehen langsamer werden
-      velocity.multiplyScalar(0.8);
+      velocity.multiplyScalar(0.95);
       if (velocity.lengthSq() < eps) velocity.setScalar(0);
     }
 
