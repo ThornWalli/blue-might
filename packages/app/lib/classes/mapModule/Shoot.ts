@@ -23,6 +23,7 @@ import type Projectile from '../Projectile';
 import type { WeaponSlot } from '../WeaponSlot';
 import type Map from '../Map';
 import type { ProjectileInstance } from '../Projectile';
+import type Weapon from '../Weapon';
 
 import { SMOKE_TYPE } from './../unitModule/Damage';
 
@@ -365,6 +366,11 @@ export default class ShootModule extends MapModule<
             if (projectile.hasFire()) {
               this.map.modules.effect.addFire(point);
             }
+            if (projectile.hasShoot()) {
+              this.map.modules.effect.addShoot(shoot.object.position.clone(), {
+                life: 0.8
+              });
+            }
 
             if (projectile.radius > 0) {
               this.hitByProjectileRadius(shoot, point);
@@ -452,12 +458,16 @@ export default class ShootModule extends MapModule<
     animationLoopValue: AnimationLoopValue,
     position: Vector3,
     direction: Vector3,
-    projectile: Projectile,
+    weapon: Weapon,
     targetPosition?: Vector3 | null // Optional: Für Homing-Projektille, falls relevant
   ) {
+    const projectile = weapon.projectile;
     const points: Vector3[] = [];
     const simPosition = position.clone();
-    const simVelocity = direction.clone().multiplyScalar(projectile.speed);
+    const simVelocity = direction
+      .clone()
+      .multiplyScalar(projectile.speed)
+      .multiplyScalar(weapon.shootStrength);
 
     let simLifetime = projectile.maxLifetime;
 

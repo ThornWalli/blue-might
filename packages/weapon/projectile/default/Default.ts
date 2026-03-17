@@ -25,7 +25,8 @@ export default class Default extends Projectile {
       weight: options.weight ?? 1,
       features: options.features ?? {
         ...(options.features ?? {}),
-        dust: true
+        dust: true,
+        shoot: true
       }
     });
   }
@@ -52,6 +53,42 @@ export default class Default extends Projectile {
   }
 }
 
+PROJECTILE_TYPE.CALIBER_35_MM = 'caliber_35_mm';
+export class Caliber35MmProjectile extends Default {
+  static override KEY = PROJECTILE_TYPE.CALIBER_35_MM;
+  constructor() {
+    super({
+      id: PROJECTILE_TYPE.CALIBER_35_MM,
+      name: 'Caliber 35mm Projectile',
+      shortName: 'Caliber 35mm',
+      description: 'A 35mm caliber projectile.',
+      maxLifetime: 1,
+      speed: 20,
+      strength: 0.1,
+      weight: 0.01,
+      radius: 0
+    });
+  }
+}
+
+PROJECTILE_TYPE.CALIBER_120_MM = 'caliber_120_mm';
+export class Caliber120MmProjectile extends Default {
+  static override KEY = PROJECTILE_TYPE.CALIBER_120_MM;
+  constructor() {
+    super({
+      id: PROJECTILE_TYPE.CALIBER_120_MM,
+      name: 'Caliber 120mm Projectile',
+      shortName: 'Caliber 120mm',
+      description: 'A 120mm caliber projectile.',
+      maxLifetime: 1,
+      speed: 10,
+      strength: 1,
+      weight: 0.5,
+      radius: 0
+    });
+  }
+}
+
 PROJECTILE_TYPE.LIGHT_PROJECTILE = 'light_projectile';
 export class LightProjectile extends Default {
   static override KEY = PROJECTILE_TYPE.LIGHT_PROJECTILE;
@@ -62,7 +99,7 @@ export class LightProjectile extends Default {
       shortName: 'Light',
       description: 'A lightweight projectile.',
       maxLifetime: 1,
-      speed: 20,
+      speed: 10,
       strength: 0.1,
       weight: 0.01
     });
@@ -95,7 +132,8 @@ export class HeavyProjectile extends Default {
       description: 'A heavy-weight projectile.',
       speed: 13,
       strength: 0.4,
-      weight: 4
+      weight: 4,
+      radius: 0
     });
   }
 }

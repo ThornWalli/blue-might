@@ -112,6 +112,7 @@ export default abstract class Projectile implements ProjectileDescription {
   features: {
     smoke: boolean;
     fire: boolean;
+    shoot: boolean;
     explosion: boolean;
     dust: boolean;
   };
@@ -135,6 +136,7 @@ export default abstract class Projectile implements ProjectileDescription {
     this.features = {
       smoke: options.features?.smoke ?? false,
       fire: options.features?.fire ?? false,
+      shoot: options.features?.shoot ?? false,
       explosion: options.features?.explosion ?? false,
       dust: options.features?.dust ?? false
     };
@@ -158,6 +160,9 @@ export default abstract class Projectile implements ProjectileDescription {
   }
   hasFire() {
     return this.features.fire;
+  }
+  hasShoot() {
+    return this.features.shoot;
   }
   hasExplosion() {
     return this.features.explosion;

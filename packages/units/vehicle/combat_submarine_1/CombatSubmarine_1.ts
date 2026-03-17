@@ -122,14 +122,14 @@ export default class CombatSubmarine_1
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.default('light_projectile'),
-                maxAmmunition: 100,
-                ammunition: 100
+                weapon: new weapons.rapid_fire_gun_35mm(),
+                maxAmmunition: Infinity,
+                ammunition: Infinity
               },
               {
-                weapon: new weapons.default('light_projectile'),
-                maxAmmunition: 100,
-                ammunition: 100
+                weapon: new weapons.rapid_fire_gun_35mm(),
+                maxAmmunition: Infinity,
+                ammunition: Infinity
               }
             ],
             ...options.moduleOptions?.weapon

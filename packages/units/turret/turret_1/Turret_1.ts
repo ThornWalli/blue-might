@@ -33,7 +33,7 @@ import type {
   TurretBuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/building/Turret';
 import TurretBuildingUnit from '@blue-might/app/lib/classes/unit/building/Turret';
-import { GatlingGun } from '@blue-might/weapon/weapon';
+import { weapons } from '@blue-might/weapon/weapon';
 
 import baseGlb from './assets/turret_1.glb?url';
 //#endregion
@@ -118,13 +118,8 @@ export default class Turret_1
                 () => this.getRotation()
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
-              // {
-              //   weapon: new weapons.default('light_projectile'),
-              //   maxAmmunition: Infinity,
-              //   ammunition: Infinity
-              // },
               {
-                weapon: new GatlingGun(),
+                weapon: new weapons.gatling_gun(),
                 maxAmmunition: Infinity,
                 ammunition: Infinity
               }

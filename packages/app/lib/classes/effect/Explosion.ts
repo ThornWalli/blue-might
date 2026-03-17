@@ -128,6 +128,7 @@ export default class Explosion extends Particle {
     sprite.scale.set(radius * 2, radius * 2, radius * 2);
     obj.add(sprite);
 
+    obj.renderOrder = 999;
     return obj;
   }
 }

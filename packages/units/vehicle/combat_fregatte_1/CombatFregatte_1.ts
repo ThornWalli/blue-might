@@ -37,7 +37,6 @@ import WeaponUnitModule, {
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { weapons } from '@blue-might/weapon';
 import { playSound } from '@blue-might/weapon/utils';
-import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 
 import baseGlb from './assets/combat_fregatte_1.glb?url';
@@ -136,9 +135,9 @@ export default class CombatFregatte_1
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.default(PROJECTILE_TYPE.HEAVY_PROJECTILE),
-                maxAmmunition: 100,
-                ammunition: 100
+                weapon: new weapons.gun_120mm(),
+                maxAmmunition: Infinity,
+                ammunition: Infinity
               }
             ],
             ...options.moduleOptions?.weapon

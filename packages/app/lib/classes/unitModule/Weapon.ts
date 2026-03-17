@@ -371,19 +371,21 @@ export default class WeaponUnitModule<
     });
   }
 
-  public updateSourcePosition(index: number) {
-    const sourcePosition = this.state.sourcePositions[index]!;
-    const sourceDirection = this.state.sourceDirections[index]!;
-    const object = this.getBarrelTargetbyIndex(index);
-    if (object) {
-      object.getWorldPosition(sourcePosition);
-      object.getWorldDirection(sourceDirection);
-    } else {
-      sourcePosition.set(0, 0.5, 0);
-      sourceDirection.set(...DEFAULT_DIRECTION);
-    }
-
-    return { sourcePosition, sourceDirection };
+  public updateSourcePosition(index?: number) {
+    (index ? [index] : this.getSlots().map(({ index }) => index)).forEach(
+      index => {
+        const sourcePosition = this.state.sourcePositions[index]!;
+        const sourceDirection = this.state.sourceDirections[index]!;
+        const object = this.getBarrelTargetbyIndex(index);
+        if (object) {
+          object.getWorldPosition(sourcePosition);
+          object.getWorldDirection(sourceDirection);
+        } else {
+          sourcePosition.set(0, 0.5, 0);
+          sourceDirection.set(...DEFAULT_DIRECTION);
+        }
+      }
+    );
   }
 
   autoAimTemps = {
@@ -519,7 +521,7 @@ export default class WeaponUnitModule<
             v,
             this.state.sourcePositions[index]!,
             this.state.sourceDirections[index]!,
-            weaponSlot.weapon.projectile,
+            weaponSlot.weapon,
             this.state.autoAimTarget?.getPosition()
           );
         }

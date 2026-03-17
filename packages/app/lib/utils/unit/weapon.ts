@@ -15,6 +15,7 @@ import type { AutoAimFnOptions } from '../../classes/unitModule/Weapon';
 import type Projectile from '../../classes/Projectile';
 import type { ProjectileInstance } from '../../classes/Projectile';
 import type AttackUnitModule from '../../classes/unitModule/Attack';
+import type Weapon from '../../classes/Weapon';
 
 export abstract class WeaponUnitInterface<State extends WeaponSupportState> {
   state: State = {
@@ -77,9 +78,10 @@ export function normalizeAngle(angle: number): number {
 
 //#region aim
 
-const MAX_PROJECTILE_DISTANCE = 1 / 3;
+const MAX_PROJECTILE_DISTANCE = 1 / 5;
 
 function simulateProjectile(
+  weapon: Weapon,
   projectileInstance: ProjectileInstance<Projectile>,
   attackModule: AttackUnitModule,
   shootModule: ShootModule,
@@ -94,7 +96,8 @@ function simulateProjectile(
   temps.position.copy(sourcePosition);
   temps.velocity
     .copy(sourceDirection)
-    .multiplyScalar(projectileInstance.projectile.speed);
+    .multiplyScalar(projectileInstance.projectile.speed)
+    .multiplyScalar(weapon.shootStrength);
 
   const delta = 0.016;
   const maxSteps = 1000;
@@ -178,8 +181,6 @@ export function autoAimFunction(
 
   const targetYaw = normalizeAngle(Math.atan2(deltaLocal.x, deltaLocal.z));
 
-  const withLerp = true;
-
   const setVerticalAim = (v: number, withLerp = true) => {
     let result = 0;
     if (head) {
@@ -216,7 +217,7 @@ export function autoAimFunction(
     state.weaponTargetRotation[index]!.setY(result);
   };
 
-  setHorizontalAim(targetYaw, withLerp);
+  setHorizontalAim(targetYaw, true);
 
   const isInYaw =
     Math.abs(targetYaw - ((head ? head : barrels[1])?.rotation.y ?? Infinity)) <
@@ -229,12 +230,13 @@ export function autoAimFunction(
     const pitchValidFn = (pitch: number) => {
       setVerticalAim(pitch, false);
 
-      weaponModule.updateSourcePosition(index);
+      weaponModule.updateSourcePosition();
       const [sourcePosition] = weaponModule.getSourcePositions();
       const [sourceDirection] = weaponModule.getSourceDirections();
       if (!sourcePosition || !sourceDirection) return false;
 
       const isInPitch = simulateProjectile(
+        weapon,
         projectileInstance,
         attackModule,
         shootModule,
@@ -255,15 +257,16 @@ export function autoAimFunction(
       return true;
     } else {
       const range = Math.abs(minAngle.x - maxAngle.x);
-      const steps = 25;
+      const steps = 50;
       const rangeStep = range / steps;
 
       let isInPitch = false;
 
+      const pitches = [];
       for (let i = 0; i <= steps; i++) {
         let pitch = 0;
         if (weaponAngles[index]?.revert) {
-          pitch = minAngle.x + rangeStep * i;
+          pitch = maxAngle.x - rangeStep * i;
         } else {
           pitch = maxAngle.x - rangeStep * i;
         }
@@ -271,12 +274,19 @@ export function autoAimFunction(
         isInPitch = pitchValidFn(pitch);
 
         if (isInPitch) {
-          return isInPitch;
+          pitches.push(pitch);
+          // return isInPitch;
+        } else if (pitches.length > 0 && !isInPitch) {
+          break;
         }
+      }
+      if (pitches.length > 0) {
+        isInPitch = pitchValidFn(pitches[Math.floor(pitches.length / 2)]!);
+        if (isInPitch) return true;
       }
       if (!isInPitch) {
         setVerticalAim(last, false);
-        weaponModule.updateSourcePosition(index);
+        weaponModule.updateSourcePosition();
       }
     }
   }

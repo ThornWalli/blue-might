@@ -1,3 +1,4 @@
+import textureShoot from '@blue-might/app/assets/fire/shoot.png?url';
 import textureFire from '@blue-might/app/assets/fire/fire.png?url';
 import textureSmokeLight_1 from '@blue-might/app/assets/fire/smoke/light/1.png?url';
 import textureSmokeLight_2 from '@blue-might/app/assets/fire/smoke/light/2.png?url';
@@ -32,6 +33,7 @@ import Fire from '../effect/Fire';
 import Smoke from '../effect/Smoke';
 import WaterCone from '../effect/WaterCone';
 import SignalSmoke from '../effect/SignalSmoke';
+import Shoot from '../effect/Shoot';
 declare module '../Map' {
   interface ModuleDebug {
     effect: boolean;
@@ -54,14 +56,7 @@ export default class EffectModule extends MapModule<
 > {
   static override TYPE = 'effect';
 
-  private textures: {
-    fire: Texture<ImageBitmap>;
-    smoke: {
-      [SMOKE_TYPE.LIGHT]: Texture<ImageBitmap>[];
-      [SMOKE_TYPE.MEDIUM]: Texture<ImageBitmap>[];
-      [SMOKE_TYPE.HEAVY]: Texture<ImageBitmap>[];
-    };
-  } | null = null;
+  private textures: Textures | null = null;
 
   private root: Group;
   constructor(map: Map, options: Options, states: State, debug: boolean) {
@@ -116,6 +111,23 @@ export default class EffectModule extends MapModule<
     this.state.particles.push(explosion);
     disableRaycaster(explosion.getRoot());
     this.root.add(explosion.getRoot());
+  }
+
+  async addShoot(
+    position: Vector3,
+    options?: Partial<Exclude<ParticleOptions, 'texture'>>
+  ) {
+    if (!this.textures) return;
+    const shoot = new Shoot({
+      ...options,
+      texture: this.textures.shoot,
+      airFlow: this.map.modules.airFlow
+    });
+    await shoot.setup();
+    shoot.getRoot().position.copy(position);
+    this.state.particles.push(shoot);
+    disableRaycaster(shoot.getRoot());
+    this.root.add(shoot.getRoot());
   }
 
   async addWaterCone(
@@ -264,6 +276,7 @@ export default class EffectModule extends MapModule<
 
 async function loadTextures() {
   const [
+    shoot,
     fire,
     smokeLight_1,
     smokeLight_2,
@@ -279,6 +292,7 @@ async function loadTextures() {
     smokeHeavy_4
   ] = await Promise.all(
     [
+      textureShoot,
       textureFire,
       textureSmokeLight_1,
       textureSmokeLight_2,
@@ -307,6 +321,7 @@ async function loadTextures() {
     })
   );
   return {
+    shoot,
     fire,
     smoke: {
       [SMOKE_TYPE.LIGHT]: [
@@ -328,12 +343,15 @@ async function loadTextures() {
         smokeHeavy_4
       ]
     }
-  } as {
-    fire: Texture<ImageBitmap>;
-    smoke: {
-      [SMOKE_TYPE.LIGHT]: Texture<ImageBitmap>[];
-      [SMOKE_TYPE.MEDIUM]: Texture<ImageBitmap>[];
-      [SMOKE_TYPE.HEAVY]: Texture<ImageBitmap>[];
-    };
-  };
+  } as Textures;
 }
+
+type Textures = {
+  shoot: Texture<ImageBitmap>;
+  fire: Texture<ImageBitmap>;
+  smoke: {
+    [SMOKE_TYPE.LIGHT]: Texture<ImageBitmap>[];
+    [SMOKE_TYPE.MEDIUM]: Texture<ImageBitmap>[];
+    [SMOKE_TYPE.HEAVY]: Texture<ImageBitmap>[];
+  };
+};

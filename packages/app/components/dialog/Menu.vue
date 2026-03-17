@@ -130,6 +130,13 @@ const debugLinks = ref([
     }
   },
   {
+    title: 'Tank',
+    href: {
+      name: 'debug-map',
+      params: { map: 'debug/tank.zip' }
+    }
+  },
+  {
     title: 'Rescue',
     href: {
       name: 'debug-map',

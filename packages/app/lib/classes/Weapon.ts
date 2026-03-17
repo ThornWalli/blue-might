@@ -25,6 +25,8 @@ export default class Weapon implements WeaponDescription<Projectile> {
    */
   shootType: WEAPON_SHOOT_TYPE = WEAPON_SHOOT_TYPE.SINGLE;
 
+  shootStrength: number = 1;
+
   constructor(options: WeaponDescription) {
     this.id = options.id;
     this.name = options.name;
@@ -34,5 +36,6 @@ export default class Weapon implements WeaponDescription<Projectile> {
     this.spreadAmount = options.spreadAmount;
     this.perSeconds = options.perSeconds;
     this.shootType = options.shootType;
+    this.shootStrength = options.shootStrength;
   }
 }

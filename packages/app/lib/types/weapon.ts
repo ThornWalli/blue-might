@@ -25,6 +25,7 @@ export interface ProjectileDescription {
   features?: {
     smoke?: boolean;
     fire?: boolean;
+    shoot?: boolean;
     explosion?: boolean;
     dust?: boolean;
   };
@@ -40,6 +41,7 @@ export interface WeaponDescription<P = ProjectileIdentifier> {
   spreadAmount: number;
   perSeconds: number;
   shootType: WEAPON_SHOOT_TYPE;
+  shootStrength: number;
 }
 
 export enum WEAPON_SHOOT_TYPE {
