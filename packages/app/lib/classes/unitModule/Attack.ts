@@ -506,7 +506,6 @@ export default class AttackUnitModule extends UnitModule<
     }
 
     this.observables.targetUnit$.next(targetUnit);
-    console.log('New attack target:', targetUnit, targetIndex);
 
     return targetUnit;
   }
