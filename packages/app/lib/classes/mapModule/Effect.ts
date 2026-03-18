@@ -115,13 +115,16 @@ export default class EffectModule extends MapModule<
 
   async addShoot(
     position: Vector3,
-    options?: Partial<Exclude<ParticleOptions, 'texture'>>
+    options?: { strength?: number } & Partial<
+      Exclude<ParticleOptions, 'texture'>
+    >
   ) {
     if (!this.textures) return;
     const shoot = new Shoot({
       ...options,
       texture: this.textures.shoot,
-      airFlow: this.map.modules.airFlow
+      airFlow: this.map.modules.airFlow,
+      strength: options?.strength ?? 1
     });
     await shoot.setup();
     shoot.getRoot().position.copy(position);

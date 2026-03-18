@@ -7,8 +7,9 @@ import Particle from '../Particle';
 import type { ParticleConstructorOptions } from './../Particle';
 
 export default class Shoot extends Particle {
+  strength: number;
   constructor(
-    options: Partial<ParticleConstructorOptions> &
+    options: { strength?: number } & Partial<ParticleConstructorOptions> &
       Pick<ParticleConstructorOptions, 'airFlow'>
   ) {
     super({
@@ -17,6 +18,7 @@ export default class Shoot extends Particle {
       scale: 0.1,
       life: 0.2
     });
+    this.strength = options.strength ?? 1;
   }
 
   override update(v: AnimationLoopValue): void {
@@ -34,8 +36,9 @@ export default class Shoot extends Particle {
 
     const sprite = new Sprite(material);
     let scale = this.getScale();
-    scale *= Math.random() * 1.5 + 0.5;
+    scale *= Math.random() * this.strength + 0.5;
     sprite.scale.set(scale, scale, scale);
+
     sprite.renderOrder = 999;
     return sprite;
   }

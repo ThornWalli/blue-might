@@ -33,6 +33,8 @@ export interface SpriteLoadDescription extends LoadDescription {
   };
 }
 
+const LOCAL_DRACO = false;
+
 export default class AssetLoader {
   loaders: Loaders;
   subscription = new Subscription();
@@ -46,20 +48,15 @@ export default class AssetLoader {
   private textures: Map<string, Promise<Texture | CubeTexture | GLTF>> =
     new Map();
 
-  // has(id: LOADER | string) {
-  //   return this.textures.has(id);
-  // }
-
-  // get<T = Texture | CubeTexture | GLTF>(id: string) {
-  //   return this.textures.get(id) as Promise<T>;
-  // }
-
   private createLoaders() {
     const loaderGltf = new GLTFLoader();
     const dracoLoader = new DRACOLoader();
+
     dracoLoader.setDecoderPath(
-      'https://www.gstatic.com/draco/versioned/decoders/1.5.7/'
-    ); // oder '/draco/'
+      LOCAL_DRACO
+        ? '/draco/'
+        : 'https://www.gstatic.com/draco/versioned/decoders/1.5.7/'
+    );
 
     loaderGltf.setDRACOLoader(dracoLoader);
     return {

@@ -211,7 +211,10 @@ export default class ShootModule extends MapModule<
     obj.position.copy(sourcePosition);
 
     shootDesc.position.copy(sourcePosition);
-    shootDesc.velocity.copy(sourceDirection).multiplyScalar(projectile.speed);
+    shootDesc.velocity
+      .copy(sourceDirection)
+      .multiplyScalar(projectile.speed)
+      .multiplyScalar(slot.weapon.shootStrength);
 
     obj.lookAt(
       obj.position.x + sourceDirection.x,
@@ -292,12 +295,13 @@ export default class ShootModule extends MapModule<
         }
       }
       let hit = false;
-      const MAX_SHOOT_DISTANCE = 16;
+      const MAX_SHOOT_DISTANCE = 100;
       const INTERSECTION_SPHERE_RADIUS = 1 / 2;
 
       // Sphere-Check für grobe Kollision (immer machen, aber Raycast nur wenn shouldRaycast)
       this.temp.sphere.set(obj.position, INTERSECTION_SPHERE_RADIUS);
       let needsRaycast = false;
+
       for (const target of allPossibleTargets) {
         this.temp.sphere2.set(target.position, INTERSECTION_SPHERE_RADIUS);
         if (
@@ -335,9 +339,10 @@ export default class ShootModule extends MapModule<
           const distanceToIntersection =
             shoot.object.position.distanceTo(point);
 
-          const moveDistance = shoot.object.position.length() * delta;
+          const moveDistance =
+            shoot.object.position.clone().add(point).length() * delta;
 
-          if (distanceToIntersection <= moveDistance) {
+          if (distanceToIntersection <= Math.max(moveDistance, 0.4)) {
             hit = true;
 
             // Effekte nur bei Hit hinzufügen
@@ -367,12 +372,13 @@ export default class ShootModule extends MapModule<
               this.map.modules.effect.addFire(point);
             }
             if (projectile.hasShoot()) {
-              this.map.modules.effect.addShoot(shoot.object.position.clone(), {
-                life: 0.8
+              this.map.modules.effect.addShoot(point.clone(), {
+                life: 0.8,
+                strength: projectile.strength
               });
             }
 
-            if (projectile.radius > 0) {
+            if (projectile.radius >= 1) {
               this.hitByProjectileRadius(shoot, point);
             } else {
               if (intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]) {
@@ -427,17 +433,10 @@ export default class ShootModule extends MapModule<
     const projectileRadius = shoot.projectileInstance.projectile.radius || 0;
     if (projectileRadius > 0) {
       this.temp.hitSphere.set(position, projectileRadius);
-      const hitUnits: { unit: Unit; distance: number }[] = [];
-
-      this.map.modules.units.getUnits().forEach(unit => {
-        const unitRoot = unit.getRoot();
-        if (this.temp.hitSphere.containsPoint(unitRoot.position)) {
-          const distance = position.distanceTo(unitRoot.position);
-          hitUnits.push({ unit, distance });
-        }
-      });
-
-      hitUnits.sort((a, b) => a.distance - b.distance);
+      const hitUnits = this.map.modules.units.getUnitsInRadius(
+        position,
+        shoot.projectileInstance.projectile.radius
+      );
       hitUnits.forEach(({ unit, distance }) => {
         this.hitUnit(unit, shoot, distance);
       });

@@ -60,7 +60,7 @@ export class Caliber35MmProjectile extends Default {
     super({
       id: PROJECTILE_TYPE.CALIBER_35_MM,
       name: 'Caliber 35mm Projectile',
-      shortName: 'Caliber 35mm',
+      shortName: '35mm',
       description: 'A 35mm caliber projectile.',
       maxLifetime: 1,
       speed: 20,
@@ -78,13 +78,31 @@ export class Caliber120MmProjectile extends Default {
     super({
       id: PROJECTILE_TYPE.CALIBER_120_MM,
       name: 'Caliber 120mm Projectile',
-      shortName: 'Caliber 120mm',
+      shortName: '120mm',
       description: 'A 120mm caliber projectile.',
-      maxLifetime: 1,
+      maxLifetime: 3,
       speed: 10,
       strength: 1,
       weight: 0.5,
       radius: 0
+    });
+  }
+}
+
+PROJECTILE_TYPE.CALIBER_155_MM = 'caliber_155_mm';
+export class Caliber155MmProjectile extends Default {
+  static override KEY = PROJECTILE_TYPE.CALIBER_155_MM;
+  constructor() {
+    super({
+      id: PROJECTILE_TYPE.CALIBER_155_MM,
+      name: 'Caliber 155mm Projectile',
+      shortName: '155mm',
+      description: 'A 155mm caliber projectile.',
+      maxLifetime: 10,
+      speed: 5,
+      strength: 4,
+      weight: 5,
+      radius: 1.2
     });
   }
 }

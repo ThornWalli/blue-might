@@ -60,7 +60,7 @@ export class BaseMissileLauncher extends Weapon {
       description: options?.description ?? 'A missile launcher.',
       spreadAmount: options?.spreadAmount ?? 0,
       perSeconds: options?.perSeconds ?? 0.25,
-      projectile: options?.projectile ?? PROJECTILE_TYPE.AIR_SURFACE_MISSILE_1,
+      projectile: options?.projectile ?? PROJECTILE_TYPE.AIR_MISSILE_1,
       shootType: options?.shootType ?? WEAPON_SHOOT_TYPE.SINGLE,
       shootStrength: options?.shootStrength ?? 1
     });
@@ -125,12 +125,35 @@ export class Gun120mm extends Weapon {
   }
 }
 
+export class Gun155mm extends Weapon {
+  constructor(
+    options?: Partial<
+      Pick<
+        ConstructorParameters<typeof Weapon>[0],
+        'spreadAmount' | 'perSeconds' | 'projectile'
+      >
+    >
+  ) {
+    super({
+      id: 'gun_155mm',
+      name: 'Gun 155mm',
+      description: 'A powerful 155mm gun.',
+      spreadAmount: options?.spreadAmount ?? 0,
+      perSeconds: options?.perSeconds ?? 1,
+      projectile: options?.projectile ?? PROJECTILE_TYPE.CALIBER_155_MM,
+      shootType: WEAPON_SHOOT_TYPE.SINGLE,
+      shootStrength: 5
+    });
+  }
+}
+
 const weapons = {
   default: Default,
   base_missile_launcher: BaseMissileLauncher,
   gatling_gun: GatlingGun,
   rapid_fire_gun_35mm: RapidFireGun35mm,
-  gun_120mm: Gun120mm
+  gun_120mm: Gun120mm,
+  gun_155mm: Gun155mm
 };
 
 export { weapons };
@@ -140,4 +163,5 @@ export type Weapons =
   | BaseMissileLauncher
   | GatlingGun
   | RapidFireGun35mm
-  | Gun120mm;
+  | Gun120mm
+  | Gun155mm;

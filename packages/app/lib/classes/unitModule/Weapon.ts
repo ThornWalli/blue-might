@@ -457,6 +457,10 @@ export default class WeaponUnitModule<
     return this.slots;
   }
 
+  public getCurrentSlot() {
+    return this.slots.at(this.state.currentSlot) ?? null;
+  }
+
   public hasSlots() {
     return this.slots.length > 0;
   }

@@ -9,6 +9,7 @@ import {
   EMPTY
 } from 'rxjs';
 import type { Units } from '@blue-might/units';
+import { TARGET_TYPE } from '@blue-might/app/lib/types/weapon';
 
 import UnitModule, {
   type UnitModuleObservables,
@@ -18,7 +19,14 @@ import UnitModule, {
 import type Unit from '../Unit';
 import type { AnimationLoopValue } from '../Renderer';
 import { disposeObject3D } from '../../utils/object';
-import { getUnitDistance, isUnitDestroyed, isVehicle } from '../../utils/unit';
+import {
+  getUnitDistance,
+  isAirVehicle,
+  isGroundVehicle,
+  isSeaVehicle,
+  isUnitDestroyed,
+  isVehicle
+} from '../../utils/unit';
 import type { UnitModules } from '../Unit';
 import { ControlAction } from '../playerModule/Controls';
 
@@ -191,7 +199,10 @@ export default class AttackUnitModule extends UnitModule<
         unit.modules.radar.observables.units$
           .pipe(
             map(units =>
-              units.filter(({ unit }) => this.isAttackAllowed(unit))
+              units.filter(
+                ({ unit }) =>
+                  this.isAttackAllowed(unit) && this.isTargetType(unit)
+              )
             ),
             distinctUntilChanged(
               (a, b) =>
@@ -505,6 +516,21 @@ export default class AttackUnitModule extends UnitModule<
   }
   getAttackRadius() {
     return this.options.attackRadiusRatio * this.options.radius;
+  }
+
+  isTargetType(target: Unit): boolean {
+    const u = this.getUnit();
+    if ('weapon' in u.modules) {
+      switch (u.modules.weapon.getCurrentSlot()?.weapon.projectile.targetType) {
+        case TARGET_TYPE.GROUND:
+          return isGroundVehicle(target);
+        case TARGET_TYPE.AIR:
+          return isAirVehicle(target);
+        case TARGET_TYPE.SEA:
+          return isSeaVehicle(target);
+      }
+    }
+    return true;
   }
 
   public isAttackAllowed(target: Unit): boolean {

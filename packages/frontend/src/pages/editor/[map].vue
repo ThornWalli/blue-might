@@ -42,7 +42,7 @@ onMounted(async () => {
 const config = ref<AppConfig>({
   mode: APP_MODE.EDITOR,
   rendererOptions: {
-    pixelated: false,
+    pixelated: true,
     controls: true
   }
 });

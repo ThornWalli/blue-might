@@ -4,7 +4,8 @@ import type { Vector3 } from 'three/src/math/Vector3.js';
 
 import type {
   ProjectileDescription,
-  ProjectileIdentifier
+  ProjectileIdentifier,
+  TARGET_TYPE
 } from '../types/weapon';
 
 import type { AnimationLoopValue } from './Renderer';
@@ -107,6 +108,11 @@ export default abstract class Projectile implements ProjectileDescription {
    */
   weight: number = 1;
   /**
+   * The target type of the projectile.
+   * @default null
+   */
+  targetType: TARGET_TYPE | null;
+  /**
    * The features of the projectile.
    */
   features: {
@@ -141,6 +147,7 @@ export default abstract class Projectile implements ProjectileDescription {
       dust: options.features?.dust ?? false
     };
     this.maxLifetime = options.maxLifetime ?? this.maxLifetime;
+    this.targetType = options.targetType ?? null;
   }
 
   async setup() {
@@ -201,7 +208,8 @@ export default abstract class Projectile implements ProjectileDescription {
       strength: this.strength,
       radius: this.radius,
       airResistance: this.airResistance,
-      weight: this.weight
+      weight: this.weight,
+      targetType: this.targetType
     };
   }
 }

@@ -139,10 +139,10 @@ export default class CombatHelicopter_1
         moduleOptions: {
           ...options.moduleOptions,
           radar: {
-            radius: 12
+            radius: 20
           },
           attack: {
-            radius: 10,
+            radius: 15,
             attackRadiusRatio: 8 / 10
           },
           movable: {

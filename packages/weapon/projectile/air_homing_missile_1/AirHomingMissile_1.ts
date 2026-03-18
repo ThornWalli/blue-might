@@ -3,7 +3,7 @@ import type {
   ProjectileUpdateContext
 } from '@blue-might/app/lib/classes/Projectile';
 import Projectile from '@blue-might/app/lib/classes/Projectile';
-import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
+import { PROJECTILE_TYPE, TARGET_TYPE } from '@blue-might/app/lib/types/weapon';
 
 declare module '@blue-might/app/lib/types/weapon' {
   interface ProjectileTypes {
@@ -49,6 +49,7 @@ export default class AirHomingMissile_1 extends Projectile {
       radius: 1,
       airResistance: 0,
       weight: 0,
+      targetType: TARGET_TYPE.AIR,
       features: {
         smoke: true,
         explosion: true

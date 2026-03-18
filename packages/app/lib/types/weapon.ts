@@ -22,6 +22,7 @@ export interface ProjectileDescription {
   radius: number;
   airResistance: number;
   weight: number;
+  targetType: TARGET_TYPE | null;
   features?: {
     smoke?: boolean;
     fire?: boolean;
@@ -48,4 +49,10 @@ export enum WEAPON_SHOOT_TYPE {
   NONE = 'none',
   SINGLE = 'single',
   AUTO = 'auto'
+}
+
+export enum TARGET_TYPE {
+  GROUND = 'ground',
+  AIR = 'air',
+  SEA = 'sea'
 }
