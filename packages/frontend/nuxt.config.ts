@@ -89,8 +89,7 @@ export default defineNuxtConfig({
         defaultImport: 'component',
         svgo: true,
         svgoConfig: svgoConfig as unknown as object
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      }) as any
+      })
     ]
   },
 
