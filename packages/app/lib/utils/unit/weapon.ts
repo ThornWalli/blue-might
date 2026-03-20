@@ -289,9 +289,6 @@ export function autoAimFunction(
         weaponModule.updateSourcePosition();
       }
     }
-  } else {
-    setHorizontalAim(0, false);
-    weaponModule.updateSourcePosition();
   }
   return false;
 }

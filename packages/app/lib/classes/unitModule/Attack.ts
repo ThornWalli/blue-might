@@ -22,6 +22,7 @@ import { disposeObject3D } from '../../utils/object';
 import {
   getUnitDistance,
   isAirVehicle,
+  isBuilding,
   isGroundVehicle,
   isSeaVehicle,
   isUnitDestroyed,
@@ -522,7 +523,7 @@ export default class AttackUnitModule extends UnitModule<
     if ('weapon' in u.modules) {
       switch (u.modules.weapon.getCurrentSlot()?.weapon.projectile.targetType) {
         case TARGET_TYPE.GROUND:
-          return isGroundVehicle(target);
+          return isGroundVehicle(target) || isBuilding(target);
         case TARGET_TYPE.AIR:
           return isAirVehicle(target);
         case TARGET_TYPE.SEA:

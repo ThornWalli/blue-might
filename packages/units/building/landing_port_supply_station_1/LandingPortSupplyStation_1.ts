@@ -70,12 +70,6 @@ export default class LandingPortSupplyStation_1 extends LandingPortUnit<
   override async afterSetup(_context: SetupContext): Promise<void> {
     await super.afterSetup(_context);
 
-    // this.subscription.add(
-    //   this.modules.landingPort.observables.landedUnit.subscribe(unit =>
-    //     this.modules.supply.setSupplyUnit(unit)
-    //   )
-    // );
-
     this.setMaterialReady();
   }
 

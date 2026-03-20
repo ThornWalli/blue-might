@@ -41,7 +41,7 @@ export default class AirHomingMissile_1 extends Projectile {
     super({
       id: PROJECTILE_TYPE.AIR_HOMING_MISSILE_1,
       name: 'Air Homing Missile 1',
-      shortName: 'Air Homing 1',
+      shortName: 'Air Missile (Homing)',
       description: 'A homing missile that targets airborne enemies.',
       maxLifetime: 5,
       speed: 4,

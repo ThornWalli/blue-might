@@ -77,7 +77,8 @@ export default class SupplyUnitModule extends UnitModule<
     speed: 0.1,
     progress: 0,
     fuelConsumptionRatio: 0.1,
-    weaponSpeed: 1
+    weaponSpeed: 1,
+    repairSpeed: 0.1
   };
   private lastUpdateTime = 0;
 
@@ -194,11 +195,13 @@ export default class SupplyUnitModule extends UnitModule<
     //#region  supply
     if (this.state.unit) {
       const unit = this.state.unit;
+      const damageModule = unit.modules.damage;
       const weaponModule =
         'weapon' in unit.modules ? unit.modules.weapon : null;
       const movableModule =
         'movable' in unit.modules ? unit.modules.movable : null;
       if (this.supply.progress >= 1) {
+        // Supply ammunition
         if (weaponModule) {
           weaponModule.getSlots().forEach(slot => {
             if (slot.ammunition < slot.maxAmmunition) {
@@ -206,6 +209,8 @@ export default class SupplyUnitModule extends UnitModule<
             }
           });
         }
+
+        // Supply fuel
         if (
           movableModule &&
           movableModule.getFuel() < movableModule.getMaxFuel()
@@ -213,6 +218,14 @@ export default class SupplyUnitModule extends UnitModule<
           movableModule.setFuel(
             movableModule.getFuel() +
               movableModule.getMaxFuel() * this.supply.fuelConsumptionRatio
+          );
+        }
+
+        // Supply repair
+        if (damageModule) {
+          damageModule.setDamage(
+            damageModule.getDamageValue() -
+              damageModule.getMaxDamage() * this.supply.repairSpeed
           );
         }
         this.supply.progress = 0;

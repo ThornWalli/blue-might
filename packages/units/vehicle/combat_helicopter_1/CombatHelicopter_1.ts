@@ -41,12 +41,13 @@ import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/An
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 import TransportUnitModule from '@blue-might/app/lib/classes/unitModule/Transport';
+import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 
 import baseGlb from './assets/combat_helicopter_1.glb?url';
 
 function getVectors() {
   const vector = new Vector2(0, 0);
-  return [vector, vector] as Vector2[];
+  return [vector, vector, vector] as Vector2[];
 }
 
 interface CombatHelicopterState extends UnitState, WeaponSupportState {}
@@ -132,6 +133,11 @@ export default class CombatHelicopter_1
               revert: true,
               min: new Vector2(-0.15, -Math.PI / 2),
               max: new Vector2(Math.PI / 2, Math.PI / 2)
+            },
+            {
+              revert: true,
+              min: new Vector2(-0.15, -Math.PI / 2),
+              max: new Vector2(Math.PI / 2, Math.PI / 2)
             }
           ],
           rotationSpeed: options.options?.rotationSpeed ?? 0.25
@@ -177,8 +183,16 @@ export default class CombatHelicopter_1
                 weapon: new weapons.base_missile_launcher({
                   perSeconds: 1
                 }),
-                maxAmmunition: 400,
-                ammunition: 400
+                maxAmmunition: 20,
+                ammunition: 20
+              },
+              {
+                weapon: new weapons.base_missile_launcher({
+                  projectile: PROJECTILE_TYPE.GROUND_MISSILE_1,
+                  perSeconds: 1
+                }),
+                maxAmmunition: 20,
+                ammunition: 20
               }
             ],
             ...options.moduleOptions?.weapon
@@ -293,9 +307,15 @@ export default class CombatHelicopter_1
           barrels: [barrelWrapperX, barrelWrapperY],
           barrelTargets: [barrelTargetObj],
           barrelTargetShoots: [barrelTargetObj]
+        },
+        {
+          barrels: [barrelWrapperX, barrelWrapperY],
+          barrelTargets: [barrelTargetObj],
+          barrelTargetShoots: [barrelTargetObj]
         }
       );
 
+      this.modules.weapon.registerBarrelTarget(barrelTargetObj);
       this.modules.weapon.registerBarrelTarget(barrelTargetObj);
       this.modules.weapon.registerBarrelTarget(barrelTargetObj);
     }
