@@ -222,7 +222,10 @@ export default class SupplyUnitModule extends UnitModule<
         }
 
         // Supply repair
-        if (damageModule) {
+        if (
+          damageModule &&
+          damageModule.getDamageValue() < damageModule.getMaxDamage()
+        ) {
           damageModule.setDamage(
             damageModule.getDamageValue() -
               damageModule.getMaxDamage() * this.supply.repairSpeed

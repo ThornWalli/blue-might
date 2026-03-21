@@ -109,6 +109,25 @@
                   })
                 " />
             </div>
+            <div class="grid-row">
+              <bm-control-item
+                button
+                indicator
+                label="Helper"
+                hide-value
+                :value="
+                  (projectileHelper ? 'On' : 'Off').padStart(
+                    padLength,
+                    '\u00A0'
+                  )
+                "
+                :indicator-status="
+                  projectileHelper
+                    ? CONTROL_ITEM_STATUS.NORMAL
+                    : CONTROL_ITEM_STATUS.INACTIVE
+                "
+                @click="onClickProjectileHelper($event, !projectileHelper)" />
+            </div>
             <bm-control-item
               v-for="(slot, index) in weaponSlots"
               :key="index"
@@ -311,7 +330,8 @@ const {
   groundHeight,
   playerLifes,
   transportSlotInfo,
-  flightStatus
+  flightStatus,
+  projectileHelper
 } = usePlayerUnitInterface($props.app);
 
 const hasTransport = computed(() => {
@@ -360,6 +380,20 @@ function onClickWeaponAutopilot(
 
   if (weaponModule) {
     weaponModule.setAutopilot(weaponAutopilot.value);
+  }
+}
+
+function onClickProjectileHelper(e: Event, value: boolean) {
+  blur(e);
+  projectileHelper.value = value;
+  const vehicle = player.value?.modules.vehicle;
+  if (!vehicle) return;
+  const weaponModule = vehicle
+    .getCurrentUnit()!
+    .getModuleByType(WeaponUnitModule);
+
+  if (weaponModule) {
+    weaponModule.setProjectileHelper(projectileHelper.value);
   }
 }
 

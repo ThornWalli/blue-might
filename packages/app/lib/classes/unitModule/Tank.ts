@@ -27,8 +27,8 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
       {
         ...options,
         // maxSpeed: options.maxSpeed ?? 1,
-        acceleration: options.acceleration ?? 1,
-        friction: options.friction ?? 0.75,
+        acceleration: options.acceleration ?? 0.85,
+        friction: options.friction ?? 0.95,
         turnSpeed: options.turnSpeed ?? 1,
         maxSpeed: options.maxSpeed ?? 2
       },
@@ -87,7 +87,7 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
       }
     } else {
       // Beim Drehen langsamer werden
-      velocity.multiplyScalar(0.95);
+      velocity.multiplyScalar(0.9);
       if (velocity.lengthSq() < eps) velocity.setScalar(0);
     }
 
@@ -115,9 +115,27 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
     if (controls.moveRight) turn -= turnSpeed;
 
     if (turn !== 0) {
-      // Statt Quaternion: Yaw direkt ändern, unabhängig von Tilt/Pitch/Roll
-      const newYaw = unit.getYaw() + turn * delta * turnFactor;
+      const oldYaw = unit.getYaw();
+      const yawDelta = turn * delta * turnFactor;
+      const newYaw = oldYaw + yawDelta;
       unit.setYaw(newYaw);
+
+      // Drehe die Welt-Velocity Richtung neuer Yaw, um Gleiten zu verhindern
+      const steeringResponse = Math.min(
+        1,
+        Math.max(0.2, speed / Math.max(0.0001, maxSpeed))
+      ); // Etwas erhöht für bessere Reaktion
+      if (velocity.lengthSq() > 1e-8) {
+        const rotateAngle = yawDelta * steeringResponse;
+        const cos = Math.cos(rotateAngle);
+        const sin = Math.sin(rotateAngle);
+        const vx = velocity.x;
+        const vz = velocity.z;
+        // Rotation um Y-Achse (XZ-Ebene)
+        velocity.x = vx * cos - vz * sin;
+        velocity.z = vx * sin + vz * cos;
+        velocity.multiplyScalar(0.95);
+      }
     }
 
     // newPosition vermeiden: temp nutzen

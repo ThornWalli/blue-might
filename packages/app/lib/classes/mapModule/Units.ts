@@ -138,13 +138,7 @@ export default class UnitsModule extends MapModule<
         this.map.app.renderer.modules.controls.observables.change$
       )
         .pipe(throttleTime(1000))
-        .subscribe(() => {
-          this.state.visibleUnits = Array.from(
-            this.chunkManager.updateVisibility(
-              this.map.app.renderer.modules.camera.getCamera()
-            )
-          );
-        })
+        .subscribe(() => this.updateVisibility())
     );
 
     this.subscription.add(
@@ -293,10 +287,17 @@ export default class UnitsModule extends MapModule<
   }
 
   updateVisibility() {
+    const camera = this.map.app.renderer.modules.camera.getCamera();
+
+    const positions = [];
+    if ('player' in this.map.app.modules) {
+      const player = this.map.app.modules.player.getCurrentPlayer();
+      const unit = player.modules.vehicle.getCurrentUnit();
+      if (unit?.position) positions.push(unit?.position);
+    }
+
     this.state.visibleUnits = Array.from(
-      this.chunkManager.updateVisibility(
-        this.map.app.renderer.modules.camera.getCamera()
-      )
+      this.chunkManager.updateVisibility(camera, positions)
     );
   }
 

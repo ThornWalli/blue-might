@@ -125,6 +125,8 @@ function create(app: App) {
     maxSlots: 0
   });
 
+  const projectileHelper = ref(false);
+
   const seaHeight = computed(
     () => app.modules.map.getMap()?.modules.surface.getWaterLevel() ?? 0
   );
@@ -342,6 +344,15 @@ function create(app: App) {
           hasAimTarget.value = !!v;
         })
     );
+    subscription.add(
+      weaponModule$
+        .pipe(
+          switchMap(weaponModule => weaponModule.observables.projectileHelper$)
+        )
+        .subscribe(v => {
+          projectileHelper.value = !!v;
+        })
+    );
 
     subscription.add(
       weaponModule$
@@ -499,6 +510,7 @@ function create(app: App) {
     currentHeight,
     playerLifes,
     transportSlotInfo,
+    projectileHelper,
     isVehicle: computed(() => isVehicle(unit.value)),
     isAirVehicle: computed(() => isAirVehicle(unit.value)),
     isSeaVehicle: computed(() => isSeaVehicle(unit.value)),

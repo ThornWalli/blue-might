@@ -453,13 +453,14 @@ export default class ShootModule extends MapModule<
     unit.modules.damage.hit(shoot.projectileInstance.projectile);
   }
 
-  createDebugVisualizePath(
+  createProjectileVisualizePath(
     animationLoopValue: AnimationLoopValue,
     position: Vector3,
     direction: Vector3,
     weapon: Weapon,
     targetPosition?: Vector3 | null // Optional: Für Homing-Projektille, falls relevant
   ) {
+    const surfaceModule = this.map.modules.surface;
     const projectile = weapon.projectile;
     const points: Vector3[] = [];
     const simPosition = position.clone();
@@ -488,7 +489,10 @@ export default class ShootModule extends MapModule<
         break;
       }
 
-      if (simPosition.y < 0) {
+      if (
+        simPosition.y <
+        surfaceModule.getSurfaceHeightAt(simPosition.x, simPosition.z)
+      ) {
         break;
       }
     }

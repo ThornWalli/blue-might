@@ -33,7 +33,7 @@ export interface SpriteLoadDescription extends LoadDescription {
   };
 }
 
-const LOCAL_DRACO = false;
+const LOCAL_DRACO = true;
 
 export default class AssetLoader {
   loaders: Loaders;

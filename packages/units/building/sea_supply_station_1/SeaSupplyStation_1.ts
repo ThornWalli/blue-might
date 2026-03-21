@@ -14,14 +14,17 @@ import BuildingUnit, {
   type BuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/Building';
 import { addModules } from '@blue-might/app/lib/classes/Module';
+import RadarUnitModule from '@blue-might/app/lib/classes/unitModule/Radar';
 
 import baseGlb from './assets/sea_supply_station.glb?url';
 
 export type Options = BuildingUnitOptions;
 export interface Modules extends BuildingUnitModules {
+  radar: RadarUnitModule;
   supply: SupplyUnitModule;
 }
-export type ModuleList = BuildingUnitModuleList & [typeof SupplyUnitModule];
+export type ModuleList = BuildingUnitModuleList &
+  [typeof RadarUnitModule, typeof SupplyUnitModule];
 export interface RawUnitDescription_SeaSupplyStation_1<
   O extends UnitOptions = Options
 > extends RawUnitDescription<UnitConstructorOptions<O>> {
@@ -38,7 +41,7 @@ export default class SeaSupplyStation_1 extends BuildingUnit<
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList?: ModuleList
   ) {
-    moduleList = addModules(moduleList, [SupplyUnitModule]);
+    moduleList = addModules(moduleList, [RadarUnitModule, SupplyUnitModule]);
     super(
       {
         ...options,

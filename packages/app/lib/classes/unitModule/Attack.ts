@@ -523,7 +523,11 @@ export default class AttackUnitModule extends UnitModule<
     if ('weapon' in u.modules) {
       switch (u.modules.weapon.getCurrentSlot()?.weapon.projectile.targetType) {
         case TARGET_TYPE.GROUND:
-          return isGroundVehicle(target) || isBuilding(target);
+          return (
+            isSeaVehicle(target) ||
+            isGroundVehicle(target) ||
+            isBuilding(target)
+          );
         case TARGET_TYPE.AIR:
           return isAirVehicle(target);
         case TARGET_TYPE.SEA:

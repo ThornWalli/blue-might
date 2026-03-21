@@ -1,12 +1,10 @@
 /* eslint-disable complexity */
 import Weapon from '@blue-might/app/lib/classes/Weapon';
-import type { Values } from '@blue-might/app/types';
 
 import {
   PROJECTILE_TYPE,
   WEAPON,
-  WEAPON_SHOOT_TYPE,
-  type ProjectileTypes
+  WEAPON_SHOOT_TYPE
 } from './../app/lib/types/weapon';
 
 declare module '@blue-might/app/lib/types/weapon' {
@@ -19,35 +17,18 @@ declare module '@blue-might/app/lib/types/weapon' {
 WEAPON.DEFAULT = 'default';
 export class Default extends Weapon {
   constructor(
-    projectile:
-      | typeof PROJECTILE_TYPE.DEFAULT
-      | typeof PROJECTILE_TYPE.LIGHT_PROJECTILE
-      | typeof PROJECTILE_TYPE.MEDIUM_PROJECTILE
-      | typeof PROJECTILE_TYPE.HEAVY_PROJECTILE = PROJECTILE_TYPE.DEFAULT
+    projectile: typeof PROJECTILE_TYPE.DEFAULT = PROJECTILE_TYPE.DEFAULT
   ) {
     super({
       id: WEAPON.DEFAULT,
       name: 'Default Weapon',
       description: 'The default weapon.',
       spreadAmount: 0.1,
-      perSeconds: getSecondsByType(projectile),
+      perSeconds: 1,
       projectile: projectile,
       shootType: WEAPON_SHOOT_TYPE.AUTO,
       shootStrength: 1
     });
-  }
-}
-
-function getSecondsByType(type: Values<ProjectileTypes>): number {
-  switch (type) {
-    case PROJECTILE_TYPE.LIGHT_PROJECTILE:
-      return 3;
-    case PROJECTILE_TYPE.MEDIUM_PROJECTILE:
-      return 2;
-    case PROJECTILE_TYPE.HEAVY_PROJECTILE:
-      return 5;
-    default:
-      return 4;
   }
 }
 

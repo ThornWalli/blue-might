@@ -1,5 +1,5 @@
 import type { Line, Object3D } from 'three';
-import { Vector3 } from 'three';
+import { Color, Vector3 } from 'three';
 import { EMPTY, ReplaySubject, Subject, switchMap } from 'rxjs';
 import { WEAPON_SHOOT_TYPE } from '@blue-might/app/lib/types/weapon';
 
@@ -49,6 +49,7 @@ export interface WeaponUnitModuleObservables extends UnitModuleObservables {
   autopilot$: ReplaySubject<WeaponAutopilotOptions>;
   autopilotActive$: ReplaySubject<boolean>;
   autoAimTarget$: ReplaySubject<Unit | null>;
+  projectileHelper$: ReplaySubject<boolean>;
 }
 
 export type AutoAimFnOptions = {
@@ -80,6 +81,7 @@ export interface WeaponUnitModuleState extends UnitModuleState {
   autopilotActive: boolean;
   autoAimTarget: Unit | null;
   currentSlot: number;
+  projectileHelper: boolean;
 }
 
 const DEFAULT_DIRECTION: [number, number, number] = [0, 0, -1];
@@ -128,7 +130,8 @@ export default class WeaponUnitModule<
         barrelTargets: state.barrelTargets ?? [],
         autopilotActive: options.autopilot?.aim || options.autopilot?.shoot,
         autoAimTarget: state.autoAimTarget ?? null,
-        currentSlot: state.currentSlot ?? 0
+        currentSlot: state.currentSlot ?? 0,
+        projectileHelper: state.projectileHelper ?? false
       },
       debug
     );
@@ -160,7 +163,17 @@ export default class WeaponUnitModule<
     this.observables.autopilotActive$ = new ReplaySubject<boolean>();
     this.observables.autopilotActive$.next(this.state.autopilotActive);
     this.observables.autoAimTarget$ = new ReplaySubject<Unit | null>();
+    this.observables.projectileHelper$ = new ReplaySubject<boolean>();
+    this.observables.projectileHelper$.next(this.state.projectileHelper);
     //#endregion
+  }
+
+  setProjectileHelper(value: boolean) {
+    this.state.projectileHelper = value;
+    this.observables.projectileHelper$.next(value);
+    if (!value) {
+      this.destroyHelper();
+    }
   }
 
   override async setup() {
@@ -182,6 +195,7 @@ export default class WeaponUnitModule<
       unit.modules.damage.observables.destroyed$.subscribe(() => {
         this.abortShoot();
         this.subscription.unsubscribe();
+        this.destroyHelper();
       })
     );
 
@@ -241,17 +255,18 @@ export default class WeaponUnitModule<
     this.observables.slots$.next(slots);
   }
 
-  override destroy() {
+  private destroyHelper() {
     const map = this.getUnit().getMap();
-    const app = map?.app;
-
-    Object.values(this.debugWeaponLines).forEach(line => {
+    Object.values(this.weaponLines).forEach(line => {
       if (line) {
-        app?.renderer.scene.remove(line);
+        map?.app?.renderer.scene.remove(line);
         disposeObject3D(line);
       }
     });
+  }
 
+  override destroy() {
+    this.destroyHelper();
     super.destroy();
   }
 
@@ -284,8 +299,8 @@ export default class WeaponUnitModule<
     this.state.barrelTargets.forEach((_, index) => {
       this.updateSourcePosition(index);
     });
-    if (this.debug) {
-      this.updateDebug(v);
+    if (this.state.projectileHelper) {
+      this.updateHelper(v);
     }
   }
 
@@ -393,6 +408,7 @@ export default class WeaponUnitModule<
     velocity: new Vector3()
   };
   private lastUpdateTime = 0;
+  private hasTarget = false;
   private updateAutoAIM(v: AnimationLoopValue) {
     if (this.state.autopilotActive) {
       const target = this.state.autoAimTarget;
@@ -420,15 +436,19 @@ export default class WeaponUnitModule<
               })
             : true;
 
+          this.hasTarget = shoot;
+
           if (this.options.autopilot?.shoot) {
             if (shoot) {
               this.shoot();
             } else {
+              this.hasTarget = false;
               this.abortShoot();
             }
           }
         });
       } else {
+        this.hasTarget = false;
         this.abortShoot();
       }
       return true;
@@ -506,22 +526,20 @@ export default class WeaponUnitModule<
     return this.state.barrelTargets;
   }
 
-  //#region debug
+  private weaponLines: Record<number, Line | null> = {};
 
-  private debugWeaponLines: Record<number, Line | null> = {};
-
-  updateDebug(v: AnimationLoopValue) {
+  private updateHelper(v: AnimationLoopValue) {
     const shootModule = this.getUnit().getMap()?.modules.shoot;
     this.getSlots().forEach((weaponSlot, index) => {
-      if (this.debugWeaponLines[index]) {
-        shootModule?.removeFromScene(this.debugWeaponLines[index]);
-        disposeObject3D(this.debugWeaponLines[index]);
-        this.debugWeaponLines[index] = null;
+      if (this.weaponLines[index]) {
+        shootModule?.removeFromScene(this.weaponLines[index]);
+        disposeObject3D(this.weaponLines[index]);
+        this.weaponLines[index] = null;
       }
       if (weaponSlot.active) {
         let line;
         if (this.state.sourcePositions[index]!) {
-          line = shootModule?.createDebugVisualizePath(
+          line = shootModule?.createProjectileVisualizePath(
             v,
             this.state.sourcePositions[index]!,
             this.state.sourceDirections[index]!,
@@ -529,13 +547,16 @@ export default class WeaponUnitModule<
             this.state.autoAimTarget?.getPosition()
           );
         }
+        if (this.hasTarget) {
+          line!.material.color = new Color(0x00ff00);
+        } else {
+          line!.material.color = new Color(0xff0000);
+        }
         if (line) {
-          this.debugWeaponLines[index] = line;
+          this.weaponLines[index] = line;
           shootModule?.addToScene(line);
         }
       }
     });
   }
-
-  //#endregion
 }

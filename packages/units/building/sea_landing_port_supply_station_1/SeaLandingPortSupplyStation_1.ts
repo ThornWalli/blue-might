@@ -14,14 +14,17 @@ import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
 import { addModules } from '@blue-might/app/lib/classes/Module';
+import RadarUnitModule from '@blue-might/app/lib/classes/unitModule/Radar';
 
 import baseGlb from './assets/sea_landing_port_supply_station.glb?url';
 
 export type Options = LandingPortUnitOptions;
 export interface Modules extends LandingPortUnitModules {
+  radar: RadarUnitModule;
   supply: SupplyUnitModule;
 }
-export type ModuleList = LandingPortUnitModuleList & [typeof SupplyUnitModule];
+export type ModuleList = LandingPortUnitModuleList &
+  [typeof RadarUnitModule, typeof SupplyUnitModule];
 
 export interface RawUnitDescription_SeaLandingPortSupplyStation_1<
   O extends UnitOptions = Options
@@ -39,7 +42,7 @@ export default class SeaLandingPortSupplyStation_1 extends LandingPortUnit<
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList?: ModuleList
   ) {
-    moduleList = addModules(moduleList, [SupplyUnitModule]);
+    moduleList = addModules(moduleList, [RadarUnitModule, SupplyUnitModule]);
     super(
       {
         ...options,
@@ -77,13 +80,6 @@ export default class SeaLandingPortSupplyStation_1 extends LandingPortUnit<
 
   override async afterSetup(_context: SetupContext): Promise<void> {
     await super.afterSetup(_context);
-
-    // this.subscription.add(
-    //   this.modules.landingPort.observables.landedUnit.subscribe(unit =>
-    //     this.modules.supply.setSupplyUnit(unit)
-    //   )
-    // );
-
     this.setMaterialReady();
   }
 
