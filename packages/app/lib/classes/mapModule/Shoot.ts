@@ -127,7 +127,9 @@ export default class ShootModule extends MapModule<
   }
 
   private async createShootObj(projectile: Projectile) {
-    const { object: shootObject } = await loadGltf(await projectile.getGlb());
+    const { object: shootObject } = await loadGltf(
+      await projectile.getShootGlb()
+    );
     shootObject.scale.set(0.4, 0.4, 0.4);
     shootObject.traverse(child => {
       if ((child as Mesh).isMesh) {

@@ -64,6 +64,10 @@
           <div class="keys right">
             <bm-key-cap value="P" direction="right" description="Power" />
             <bm-key-cap value="G" direction="right" description="Get in/out" />
+            <bm-key-cap
+              value="Shift"
+              direction="right"
+              description="Modifier<br> (precise target movement)" />
           </div>
           <div class="keys right">
             <bm-key-cap

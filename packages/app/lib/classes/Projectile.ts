@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable complexity */
 import type { Vector3 } from 'three/src/math/Vector3.js';
+import type { Object3D } from 'three';
 
 import type {
+  PROJECTILE_TYPE,
   ProjectileDescription,
   ProjectileIdentifier,
   TARGET_TYPE
@@ -72,7 +74,8 @@ export class ProjectileInstance<
   }
 }
 export default abstract class Projectile implements ProjectileDescription {
-  static KEY: string;
+  static readonly KEY: string;
+  type: PROJECTILE_TYPE;
   id: ProjectileIdentifier;
   name: string;
   shortName: string | null;
@@ -125,10 +128,12 @@ export default abstract class Projectile implements ProjectileDescription {
 
   constructor(
     options: {
+      type: PROJECTILE_TYPE;
       id: ProjectileIdentifier;
       name: string;
     } & Partial<ProjectileDescription>
   ) {
+    this.type = options.type;
     this.id = options.id;
     this.name = options.name;
     this.shortName = options.shortName ?? null;
@@ -149,16 +154,28 @@ export default abstract class Projectile implements ProjectileDescription {
     this.maxLifetime = options.maxLifetime ?? this.maxLifetime;
     this.targetType = options.targetType ?? null;
   }
+  destroy() {
+    // override in subclass
+  }
 
   async setup() {
     // override in subclass
   }
 
-  async getGlb(): Promise<string> {
+  async getCaseObject(): Promise<Object3D | null> {
+    console.warn('Method not implemented.');
+    return null;
+  }
+  async getProjectileObject(): Promise<Object3D | null> {
+    console.warn('Method not implemented.');
+    return null;
+  }
+
+  async getShootGlb(): Promise<string> {
     throw new Error('Method not implemented.');
   }
 
-  async getSfx(): Promise<string> {
+  async getShootSfx(): Promise<string> {
     throw new Error('Method not implemented.');
   }
 
@@ -199,6 +216,7 @@ export default abstract class Projectile implements ProjectileDescription {
 
   toDescription(): ProjectileDescription {
     return {
+      type: this.type,
       id: this.id,
       name: this.name,
       shortName: this.shortName,

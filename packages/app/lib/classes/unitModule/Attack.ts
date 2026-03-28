@@ -25,8 +25,7 @@ import {
   isBuilding,
   isGroundVehicle,
   isSeaVehicle,
-  isUnitDestroyed,
-  isVehicle
+  isUnitDestroyed
 } from '../../utils/unit';
 import type { UnitModules } from '../Unit';
 import { ControlAction } from '../playerModule/Controls';
@@ -124,7 +123,7 @@ export default class AttackUnitModule extends UnitModule<
         ...options,
         radius: options.radius ?? 6,
         attackRadiusRatio: options.attackRadiusRatio ?? 4 / 5,
-        followTarget: options.followTarget ?? true,
+        followTarget: options.followTarget ?? false,
         attackTypes: options.attackTypes ?? []
       },
       {
@@ -152,6 +151,7 @@ export default class AttackUnitModule extends UnitModule<
 
     this.subscription.add(
       unit.modules.damage.observables.destroyed$.subscribe(() => {
+        this.destroyDebug();
         this.unitSubscription?.unsubscribe();
         this.subscription.remove(this.unitSubscription!);
         this.unitSubscription = null;
@@ -170,15 +170,15 @@ export default class AttackUnitModule extends UnitModule<
 
     if ('player' in unit.modules) {
       const player$ = unit.modules.player.observables.player$;
-      this.subscription.add(
-        player$.subscribe(player => {
-          if (isVehicle(this.getUnit())) {
-            this.setFollowTarget(!player);
-          } else {
-            this.setFollowTarget(false);
-          }
-        })
-      );
+      // this.subscription.add(
+      //   player$.subscribe(player => {
+      //     if (isVehicle(this.getUnit())) {
+      //       this.setFollowTarget(!player);
+      //     } else {
+      //       this.setFollowTarget(false);
+      //     }
+      //   })
+      // );
 
       this.subscription.add(
         player$
@@ -244,15 +244,7 @@ export default class AttackUnitModule extends UnitModule<
       this.resumeTimeout = null;
     }
 
-    if (this.debugObjects) {
-      Object.values(this.debugObjects)
-        .filter(v => v !== null)
-        .forEach(debugObject => {
-          debugObject.removeFromParent();
-          disposeObject3D(debugObject);
-        });
-      this.debugObjects = null;
-    }
+    this.destroyDebug();
 
     super.destroy();
   }
@@ -577,6 +569,7 @@ export default class AttackUnitModule extends UnitModule<
   }
 
   private setupDebug() {
+    const unit = this.getUnit();
     this.debugObjects = {
       radiusSphere: new Mesh(
         new SphereGeometry(this.options.radius, 16, 16),
@@ -587,10 +580,23 @@ export default class AttackUnitModule extends UnitModule<
         new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
       )
     };
-    this.getUnit()
+
+    unit
       .getMap()
       ?.app.getScene()
       .add(...Object.values(this.debugObjects).filter(o => o !== null));
+  }
+
+  destroyDebug() {
+    if (this.debugObjects) {
+      Object.values(this.debugObjects)
+        .filter(v => v !== null)
+        .forEach(debugObject => {
+          debugObject.removeFromParent();
+          disposeObject3D(debugObject);
+        });
+      this.debugObjects = null;
+    }
   }
 
   updateRadiusDebug(unit: Unit | null) {

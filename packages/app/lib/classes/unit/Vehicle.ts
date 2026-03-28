@@ -9,6 +9,7 @@ import { setDestroyedMaterials } from '../../utils/material';
 import { addModules } from '../Module';
 import type { SetupContext } from '../../types/unit';
 import RadarUnitModule from '../unitModule/Radar';
+import type CustomizeUnitModule from '../unitModule/Customize';
 
 import MovableUnit, {
   type MovableUnitModuleList,
@@ -23,6 +24,7 @@ export type VehicleUnitModules = MovableUnitModules & {
   radar: RadarUnitModule;
   patrol: PatrolUnitModule;
   player: PlayerUnitModule;
+  customize?: CustomizeUnitModule;
 };
 
 export type VehicleUnitModuleList = (

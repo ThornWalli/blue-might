@@ -126,7 +126,10 @@ export default class StationaryGun_2 extends BuildingUnit<
       this.modules.weapon.observables.shoot$.subscribe(
         async ({ index, shoot }) => {
           this.objects.barrelTargetShoots[index]!.visible = true;
-          playSound(await shoot.projectileInstance.projectile.getSfx(), 0.3);
+          playSound(
+            await shoot.projectileInstance.projectile.getShootSfx(),
+            0.3
+          );
         }
       )
     );

@@ -7,6 +7,7 @@ import {
   forkJoin,
   from,
   map,
+  merge,
   of,
   Subscription,
   switchMap,
@@ -25,7 +26,7 @@ import WeaponUnitModule, {
 import type AirVehicleUnit from '../lib/classes/unit/vehicle/AirVehicle';
 import type { FLIGHT_STATUS } from '../lib/classes/unitModule/movable/airVehicle/Helicopter';
 import type { PowerInfo } from '../lib/classes/unitModule/Movable';
-import type { WeaponSlot } from '../lib/classes/WeaponSlot';
+import type { WeaponSlotThumb } from '../lib/classes/WeaponSlot';
 import type Unit from '../lib/classes/Unit';
 import type { UnitModules } from '../lib/classes/Unit';
 import {
@@ -110,7 +111,7 @@ function create(app: App) {
     shoot: false
   });
   const unitActive = ref<boolean>(false);
-  const weaponSlots = ref<({ thumb: string } & WeaponSlot)[]>([]);
+  const weaponSlots = ref<WeaponSlotThumb[]>([]);
   const fuelWarningMinValue = ref<number>(0.4);
   const fuelInfo = ref<{
     fuel: number;
@@ -126,6 +127,8 @@ function create(app: App) {
   });
 
   const projectileHelper = ref(false);
+
+  const canCustomize = ref(false);
 
   const seaHeight = computed(
     () => app.modules.map.getMap()?.modules.surface.getWaterLevel() ?? 0
@@ -220,13 +223,23 @@ function create(app: App) {
     //#region vehicle
 
     subscription.add(
-      vehicle$
-        .pipe(
+      merge(
+        vehicle$.pipe(
           switchMap(
             vehicle =>
               vehicle?.getModuleByType(WeaponUnitModule)?.observables.slots$ ??
               EMPTY
-          ),
+          )
+        ),
+        weaponModule$.pipe(
+          switchMap(weaponModule =>
+            weaponModule.observables.shoot$.pipe(
+              map(() => weaponModule.getSlots())
+            )
+          )
+        )
+      )
+        .pipe(
           switchMap(slots => {
             return from(slots).pipe(
               concatMap(async slot => {
@@ -235,11 +248,11 @@ function create(app: App) {
                   thumb: await thumbGenerator.getFromProjectile(
                     slot.weapon.projectile.id,
                     {
-                      size: 16,
-                      view: 'side'
+                      size: 32,
+                      view: 'isometric'
                     }
                   )
-                };
+                } as WeaponSlotThumb;
               }),
               toArray()
             );
@@ -280,6 +293,25 @@ function create(app: App) {
       vehicle$
         .pipe(switchMap(vehicle => vehicle?.observables.position$ ?? EMPTY))
         .subscribe(p => (position.value = p.clone()))
+    );
+
+    subscription.add(
+      vehicle$
+        .pipe(
+          switchMap(vehicle =>
+            vehicle &&
+            'customize' in vehicle.modules &&
+            vehicle.modules.customize
+              ? vehicle.modules.customize.observables.supplyUnit$.pipe(
+                  map(supplyUnit => !!supplyUnit)
+                )
+              : of(false)
+          )
+        )
+        .subscribe(hasSupplyUnit => {
+          console.log('Supply Unit Available:', hasSupplyUnit);
+          canCustomize.value = !!hasSupplyUnit;
+        })
     );
 
     subscription.add(
@@ -352,35 +384,6 @@ function create(app: App) {
         .subscribe(v => {
           projectileHelper.value = !!v;
         })
-    );
-
-    subscription.add(
-      weaponModule$
-        .pipe(
-          switchMap(weaponModule =>
-            weaponModule.observables.shoot$.pipe(
-              map(() => weaponModule.getSlots())
-            )
-          ),
-          switchMap(slots => {
-            return from(slots).pipe(
-              concatMap(async slot => {
-                return {
-                  ...slot,
-                  thumb: await thumbGenerator.getFromProjectile(
-                    slot.weapon.projectile.id,
-                    {
-                      size: 16,
-                      view: 'side'
-                    }
-                  )
-                };
-              }),
-              toArray()
-            );
-          })
-        )
-        .subscribe(slots => (weaponSlots.value = markRaw([...slots])))
     );
 
     subscription.add(
@@ -511,6 +514,7 @@ function create(app: App) {
     playerLifes,
     transportSlotInfo,
     projectileHelper,
+    canCustomize,
     isVehicle: computed(() => isVehicle(unit.value)),
     isAirVehicle: computed(() => isAirVehicle(unit.value)),
     isSeaVehicle: computed(() => isSeaVehicle(unit.value)),

@@ -3,14 +3,18 @@ import type {
   ProjectileUpdateContext
 } from '@blue-might/app/lib/classes/Projectile';
 import Projectile from '@blue-might/app/lib/classes/Projectile';
-import { PROJECTILE_TYPE, TARGET_TYPE } from '@blue-might/app/lib/types/weapon';
+import {
+  PROJECTILE_KEY,
+  PROJECTILE_TYPE,
+  TARGET_TYPE
+} from '@blue-might/app/lib/types/weapon';
 
 declare module '@blue-might/app/lib/types/weapon' {
-  interface ProjectileTypes {
+  interface ProjectileKeys {
     AIR_HOMING_MISSILE_1: 'air_homing_missile_1';
   }
 }
-PROJECTILE_TYPE.AIR_HOMING_MISSILE_1 = 'air_homing_missile_1';
+PROJECTILE_KEY.AIR_HOMING_MISSILE_1 = 'air_homing_missile_1';
 
 type AirHomingMissileInstance = ProjectileInstance<
   AirHomingMissile_1,
@@ -18,7 +22,7 @@ type AirHomingMissileInstance = ProjectileInstance<
 >;
 
 export default class AirHomingMissile_1 extends Projectile {
-  static override KEY = PROJECTILE_TYPE.AIR_HOMING_MISSILE_1;
+  static override KEY = PROJECTILE_KEY.AIR_HOMING_MISSILE_1;
 
   /**
    * Gibt an, wie genau die Rakete ihr Ziel ansteuert.
@@ -39,7 +43,8 @@ export default class AirHomingMissile_1 extends Projectile {
     homingDuration
   }: { homingAccuracy?: number; homingDuration?: number } = {}) {
     super({
-      id: PROJECTILE_TYPE.AIR_HOMING_MISSILE_1,
+      type: PROJECTILE_TYPE.MISSILE,
+      id: PROJECTILE_KEY.AIR_HOMING_MISSILE_1,
       name: 'Air Homing Missile 1',
       shortName: 'Air Missile (Homing)',
       description: 'A homing missile that targets airborne enemies.',
@@ -122,11 +127,11 @@ export default class AirHomingMissile_1 extends Projectile {
     }
   }
 
-  override getGlb() {
+  override getShootGlb() {
     return import('./air_homing_missile_1.glb?url').then(m => m.default ?? m);
   }
 
-  override getSfx() {
+  override getShootSfx() {
     return import('./air_homing_missile_1_sound.wav?url').then(
       m => m.default ?? m
     );

@@ -1,5 +1,5 @@
 import { EMPTY, filter, switchMap, ReplaySubject } from 'rxjs';
-import AirHomingMissile_1 from '@blue-might/weapon/projectile/air_homing_missile_1/AirHomingMissile_1';
+import AirHomingMissile_1 from '@blue-might/weapon/projectile/missile/air_homing_missile_1/AirHomingMissile_1';
 import { BaseMissileLauncher } from '@blue-might/weapon/weapon';
 import type { Vector3 } from 'three';
 import { Mesh, MeshLambertMaterial, SphereGeometry } from 'three';
@@ -13,6 +13,7 @@ import UnitModule, {
 import type { ShootDescription } from '../mapModule/Shoot';
 import type { AnimationLoopValue } from '../Renderer';
 import { isUnitDestroyed } from '../../utils/unit';
+import { disposeObject3D } from '../../utils/object';
 
 declare module '../Unit' {
   interface ModuleStates {
@@ -83,6 +84,7 @@ export default class RadarUnitModule extends UnitModule<
   override async setup() {
     await super.setup();
     const unit = this.getUnit();
+
     const map$ = unit.observables.map$;
     this.subscription.add(
       map$
@@ -123,6 +125,13 @@ export default class RadarUnitModule extends UnitModule<
           this.observables.warnings$.next(this.state.warnings);
         })
     );
+
+    this.subscription.add(
+      unit.modules.damage.observables.destroyed$.subscribe(() => {
+        this.destroyDebug();
+        this.subscription.unsubscribe();
+      })
+    );
   }
 
   override async afterSetup() {
@@ -130,6 +139,12 @@ export default class RadarUnitModule extends UnitModule<
     if (this.debug) {
       this.setupDebug();
     }
+  }
+
+  override destroy() {
+    this.destroyDebug();
+
+    super.destroy();
   }
 
   private lastUpdateTime = 0;
@@ -165,6 +180,11 @@ export default class RadarUnitModule extends UnitModule<
       new MeshLambertMaterial({ color: 0x00ff00, wireframe: true })
     );
     this.getUnit().getMap()?.app.getScene().add(this.debugSphere);
+  }
+
+  destroyDebug() {
+    this.debugSphere?.removeFromParent();
+    disposeObject3D(this.debugSphere);
   }
 
   updateRadiusDebug(position: Vector3, units: { unit: Units }[]) {

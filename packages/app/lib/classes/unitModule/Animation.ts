@@ -187,11 +187,13 @@ export class AnimationUnitModule extends UnitModule<
     {
       reverse = false,
       from,
-      duration = 0
+      duration = 0,
+      randomStartTime
     }: {
       reverse?: boolean;
       from?: string;
       duration?: number;
+      randomStartTime?: boolean;
     } = {}
   ) {
     const { promise, resolve } = Promise.withResolvers<AnimationAction>();
@@ -217,6 +219,10 @@ export class AnimationUnitModule extends UnitModule<
       next.time = next.getClip().duration - 0.000001;
     } else {
       next.time = 0;
+    }
+
+    if (randomStartTime) {
+      next.time = next.getClip().duration * Math.random();
     }
 
     if (from && current) {

@@ -41,7 +41,8 @@ import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/An
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 import TransportUnitModule from '@blue-might/app/lib/classes/unitModule/Transport';
-import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
+import { PROJECTILE_KEY } from '@blue-might/app/lib/types/weapon';
+import CustomizeUnitModule from '@blue-might/app/lib/classes/unitModule/Customize';
 
 import baseGlb from './assets/combat_helicopter_1.glb?url';
 
@@ -61,12 +62,14 @@ export interface CombatHelicopterModules extends HelicopterUnitModules {
   attack: AttackUnitModule;
   weapon: WeaponUnitModule;
   transport: TransportUnitModule;
+  customize: CustomizeUnitModule;
 }
 export type CombatHelicopterModuleList = HelicopterUnitModuleList &
   [
     | typeof AttackUnitModule
     | typeof WeaponUnitModule
     | typeof TransportUnitModule
+    | typeof CustomizeUnitModule
   ];
 
 export interface RawUnitDescription_CombatHelicopter_1<
@@ -110,7 +113,8 @@ export default class CombatHelicopter_1
     moduleList = addModules(moduleList, [
       AttackUnitModule,
       WeaponUnitModule,
-      TransportUnitModule
+      TransportUnitModule,
+      CustomizeUnitModule
     ]);
     super(
       {
@@ -188,7 +192,7 @@ export default class CombatHelicopter_1
               },
               {
                 weapon: new weapons.base_missile_launcher({
-                  projectile: PROJECTILE_TYPE.GROUND_MISSILE_1,
+                  projectile: PROJECTILE_KEY.GROUND_MISSILE_1,
                   perSeconds: 1
                 }),
                 maxAmmunition: 20,
@@ -224,7 +228,7 @@ export default class CombatHelicopter_1
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
         async ({ shoot: { projectileInstance } }) => {
-          playSound(await projectileInstance.projectile.getSfx(), 0.3);
+          playSound(await projectileInstance.projectile.getShootSfx(), 0.3);
         }
       )
     );

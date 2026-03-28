@@ -58,4 +58,21 @@ export class WeaponSlot implements WeaponSlotDescription {
     this.parallel = parallel ?? this.parallel;
     this.revert = revert ?? this.revert;
   }
+
+  destroy() {
+    // implement destruction logic
+  }
+
+  toDescription(): WeaponSlotDescription {
+    return {
+      active: this.active,
+      weapon: this.weapon,
+      ammunition: this.ammunition,
+      maxAmmunition: this.maxAmmunition,
+      parallel: this.parallel,
+      revert: this.revert
+    };
+  }
 }
+
+export type WeaponSlotThumb = { thumb: string } & WeaponSlot;

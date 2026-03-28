@@ -1,17 +1,23 @@
 import type { Values } from '../../types';
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface ProjectileTypes {}
+export interface ProjectileKeys {}
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 export interface Weapon {}
 
-export const PROJECTILE_TYPE: ProjectileTypes = {} as ProjectileTypes;
+export const PROJECTILE_KEY: ProjectileKeys = {} as ProjectileKeys;
 export const WEAPON: Weapon = {} as Weapon;
 
-export type ProjectileType = Values<ProjectileTypes>;
+export type ProjectileKey = Values<ProjectileKeys>;
 export type ProjectileIdentifier = string;
-
+export enum PROJECTILE_TYPE {
+  MISSILE = 'missile',
+  P35 = 'p35',
+  P120 = 'p120',
+  P155 = 'p155'
+}
 export interface ProjectileDescription {
+  type: PROJECTILE_TYPE;
   id: ProjectileIdentifier;
   name: string;
   shortName?: string | null;
@@ -35,6 +41,7 @@ export interface ProjectileDescription {
 export type WeaponId = Values<Weapon>;
 export type WeaponIdentifier = string;
 export interface WeaponDescription<P = ProjectileIdentifier> {
+  projectileType: PROJECTILE_TYPE;
   id: WeaponIdentifier;
   name: string;
   description?: string | null;

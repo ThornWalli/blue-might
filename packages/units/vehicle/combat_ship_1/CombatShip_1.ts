@@ -143,7 +143,7 @@ export default class CombatShip_1
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
         async ({ shoot: { projectileInstance } }) => {
-          playSound(await projectileInstance.projectile.getSfx(), 0.3);
+          playSound(await projectileInstance.projectile.getShootSfx(), 0.3);
         }
       )
     );

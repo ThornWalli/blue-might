@@ -109,6 +109,9 @@ export default class CombatSubmarine_1
             ...options.moduleOptions?.seaVehicle,
             turnSpeed: 1 / 3
           },
+          damage: {
+            maxDamage: 5
+          },
           weapon: {
             autoAimFn: (options: AutoAimFnOptions) =>
               autoAimFunction(
@@ -154,7 +157,7 @@ export default class CombatSubmarine_1
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
         async ({ shoot: { projectileInstance } }) => {
-          playSound(await projectileInstance.projectile.getSfx(), 0.3);
+          playSound(await projectileInstance.projectile.getShootSfx(), 0.3);
         }
       )
     );

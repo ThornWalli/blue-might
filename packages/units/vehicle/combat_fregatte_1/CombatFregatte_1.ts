@@ -113,7 +113,7 @@ export default class CombatFregatte_1
         moduleOptions: {
           ...options.moduleOptions,
           damage: {
-            maxDamage: 4
+            maxDamage: 6
           },
           attack: {
             radius: 10
@@ -162,7 +162,7 @@ export default class CombatFregatte_1
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
         async ({ shoot: { projectileInstance } }) => {
-          playSound(await projectileInstance.projectile.getSfx(), 0.3);
+          playSound(await projectileInstance.projectile.getShootSfx(), 0.3);
         }
       )
     );

@@ -278,11 +278,18 @@ export default class SupplyUnitModule extends UnitModule<
 
   setSupplyUnit(unit: VehicleUnit | null) {
     if (unit === this.state.unit) return;
+
+    if (this.state.unit && this.state.unit.modules.customize) {
+      this.state.unit.modules.customize.setSupplyUnit(null);
+    }
+
     this.state.unit = unit as VehicleUnit<
       {
         weapon: WeaponUnitModule;
       } & VehicleUnitModules
     >;
+
+    unit?.modules.customize?.setSupplyUnit(unit);
     this.observables.unit$.next(unit);
   }
 

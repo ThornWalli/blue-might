@@ -18,10 +18,15 @@
     <template #[PANEL.BOTTOM_RIGHT]>
       <bm-panel-unit-preview key="unit-preview" :app="app" />
     </template>
+    <template #background>
+      <bm-head-up-indicator v-if="!hideIndicators" :app="app" />
+    </template>
   </bm-app-layout>
 </template>
 
 <script lang="ts" setup>
+import { ref } from 'vue';
+
 import type AppDebug from '../../lib/classes/app/AppDebug';
 import BmAppLayout, { PANEL } from '../AppLayout.vue';
 import BmPanelInternals from '../panel/Internals.vue';
@@ -30,6 +35,9 @@ import BmPanelGeneral from '../panel/General.vue';
 import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
 import BmPanelMap from '../panel/NavigatorMap.vue';
+import BmHeadUpIndicator from '../HeadUpIndicator.vue';
+
+const hideIndicators = ref(false);
 
 defineProps<{
   app: AppDebug;

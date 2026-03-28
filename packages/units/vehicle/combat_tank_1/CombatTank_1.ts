@@ -28,6 +28,7 @@ import {
   updateControls
 } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
+import CustomizeUnitModule from '@blue-might/app/lib/classes/unitModule/Customize';
 
 import type { UnitObservables } from './../../../app/lib/classes/Unit';
 import baseGlb from './assets/combat_tank_1.glb?url';
@@ -41,9 +42,14 @@ export interface CombatTankOptions
 export interface CombatTankModules extends TankUnitModules {
   attack: AttackUnitModule;
   weapon: WeaponUnitModule;
+  customize: CustomizeUnitModule;
 }
 export type CombatTankModuleList = TankUnitModuleList &
-  [typeof AttackUnitModule | typeof WeaponUnitModule];
+  [
+    | typeof AttackUnitModule
+    | typeof WeaponUnitModule
+    | typeof CustomizeUnitModule
+  ];
 
 export interface RawUnitDescription_CombatTank_1<
   O extends UnitOptions = CombatTankOptions
@@ -77,7 +83,11 @@ export default class CombatTank_1
     > = {},
     moduleList?: CombatTankModuleList
   ) {
-    moduleList = addModules(moduleList, [AttackUnitModule, WeaponUnitModule]);
+    moduleList = addModules(moduleList, [
+      AttackUnitModule,
+      WeaponUnitModule,
+      CustomizeUnitModule
+    ]);
 
     super(
       {
@@ -136,6 +146,7 @@ export default class CombatTank_1
                 this.state,
                 () => this.getRotation()
               ),
+            slotCount: 3,
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
                 weapon: new weapons.gun_120mm(),
@@ -175,7 +186,7 @@ export default class CombatTank_1
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
         async ({ shoot: { projectileInstance } }) => {
-          playSound(await projectileInstance.projectile.getSfx(), 0.3);
+          playSound(await projectileInstance.projectile.getShootSfx(), 0.3);
         }
       )
     );

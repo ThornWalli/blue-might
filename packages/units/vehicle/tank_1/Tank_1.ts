@@ -55,6 +55,10 @@ export default class Tank_1<
                 name: 'base'
               }
             ]
+          },
+          damage: {
+            ...options?.moduleOptions?.damage,
+            maxDamage: 2
           }
         }
       },

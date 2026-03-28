@@ -60,7 +60,9 @@ export default class WindTurbine_1<
     await super.afterSetup(_context);
     this.setMaterialReady();
     this.modules.animation.applySettings(this.animationSettings);
-    this.modules.animation.playAction('active');
+    this.modules.animation.playAction('active', {
+      randomStartTime: true
+    });
   }
 
   initialRotationY: number = 0;

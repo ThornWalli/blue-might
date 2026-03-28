@@ -14,7 +14,7 @@ import {
 } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import type { Object3D } from 'three';
-import { Vector2, Mesh, SkinnedMesh } from 'three';
+import { Vector2, Mesh, SkinnedMesh, LoopOnce } from 'three';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { playSound } from '@blue-might/weapon/utils';
@@ -34,13 +34,14 @@ import type {
 } from '@blue-might/app/lib/classes/unit/building/Turret';
 import TurretBuildingUnit from '@blue-might/app/lib/classes/unit/building/Turret';
 import { weapons } from '@blue-might/weapon/weapon';
+import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/Animation';
 
 import baseGlb from './assets/turret_1.glb?url';
 //#endregion
 
 //#region definitions
 
-interface State extends UnitState, WeaponSupportState {}
+export interface TurretState extends UnitState, WeaponSupportState {}
 
 export interface TurretOptions
   extends TurretBuildingUnitOptions, WeaponSupportOptions {
@@ -65,11 +66,15 @@ export default class Turret_1
     TurretModuleList,
     TurretOptions,
     UnitObservables,
-    State
+    TurretState
   >
-  implements WeaponUnitInterface<State>
+  implements WeaponUnitInterface<TurretState>
 {
   static override KEY = 'turret_1';
+
+  animationSettings: Record<string, AnimationSetting> = {
+    destroyed: { clampWhenFinished: true, loop: LoopOnce, duration: 0.5 }
+  };
 
   objects: {
     head?: Object3D;
@@ -79,13 +84,13 @@ export default class Turret_1
   }[] = [];
 
   constructor(
-    options: Omit<UnitConstructorOptions<TurretOptions, State>, 'name'> = {},
+    options: UnitConstructorOptions<TurretOptions, TurretState> = {},
     moduleList?: TurretModuleList
   ) {
     super(
       {
         ...options,
-        name: 'Turret',
+        name: options.name ?? 'Turret',
         state: {
           weaponActive: false,
           weaponVelocity: [new Vector2(0, 0)],
@@ -103,6 +108,9 @@ export default class Turret_1
         },
         moduleOptions: {
           ...options.moduleOptions,
+          attack: {
+            radius: options.moduleOptions?.attack?.radius ?? 10
+          },
           weapon: {
             autoAimFn: (options: AutoAimFnOptions) =>
               autoAimFunction(
@@ -119,7 +127,7 @@ export default class Turret_1
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.gatling_gun(),
+                weapon: new weapons.gatling_gun_35mm(),
                 maxAmmunition: Infinity,
                 ammunition: Infinity
               }
@@ -150,17 +158,23 @@ export default class Turret_1
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
         async ({ shoot: { projectileInstance } }) => {
-          playSound(await projectileInstance.projectile.getSfx(), 0.3);
+          playSound(await projectileInstance.projectile.getShootSfx(), 0.3);
         }
       )
     );
     //#endregion
+    this.subscription.add(
+      this.modules.damage.observables.destroyed$.subscribe(() => {
+        this.modules.animation.playAction('destroyed');
+      })
+    );
     return super.setup(context);
   }
 
   override async afterSetup(_context: SetupContext) {
     await super.afterSetup(_context);
     this.setMaterialReady();
+    this.modules.animation.applySettings(this.animationSettings);
   }
 
   override async createMesh(_context: SetupContext) {
@@ -237,5 +251,132 @@ export default class Turret_1
         }
       }
     });
+  }
+}
+
+export class Turret_35mm_Gatling extends Turret_1 {
+  static override KEY = 'turret_35mm_gatling';
+  constructor(
+    options: Omit<
+      UnitConstructorOptions<TurretOptions, TurretState>,
+      'name'
+    > = {},
+    moduleList?: TurretModuleList
+  ) {
+    super(
+      {
+        ...options,
+        name: 'Turret 35mm (Gatling)',
+        moduleOptions: {
+          ...options.moduleOptions,
+          weapon: {
+            slots: options.moduleOptions?.weapon?.slots ?? [
+              {
+                weapon: new weapons.gatling_gun_35mm(),
+                maxAmmunition: Infinity,
+                ammunition: Infinity
+              }
+            ]
+          }
+        }
+      },
+      moduleList
+    );
+  }
+}
+export class Turret_35mm_Rapid extends Turret_1 {
+  static override KEY = 'turret_35mm_rapid';
+  constructor(
+    options: Omit<
+      UnitConstructorOptions<TurretOptions, TurretState>,
+      'name'
+    > = {},
+    moduleList?: TurretModuleList
+  ) {
+    super(
+      {
+        ...options,
+        name: 'Turret 35mm (Rapid)',
+        moduleOptions: {
+          ...options.moduleOptions,
+          weapon: {
+            slots: options.moduleOptions?.weapon?.slots ?? [
+              {
+                weapon: new weapons.rapid_fire_gun_35mm(),
+                maxAmmunition: Infinity,
+                ammunition: Infinity
+              }
+            ]
+          }
+        }
+      },
+      moduleList
+    );
+  }
+}
+export class Turret_120mm extends Turret_1 {
+  static override KEY = 'turret_120mm';
+  constructor(
+    options: Omit<
+      UnitConstructorOptions<TurretOptions, TurretState>,
+      'name'
+    > = {},
+    moduleList?: TurretModuleList
+  ) {
+    super(
+      {
+        ...options,
+        name: 'Turret 120mm',
+        moduleOptions: {
+          ...options.moduleOptions,
+          weapon: {
+            slots: options.moduleOptions?.weapon?.slots ?? [
+              {
+                weapon: new weapons.gun_120mm(),
+                maxAmmunition: Infinity,
+                ammunition: Infinity
+              }
+            ]
+          }
+        }
+      },
+      moduleList
+    );
+  }
+}
+export class Turret_155mm extends Turret_1 {
+  static override KEY = 'turret_155mm';
+  constructor(
+    options: Omit<
+      UnitConstructorOptions<TurretOptions, TurretState>,
+      'name'
+    > = {},
+    moduleList?: TurretModuleList
+  ) {
+    super(
+      {
+        ...options,
+        name: 'Turret 155mm',
+        moduleOptions: {
+          ...options.moduleOptions,
+          radar: {
+            radius: 15
+          },
+          attack: {
+            radius: 15
+          },
+          weapon: {
+            slots: options.moduleOptions?.weapon?.slots ?? [
+              {
+                weapon: new weapons.gun_155mm(),
+                maxAmmunition: Infinity,
+                ammunition: Infinity
+              }
+            ]
+          }
+        }
+      },
+      moduleList
+    );
   }
 }

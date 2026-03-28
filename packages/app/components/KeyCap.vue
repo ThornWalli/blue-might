@@ -1,7 +1,7 @@
 <template>
   <div class="bm-key-cap" :class="`direction-${direction ?? 'bottom-right'}`">
     <span class="key">{{ value }}</span>
-    <div class="description">{{ description }}</div>
+    <div class="description" v-html="description"></div>
   </div>
 </template>
 

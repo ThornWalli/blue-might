@@ -1,6 +1,12 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { projectiles } from '@blue-might/weapon';
 
-import { WEAPON_SHOOT_TYPE, type WeaponDescription } from '../types/weapon';
+import {
+  WEAPON_SHOOT_TYPE,
+  type PROJECTILE_TYPE,
+  type ProjectileIdentifier,
+  type WeaponDescription
+} from '../types/weapon';
 
 import type Projectile from './Projectile';
 
@@ -8,7 +14,8 @@ export default class Weapon implements WeaponDescription<Projectile> {
   id: string;
   name: string;
   description?: string | null;
-  readonly projectile: Projectile;
+  projectile: Projectile;
+  projectileType: PROJECTILE_TYPE;
   /**
    * The amount of spread for the weapon's projectiles.
    * @default 0
@@ -31,11 +38,16 @@ export default class Weapon implements WeaponDescription<Projectile> {
     this.id = options.id;
     this.name = options.name;
     this.description = options.description;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.projectile = new (projectiles[options.projectile]! as any)();
     this.spreadAmount = options.spreadAmount;
     this.perSeconds = options.perSeconds;
     this.shootType = options.shootType;
     this.shootStrength = options.shootStrength;
+    this.projectileType = options.projectileType;
+  }
+
+  setProjectile(projectile: ProjectileIdentifier) {
+    this.projectile.destroy();
+    this.projectile = new (projectiles[projectile]! as any)();
   }
 }

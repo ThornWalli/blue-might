@@ -50,6 +50,12 @@ export { default as Helicopter_1 } from './vehicle/helicopter_1/Helicopter_1';
 //#endregion
 
 //#region turrets
-export { default as Turret_1 } from './turret/turret_1/Turret_1';
+export {
+  default as Turret_1,
+  Turret_35mm_Gatling,
+  Turret_35mm_Rapid,
+  Turret_120mm,
+  Turret_155mm
+} from './turret/turret_1/Turret_1';
 export { default as MissileLauncher_1 } from './turret/missile_launcher_1/MissileLauncher_1';
 //#endregion

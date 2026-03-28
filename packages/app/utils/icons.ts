@@ -12,6 +12,7 @@ export enum ICON {
   ARROWS_POINTING_IN = 'arrows-pointing-in',
   ARROWS_POINTING_OUT = 'arrows-pointing-out',
   ARROW_PATH = 'arrow-path',
+  ARROW_PATH_ROUNDED_SQUARE = 'arrow-path-rounded-square',
   X_MARK = 'x-mark',
   CHECK = 'check',
   CUBE_TRANSPARENT = 'cube-transparent',
@@ -86,6 +87,12 @@ export default {
   [ICON.ARROW_PATH]: markRaw(
     defineAsyncComponent(
       () => import('../assets/icons/micro/arrow-path.svg?component')
+    )
+  ),
+  [ICON.ARROW_PATH_ROUNDED_SQUARE]: markRaw(
+    defineAsyncComponent(
+      () =>
+        import('../assets/icons/micro/arrow-path-rounded-square.svg?component')
     )
   ),
   [ICON.CHECK]: markRaw(

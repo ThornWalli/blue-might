@@ -4,6 +4,7 @@
     class="bm-control-item"
     :class="{
       blinking,
+      'hide-label': hideLabel,
       [`status-${indicatorStatus}`]: indicatorStatus
     }">
     <div>
@@ -32,6 +33,7 @@ const $props = defineProps<{
   indicatorStatus?: CONTROL_ITEM_STATUS;
   label: string;
   labelPad?: number;
+  hideLabel?: boolean;
   hideValue?: boolean;
   value: string;
   blink?: boolean;
@@ -107,6 +109,26 @@ export enum CONTROL_ITEM_STATUS {
       flex: 0;
       text-align: right;
       background-color: #333;
+    }
+  }
+
+  &.hide-label {
+    & .label {
+      display: none;
+    }
+
+    & > div > div {
+      &:nth-child(odd) {
+        flex: 0;
+      }
+
+      &:nth-child(even) {
+        display: block;
+        flex: 1;
+        margin-left: var(--bm-spacing-small);
+        text-align: right;
+        background-color: #333;
+      }
     }
   }
 

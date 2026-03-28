@@ -40,6 +40,7 @@ declare module '../Unit' {
 export interface WeaponUnitModuleObservables extends UnitModuleObservables {
   active$: Subject<boolean>;
   slots$: ReplaySubject<WeaponSlot[]>;
+  currentSlot$: ReplaySubject<WeaponSlot | null>;
   shoot$: Subject<{
     index: number;
     slot: WeaponSlot;
@@ -69,6 +70,7 @@ export type AutoAimFn = (options: AutoAimFnOptions) => boolean;
 export interface WeaponUnitModuleOptions extends UnitModuleOptions {
   autoAimFn: AutoAimFn;
   autopilot: WeaponAutopilotOptions;
+  slotCount?: number;
   slots: Exclude<WeaponSlotDescription, 'index'>[];
 }
 
@@ -80,7 +82,7 @@ export interface WeaponUnitModuleState extends UnitModuleState {
   barrelTargets: Object3D[];
   autopilotActive: boolean;
   autoAimTarget: Unit | null;
-  currentSlot: number;
+  currentSlotIndex: number;
   projectileHelper: boolean;
 }
 
@@ -109,12 +111,13 @@ export default class WeaponUnitModule<
   }
   static override TYPE = 'weapon';
 
-  slots: WeaponSlot[];
+  slots: WeaponSlot[] = [];
   constructor(unit: U, options: Options, state: State, debug?: boolean) {
     super(
       unit,
       {
         ...options,
+        slotCount: Math.max(options.slotCount ?? 0, options.slots.length),
         slots: options.slots ?? [],
         autopilot: options.autopilot ?? {
           aim: false,
@@ -130,28 +133,17 @@ export default class WeaponUnitModule<
         barrelTargets: state.barrelTargets ?? [],
         autopilotActive: options.autopilot?.aim || options.autopilot?.shoot,
         autoAimTarget: state.autoAimTarget ?? null,
-        currentSlot: state.currentSlot ?? 0,
+        currentSlotIndex: state.currentSlotIndex ?? 0,
         projectileHelper: state.projectileHelper ?? false
       },
       debug
     );
 
-    this.slots = this.options.slots.map(
-      (slot, index) => new WeaponSlot({ ...slot, index })
-    );
-
-    // deaktivere alle slots die schon verwendet werden
-    this.getSlots().forEach((slot, index) => {
-      slot.active = index === 0;
-    });
-
     //#region observables
     this.observables.active$ = new Subject<boolean>();
     this.observables.active$.next(this.state.active);
-
     this.observables.slots$ = new ReplaySubject<WeaponSlot[]>(1);
-    this.observables.slots$.next(this.getSlots());
-
+    this.observables.currentSlot$ = new ReplaySubject<WeaponSlot | null>(1);
     this.observables.shoot$ = new Subject<{
       index: number;
       slot: WeaponSlot;
@@ -166,6 +158,8 @@ export default class WeaponUnitModule<
     this.observables.projectileHelper$ = new ReplaySubject<boolean>();
     this.observables.projectileHelper$.next(this.state.projectileHelper);
     //#endregion
+
+    this.setSlots(this.options.slots);
   }
 
   setProjectileHelper(value: boolean) {
@@ -229,27 +223,30 @@ export default class WeaponUnitModule<
   setSlotByIndex(index: number) {
     const slot = this.getSlot(index);
     if (slot) {
-      this.setSlot(slot);
+      this.useSlot(slot);
     }
   }
 
   switchSlot() {
-    this.setSlotByIndex((this.state.currentSlot + 1) % this.getSlots().length);
+    this.setSlotByIndex(
+      (this.state.currentSlotIndex + 1) % this.getSlots().length
+    );
   }
 
-  setSlot(slot: WeaponSlot) {
-    const lastSlot = this.state.currentSlot;
+  useSlot(slot: WeaponSlot) {
+    const lastSlot = this.state.currentSlotIndex;
     const slots = this.getSlots();
     if (slots[lastSlot]) {
       slots[lastSlot].active = false;
     }
 
     // Move to the next slot
-    this.state.currentSlot = slot.index;
+    this.state.currentSlotIndex = slot.index;
+    this.observables.currentSlot$.next(slot);
 
     // Activate the new current slot
-    if (slots[this.state.currentSlot]) {
-      slots[this.state.currentSlot]!.active = true;
+    if (slots[this.state.currentSlotIndex]) {
+      slots[this.state.currentSlotIndex]!.active = true;
     }
 
     this.observables.slots$.next(slots);
@@ -275,6 +272,21 @@ export default class WeaponUnitModule<
   }
   public abortShoot() {
     this.setActive(false);
+  }
+
+  setSlots(slots: WeaponSlotDescription[]) {
+    // Destroy existing slots
+    this.slots.forEach(slot => slot.destroy());
+
+    this.options.slots = slots;
+    this.slots = slots.map((slot, index) => new WeaponSlot({ ...slot, index }));
+
+    // deaktivere alle slots die schon verwendet werden
+    this.getSlots().forEach((slot, index) => {
+      slot.active = index === 0;
+    });
+
+    this.useSlot(this.getSlots().find(slot => slot.active)!);
   }
 
   private setActive(active: boolean) {
@@ -467,7 +479,7 @@ export default class WeaponUnitModule<
   }
 
   public getSlotIndex() {
-    return this.state.currentSlot;
+    return this.state.currentSlotIndex;
   }
 
   public getSlot(index: number) {
@@ -478,7 +490,7 @@ export default class WeaponUnitModule<
   }
 
   public getCurrentSlot() {
-    return this.slots.at(this.state.currentSlot) ?? null;
+    return this.slots.at(this.state.currentSlotIndex) ?? null;
   }
 
   public hasSlots() {

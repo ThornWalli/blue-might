@@ -1,8 +1,8 @@
 import {
+  Object3D,
   Timer,
   Vector2,
   Vector3,
-  type Object3D,
   type OrthographicCamera,
   type Scene,
   type WebGLRenderer
@@ -106,11 +106,13 @@ class ThumbGenerator {
       scale,
       size,
       view,
-      ratio
+      ratio,
+      withCase
     }: Omit<Options, 'scale' | 'view' | 'ratio'> & {
       scale?: number;
       view?: ViewType;
       ratio?: number;
+      withCase?: boolean;
     }
   ) {
     const ProjectileClass = projectiles[type];
@@ -122,7 +124,7 @@ class ThumbGenerator {
     view = view ?? 'isometric';
     ratio = ratio ?? 1;
 
-    const key = `projectile_${scale}_${type}_${size}_${view}`;
+    const key = `projectile_${scale}_${type}_${size}_${view}_${withCase}`;
 
     if (this.imageCache.has(key)) {
       return Promise.resolve(this.imageCache.get(key) as Promise<string>);
@@ -130,10 +132,28 @@ class ThumbGenerator {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const projectile = new (ProjectileClass as unknown as any)() as Projectile;
+    let obj = await projectile.getProjectileObject();
+    if (obj) {
+      let caseObj: Object3D | null;
+      if (withCase) {
+        caseObj = await projectile.getCaseObject();
+        if (caseObj) {
+          const test = new Object3D();
+          test.add(caseObj);
+          test.add(obj);
 
-    const gltf = await loadGltf(await projectile.getGlb());
+          caseObj.translateZ(-0.05);
+          obj.translateZ(0.05);
+          obj = test;
+          console.log('Combined object with case object');
+        }
+      }
+    }
+    obj = obj || (await loadGltf(await projectile.getShootGlb())).object;
 
-    return this.addQueue(key, gltf.object, {
+    obj.scale.set(2, 2, 2);
+
+    return this.addQueue(key, obj, {
       scale,
       size,
       view,

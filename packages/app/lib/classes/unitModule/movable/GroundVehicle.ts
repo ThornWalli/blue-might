@@ -90,7 +90,18 @@ export default class GroundVehicleUnitModule<
 
   override update(v: AnimationLoopValue): void {
     super.update(v);
-    this.moveUpdate({ delta: v.delta });
+
+    const controls = this.getControls();
+    if (
+      !this.isTurnOn() &&
+      (controls[ControlAction.MOVE_FORWARD] ||
+        controls[ControlAction.MOVE_BACKWARD] ||
+        controls[ControlAction.ASCEND] ||
+        controls[ControlAction.DESCEND])
+    ) {
+      this.turnOn();
+    }
+    this.moveUpdate({ delta: v.delta, controls });
   }
 
   getTmpRotationDirection() {
@@ -129,13 +140,12 @@ export default class GroundVehicleUnitModule<
         ai[ControlAction.ROTATE_RIGHT] ?? human[ControlAction.ROTATE_RIGHT]
     };
   }
-  moveUpdate({ delta }: { delta: number }) {
+  moveUpdate({ delta, controls }: { delta: number; controls: ControlState }) {
     const unit = this.getUnit();
     const acceleration = this.options.acceleration;
     const maxSpeed = this.options.maxSpeed;
     const friction = this.options.friction;
 
-    const controls = this.getControls();
     const aiActive = !!this.getAIControls();
 
     delta = Math.max(1 / 60, Math.min(delta, 1 / 30));

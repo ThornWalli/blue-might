@@ -137,6 +137,13 @@ const debugLinks = ref([
     }
   },
   {
+    title: 'Turret',
+    href: {
+      name: 'debug-map',
+      params: { map: 'debug/turret.zip' }
+    }
+  },
+  {
     title: 'Rescue',
     href: {
       name: 'debug-map',

@@ -66,7 +66,8 @@ const moduleDebug = ref<ModuleDebug>({
   supply: $props.modelValue.supply ?? false,
   transport: $props.modelValue.transport ?? false,
   weapon: $props.modelValue.weapon ?? false,
-  radar: $props.modelValue.radar ?? false
+  radar: $props.modelValue.radar ?? false,
+  customize: $props.modelValue.customize ?? false
 });
 
 function onReset() {

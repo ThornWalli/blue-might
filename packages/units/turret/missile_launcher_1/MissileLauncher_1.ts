@@ -26,7 +26,7 @@ import {
 import { ReplaySubject, Subject } from 'rxjs';
 import { playSound } from '@blue-might/weapon/utils';
 import { lerp } from 'three/src/math/MathUtils.js';
-import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
+import { PROJECTILE_KEY } from '@blue-might/app/lib/types/weapon';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import TurretBuildingUnit, {
   type TurretBuildingUnitModuleList,
@@ -141,7 +141,7 @@ export default class MissileLauncher_1
               {
                 weapon: new weapons.base_missile_launcher({
                   perSeconds: 0.5,
-                  projectile: PROJECTILE_TYPE.AIR_HOMING_MISSILE_1
+                  projectile: PROJECTILE_KEY.AIR_HOMING_MISSILE_1
                 })
               }
             ],
@@ -175,7 +175,7 @@ export default class MissileLauncher_1
     this.subscription.add(
       this.modules.weapon.observables.shoot$.subscribe(
         async ({ shoot: { projectileInstance } }) => {
-          playSound(await projectileInstance.projectile.getSfx(), 0.3);
+          playSound(await projectileInstance.projectile.getShootSfx(), 0.3);
         }
       )
     );

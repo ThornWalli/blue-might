@@ -1,7 +1,7 @@
 import { Vector3 } from 'three';
 
-import type { AnimationLoopValue } from '../Renderer';
 import type TankUnit from '../unit/vehicle/Tank';
+import type { ControlState } from '../playerModule/Controls';
 
 import GroundVehicleUnitModule, {
   type GroundVehicleUnitModuleOptions,
@@ -40,11 +40,16 @@ export default class TankUnitModule extends GroundVehicleUnitModule<
   }
 
   // eslint-disable-next-line complexity
-  override moveUpdate({ delta }: AnimationLoopValue): void {
+  override moveUpdate({
+    delta,
+    controls
+  }: {
+    delta: number;
+    controls: ControlState;
+  }): void {
     const unit = this.getUnit();
     const acceleration = this.options.acceleration;
 
-    const controls = this.getControls();
     const currentPower = this.getCurrentPower();
 
     const maxSpeed = this.options.maxSpeed;

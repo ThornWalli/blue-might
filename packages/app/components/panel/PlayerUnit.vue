@@ -64,108 +64,117 @@
             </div>
           </bm-details>
         </div>
-        <div v-if="weaponSlots.length > 0">
+        <div v-if="weaponSlots.length > 0 && currentWeaponSlot">
           <bm-details label="Weapons" open>
             <div class="grid-row">
-              <bm-control-item
-                button
-                indicator
-                label="Auto AIM"
-                hide-value
-                :value="
-                  (weaponAutopilot.aim ? 'On' : 'Off').padStart(
-                    padLength,
-                    '\u00A0'
-                  )
-                "
-                :indicator-status="
-                  weaponAutopilot.aim
-                    ? CONTROL_ITEM_STATUS.NORMAL
-                    : CONTROL_ITEM_STATUS.INACTIVE
-                "
-                @click="
-                  onClickWeaponAutopilot($event, { aim: !weaponAutopilot.aim })
-                " />
-
-              <bm-control-item
-                button
-                indicator
-                label="Auto Shoot"
-                hide-value
-                :value="
-                  (weaponAutopilot.shoot ? 'On' : 'Off').padStart(
-                    padLength,
-                    '\u00A0'
-                  )
-                "
-                :indicator-status="
-                  weaponAutopilot.shoot
-                    ? CONTROL_ITEM_STATUS.NORMAL
-                    : CONTROL_ITEM_STATUS.INACTIVE
-                "
-                @click="
-                  onClickWeaponAutopilot($event, {
-                    shoot: !weaponAutopilot.shoot
-                  })
-                " />
-            </div>
-            <div class="grid-row">
-              <bm-control-item
-                button
-                indicator
-                label="Helper"
-                hide-value
-                :value="
-                  (projectileHelper ? 'On' : 'Off').padStart(
-                    padLength,
-                    '\u00A0'
-                  )
-                "
-                :indicator-status="
-                  projectileHelper
-                    ? CONTROL_ITEM_STATUS.NORMAL
-                    : CONTROL_ITEM_STATUS.INACTIVE
-                "
-                @click="onClickProjectileHelper($event, !projectileHelper)" />
-            </div>
-            <bm-control-item
-              v-for="(slot, index) in weaponSlots"
-              :key="index"
-              button
-              indicator
-              :indicator-status="
-                slot.active
-                  ? slot.ammunition / slot.maxAmmunition < 0.5
-                    ? slot.ammunition <= 0
-                      ? CONTROL_ITEM_STATUS.DANGER
-                      : CONTROL_ITEM_STATUS.WARNING
-                    : CONTROL_ITEM_STATUS.NORMAL
-                  : CONTROL_ITEM_STATUS.INACTIVE
-              "
-              :label="
-                slot.weapon.projectile.shortName ?? `Weapon #${index + 1}`
-              "
-              :value="
-                slot.ammunition === Infinity && slot.ammunition === Infinity
-                  ? `x`.padStart(padLength, '\u00A0')
-                  : `${slot.ammunition}/${slot.maxAmmunition}`
-                      .toString()
-                      .padStart(padLength, '\u00A0')
-              "
-              @click="onClickWeaponSlot($event, slot)">
-              <template #after-indicator>
-                <img
-                  v-if="slot.thumb"
-                  :src="slot.thumb"
-                  :alt="
-                    slot.weapon.projectile.shortName ?? `Weapon #${index + 1}`
+              <div class="grid-col grid-col-vertical-end">
+                <bm-control-item
+                  button
+                  indicator
+                  label="AIM"
+                  hide-value
+                  :value="
+                    (weaponAutopilot.aim ? 'On' : 'Off').padStart(
+                      padLength,
+                      '\u00A0'
+                    )
+                  "
+                  :indicator-status="
+                    weaponAutopilot.aim
+                      ? CONTROL_ITEM_STATUS.NORMAL
+                      : CONTROL_ITEM_STATUS.INACTIVE
+                  "
+                  @click="
+                    onClickWeaponAutopilot($event, {
+                      aim: !weaponAutopilot.aim
+                    })
                   " />
-              </template>
-            </bm-control-item>
-            <bm-control-item
-              v-if="weaponSlots.length === 1"
-              label="(none)"
-              :value="'-'.padStart(padLength, '\u00A0')" />
+                <bm-control-item
+                  button
+                  indicator
+                  label="Auto"
+                  hide-value
+                  :value="
+                    (weaponAutopilot.shoot ? 'On' : 'Off').padStart(
+                      padLength,
+                      '\u00A0'
+                    )
+                  "
+                  :indicator-status="
+                    weaponAutopilot.shoot
+                      ? CONTROL_ITEM_STATUS.NORMAL
+                      : CONTROL_ITEM_STATUS.INACTIVE
+                  "
+                  @click="
+                    onClickWeaponAutopilot($event, {
+                      shoot: !weaponAutopilot.shoot
+                    })
+                  " />
+                <bm-control-item
+                  button
+                  indicator
+                  label="Helper"
+                  hide-value
+                  :value="
+                    (projectileHelper ? 'On' : 'Off').padStart(
+                      padLength,
+                      '\u00A0'
+                    )
+                  "
+                  :indicator-status="
+                    projectileHelper
+                      ? CONTROL_ITEM_STATUS.NORMAL
+                      : CONTROL_ITEM_STATUS.INACTIVE
+                  "
+                  @click="onClickProjectileHelper($event, !projectileHelper)" />
+
+                <!-- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -->
+                <bm-control-item
+                  indicator
+                  :label="currentWeaponSlot.weapon.name"
+                  hide-label
+                  :value="`#${(currentWeaponSlot.index + 1).toString().padEnd(2, '\u00A0')}${
+                    currentWeaponSlot.ammunition === Infinity &&
+                    currentWeaponSlot.ammunition === Infinity
+                      ? `x`.padStart(6, '\u00A0')
+                      : `${currentWeaponSlot.ammunition}`
+                          .toString()
+                          .padStart(7, '\u00A0')
+                  }`"
+                  :indicator-status="
+                    currentWeaponSlot.ammunition /
+                      currentWeaponSlot.maxAmmunition <
+                    0.5
+                      ? currentWeaponSlot.ammunition <= 0
+                        ? CONTROL_ITEM_STATUS.DANGER
+                        : CONTROL_ITEM_STATUS.WARNING
+                      : CONTROL_ITEM_STATUS.NORMAL
+                  " />
+              </div>
+              <div class="current-weapon">
+                <div
+                  class="name"
+                  :title="currentWeaponSlot.weapon.projectile.shortName ?? ''">
+                  <span>
+                    {{ currentWeaponSlot.weapon.projectile.shortName }}
+                  </span>
+                </div>
+                <div class="thumb">
+                  <img
+                    :src="currentWeaponSlot.thumb"
+                    :alt="`Weapon Thumb`"
+                    :title="
+                      currentWeaponSlot.weapon.projectile.shortName ?? ''
+                    " />
+                  <bm-button
+                    label="Change Weapon"
+                    mode="icon"
+                    :icon="ICON.ARROW_PATH_ROUNDED_SQUARE"
+                    hide-label
+                    @click="onClickChangeWeapon" />
+                </div>
+              </div>
+            </div>
           </bm-details>
         </div>
       </div>
@@ -262,6 +271,11 @@
               ).padStart(padLength, '\u00A0')
             "
             @click="onClickGears" />
+
+          <bm-button
+            v-if="canCustomize"
+            label="Customize Unit"
+            @click="onClickCustomizeUnit" />
         </bm-details>
         <div v-if="hasTransport && transportSlotInfo.slots.length">
           <bm-details label="Transport" open>
@@ -282,11 +296,19 @@
         </div>
       </div>
     </div>
+    <teleport to="body">
+      <bm-dialog ref="customizeUnitDialog">
+        <template #header>Customize Unit</template>
+        <template #default>
+          <bm-dialog-customize-unit :app="$props.app" :unit="unit" />
+        </template>
+      </bm-dialog>
+    </teleport>
   </bm-panel>
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import AirVehicleUnit from '@blue-might/app/lib/classes/unit/vehicle/AirVehicle';
 import WeaponUnitModule, {
   type WeaponAutopilotOptions
@@ -298,12 +320,15 @@ import usePlayerUnitInterface, {
 } from '@blue-might/app/composables/usePlayerUnitInterface';
 import type { App } from '@blue-might/app/lib/types';
 import { FLIGHT_STATUS } from '@blue-might/app/lib/classes/unitModule/movable/airVehicle/Helicopter';
-import type { WeaponSlot } from '@blue-might/app/lib/classes/WeaponSlot';
+import { ICON } from '@blue-might/app/utils/icons';
 
 import BmControlItem, { CONTROL_ITEM_STATUS } from '../element/ControlItem.vue';
 import BmPanel from '../Panel.vue';
+import BmButton from '../Button.vue';
 import BmDetails from '../Details.vue';
 import BmAttitudeIndicator from '../AttitudeIndicator.vue';
+import BmDialogCustomizeUnit from '../dialog/CustomizeUnit.vue';
+import BmDialog from '../Dialog.vue';
 import SvgIconHeart from '../../assets/icons/heart.svg?component';
 
 const padLength = 10;
@@ -331,8 +356,15 @@ const {
   playerLifes,
   transportSlotInfo,
   flightStatus,
-  projectileHelper
+  projectileHelper,
+  canCustomize
 } = usePlayerUnitInterface($props.app);
+
+const currentWeaponSlot = computed(() =>
+  weaponSlots.value.find(slot => slot.active)
+);
+
+const customizeUnitDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 
 const hasTransport = computed(() => {
   if (!unit.value) return false;
@@ -363,6 +395,15 @@ function blur(e: Event) {
   ((e.target as HTMLElement)?.closest('button') as HTMLButtonElement).blur();
 }
 
+function onClickChangeWeapon(e: Event) {
+  blur(e);
+  const vehicle = player.value?.modules.vehicle;
+  if (!vehicle) return;
+  if (weaponModule.value) {
+    weaponModule.value.switchSlot();
+  }
+}
+
 function onClickWeaponAutopilot(
   e: Event,
   options: Partial<WeaponAutopilotOptions>
@@ -374,26 +415,16 @@ function onClickWeaponAutopilot(
   };
   const vehicle = player.value?.modules.vehicle;
   if (!vehicle) return;
-  const weaponModule = vehicle
-    .getCurrentUnit()!
-    .getModuleByType(WeaponUnitModule);
-
-  if (weaponModule) {
-    weaponModule.setAutopilot(weaponAutopilot.value);
+  if (weaponModule.value) {
+    weaponModule.value.setAutopilot(weaponAutopilot.value);
   }
 }
 
 function onClickProjectileHelper(e: Event, value: boolean) {
   blur(e);
   projectileHelper.value = value;
-  const vehicle = player.value?.modules.vehicle;
-  if (!vehicle) return;
-  const weaponModule = vehicle
-    .getCurrentUnit()!
-    .getModuleByType(WeaponUnitModule);
-
-  if (weaponModule) {
-    weaponModule.setProjectileHelper(projectileHelper.value);
+  if (weaponModule.value) {
+    weaponModule.value.setProjectileHelper(projectileHelper.value);
   }
 }
 
@@ -421,9 +452,8 @@ const weaponModule = computed(() => {
   return vehicle.getCurrentUnit()!.getModuleByType(WeaponUnitModule);
 });
 
-function onClickWeaponSlot(e: Event, slot: { thumb: string } & WeaponSlot) {
-  blur(e);
-  weaponModule.value?.setSlot(slot);
+function onClickCustomizeUnit() {
+  customizeUnitDialog.value?.context?.open();
 }
 //#endregion
 </script>
@@ -455,7 +485,7 @@ function onClickWeaponSlot(e: Event, slot: { thumb: string } & WeaponSlot) {
       }
 
       &.secondary {
-        width: 300px;
+        /* width: 300px; */
       }
 
       & .bm-control-item {
@@ -531,6 +561,74 @@ function onClickWeaponSlot(e: Event, slot: { thumb: string } & WeaponSlot) {
 .heart {
   width: 12px;
   color: red;
+}
+
+.current-weapon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 96px;
+
+  &,
+  & button {
+    font-family: var(--font-family-bit-font);
+    font-size: var(--font-size-bit-font);
+    line-height: var(--line-height-bit-font);
+  }
+
+  & .name,
+  & .value {
+    box-sizing: border-box;
+    padding: var(--bm-spacing-small);
+    text-align: center;
+  }
+
+  & .name {
+    width: 100%;
+
+    & span {
+      display: block;
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  & .value {
+    box-sizing: border-box;
+    width: 100%;
+    background: #333;
+  }
+
+  & .thumb {
+    position: relative;
+    width: 100%;
+    padding-top: 100%;
+    background: #333;
+
+    & img {
+      --contour: #444;
+
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: block;
+      width: 80px;
+      image-rendering: pixelated;
+
+      /* filter: drop-shadow(2px 0 0 var(--contour))
+        drop-shadow(-2px 0 0 var(--contour)) drop-shadow(0 2px 0 var(--contour))
+        drop-shadow(0 -2px 0 var(--contour)); */
+      transform: translate(-50%, -50%);
+    }
+
+    & button {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+    }
+  }
 }
 
 @keyframes blink {
