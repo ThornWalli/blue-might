@@ -9,8 +9,9 @@ export interface WeaponSlotDescription {
   revert?: boolean;
 }
 
+export type WeaponSlotIndex = number;
 export class WeaponSlot implements WeaponSlotDescription {
-  index: number;
+  index: WeaponSlotIndex;
   /**
    * Whether this slot is currently active.
    * @default true
@@ -63,6 +64,10 @@ export class WeaponSlot implements WeaponSlotDescription {
     // implement destruction logic
   }
 
+  setWeapon(weapon: Weapon) {
+    this.weapon = weapon;
+  }
+
   toDescription(): WeaponSlotDescription {
     return {
       active: this.active,
@@ -75,4 +80,4 @@ export class WeaponSlot implements WeaponSlotDescription {
   }
 }
 
-export type WeaponSlotThumb = { thumb: string } & WeaponSlot;
+export type WeaponSlotThumb = { slot: WeaponSlot; thumb: string };

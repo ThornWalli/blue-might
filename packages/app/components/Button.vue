@@ -20,7 +20,7 @@
 </template>
 
 <script lang="ts" setup>
-import type { FunctionalComponent } from 'vue';
+import type { Component, FunctionalComponent } from 'vue';
 
 import type icons from '../utils/icons';
 import type { ICON } from '../utils/icons';
@@ -30,7 +30,7 @@ import BmBaseIcon from './base/Icon.vue';
 
 defineProps<{
   disabled?: boolean;
-  tag?: string;
+  tag?: string | Component;
   styleType?: 'primary' | 'secondary' | 'danger';
   mode?: 'normal' | 'icon' | 'text';
   selected?: boolean;
@@ -59,6 +59,7 @@ defineProps<{
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  outline: none;
 
   &[disabled] {
     cursor: not-allowed;
@@ -66,29 +67,52 @@ defineProps<{
   }
 
   &.mode-normal {
-    padding: var(--bm-spacing-small) var(--bm-spacing-medium);
-    font-family: var(--font-family-base);
-    font-size: 12px;
-    font-weight: bold;
+    box-sizing: border-box;
+    padding: var(--bm-spacing-medium) var(--bm-spacing-medium);
+    font-family: var(--font-family-bit-font);
+    font-size: var(--font-size-bit-font);
+    line-height: calc(var(--line-height-bit-font) * 1.2);
     color: var(--color-foreground);
     background-color: var(--color-background);
-    transition:
-      background-color var(--bm-easing-duration-short) var(--bm-easing-base),
-      outline-color var(--bm-easing-duration-short) var(--bm-easing-base),
-      color var(--bm-easing-duration-short) var(--bm-easing-base);
+    border: none;
 
-    &.selected,
+    &::after {
+      position: absolute;
+      top: 0;
+      left: 0;
+      box-sizing: border-box;
+      display: block;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      content: '';
+      border: solid 3px;
+      border-color: rgb(255 255 255 / 30%) rgb(0 0 0 / 30%) rgb(0 0 0 / 30%)
+        rgb(255 255 255 / 30%);
+    }
+
+    &:active,
+    &.selected {
+      background: var(--color-background-hover);
+
+      &::after {
+        border-color: rgb(0 0 0 / 30%) rgb(255 255 255 / 30%)
+          rgb(255 255 255 / 30%) rgb(0 0 0 / 30%);
+      }
+    }
+
+    /* &.selected,
     &:not([disabled]):hover {
       background: rgb(255 255 255 / 10%);
-    }
+    } */
 
-    &:not([disabled]):hover {
+    /* &:not([disabled]):hover {
       background: var(--color-background-hover);
-    }
+    } */
 
     &.style-type-primary {
       --color-background: var(--color-green-dark);
-      --color-background-hover: var(--color-green-mid);
+      --color-background-hover: var(--color-green-very-dark);
       --color-foreground: var(--color-white);
       --color-border: var(--color-gold);
     }

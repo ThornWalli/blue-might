@@ -67,7 +67,7 @@
         <div v-if="weaponSlots.length > 0 && currentWeaponSlot">
           <bm-details label="Weapons" open>
             <div class="grid-row">
-              <div class="grid-col grid-col-vertical-end">
+              <div class="grid-col grid-col-vertical-end grid-col-full">
                 <bm-control-item
                   button
                   indicator
@@ -128,24 +128,23 @@
                   "
                   @click="onClickProjectileHelper($event, !projectileHelper)" />
 
-                <!-- &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -->
                 <bm-control-item
                   indicator
-                  :label="currentWeaponSlot.weapon.name"
+                  :label="currentWeaponSlot.slot.weapon.name"
                   hide-label
-                  :value="`#${(currentWeaponSlot.index + 1).toString().padEnd(2, '\u00A0')}${
-                    currentWeaponSlot.ammunition === Infinity &&
-                    currentWeaponSlot.ammunition === Infinity
+                  :value="
+                    currentWeaponSlot.slot.ammunition === Infinity &&
+                    currentWeaponSlot.slot.ammunition === Infinity
                       ? `x`.padStart(6, '\u00A0')
-                      : `${currentWeaponSlot.ammunition}`
+                      : `${currentWeaponSlot.slot.ammunition}`
                           .toString()
                           .padStart(7, '\u00A0')
-                  }`"
+                  "
                   :indicator-status="
-                    currentWeaponSlot.ammunition /
-                      currentWeaponSlot.maxAmmunition <
+                    currentWeaponSlot.slot.ammunition /
+                      currentWeaponSlot.slot.maxAmmunition <
                     0.5
-                      ? currentWeaponSlot.ammunition <= 0
+                      ? currentWeaponSlot.slot.ammunition <= 0
                         ? CONTROL_ITEM_STATUS.DANGER
                         : CONTROL_ITEM_STATUS.WARNING
                       : CONTROL_ITEM_STATUS.NORMAL
@@ -154,9 +153,11 @@
               <div class="current-weapon">
                 <div
                   class="name"
-                  :title="currentWeaponSlot.weapon.projectile.shortName ?? ''">
+                  :title="
+                    currentWeaponSlot.slot.weapon.projectile.shortName ?? ''
+                  ">
                   <span>
-                    {{ currentWeaponSlot.weapon.projectile.shortName }}
+                    {{ currentWeaponSlot.slot.weapon.projectile.shortName }}
                   </span>
                 </div>
                 <div class="thumb">
@@ -164,7 +165,7 @@
                     :src="currentWeaponSlot.thumb"
                     :alt="`Weapon Thumb`"
                     :title="
-                      currentWeaponSlot.weapon.projectile.shortName ?? ''
+                      currentWeaponSlot.slot.weapon.projectile.shortName ?? ''
                     " />
                   <bm-button
                     label="Change Weapon"
@@ -361,7 +362,7 @@ const {
 } = usePlayerUnitInterface($props.app);
 
 const currentWeaponSlot = computed(() =>
-  weaponSlots.value.find(slot => slot.active)
+  weaponSlots.value.find(({ slot }) => slot.active)
 );
 
 const customizeUnitDialog = ref<InstanceType<typeof BmDialog> | null>(null);
@@ -608,14 +609,14 @@ function onClickCustomizeUnit() {
     background: #333;
 
     & img {
-      --contour: #444;
-
       position: absolute;
       top: 50%;
       left: 50%;
       display: block;
       width: 80px;
       image-rendering: pixelated;
+
+      --contour: #444;
 
       /* filter: drop-shadow(2px 0 0 var(--contour))
         drop-shadow(-2px 0 0 var(--contour)) drop-shadow(0 2px 0 var(--contour))

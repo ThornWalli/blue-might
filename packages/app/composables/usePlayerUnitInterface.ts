@@ -244,7 +244,7 @@ function create(app: App) {
             return from(slots).pipe(
               concatMap(async slot => {
                 return {
-                  ...slot,
+                  slot,
                   thumb: await thumbGenerator.getFromProjectile(
                     slot.weapon.projectile.id,
                     {

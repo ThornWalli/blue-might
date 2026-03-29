@@ -2,32 +2,36 @@
   <div class="bm-dialog-menu">
     <ul>
       <li v-for="link in links" :key="link.title">
-        <nuxt-link :href="link.href">{{ link.title }}</nuxt-link>
+        <bm-button :tag="NuxtLink" :href="link.href" :label="link.title" />
       </li>
     </ul>
     <bm-separator />
     <ul>
       <li v-for="link in missionLinks" :key="link.title">
-        <nuxt-link :href="link.href">{{ link.title }}</nuxt-link>
+        <bm-button :tag="NuxtLink" :href="link.href" :label="link.title" />
       </li>
     </ul>
     <bm-details label="Debug">
       <ul>
         <li v-for="link in debugLinks" :key="link.title">
-          <nuxt-link :href="link.href">{{ link.title }}</nuxt-link>
+          <bm-button :tag="NuxtLink" :href="link.href" :label="link.title" />
         </li>
       </ul>
     </bm-details>
     <ul>
       <li>
-        <nuxt-link target="_blank" href="https://lammpee.de">Lammpee</nuxt-link>
+        <bm-button
+          :tag="NuxtLink"
+          target="_blank"
+          href="https://lammpee.de"
+          label="Lammpee" />
       </li>
       <li>
-        <nuxt-link
+        <bm-button
+          :tag="NuxtLink"
           target="_blank"
-          href="https://github.com/ThornWalli/blue-might">
-          Github
-        </nuxt-link>
+          href="https://github.com/ThornWalli/blue-might"
+          label="Github" />
       </li>
     </ul>
     <div class="version">{{ version }}</div>
@@ -41,7 +45,9 @@ import type { App } from '@blue-might/app/lib/types';
 import type { DialogContext } from '../base/Dialog.vue';
 import BmSeparator from '../Separator.vue';
 import BmDetails from '../Details.vue';
+import BmButton from '../Button.vue';
 
+import NuxtLink from '#app/components/nuxt-link';
 import { useRoute, useRuntimeConfig } from '#imports';
 
 const runtimeConfig = useRuntimeConfig();
@@ -155,6 +161,13 @@ const debugLinks = ref([
     href: {
       name: 'debug-map',
       params: { map: 'debug/building.zip' }
+    }
+  },
+  {
+    title: 'Carrier',
+    href: {
+      name: 'debug-map',
+      params: { map: 'debug/carrier.zip' }
     }
   }
 ]);

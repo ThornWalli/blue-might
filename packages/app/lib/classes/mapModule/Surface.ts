@@ -402,16 +402,17 @@ export default class SurfaceModule extends MapModule<
     x: number,
     z: number,
     unitFilter?: (unit: Unit) => boolean,
-    maxDistance = 50
+    maxDistance = 20,
+    ignoreCache?: boolean
   ): number {
     const x_ = x.toPrecision(this.cachePrecision);
     const z_ = z.toPrecision(this.cachePrecision);
 
-    if (this.heightCache[x_] && this.heightCache[x_][z_]) {
+    if (this.heightCache[x_] && this.heightCache[x_][z_] && !ignoreCache) {
       return this.heightCache[x_][z_];
     }
 
-    this.surfaceData.position.set(x, 50, z);
+    this.surfaceData.position.set(x, maxDistance, z);
 
     const raycaster = this.surfaceData.raycaster;
     raycaster.far = maxDistance;
@@ -502,7 +503,7 @@ export default class SurfaceModule extends MapModule<
       x = x.x;
     }
 
-    this.surfaceData.position.set(x, 50, z!);
+    this.surfaceData.position.set(x, maxDistance, z!);
 
     const raycaster = this.surfaceData.raycaster;
     raycaster.far = maxDistance;
@@ -758,7 +759,11 @@ export default class SurfaceModule extends MapModule<
     x: number,
     z: number,
     unitFilter?: (unit: Unit) => boolean,
-    options?: { raycaster?: boolean; raycasterDistance?: number }
+    options?: {
+      raycaster?: boolean;
+      raycasterDistance?: number;
+      ignoreCache?: boolean;
+    }
   ): number {
     unitFilter = unitFilter ?? (() => true);
     if (options?.raycaster) {
@@ -766,7 +771,8 @@ export default class SurfaceModule extends MapModule<
         x,
         z,
         unitFilter,
-        options?.raycasterDistance
+        options?.raycasterDistance,
+        options?.ignoreCache
       );
     }
 
@@ -783,17 +789,13 @@ export default class SurfaceModule extends MapModule<
         unit.modules.collision.getDefaultCollisionObject() ?? unit.root
       );
 
-      const minY = box.max.y;
-      return minY;
+      return box.max.y;
     }
     return this.getHeightByHeightMapTexture(x, z);
-    // return this.performRaycastForSurfaceHeight(x, z, unitFilter);
   }
 
   private getHeightByHeightMapTexture(x: number, z: number): number {
-    // Interpolierte Höhe aus der Heightmap (normalisiert 0-1)
     const depth = this.getDepthAt(x, z);
-    // Transformation in Welt-Höhe: gleiche wie im Mesh (vertices Y = depth * -10; object.position.y = 9)
     return depth * -10 + this.state.origin.y;
   }
 
@@ -808,7 +810,8 @@ export default class SurfaceModule extends MapModule<
     x: number | Vector2,
     z: number | undefined = undefined,
     unitFilter: (unit: Unit) => boolean = () => true,
-    maxDistance?: number
+    maxDistance?: number,
+    ignoreCache?: boolean
   ): number {
     if (x instanceof Vector2) {
       z = x.y;
@@ -818,7 +821,8 @@ export default class SurfaceModule extends MapModule<
       x,
       z!,
       unitFilter,
-      maxDistance ?? 50
+      maxDistance ?? 20,
+      ignoreCache
     );
     return height;
   }

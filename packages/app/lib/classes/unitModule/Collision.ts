@@ -79,6 +79,24 @@ export default class CollisionUnitModule<
     CollisionUnitModuleObservables,
   State extends CollisionUnitModuleState = CollisionUnitModuleState
 > extends UnitModule<Options, State, Observables> {
+  isIntersect(position: Vector3): boolean {
+    this.refreshWorldOBBs();
+    for (const obb of this.worldOBBs) {
+      // Transformiere die Position in den lokalen Raum der OBB
+      const localPos = position
+        .clone()
+        .sub(obb.center)
+        .applyMatrix3(obb.rotation.clone().transpose());
+      if (
+        Math.abs(localPos.x) <= obb.halfSize.x &&
+        Math.abs(localPos.y) <= obb.halfSize.y &&
+        Math.abs(localPos.z) <= obb.halfSize.z
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }
   static override TYPE = 'collision';
   private localOBBs: OBB[] = [];
   private worldOBBs: OBB[] = [];

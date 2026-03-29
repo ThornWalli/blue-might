@@ -30,6 +30,7 @@ import type { RawUnitDescription_Windsock_1 } from './building/windsock_1/Windso
 import type { RawUnitDescription_SupplyStation_1 } from './building/supply_station_1/SupplyStation_1';
 import type { RawUnitDescription_Barrack_1 } from './building/barrack_1/Barrack_1';
 import type { RawUnitDescription_BarrackRescue_1 } from './building/barrack_rescue_1/BarrackRescue_1';
+import type { RawUnitDescription_Carrier_1 } from './building/carrier_1/Carrier_1';
 import type { RawUnitDescription_CombatSubmarine_1 } from './vehicle/combat_submarine_1/CombatSubmarine_1';
 import type { RawUnitDescription_CombatFregatte_1 } from './vehicle/combat_fregatte_1/CombatFregatte_1';
 import type { RawUnitDescription_Tree_1 } from './tree/tree_1/Tree_1';
@@ -72,6 +73,7 @@ import type Helicopter_1 from './vehicle/helicopter_1/Helicopter_1';
 import type Scientist_1 from './vehicle/scientist_1/Scientist_1';
 import type Civilian_1 from './vehicle/civilian_1/Civilian_1';
 import type Radar_1 from './building/radar_1/Radar_1';
+import type Carrier_1 from './building/carrier_1/Carrier_1';
 
 export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_LandingPortSupplyStation_1<O>
@@ -104,6 +106,7 @@ export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_SupplyStation_1<O>
   | RawUnitDescription_Barrack_1<O>
   | RawUnitDescription_BarrackRescue_1<O>
+  | RawUnitDescription_Carrier_1<O>
   | RawUnitDescription_CombatSubmarine_1<O>
   | RawUnitDescription_CombatFregatte_1<O>
   | RawUnitDescription_CombatShip_1<O>
@@ -142,6 +145,7 @@ export type Units =
   | Windsock_1
   | SupplyStation_1
   | Barrack_1
+  | Carrier_1
   | BarrackRescue_1
   | CombatSubmarine_1
   | CombatFregatte_1

@@ -4,6 +4,7 @@
     v-slot="{ close }"
     class="bm-dialog"
     :class="{
+      header: !hideHeader,
       'embed-content': embedContent
     }">
     <div class="wrapper">
@@ -78,14 +79,16 @@ function onClickFullscreen() {
 .bm-dialog {
   &:not(.embed-content) {
     & .content {
-      padding: 5px;
+      padding: var(--bm-spacing-medium);
     }
   }
 
   & .wrapper {
     overflow: hidden;
     color: var(--bm-dialog-foreground);
+    outline: solid var(--bm-spacing-small) var(--bm-dialog-outline-color);
     background: var(--bm-dialog-background);
+    border: solid var(--bm-spacing-medium) var(--bm-dialog-border-color);
   }
 
   & .header {
@@ -94,7 +97,7 @@ function onClickFullscreen() {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 5px;
+    padding: var(--bm-spacing-medium) 0;
     font-weight: bold;
     color: var(--bm-dialog-header-foreground);
     background: var(--bm-dialog-header-background);
@@ -107,6 +110,12 @@ function onClickFullscreen() {
       font-family: var(--font-family-bit-font);
       font-size: var(--font-size-bit-font);
       line-height: var(--line-height-bit-font);
+    }
+  }
+
+  &.header {
+    & .wrapper {
+      border-top: 0;
     }
   }
 

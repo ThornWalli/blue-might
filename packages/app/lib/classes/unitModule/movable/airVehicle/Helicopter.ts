@@ -517,12 +517,13 @@ export default class HelicopterUnitModule<
 
     if (!active || !controls.ascend) {
       const groundModule = unit.getMap()!.modules.surface;
+
       let minY =
         groundModule.getSurfaceHeightAt(
           unitPosition.x,
           unitPosition.z,
           u => !u.equals(unit),
-          { raycaster: true }
+          { raycaster: true, ignoreCache: true }
         ) ?? 0;
 
       if (!isDestroyed && this.state.gearsOpened) {
@@ -562,7 +563,7 @@ export default class HelicopterUnitModule<
               position.x,
               position.z,
               u => !u.equals(unit),
-              { raycaster: true }
+              { raycaster: true, ignoreCache: true }
             ) ?? 0;
           if (!isDestroyed && this.state.gearsOpened) {
             minY += this.options.gearsHeight;
@@ -628,8 +629,6 @@ export default class HelicopterUnitModule<
     unit.setPitch(tilt.x);
     unit.setRoll(-tilt.z);
   }
-
-  lastUpdateTime = 0;
 
   getTmpRight() {
     return this._right;

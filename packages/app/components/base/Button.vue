@@ -5,8 +5,10 @@
 </template>
 
 <script setup lang="ts">
+import type { Component } from 'vue';
+
 defineProps<{
-  tag?: string;
+  tag?: string | Component;
 }>();
 </script>
 

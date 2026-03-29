@@ -43,6 +43,30 @@ defineEmits<{
   cursor: pointer;
   background: var(--color-background);
 
+  &::after {
+    position: absolute;
+    top: 0;
+    left: 0;
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    content: '';
+    border: solid 3px;
+    border-color: rgb(255 255 255 / 30%) rgb(0 0 0 / 30%) rgb(0 0 0 / 30%)
+      rgb(255 255 255 / 30%);
+  }
+
+  &:has(select:active) {
+    background: var(--color-background-hover);
+
+    &::after {
+      border-color: rgb(0 0 0 / 30%) rgb(255 255 255 / 30%)
+        rgb(255 255 255 / 30%) rgb(0 0 0 / 30%);
+    }
+  }
+
   &:hover {
     background: var(--color-background-hover);
 
@@ -55,9 +79,10 @@ defineEmits<{
     box-sizing: border-box;
     display: block;
     width: 100%;
-    padding: var(--bm-spacing-small);
-    font-family: var(--font-family-base);
-    font-size: 12px;
+    padding: var(--bm-spacing-medium) var(--bm-spacing-medium);
+    font-family: var(--font-family-bit-font);
+    font-size: var(--font-size-bit-font);
+    line-height: calc(var(--line-height-bit-font) * 1.2);
     color: var(--color-foreground);
     appearance: none;
     cursor: pointer;

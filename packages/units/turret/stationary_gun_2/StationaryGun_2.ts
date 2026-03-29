@@ -103,7 +103,7 @@ export default class StationaryGun_2 extends BuildingUnit<
           ...options.moduleOptions,
           weapon: {
             slots: (options.moduleOptions?.weapon as WeaponUnitModuleOptions)
-              ?.slots ?? [new weapons.default(), new weapons.default()],
+              ?.slots ?? [new weapons.gun_35mm(), new weapons.gun_35mm()],
             ...options.moduleOptions?.weapon
           },
           collision: {

@@ -10,29 +10,16 @@ import {
 
 declare module '@blue-might/app/lib/types/weapon' {
   interface Weapon {
-    DEFAULT: 'default';
+    GUN_35MM: 'gun_35mm';
+    GATLING_GUN_35MM: 'gatling_gun_35mm';
+    RAPID_FIRE_GUN_35MM: 'rapid_fire_gun_35mm';
+    GUN_120MM: 'gun_120mm';
+    GUN_155MM: 'gun_155mm';
     BASE_MISSILE_LAUNCHER: 'base_missile_launcher';
   }
 }
 
-WEAPON.DEFAULT = 'default';
-export class Default extends Weapon {
-  constructor(
-    projectile: typeof PROJECTILE_KEY.CALIBER_35_MM_HE = PROJECTILE_KEY.CALIBER_35_MM_HE
-  ) {
-    super({
-      projectileType: PROJECTILE_TYPE.P35,
-      id: WEAPON.DEFAULT,
-      name: 'Default Weapon',
-      description: 'The default weapon.',
-      spreadAmount: 0.1,
-      perSeconds: 1,
-      projectile: projectile,
-      shootType: WEAPON_SHOOT_TYPE.AUTO,
-      shootStrength: 1
-    });
-  }
-}
+//#region missile
 
 WEAPON.BASE_MISSILE_LAUNCHER = 'base_missile_launcher';
 export class BaseMissileLauncher extends Weapon {
@@ -51,11 +38,35 @@ export class BaseMissileLauncher extends Weapon {
   }
 }
 
+//#endregion
+
+//#region gun
+
+WEAPON.GUN_35MM = 'gun_35mm';
+export class Gun35mm extends Weapon {
+  constructor(
+    projectile: typeof PROJECTILE_KEY.CALIBER_35_MM_HE = PROJECTILE_KEY.CALIBER_35_MM_HE
+  ) {
+    super({
+      projectileType: PROJECTILE_TYPE.P35,
+      id: WEAPON.GUN_35MM,
+      name: 'Gun 35mm',
+      description: 'A powerful 35mm gun.',
+      spreadAmount: 0.1,
+      perSeconds: 1,
+      projectile: projectile,
+      shootType: WEAPON_SHOOT_TYPE.AUTO,
+      shootStrength: 1
+    });
+  }
+}
+
+WEAPON.GATLING_GUN_35MM = 'gatling_gun_35mm';
 export class GatlingGun35mm extends Weapon {
   constructor(options?: Partial<ConstructorParameters<typeof Weapon>[0]>) {
     super({
       projectileType: PROJECTILE_TYPE.P35,
-      id: options?.id ?? 'gatling_gun',
+      id: options?.id ?? WEAPON.GATLING_GUN_35MM,
       name: options?.name ?? 'Gatling Gun',
       description: options?.description ?? 'A rapid-fire gun.',
       spreadAmount: options?.spreadAmount ?? 0.2,
@@ -66,6 +77,8 @@ export class GatlingGun35mm extends Weapon {
     });
   }
 }
+
+WEAPON.RAPID_FIRE_GUN_35MM = 'rapid_fire_gun_35mm';
 export class RapidFireGun35mm extends Weapon {
   constructor(
     options?: Partial<
@@ -77,9 +90,9 @@ export class RapidFireGun35mm extends Weapon {
   ) {
     super({
       projectileType: PROJECTILE_TYPE.P35,
-      id: 'gun_35mm',
-      name: 'Gun 35mm',
-      description: 'A powerful 35mm gun.',
+      id: WEAPON.RAPID_FIRE_GUN_35MM,
+      name: 'Rapid Fire Gun 35mm',
+      description: 'A rapid-fire gun.',
       spreadAmount: options?.spreadAmount ?? 0,
       perSeconds: options?.perSeconds ?? 5,
       projectile: options?.projectile ?? PROJECTILE_KEY.CALIBER_35_MM_HE,
@@ -89,6 +102,7 @@ export class RapidFireGun35mm extends Weapon {
   }
 }
 
+WEAPON.GUN_120MM = 'gun_120mm';
 export class Gun120mm extends Weapon {
   constructor(
     options?: Partial<
@@ -100,7 +114,7 @@ export class Gun120mm extends Weapon {
   ) {
     super({
       projectileType: PROJECTILE_TYPE.P120,
-      id: 'gun_120mm',
+      id: WEAPON.GUN_120MM,
       name: 'Gun 120mm',
       description: 'A powerful 120mm gun.',
       spreadAmount: options?.spreadAmount ?? 0,
@@ -112,6 +126,7 @@ export class Gun120mm extends Weapon {
   }
 }
 
+WEAPON.GUN_155MM = 'gun_155mm';
 export class Gun155mm extends Weapon {
   constructor(
     options?: Partial<
@@ -123,32 +138,34 @@ export class Gun155mm extends Weapon {
   ) {
     super({
       projectileType: PROJECTILE_TYPE.P155,
-      id: 'gun_155mm',
+      id: WEAPON.GUN_155MM,
       name: 'Gun 155mm',
       description: 'A powerful 155mm gun.',
       spreadAmount: options?.spreadAmount ?? 0,
-      perSeconds: options?.perSeconds ?? 1,
+      perSeconds: options?.perSeconds ?? 0.25,
       projectile: options?.projectile ?? PROJECTILE_KEY.CALIBER_155_MM_HE,
       shootType: WEAPON_SHOOT_TYPE.SINGLE,
-      shootStrength: 5
+      shootStrength: 20
     });
   }
 }
 
+//#endregion
+
 const weapons = {
-  default: Default,
-  base_missile_launcher: BaseMissileLauncher,
-  gatling_gun_35mm: GatlingGun35mm,
-  rapid_fire_gun_35mm: RapidFireGun35mm,
-  gun_120mm: Gun120mm,
-  gun_155mm: Gun155mm
+  [WEAPON.BASE_MISSILE_LAUNCHER]: BaseMissileLauncher,
+  [WEAPON.GUN_35MM]: Gun35mm,
+  [WEAPON.GATLING_GUN_35MM]: GatlingGun35mm,
+  [WEAPON.RAPID_FIRE_GUN_35MM]: RapidFireGun35mm,
+  [WEAPON.GUN_120MM]: Gun120mm,
+  [WEAPON.GUN_155MM]: Gun155mm
 };
 
 export { weapons };
 
 export type Weapons =
-  | Default
   | BaseMissileLauncher
+  | Gun35mm
   | GatlingGun35mm
   | RapidFireGun35mm
   | Gun120mm

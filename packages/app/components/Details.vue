@@ -32,6 +32,7 @@ defineProps<{
     line-height: var(--line-height-bit-font);
     color: var(--bm-fieldset-foreground);
     cursor: pointer;
+    user-select: none;
 
     &::before {
       width: 1em;

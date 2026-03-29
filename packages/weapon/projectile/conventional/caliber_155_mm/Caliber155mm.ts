@@ -16,7 +16,7 @@ export class Caliber155MmHeProjectile extends Default {
       shortName: '155mm HE',
       description: 'A 155mm high-explosive projectile.',
       maxLifetime: 10,
-      speed: 5,
+      speed: 1,
       strength: 4,
       weight: 5,
       radius: 1.2

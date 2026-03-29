@@ -167,35 +167,6 @@ export default class UnitChunkManager {
     return visibleChunkKeys;
   }
 
-  // findVisibleChunks(camera: Camera) {
-  //   this.projScreenMatrix.multiplyMatrices(
-  //     camera.projectionMatrix,
-  //     camera.matrixWorldInverse
-  //   );
-  //   this.frustum.setFromProjectionMatrix(this.projScreenMatrix);
-
-  //   const visibleChunkKeys = new Set<string>();
-  //   const allChunkPositions = this.getChunkPositions();
-
-  //   // Puffer-Faktor, um Ungenauigkeiten auszugleichen (z. B. 10% Erweiterung)
-  //   const buffer = 1.1; // Anpassen, falls nötig
-
-  //   for (const pos of allChunkPositions) {
-  //     // WICHTIG: Box muss am Chunk-Zentrum sein, mit Puffer erweitert
-  //     const chunkBox = new Box3().setFromCenterAndSize(
-  //       pos.clone().addScalar(this.size / 2), // Zentrum des Chunks
-  //       new Vector3(this.size * buffer, this.size * buffer, this.size * buffer)
-  //     );
-
-  //     if (this.frustum.intersectsBox(chunkBox)) {
-  //       const chunkKey = this.getChunkKey(pos);
-  //       visibleChunkKeys.add(chunkKey);
-  //     }
-  //   }
-
-  //   return visibleChunkKeys;
-  // }
-
   getUnitsInRadius(position: Vector3, radius: number) {
     const unitsInRadius: { unit: Unit; distance: number }[] = [];
     const chunkSize = this.size;
@@ -229,7 +200,8 @@ export default class UnitChunkManager {
             chunk.units.forEach(unit => {
               const unitPos = unit.getPosition();
               const distance = position.distanceTo(unitPos);
-              if (distance <= radius) {
+              const intersect = unit.modules.collision.isIntersect(position);
+              if (intersect || distance <= radius) {
                 unitsInRadius.push({ unit, distance });
               }
             });
@@ -237,7 +209,6 @@ export default class UnitChunkManager {
         }
       }
     }
-
     unitsInRadius.sort((a, b) => a.distance - b.distance);
 
     return unitsInRadius.map(entry => {
