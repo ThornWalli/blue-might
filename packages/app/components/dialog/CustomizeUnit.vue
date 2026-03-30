@@ -139,9 +139,10 @@ const preparedWeapons = ref<WeaponThumb[]>(
 
 const filteredWeaponSlots = computed(() => {
   return preparedWeapons.value.filter(slot => {
+    const projectileTypes = currentSlot.value?.slot.getProjectileTypes() ?? [];
     return (
-      currentSlot.value?.slot.weapon.projectileType ===
-      slot.weapon.projectileType
+      projectileTypes.length === 0 ||
+      projectileTypes.includes(slot.weapon.projectileType)
     );
   });
 });

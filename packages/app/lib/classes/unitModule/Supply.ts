@@ -193,7 +193,11 @@ export default class SupplyUnitModule extends UnitModule<
 
   override update({ time }: AnimationLoopValue): void {
     //#region  supply
-    if (this.state.unit) {
+    if (
+      this.state.unit &&
+      !this.state.unit.isDestroyed() &&
+      !this.state.unit.modules.damage.isDestroyed()
+    ) {
       const unit = this.state.unit;
       const damageModule = unit.modules.damage;
       const weaponModule =
@@ -279,7 +283,12 @@ export default class SupplyUnitModule extends UnitModule<
   setSupplyUnit(unit: VehicleUnit | null) {
     if (unit === this.state.unit) return;
 
-    if (this.state.unit && this.state.unit.modules.customize) {
+    if (
+      this.state.unit &&
+      this.state.unit.modules.customize &&
+      !this.state.unit.isDestroyed() &&
+      !this.state.unit.modules.damage.isDestroyed()
+    ) {
       this.state.unit.modules.customize.setSupplyUnit(null);
     }
 

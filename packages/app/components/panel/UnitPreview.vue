@@ -57,14 +57,14 @@
           )
         " /> -->
     </bm-fieldset>
-    <bm-button
+    <!-- <bm-button
       v-if="canFocusUnit"
       label="Focus Unit"
-      @click="onClickFocusUnit" />
-    <bm-button
+      @click="onClickFocusUnit" /> -->
+    <!-- <bm-button
       v-if="canUseVehicle"
       label="Use Vehicle"
-      @click="onClickUseVehicle" />
+      @click="onClickUseVehicle" /> -->
   </bm-panel>
 </template>
 
@@ -75,10 +75,10 @@ import type { Vector3 } from 'three';
 import PlayerUnitModule from '@blue-might/app/lib/classes/unitModule/Player';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
 import type { App } from '@blue-might/app/lib/types';
-import type { Units, VehicleUnits } from '@blue-might/units';
+import type { Units } from '@blue-might/units';
 
 import BmControlItem, { CONTROL_ITEM_STATUS } from '../element/ControlItem.vue';
-import BmButton from '../Button.vue';
+// import BmButton from '../Button.vue';
 import BmPanel from '../Panel.vue';
 import BmFieldset from '../Fieldset.vue';
 import BmObjectPreviewUnit from '../objectPreview/Unit.vue';
@@ -164,37 +164,36 @@ const previewOptions = computed(() => {
   };
 });
 
-const canUseVehicle = computed(() => {
-  if (!unit.value) return false;
+// const canUseVehicle = computed(() => {
+//   if (!unit.value) return false;
 
-  const playerUnitModule = unit.value.getModuleByType(PlayerUnitModule);
-  return playerUnitModule && !playerUnitModule.hasPlayer();
-});
+//   const playerUnitModule = unit.value.getModuleByType(PlayerUnitModule);
+//   return playerUnitModule && !playerUnitModule.hasPlayer();
+// });
 
-const canFocusUnit = ref(true);
+// function onClickUseVehicle() {
+//   const app = $props.app;
+//   if (!('player' in app.modules)) return;
 
-function onClickUseVehicle() {
-  const app = $props.app;
-  if (!('player' in app.modules)) return;
+//   const u = unit.value as VehicleUnits;
+//   if (!u) return;
+//   if (canUseVehicle.value) {
+//     const player = app.modules.player.getCurrentPlayer();
 
-  const u = unit.value as VehicleUnits;
-  if (!u) return;
-  if (canUseVehicle.value) {
-    const player = app.modules.player.getCurrentPlayer();
+//     if (!player) return;
+//     player.modules.vehicle.setVehicleUnit(u);
+//     u.getModuleByType(PlayerUnitModule)?.setPlayer(player);
+//     unit.value = u;
+//   }
+// }
 
-    if (!player) return;
-    player.modules.vehicle.setVehicleUnit(u);
-    u.getModuleByType(PlayerUnitModule)?.setPlayer(player);
-    unit.value = u;
-  }
-}
-
-function onClickFocusUnit() {
-  const u = unit.value;
-  if (!u) return;
-  const app = $props.app;
-  app.modules.unitFocus.focus(u);
-}
+// const canFocusUnit = ref(true);
+// function onClickFocusUnit() {
+//   const u = unit.value;
+//   if (!u) return;
+//   const app = $props.app;
+//   app.modules.unitFocus.focus(u);
+// }
 </script>
 
 <style lang="postcss" scoped>

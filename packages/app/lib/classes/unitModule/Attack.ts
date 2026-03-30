@@ -25,7 +25,8 @@ import {
   isBuilding,
   isGroundVehicle,
   isSeaVehicle,
-  isUnitDestroyed
+  isUnitDestroyed,
+  isVehicle
 } from '../../utils/unit';
 import type { UnitModules } from '../Unit';
 import { ControlAction } from '../playerModule/Controls';
@@ -170,15 +171,16 @@ export default class AttackUnitModule extends UnitModule<
 
     if ('player' in unit.modules) {
       const player$ = unit.modules.player.observables.player$;
-      // this.subscription.add(
-      //   player$.subscribe(player => {
-      //     if (isVehicle(this.getUnit())) {
-      //       this.setFollowTarget(!player);
-      //     } else {
-      //       this.setFollowTarget(false);
-      //     }
-      //   })
-      // );
+      this.subscription.add(
+        player$.subscribe(player => {
+          const unit = this.getUnit();
+          if (isVehicle(unit) && !isSeaVehicle(unit)) {
+            this.setFollowTarget(!player);
+          } else {
+            this.setFollowTarget(false);
+          }
+        })
+      );
 
       this.subscription.add(
         player$
