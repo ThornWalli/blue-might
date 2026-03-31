@@ -12,8 +12,8 @@ catalog:
   '@types/node': 25.5.0
   '@types/pathfinding': 0.1.0
   '@types/three': 0.183.1
-  '@types/web': 0.0.344
-  '@typescript-eslint/eslint-plugin': 8.57.2
+  '@types/web': 0.0.345
+  '@typescript-eslint/eslint-plugin': 8.58.0
   change-case: 5.4.4
   consola: 3.4.2
   dotenv-mono: 1.5.1
@@ -44,13 +44,13 @@ catalog:
   three: 0.183.2
   tsx: 4.21.0
   typescript: 5.9.3
-  typescript-eslint: 8.57.2
+  typescript-eslint: 8.58.0
   ufo: 1.6.3
   vite: 8.0.3
   vite-plugin-eslint2: 5.1.0
   vite-plugin-markdown: 2.2.0
   vite-plugin-mkcert: 1.17.10
-  vite-plugin-node-polyfills: 0.25.0
+  vite-plugin-node-polyfills: 0.26.0
   vite-svg-loader: 5.1.1
   vitest: 4.1.2
   vue: 3.5.31
