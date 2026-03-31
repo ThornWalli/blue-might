@@ -8,7 +8,7 @@ import {
   type SetupContext
 } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
-import { Mesh, SkinnedMesh, Vector2 } from 'three';
+import { LoopRepeat, Mesh, SkinnedMesh, Vector2 } from 'three';
 import BuildingUnit, {
   type BuildingUnitModuleList,
   type BuildingUnitModules,
@@ -93,6 +93,25 @@ export default class Carrier_1<
   override async afterSetup(_context: SetupContext) {
     await super.afterSetup(_context);
     this.setMaterialReady();
+
+    //#region Animation
+
+    const action = this.modules.animation.getAction('radar');
+    if (action) {
+      action.clampWhenFinished = false;
+      action.setLoop(LoopRepeat, Infinity);
+      action.setDuration(2);
+    }
+
+    this.modules.animation.playAction('radar');
+
+    this.subscription.add(
+      this.modules.damage.observables.destroyed$.subscribe(() => {
+        this.modules.animation.stopAction('radar');
+      })
+    );
+
+    //#endregion
   }
 
   override getTileType() {
