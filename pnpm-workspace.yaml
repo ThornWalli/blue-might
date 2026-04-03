@@ -8,7 +8,7 @@ catalog:
   '@nuxt/eslint': 1.15.2
   '@nuxtjs/critters': 0.9.0
   '@nuxtjs/robots': 5.7.1
-  '@nuxtjs/sitemap': 7.6.0
+  '@nuxtjs/sitemap': 8.0.11
   '@types/node': 25.5.0
   '@types/pathfinding': 0.1.0
   '@types/three': 0.183.1
