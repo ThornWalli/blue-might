@@ -28,7 +28,7 @@ export default class GroundMissile_1 extends Projectile {
       maxLifetime: 5,
       speed: 6,
       strength: 2.4,
-      radius: 1,
+      radius: 1.1,
       airResistance: 0,
       weight: 0,
       targetType: TARGET_TYPE.GROUND,

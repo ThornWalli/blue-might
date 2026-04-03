@@ -58,13 +58,13 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, inject, ref } from 'vue';
+import { computed, inject, ref, type Raw } from 'vue';
 import type { App } from '@blue-might/app/lib/types';
 import type { Units } from '@blue-might/units';
 import { concatMap, Subscription } from 'rxjs';
 import type {
   WeaponSlotIndex,
-  WeaponSlotThumb
+  WeaponSlotOptionsThumb
 } from '@blue-might/app/lib/classes/WeaponSlot';
 import thumbGenerator from '@blue-might/app/services/thumbGenerator';
 import { projectiles, weapons } from '@blue-might/weapon';
@@ -85,7 +85,7 @@ const currentSlotIndex = ref<WeaponSlotIndex>(0);
 
 const $props = defineProps<{
   app: App;
-  unit: Units;
+  unit: Raw<Units>;
 }>();
 
 if (!('weapon' in $props.unit.modules)) {
@@ -117,7 +117,7 @@ const currentSlot = computed(
 const filteredProjectiles = computed(() => {
   return preparedProjectiles.value.filter(
     projectile =>
-      currentSlot.value?.slot.weapon.projectileType === projectile.type
+      currentSlot.value?.slot.weapon?.projectileType === projectile.type
   );
 });
 
@@ -139,7 +139,7 @@ const preparedWeapons = ref<WeaponThumb[]>(
 
 const filteredWeaponSlots = computed(() => {
   return preparedWeapons.value.filter(slot => {
-    const projectileTypes = currentSlot.value?.slot.getProjectileTypes() ?? [];
+    const projectileTypes = currentSlot.value?.slot.projectileTypes ?? [];
     return (
       projectileTypes.length === 0 ||
       projectileTypes.includes(slot.weapon.projectileType)
@@ -147,8 +147,9 @@ const filteredWeaponSlots = computed(() => {
   });
 });
 
-const currentWeaponSlots = ref<WeaponSlotThumb[]>([]);
+const currentWeaponSlots = ref<WeaponSlotOptionsThumb[]>([]);
 const subscription = new Subscription();
+
 subscription.add(
   weaponModule.observables.slots$
     .pipe(
@@ -157,6 +158,10 @@ subscription.add(
           slots.map(async slot => {
             return {
               slot,
+              options: {
+                ...slot.getOptions(),
+                projectileTypes: slot.getProjectileTypes()
+              },
               thumb: await thumbGenerator.getFromProjectile(
                 slot.weapon.projectile.id,
                 {
@@ -165,16 +170,20 @@ subscription.add(
                   withCase: false
                 }
               )
-            } as WeaponSlotThumb;
+            } as WeaponSlotOptionsThumb;
           })
         );
       })
     )
     .subscribe(slots => {
-      console.log('Update weapon slots', slots);
+      const index = Math.max(
+        currentWeaponSlots.value.findIndex(
+          slot => slot.slot.index === currentSlot.value?.slot.index
+        ),
+        0
+      );
       currentWeaponSlots.value = slots;
-      // currentSlotIndex.value =
-      //   slots.find(slot => slot.slot.active)?.slot.index ?? 0;
+      currentSlotIndex.value = index;
     })
 );
 
@@ -184,13 +193,25 @@ function onClickCurrentWeaponSlot(slotIndex: WeaponSlotIndex) {
 
 function onClickWeaponSlot(weaponId: WeaponIdentifier) {
   const weaponClass = weapons[weaponId as keyof typeof weapons];
-  currentSlot.value?.slot.setWeapon(new weaponClass());
-  weaponModule.setSlots(currentWeaponSlots.value.map(slot => slot.slot));
+  if (currentSlot.value) {
+    currentSlot.value.slot.setWeapon(
+      new weaponClass(currentSlot.value.options.weaponOptions)
+    );
+    currentSlot.value.options.weapon = weaponId;
+  }
+
+  weaponModule.setSlots(currentWeaponSlots.value.map(slot => slot.options));
 }
 
 function onClickProjectile(projectile: Projectiles) {
-  currentSlot.value?.slot.weapon.setProjectile(projectile.id);
-  weaponModule.setSlots(currentWeaponSlots.value.map(slot => slot.slot));
+  if (currentSlot.value) {
+    currentSlot.value.slot.weapon.setProjectile(projectile.id);
+    currentSlot.value.options.weaponOptions = {
+      ...currentSlot.value.options.weaponOptions,
+      projectile: projectile.id
+    };
+  }
+  weaponModule.setSlots(currentWeaponSlots.value.map(slot => slot.options));
 }
 </script>
 

@@ -30,7 +30,6 @@ import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import WeaponUnitModule, {
   type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
-import { weapons } from '@blue-might/weapon';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { playSound } from '@blue-might/weapon/utils';
 import {
@@ -43,7 +42,8 @@ import { addModules } from '@blue-might/app/lib/classes/Module';
 import TransportUnitModule from '@blue-might/app/lib/classes/unitModule/Transport';
 import {
   PROJECTILE_KEY,
-  PROJECTILE_TYPE
+  PROJECTILE_TYPE,
+  WEAPON
 } from '@blue-might/app/lib/types/weapon';
 import CustomizeUnitModule from '@blue-might/app/lib/classes/unitModule/Customize';
 
@@ -183,26 +183,27 @@ export default class CombatHelicopter_1
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
                 projectileTypes: [PROJECTILE_TYPE.P35],
-                weapon: new weapons.rapid_fire_gun_35mm()
+                weapon: WEAPON.RAPID_FIRE_GUN_35MM
               },
               {
                 projectileTypes: [
                   PROJECTILE_TYPE.P120,
                   PROJECTILE_TYPE.MISSILE
                 ],
-                weapon: new weapons.base_missile_launcher({
+                weapon: WEAPON.BASE_MISSILE_LAUNCHER,
+                weaponOptions: {
                   perSeconds: 1
-                })
+                }
               },
               {
                 projectileTypes: [PROJECTILE_TYPE.MISSILE],
-                weapon: new weapons.base_missile_launcher({
-                  projectile: PROJECTILE_KEY.GROUND_MISSILE_1,
-                  perSeconds: 1
-                })
+                weapon: WEAPON.BASE_MISSILE_LAUNCHER,
+                weaponOptions: {
+                  perSeconds: 1,
+                  projectile: PROJECTILE_KEY.GROUND_MISSILE_1
+                }
               }
-            ],
-            ...options.moduleOptions?.weapon
+            ]
           },
           helicopter: {
             ...options.moduleOptions?.helicopter,

@@ -44,19 +44,17 @@ export class BaseMissileLauncher extends Weapon {
 
 WEAPON.GUN_35MM = 'gun_35mm';
 export class Gun35mm extends Weapon {
-  constructor(
-    projectile: typeof PROJECTILE_KEY.CALIBER_35_MM_HE = PROJECTILE_KEY.CALIBER_35_MM_HE
-  ) {
+  constructor(options?: Partial<ConstructorParameters<typeof Weapon>[0]>) {
     super({
       projectileType: PROJECTILE_TYPE.P35,
-      id: WEAPON.GUN_35MM,
-      name: 'Gun 35mm',
-      description: 'A powerful 35mm gun.',
-      spreadAmount: 0.1,
-      perSeconds: 1,
-      projectile: projectile,
-      shootType: WEAPON_SHOOT_TYPE.AUTO,
-      shootStrength: 1
+      id: options?.id ?? WEAPON.GUN_35MM,
+      name: options?.name ?? 'Gun 35mm',
+      description: options?.description ?? 'A powerful 35mm gun.',
+      spreadAmount: options?.spreadAmount ?? 0.1,
+      perSeconds: options?.perSeconds ?? 1,
+      projectile: options?.projectile ?? PROJECTILE_KEY.CALIBER_35_MM_HE,
+      shootType: options?.shootType ?? WEAPON_SHOOT_TYPE.AUTO,
+      shootStrength: options?.shootStrength ?? 0.5
     });
   }
 }
@@ -68,7 +66,7 @@ export class GatlingGun35mm extends Weapon {
       projectileType: PROJECTILE_TYPE.P35,
       id: options?.id ?? WEAPON.GATLING_GUN_35MM,
       name: options?.name ?? 'Gatling Gun',
-      description: options?.description ?? 'A rapid-fire gun.',
+      description: options?.description ?? 'A gatling gun.',
       spreadAmount: options?.spreadAmount ?? 0.2,
       perSeconds: options?.perSeconds ?? 15,
       projectile: options?.projectile ?? PROJECTILE_KEY.CALIBER_35_MM_HE,
@@ -104,14 +102,7 @@ export class RapidFireGun35mm extends Weapon {
 
 WEAPON.GUN_120MM = 'gun_120mm';
 export class Gun120mm extends Weapon {
-  constructor(
-    options?: Partial<
-      Pick<
-        ConstructorParameters<typeof Weapon>[0],
-        'spreadAmount' | 'perSeconds' | 'projectile'
-      >
-    >
-  ) {
+  constructor(options?: Partial<ConstructorParameters<typeof Weapon>[0]>) {
     super({
       projectileType: PROJECTILE_TYPE.P120,
       id: WEAPON.GUN_120MM,
@@ -120,8 +111,8 @@ export class Gun120mm extends Weapon {
       spreadAmount: options?.spreadAmount ?? 0,
       perSeconds: options?.perSeconds ?? 1,
       projectile: options?.projectile ?? PROJECTILE_KEY.CALIBER_120_MM_HE,
-      shootType: WEAPON_SHOOT_TYPE.SINGLE,
-      shootStrength: 1.2
+      shootType: options?.shootType ?? WEAPON_SHOOT_TYPE.SINGLE,
+      shootStrength: options?.shootStrength ?? 1.2
     });
   }
 }

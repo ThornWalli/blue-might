@@ -90,8 +90,9 @@ export default class CameraRendererModule extends RendererModule<
     if (!camera) return;
     camera.zoom = (orbitControls?.object as PerspectiveCamera)?.zoom || 1;
 
+    let test;
     if (options) {
-      updateCameraDefault(camera, {
+      test = updateCameraDefault(camera, {
         ...options,
         view: (options.view ?? this.state.view) as Exclude<
           CAMERA_VIEW,
@@ -99,7 +100,7 @@ export default class CameraRendererModule extends RendererModule<
         >
       });
     } else {
-      updateCameraFallback(camera, orbitControls);
+      test = updateCameraFallback(camera, orbitControls);
     }
 
     camera.updateMatrix();
@@ -107,6 +108,7 @@ export default class CameraRendererModule extends RendererModule<
     orbitControls?.update();
 
     this.observables.update$.next(camera);
+    return test;
   }
 
   addCamera(type: CameraType, camera: PerspectiveCamera) {
@@ -239,6 +241,11 @@ function updateCameraDefault(
 
   camera.position.lerp(idealPosition, lerpFactor);
   camera.lookAt((options.lookAt ?? position).clone().add(targetOffset));
+
+  return {
+    position: idealPosition,
+    lookAt: (options.lookAt ?? position).clone().add(targetOffset)
+  };
 }
 
 function updateCameraFallback(
@@ -250,4 +257,9 @@ function updateCameraFallback(
   camera.lookAt(0, 0, 0); // Explizit auf Zentrum schauen
 
   orbitControls?.target.set(0, 0, 0); // Target der Controls setzen
+
+  return {
+    position: camera.position.clone(),
+    lookAt: camera.getWorldDirection(new Vector3()).clone()
+  };
 }

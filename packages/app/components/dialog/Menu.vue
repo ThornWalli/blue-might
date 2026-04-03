@@ -64,7 +64,7 @@ const $route = useRoute();
 
 const links = ref([
   {
-    title: 'Default',
+    title: 'Game Mode',
     href: {
       name: 'map',
       params: {
@@ -73,7 +73,7 @@ const links = ref([
     }
   },
   {
-    title: 'Editor',
+    title: 'Editor Mode',
     href: {
       name: 'editor-map',
       params: {
@@ -82,7 +82,7 @@ const links = ref([
     }
   },
   {
-    title: 'Debug',
+    title: 'Debug Mode',
     href: {
       name: 'debug-map',
       params: {
@@ -94,7 +94,7 @@ const links = ref([
 
 const missionLinks = ref([
   {
-    title: 'Default',
+    title: 'Example',
     href: {
       name: 'map',
       params: {

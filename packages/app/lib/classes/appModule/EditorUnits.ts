@@ -428,7 +428,6 @@ export default class EditorUnitsAppModule extends AppModule<
 }
 
 const unitMap = getUnitMap(units);
-console.log(unitMap);
 export async function getUnits() {
   return await import('@blue-might/units');
 }

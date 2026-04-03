@@ -19,7 +19,6 @@ import { Object3D, Vector2, Mesh, SkinnedMesh } from 'three';
 import WeaponUnitModule from '@blue-might/app/lib/classes/unitModule/Weapon';
 import AttackUnitModule from '@blue-might/app/lib/classes/unitModule/Attack';
 import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/Weapon';
-import { weapons } from '@blue-might/weapon';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
 import { playSound } from '@blue-might/weapon/utils';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
@@ -29,7 +28,7 @@ import {
 } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
 import CustomizeUnitModule from '@blue-might/app/lib/classes/unitModule/Customize';
-import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
+import { PROJECTILE_TYPE, WEAPON } from '@blue-might/app/lib/types/weapon';
 
 import type { UnitObservables } from './../../../app/lib/classes/Unit';
 import baseGlb from './assets/combat_tank_1.glb?url';
@@ -151,15 +150,15 @@ export default class CombatTank_1
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
                 projectileTypes: [PROJECTILE_TYPE.P120],
-                weapon: new weapons.gun_120mm()
+                weapon: WEAPON.GUN_120MM
               },
               {
                 projectileTypes: [PROJECTILE_TYPE.P35],
-                weapon: new weapons.rapid_fire_gun_35mm()
+                weapon: WEAPON.RAPID_FIRE_GUN_35MM
               },
               {
                 projectileTypes: [PROJECTILE_TYPE.P155],
-                weapon: new weapons.gun_155mm()
+                weapon: WEAPON.GUN_155MM
               }
             ],
             ...options.moduleOptions?.weapon

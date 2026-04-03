@@ -234,8 +234,12 @@ export default class UnitsModule extends MapModule<
     return Array.from(this.state.destroyedUnits);
   }
 
-  getUnitsInRadius(position: Vector3, radius: number) {
-    return this.chunkManager.getUnitsInRadius(position, radius);
+  getUnitsInRadius(
+    position: Vector3,
+    radius: number,
+    unitFilter?: (unit: Unit) => boolean
+  ) {
+    return this.chunkManager.getUnitsInRadius(position, radius, unitFilter);
   }
 
   getUnitById(id: string) {

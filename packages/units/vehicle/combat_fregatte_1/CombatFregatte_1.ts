@@ -35,9 +35,9 @@ import WeaponUnitModule, {
   type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
-import { weapons } from '@blue-might/weapon';
 import { playSound } from '@blue-might/weapon/utils';
 import { addModules } from '@blue-might/app/lib/classes/Module';
+import { WEAPON } from '@blue-might/app/lib/types/weapon';
 
 import baseGlb from './assets/combat_fregatte_1.glb?url';
 //#endregion
@@ -135,7 +135,7 @@ export default class CombatFregatte_1
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.gun_120mm(),
+                weapon: WEAPON.GUN_120MM,
                 maxAmmunition: Infinity,
                 ammunition: Infinity
               }

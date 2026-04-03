@@ -9,6 +9,7 @@ import {
   switchMap
 } from 'rxjs';
 import type { Units } from '@blue-might/units';
+import { Vector3 } from 'three';
 
 import AppModule, {
   type AppModuleObservables,
@@ -147,7 +148,19 @@ export default class UnitFocusAppModule extends AppModule<State, Observables> {
       position: unit.getPosition().clone(),
       quaternion: unit.root.quaternion.clone(),
       lerpFactor: 1
-    });
+    })!;
+
+    const controls = this.app.renderer.modules.controls.orbitControls;
+    if (controls) {
+      const camera = this.app.renderer.modules.camera.getCamera();
+      camera.updateMatrixWorld(true);
+      const dir = new Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+      const distance = 10;
+      controls.target.copy(
+        camera.position.clone().add(dir.clone().multiplyScalar(distance))
+      );
+      controls.update();
+    }
   }
 
   unfocus() {

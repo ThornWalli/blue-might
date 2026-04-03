@@ -1,6 +1,27 @@
+import type {
+  ProjectileIdentifier,
+  WeaponIdentifier
+} from '@blue-might/app/lib/types/weapon';
 import { PROJECTILE_TYPE } from '@blue-might/app/lib/types/weapon';
 
 import type Weapon from './Weapon';
+
+export interface WeaponSlotOptions extends Omit<
+  WeaponSlotDescription,
+  'index' | 'weapon'
+> {
+  /**
+   * The weapon assigned to this slot.
+   */
+  weapon: WeaponIdentifier;
+  weaponOptions?: {
+    perSeconds?: number;
+    /**
+     * The projectile assigned to this slot.
+     */
+    projectile?: ProjectileIdentifier;
+  };
+}
 
 export interface WeaponSlotDescription {
   active?: boolean;
@@ -111,6 +132,22 @@ export class WeaponSlot implements WeaponSlotDescription {
       projectileTypes: this.projectileTypes
     };
   }
+
+  getOptions(): WeaponSlotOptions {
+    return {
+      weapon: this.weapon.id,
+      weaponOptions: {
+        projectile: this.weapon.projectile.id
+      },
+      ammunition: this.ammunition,
+      maxAmmunition: this.maxAmmunition
+    };
+  }
 }
 
 export type WeaponSlotThumb = { slot: WeaponSlot; thumb: string };
+export type WeaponSlotOptionsThumb = {
+  slot: WeaponSlot;
+  options: WeaponSlotOptions;
+  thumb: string;
+};

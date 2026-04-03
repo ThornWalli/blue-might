@@ -17,7 +17,10 @@
     <bm-button
       :label="`Set rotation (${getCompassDisplayValue(playerOptions.rotation?.y ?? 0)})`"
       @click="onClickSetRotation" />
-
+    <bm-button
+      v-if="tmpUnit && canCustomize"
+      label="Customize Unit"
+      @click="onClickCustomizeUnit" />
     <bm-button label="Close" @click="onClickClose" />
     <teleport to="body">
       <bm-dialog ref="playerUnitDebugDialog">
@@ -28,21 +31,41 @@
             :app="$props.app" />
         </template>
       </bm-dialog>
+      <bm-dialog ref="customizeUnitDialog">
+        <template #header>Customize Unit</template>
+        <template #default>
+          <bm-dialog-customize-unit
+            v-if="tmpUnit"
+            :app="$props.app"
+            :unit="tmpUnit" />
+        </template>
+      </bm-dialog>
     </teleport>
   </bm-panel>
 </template>
 
 <script lang="ts" setup>
-import { computed, markRaw, onMounted, onUnmounted, ref, type Raw } from 'vue';
+import {
+  computed,
+  markRaw,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+  type Raw
+} from 'vue';
 import type { FactionIdentifier } from '@blue-might/app/lib/classes/Faction';
 import { Subscription } from 'rxjs';
 import type AppEditor from '@blue-might/app/lib/classes/app/AppEditor';
 import type { PlayerOptions } from '@blue-might/app/lib/types/map';
 import { Euler, Vector3 } from 'three';
 import * as units from '@blue-might/units';
+import type { VehicleUnits } from '@blue-might/units';
 import { UNIT_TYPE } from '@blue-might/app/lib/types/unit';
 import { getCompassDisplayValue } from '@blue-might/app/lib/utils/compass';
 import type Faction from '@blue-might/app/lib/classes/Faction';
+import { getUnitMap } from '@blue-might/app/lib/utils/unit';
+import type { WeaponSlot } from '@blue-might/app/lib/classes/WeaponSlot';
 
 import BmPanel from '../Panel.vue';
 import BmButton from '../Button.vue';
@@ -50,9 +73,36 @@ import BmSelect from '../Select.vue';
 import BmFormField from '../FormField.vue';
 import BmDialog from '../Dialog.vue';
 import BmDialogEditorPlayerUnitDebug from '../dialog/EditorPlayerUnitDebug.vue';
+import BmDialogCustomizeUnit from '../dialog/CustomizeUnit.vue';
 
 const playerOptions = ref<Raw<PlayerOptions>>({} as Raw<PlayerOptions>);
 const playerUnitDebugDialog = ref<InstanceType<typeof BmDialog> | null>(null);
+const customizeUnitDialog = ref<InstanceType<typeof BmDialog> | null>(null);
+
+const unitMap = getUnitMap(units);
+const tmpUnit = ref<Raw<VehicleUnits>>();
+let tmpUnitSuscription: Subscription | null = null;
+
+const canCustomize = ref(false);
+watch(
+  () => playerOptions.value.unit?.key,
+  newKey => {
+    tmpUnitSuscription?.unsubscribe();
+    tmpUnitSuscription = new Subscription();
+    const UnitClass = unitMap.get(newKey);
+    if (UnitClass) {
+      tmpUnit.value = markRaw(new UnitClass()) as VehicleUnits;
+      if ('weapon' in tmpUnit.value.modules && tmpUnit.value.modules.weapon) {
+        tmpUnitSuscription.add(
+          tmpUnit.value.modules.weapon.observables.slots$.subscribe(slots => {
+            onUpdateUnitWeaponSlots(slots);
+          })
+        );
+      }
+      canCustomize.value = 'customize' in (tmpUnit.value?.modules ?? {});
+    }
+  }
+);
 
 const $props = defineProps<{
   app: AppEditor;
@@ -137,6 +187,22 @@ function onUpdateUnit(key: string) {
   }
 }
 
+function onUpdateUnitWeaponSlots(slots: WeaponSlot[]) {
+  if (playerOptions.value) {
+    $props.app.modules.editorPlayer.setPlayerOptions({
+      ...playerOptions.value,
+      unit: {
+        ...playerOptions.value.unit,
+        moduleOptions: {
+          weapon: {
+            slots: slots.map(slot => slot.getOptions())
+          }
+        }
+      }
+    });
+  }
+}
+
 function onClickSetStartPosition() {
   if (playerOptions.value) {
     const currentPosition = $props.app.modules.editorGrid.getCurrentPosition();
@@ -167,6 +233,10 @@ function onClickUnitDebug() {
 
 function onClickClose() {
   $emit('close');
+}
+
+function onClickCustomizeUnit() {
+  customizeUnitDialog.value?.context?.open();
 }
 </script>
 <style lang="postcss" scoped>

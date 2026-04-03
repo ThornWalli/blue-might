@@ -33,8 +33,8 @@ import type {
   TurretBuildingUnitOptions
 } from '@blue-might/app/lib/classes/unit/building/Turret';
 import TurretBuildingUnit from '@blue-might/app/lib/classes/unit/building/Turret';
-import { weapons } from '@blue-might/weapon/weapon';
 import type { AnimationSetting } from '@blue-might/app/lib/classes/unitModule/Animation';
+import { WEAPON } from '@blue-might/app/lib/types/weapon';
 
 import baseGlb from './assets/turret_1.glb?url';
 //#endregion
@@ -127,7 +127,7 @@ export default class Turret_1
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.gatling_gun_35mm(),
+                weapon: WEAPON.GATLING_GUN_35MM,
                 maxAmmunition: Infinity,
                 ammunition: Infinity
               }
@@ -272,7 +272,7 @@ export class Turret_35mm_Gatling extends Turret_1 {
           weapon: {
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.gatling_gun_35mm(),
+                weapon: WEAPON.GATLING_GUN_35MM,
                 maxAmmunition: Infinity,
                 ammunition: Infinity
               }
@@ -302,7 +302,7 @@ export class Turret_35mm_Rapid extends Turret_1 {
           weapon: {
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.rapid_fire_gun_35mm(),
+                weapon: WEAPON.RAPID_FIRE_GUN_35MM,
                 maxAmmunition: Infinity,
                 ammunition: Infinity
               }
@@ -332,7 +332,7 @@ export class Turret_120mm extends Turret_1 {
           weapon: {
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.gun_120mm(),
+                weapon: WEAPON.GUN_120MM,
                 maxAmmunition: Infinity,
                 ammunition: Infinity
               }
@@ -368,7 +368,7 @@ export class Turret_155mm extends Turret_1 {
           weapon: {
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.gun_155mm(),
+                weapon: WEAPON.GUN_155MM,
                 maxAmmunition: Infinity,
                 ammunition: Infinity
               }

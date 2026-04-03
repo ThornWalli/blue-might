@@ -26,10 +26,10 @@ import WeaponUnitModule, {
   type AutoAimFnOptions
 } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
-import { weapons } from '@blue-might/weapon';
 import { playSound } from '@blue-might/weapon/utils';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import { addModules } from '@blue-might/app/lib/classes/Module';
+import { WEAPON } from '@blue-might/app/lib/types/weapon';
 
 import baseGlb from './assets/combat_ship_1.glb?url';
 
@@ -116,7 +116,7 @@ export default class CombatShip_1
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.rapid_fire_gun_35mm(),
+                weapon: WEAPON.RAPID_FIRE_GUN_35MM,
                 maxAmmunition: Infinity,
                 ammunition: Infinity
               }

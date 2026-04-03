@@ -40,6 +40,7 @@ import { getCompassDisplayValue } from '../lib/utils/compass';
 import type TransportUnitModule from '../lib/classes/unitModule/Transport';
 import thumbGenerator from '../services/thumbGenerator';
 import type { WARNING_TYPE } from '../lib/classes/unitModule/Radar';
+import { MAX_AIR_VEHICLE_ALTITUDE } from '../lib/classes/unitModule/movable/AirVehicle';
 
 export interface TransportSlotInfoSlot {
   key: string;
@@ -127,8 +128,8 @@ function create(app: App) {
   });
 
   const projectileHelper = ref(false);
-
   const canCustomize = ref(false);
+  const weaponModule = ref<Raw<WeaponUnitModule> | undefined>();
 
   const seaHeight = computed(
     () => app.modules.map.getMap()?.modules.surface.getWaterLevel() ?? 0
@@ -137,7 +138,7 @@ function create(app: App) {
     return seaHeight.value + ((position.value?.y ?? 0) - seaHeight.value);
   });
 
-  const groundHeight = computed(() => {
+  const groundAltitude = computed(() => {
     return position.value
       ? (app.modules.map
           .getMap()
@@ -146,6 +147,10 @@ function create(app: App) {
             position.value.z
           ) ?? 0)
       : 0;
+  });
+
+  const maxAltitude = computed(() => {
+    return groundAltitude.value + MAX_AIR_VEHICLE_ALTITUDE;
   });
 
   const hasFuelWarning = computed(() => {
@@ -309,7 +314,6 @@ function create(app: App) {
           )
         )
         .subscribe(hasSupplyUnit => {
-          console.log('Supply Unit Available:', hasSupplyUnit);
           canCustomize.value = !!hasSupplyUnit;
         })
     );
@@ -484,6 +488,12 @@ function create(app: App) {
         )
     );
 
+    subscription.add(
+      weaponModule$.subscribe(v => {
+        weaponModule.value = v ? markRaw(v) : undefined;
+      })
+    );
+
     //#endregion
   });
 
@@ -509,12 +519,14 @@ function create(app: App) {
     seaHeight,
     hasFuelWarning,
     compassValue,
-    groundHeight,
+    groundAltitude,
+    maxAltitude,
     currentHeight,
     playerLifes,
     transportSlotInfo,
     projectileHelper,
     canCustomize,
+    weaponModule,
     isVehicle: computed(() => isVehicle(unit.value)),
     isAirVehicle: computed(() => isAirVehicle(unit.value)),
     isSeaVehicle: computed(() => isSeaVehicle(unit.value)),

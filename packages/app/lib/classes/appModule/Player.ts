@@ -148,8 +148,12 @@ export default class PlayerAppModule extends AppModule<State, Observables> {
       position: playerOptions.position.clone(),
       rotation: playerOptions.rotation?.clone(),
       moduleOptions: {
+        ...playerOptions.unit.moduleOptions,
         faction: {
-          faction: playerOptions.faction
+          ...(playerOptions.unit.moduleOptions?.faction ?? {}),
+          faction:
+            playerOptions.unit.moduleOptions?.faction?.faction ??
+            playerOptions.faction
         }
       },
       moduleDebug: playerOptions.unitDebug

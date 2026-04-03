@@ -13,7 +13,7 @@
       v-if="icon && (!iconAlign || iconAlign === 'left')"
       size="very-small"
       :name="icon" />
-    <span v-if="!hideLabel">{{ label }}</span>
+    <span v-show="!hideLabel">{{ label }}</span>
     <bm-base-icon v-if="icon && iconAlign === 'right'" :name="icon" />
     <slot name="after" :disabled="disabled" />
   </base-button>

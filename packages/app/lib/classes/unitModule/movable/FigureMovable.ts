@@ -209,7 +209,10 @@ export default class FigureMovableUnitModule extends MovableUnitModule<
         ?.modules.surface.getSurfaceHeightAt(
           pos.x,
           pos.z,
-          u => !u.equals(unit)
+          u => !u.equals(unit),
+          {
+            raycaster: false
+          }
         ) ?? 0;
 
     const epsilon = 0.01; // Kleiner Toleranzwert für Fließkommafehler

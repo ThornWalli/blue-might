@@ -1,7 +1,10 @@
+/* eslint-disable complexity */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { Line, Object3D } from 'three';
 import { Color, Vector3 } from 'three';
 import { EMPTY, ReplaySubject, Subject, switchMap } from 'rxjs';
 import { WEAPON_SHOOT_TYPE } from '@blue-might/app/lib/types/weapon';
+import { weapons } from '@blue-might/weapon';
 
 import type Unit from '../Unit';
 import UnitModule, {
@@ -12,7 +15,11 @@ import UnitModule, {
 import type { AnimationLoopValue } from '../Renderer';
 import type Weapon from '../Weapon';
 import { disposeObject3D } from '../../utils/object';
-import { WeaponSlot, type WeaponSlotDescription } from '../WeaponSlot';
+import {
+  WeaponSlot,
+  type WeaponSlotOptions,
+  type WeaponSlotDescription
+} from '../WeaponSlot';
 import type { ShootDescription } from '../mapModule/Shoot';
 import { ControlAction } from '../playerModule/Controls';
 import { isUnitDestroyed } from '../../utils/unit';
@@ -39,6 +46,7 @@ declare module '../Unit' {
 
 export interface WeaponUnitModuleObservables extends UnitModuleObservables {
   active$: Subject<boolean>;
+  slotOptions$: ReplaySubject<WeaponSlotOptions[]>;
   slots$: ReplaySubject<WeaponSlot[]>;
   currentSlot$: ReplaySubject<WeaponSlot | null>;
   shoot$: Subject<{
@@ -71,7 +79,7 @@ export interface WeaponUnitModuleOptions extends UnitModuleOptions {
   autoAimFn: AutoAimFn;
   autopilot: WeaponAutopilotOptions;
   slotCount?: number;
-  slots: Exclude<WeaponSlotDescription, 'index'>[];
+  slots: WeaponSlotOptions[];
 }
 
 export interface WeaponUnitModuleState extends UnitModuleState {
@@ -84,6 +92,7 @@ export interface WeaponUnitModuleState extends UnitModuleState {
   autoAimTarget: Unit | null;
   currentSlotIndex: number;
   projectileHelper: boolean;
+  slots: Exclude<WeaponSlotDescription, 'index'>[];
 }
 
 const DEFAULT_DIRECTION: [number, number, number] = [0, 0, -1];
@@ -117,8 +126,7 @@ export default class WeaponUnitModule<
       unit,
       {
         ...options,
-        slotCount: Math.max(options.slotCount ?? 0, options.slots.length),
-        slots: options.slots ?? [],
+        slotCount: Math.max(options.slotCount ?? 0, state.slots?.length ?? 0),
         autopilot: options.autopilot ?? {
           aim: false,
           shoot: false
@@ -127,6 +135,7 @@ export default class WeaponUnitModule<
       {
         ...state,
         active: false,
+        slots: state.slots ?? [],
         lastShootTime: state.lastShootTime ?? [],
         sourcePositions: state.sourcePositions ?? [],
         sourceDirections: state.sourceDirections ?? [],
@@ -142,6 +151,7 @@ export default class WeaponUnitModule<
     //#region observables
     this.observables.active$ = new Subject<boolean>();
     this.observables.active$.next(this.state.active);
+    this.observables.slotOptions$ = new ReplaySubject<WeaponSlotOptions[]>(1);
     this.observables.slots$ = new ReplaySubject<WeaponSlot[]>(1);
     this.observables.currentSlot$ = new ReplaySubject<WeaponSlot | null>(1);
     this.observables.shoot$ = new Subject<{
@@ -163,6 +173,7 @@ export default class WeaponUnitModule<
   }
 
   setProjectileHelper(value: boolean) {
+    console.log('setProjectileHelper', value);
     this.state.projectileHelper = value;
     this.observables.projectileHelper$.next(value);
     if (!value) {
@@ -274,12 +285,25 @@ export default class WeaponUnitModule<
     this.setActive(false);
   }
 
-  setSlots(slots: WeaponSlotDescription[]) {
+  setSlots(slotOptions: WeaponSlotOptions[]) {
     // Destroy existing slots
     this.slots.forEach(slot => slot.destroy());
 
-    this.options.slots = slots;
-    this.slots = slots.map((slot, index) => new WeaponSlot({ ...slot, index }));
+    const slots = slotOptions.map((slotOption, index) => {
+      return new WeaponSlot({
+        ...slotOption,
+        index,
+        weapon: new (weapons as Record<string, any>)[slotOption.weapon]({
+          ...slotOption.weaponOptions,
+          projectile: slotOption.weaponOptions?.projectile
+        })
+      });
+    });
+
+    this.options.slots = slotOptions;
+    this.slots = slots;
+
+    this.observables.slotOptions$.next(this.options.slots);
 
     // deaktivere alle slots die schon verwendet werden
     this.getSlots().forEach((slot, index) => {
@@ -570,5 +594,18 @@ export default class WeaponUnitModule<
         }
       }
     });
+  }
+
+  override getOptions() {
+    return {
+      slots: this.slots.map(slot => {
+        return {
+          weapon: slot.weapon.id,
+          projectile: slot.weapon.projectile.id,
+          ammunition: slot.ammunition,
+          maxAmmunition: slot.maxAmmunition
+        };
+      })
+    };
   }
 }

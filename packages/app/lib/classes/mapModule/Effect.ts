@@ -88,8 +88,12 @@ export default class EffectModule extends MapModule<
     super.destroy();
   }
 
+  private lastUpdateTime = 0;
   override update({ time, delta }: AnimationLoopValue): void {
-    // const dt = 0.016;
+    if ((time - this.lastUpdateTime) / 1000 < 1 / 100) {
+      return;
+    }
+    this.lastUpdateTime = time;
 
     this.state.particles = this.state.particles.filter(particle => {
       particle.update({ time, delta });

@@ -41,7 +41,7 @@ import type {
   Textures,
   WaterOptions
 } from '../../types/map';
-import { isBuilding, isPlant } from '../../utils/unit';
+import { isBuilding, isFigure, isPlant } from '../../utils/unit';
 import { LOADER } from '../AssetLoader';
 
 declare module '../Map' {
@@ -420,7 +420,7 @@ export default class SurfaceModule extends MapModule<
 
     let allMeshes: Object3D[] = [];
     this.map.modules.units.getUnits().forEach(unit => {
-      if (!unitFilter || unitFilter(unit)) {
+      if ((!unitFilter || unitFilter(unit)) && !isFigure(unit)) {
         allMeshes.push(...getAllMeshes(unit.root));
       }
     });
@@ -776,9 +776,11 @@ export default class SurfaceModule extends MapModule<
       );
     }
 
-    const testUnits = this.map.modules.units
-      .getUnitsInRadius(new Vector3(x, 0, z), 0.1)
-      .filter(({ unit: u }) => (isBuilding(u) || isPlant(u)) && unitFilter(u));
+    const testUnits = this.map.modules.units.getUnitsInRadius(
+      new Vector3(x, 0, z),
+      0.1,
+      unit => isBuilding(unit) && !isPlant(unit) && unitFilter(unit)
+    );
 
     testUnits.sort((a, b) => a.unit.getPosition().y - b.unit.getPosition().y);
 

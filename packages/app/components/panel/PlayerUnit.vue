@@ -34,17 +34,14 @@
                   label="Min.Alti."
                   :indicator-status="CONTROL_ITEM_STATUS.NORMAL"
                   :value="
-                    groundHeight.toFixed(2).padStart(padLength, '\u00A0')
+                    groundAltitude.toFixed(2).padStart(padLength, '\u00A0')
                   " />
                 <bm-control-item
                   indicator
                   label="Max.Alti."
                   :indicator-status="CONTROL_ITEM_STATUS.NORMAL"
                   :value="
-                    MAX_AIR_VEHICLE_ALTITUDE.toFixed(2).padStart(
-                      padLength,
-                      '\u00A0'
-                    )
+                    maxAltitude.toFixed(2).padStart(padLength, '\u00A0')
                   " />
                 <bm-control-item
                   indicator
@@ -311,11 +308,8 @@
 <script lang="ts" setup>
 import { computed, ref } from 'vue';
 import AirVehicleUnit from '@blue-might/app/lib/classes/unit/vehicle/AirVehicle';
-import WeaponUnitModule, {
-  type WeaponAutopilotOptions
-} from '@blue-might/app/lib/classes/unitModule/Weapon';
+import type { WeaponAutopilotOptions } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { DAMAGE_LEVEL } from '@blue-might/app/lib/classes/unitModule/Damage';
-import { MAX_AIR_VEHICLE_ALTITUDE } from '@blue-might/app/lib/classes/unitModule/movable/AirVehicle';
 import usePlayerUnitInterface, {
   type TransportSlotInfoSlot
 } from '@blue-might/app/composables/usePlayerUnitInterface';
@@ -353,12 +347,14 @@ const {
   hasFuelWarning,
   currentHeight,
   seaHeight,
-  groundHeight,
+  groundAltitude,
+  maxAltitude,
   playerLifes,
   transportSlotInfo,
   flightStatus,
   projectileHelper,
-  canCustomize
+  canCustomize,
+  weaponModule
 } = usePlayerUnitInterface($props.app);
 
 const currentWeaponSlot = computed(() =>
@@ -446,12 +442,6 @@ async function onClickUnload(item: TransportSlotInfoSlot) {
     await unit.value.modules.transport.unloadById(item.id);
   }
 }
-
-const weaponModule = computed(() => {
-  const vehicle = player.value?.modules.vehicle;
-  if (!vehicle) return;
-  return vehicle.getCurrentUnit()!.getModuleByType(WeaponUnitModule);
-});
 
 function onClickCustomizeUnit() {
   customizeUnitDialog.value?.context?.open();

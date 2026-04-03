@@ -35,6 +35,10 @@
         @update:model-value="onUpdateNeedRescue" />
     </bm-fieldset>
     <bm-button label="Debug" @click="onClickDebug" />
+    <bm-button
+      v-if="canCustomize"
+      label="Customize Unit"
+      @click="onClickCustomizeUnit" />
     <teleport to="body">
       <bm-dialog ref="unitDebugDialog">
         <template #header>Unit Debug</template>
@@ -43,6 +47,12 @@
             :model-value="unit.moduleDebug"
             :app="$props.app"
             @update:model-value="unit.setModuleDebug($event)" />
+        </template>
+      </bm-dialog>
+      <bm-dialog ref="customizeUnitDialog">
+        <template #header>Customize Unit</template>
+        <template #default>
+          <bm-dialog-customize-unit :app="$props.app" :unit="unit" />
         </template>
       </bm-dialog>
     </teleport>
@@ -61,6 +71,7 @@ import { ICON } from '@blue-might/app/utils/icons';
 import type Faction from '@blue-might/app/lib/classes/Faction';
 
 import BmDialogEditorUnitDebug from '../dialog/EditorUnitDebug.vue';
+import BmDialogCustomizeUnit from '../dialog/CustomizeUnit.vue';
 import BmPanel from '../Panel.vue';
 import BmFieldset from '../Fieldset.vue';
 import BmSelect from '../Select.vue';
@@ -75,8 +86,12 @@ const unitDamage = ref<number>(0);
 const maxDamage = ref<number>(1);
 const needRescue = ref<boolean>(false);
 const unitFaction = ref<FactionIdentifier | null>(null);
+const canCustomize = computed(() => {
+  return 'customize' in (unit.value?.modules ?? {});
+});
 
 const unitDebugDialog = ref<InstanceType<typeof BmDialog> | null>(null);
+const customizeUnitDialog = ref<InstanceType<typeof BmDialog> | null>(null);
 
 const $props = defineProps<{
   app: AppEditor;
@@ -164,6 +179,10 @@ function onUpdateNeedRescue(needRescue: boolean) {
 
 function onClickDebug() {
   unitDebugDialog.value?.context?.open();
+}
+
+function onClickCustomizeUnit() {
+  customizeUnitDialog.value?.context?.open();
 }
 </script>
 <style lang="postcss" scoped>

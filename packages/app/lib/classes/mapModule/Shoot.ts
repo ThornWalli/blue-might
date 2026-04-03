@@ -1,5 +1,6 @@
 import type { Mesh } from 'three';
 import {
+  Box3,
   BufferGeometry,
   Line,
   LineBasicMaterial,
@@ -24,6 +25,7 @@ import type { WeaponSlot } from '../WeaponSlot';
 import type Map from '../Map';
 import type { ProjectileInstance } from '../Projectile';
 import type Weapon from '../Weapon';
+import { isUnitDestroyed } from '../../utils/unit';
 
 import { SMOKE_TYPE } from './../unitModule/Damage';
 
@@ -84,8 +86,8 @@ export default class ShootModule extends MapModule<
   readonly airResistance = 0.1;
 
   private temp = {
-    sphere: new Sphere(),
-    sphere2: new Sphere(),
+    box: new Box3(),
+    box2: new Box3(),
     vector: new Vector3(),
     drag: new Vector3(),
     hitSphere: new Sphere()
@@ -245,14 +247,20 @@ export default class ShootModule extends MapModule<
     const allPossibleTargets: Object3D[] = [
       ...Object.values(this.map.modules.surface.backgroundMeshes ?? {})
     ];
-    this.map.modules.units
-      .getUnits()
-      .forEach(u => allPossibleTargets.push(u.getRoot()));
+    this.map.modules.units.getUnits().forEach(u => {
+      if (!isUnitDestroyed(u)) {
+        allPossibleTargets.push(u.getRoot());
+      }
+    });
 
     for (const shoot of this.shoots) {
       if (!shoot.isActive) {
         continue;
       }
+
+      const allPossibleTargets_ = allPossibleTargets.filter(
+        obj => !shoot.ignoredObjects.includes(obj)
+      );
 
       const projectile = shoot.projectileInstance.projectile;
 
@@ -298,18 +306,13 @@ export default class ShootModule extends MapModule<
       }
       let hit = false;
       const MAX_SHOOT_DISTANCE = 100;
-      const INTERSECTION_SPHERE_RADIUS = 1 / 2;
 
-      // Sphere-Check für grobe Kollision (immer machen, aber Raycast nur wenn shouldRaycast)
-      this.temp.sphere.set(obj.position, INTERSECTION_SPHERE_RADIUS);
       let needsRaycast = false;
 
-      for (const target of allPossibleTargets) {
-        this.temp.sphere2.set(target.position, INTERSECTION_SPHERE_RADIUS);
-        if (
-          target !== obj &&
-          this.temp.sphere.intersectsSphere(this.temp.sphere2)
-        ) {
+      this.temp.box.setFromObject(obj);
+      for (const target of allPossibleTargets_) {
+        this.temp.box2.setFromObject(target);
+        if (target !== obj && this.temp.box.intersectsBox(this.temp.box2)) {
           needsRaycast = true;
           break;
         }
@@ -329,13 +332,15 @@ export default class ShootModule extends MapModule<
       if (needsRaycast) {
         const direction = this.temp.drag.copy(shoot.velocity).normalize();
         raycaster.set(oldPosition, direction);
+        const intersections = raycaster.intersectObjects(allPossibleTargets);
 
-        const intersections = raycaster.intersectObjects(
-          this.getTargetObjects(allPossibleTargets, shoot.ignoredObjects)
-        );
+        const validIntersection =
+          shoot.ignoredObjects.length > 0
+            ? intersections.find(i => !shoot.ignoredObjects.includes(i.object))
+            : intersections[0];
 
-        if (intersections.length > 0) {
-          const intersection = intersections[0]!;
+        if (validIntersection) {
+          const intersection = validIntersection;
           const point = intersection.point;
           const normal = intersection.face?.normal;
           const distanceToIntersection =

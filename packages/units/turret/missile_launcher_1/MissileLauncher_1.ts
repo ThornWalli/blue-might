@@ -16,7 +16,6 @@ import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import type { Object3D } from 'three';
 import { Vector2, Mesh, SkinnedMesh, LoopOnce } from 'three';
 import type { AnimationLoopValue } from '@blue-might/app/lib/classes/Renderer';
-import { weapons } from '@blue-might/weapon';
 import type { AutoAimFnOptions } from '@blue-might/app/lib/classes/unitModule/Weapon';
 import { ATTACK_TYPE } from '@blue-might/app/lib/classes/unitModule/Attack';
 import {
@@ -26,7 +25,7 @@ import {
 import { ReplaySubject, Subject } from 'rxjs';
 import { playSound } from '@blue-might/weapon/utils';
 import { lerp } from 'three/src/math/MathUtils.js';
-import { PROJECTILE_KEY } from '@blue-might/app/lib/types/weapon';
+import { PROJECTILE_KEY, WEAPON } from '@blue-might/app/lib/types/weapon';
 import type { WeaponUnitInterface } from '@blue-might/app/lib/utils/unit/weapon';
 import TurretBuildingUnit, {
   type TurretBuildingUnitModuleList,
@@ -139,10 +138,11 @@ export default class MissileLauncher_1
               ),
             slots: options.moduleOptions?.weapon?.slots ?? [
               {
-                weapon: new weapons.base_missile_launcher({
+                weapon: WEAPON.BASE_MISSILE_LAUNCHER,
+                weaponOptions: {
                   perSeconds: 0.5,
                   projectile: PROJECTILE_KEY.AIR_HOMING_MISSILE_1
-                })
+                }
               }
             ],
             ...options.moduleOptions?.weapon

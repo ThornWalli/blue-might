@@ -28,22 +28,45 @@
         <span>Click or type "R" for restart.</span>
       </div>
     </div>
+
+    <div v-if="$props.type === MESSAGE_TYPE.OUT_OF_BOUNDS">
+      <div>Out of Bounds</div>
+      <div>
+        <span>You have gone out of bounds!</span>
+        <span>
+          Return to the play area or you will be destroyed in
+          {{ $props.payload?.duration }} seconds.
+        </span>
+      </div>
+    </div>
   </div>
 </template>
 
 <script lang="ts" setup>
 const $props = defineProps<{
   type: MESSAGE_TYPE;
+  payload?: MESSAGE_PAYLOADS;
 }>();
 </script>
 
 <script lang="ts">
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type MESSAGE_PAYLOAD = Record<string, any>;
 export enum MESSAGE_TYPE {
+  OUT_OF_BOUNDS = 'out_of_bounds',
   DESTROYED_GAME_OVER = 'destroyed_game_over',
   DESTROYED_RESTART = 'destroyed_restart',
   MISSION_COMPLETE = 'mission_complete',
   MISSION_FAILED = 'mission_failed'
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type MessagePayload = Record<string, any>;
+interface MessagePayload_OutOfBounds extends MessagePayload {
+  duration: number;
+}
+
+export type MESSAGE_PAYLOADS = MessagePayload | MessagePayload_OutOfBounds;
 </script>
 
 <style lang="postcss" scoped>

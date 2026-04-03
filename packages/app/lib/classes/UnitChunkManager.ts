@@ -167,7 +167,11 @@ export default class UnitChunkManager {
     return visibleChunkKeys;
   }
 
-  getUnitsInRadius(position: Vector3, radius: number) {
+  getUnitsInRadius(
+    position: Vector3,
+    radius: number,
+    unitFilter?: (unit: Unit) => boolean
+  ) {
     const unitsInRadius: { unit: Unit; distance: number }[] = [];
     const chunkSize = this.size;
 
@@ -197,7 +201,10 @@ export default class UnitChunkManager {
 
           const chunk = this.chunks.get(chunkKey);
           if (chunk) {
-            chunk.units.forEach(unit => {
+            const units = Array.from(chunk.units);
+
+            units.forEach(unit => {
+              if (unitFilter && !unitFilter(unit)) return;
               const unitPos = unit.getPosition();
               const distance = position.distanceTo(unitPos);
               const intersect = unit.modules.collision.isIntersect(position);

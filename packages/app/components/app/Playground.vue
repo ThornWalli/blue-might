@@ -33,7 +33,11 @@
     </template>
     <template #foreground>
       <bm-head-up-display-warning :app="app" />
-      <bm-message v-if="messageType" :key="messageType" :type="messageType" />
+      <bm-message
+        v-if="messageType"
+        :key="messageType"
+        :type="messageType"
+        :payload="messagePayload" />
     </template>
   </bm-app-layout>
 </template>
@@ -49,7 +53,8 @@ import {
   Subscription,
   switchMap,
   debounceTime,
-  combineLatest
+  combineLatest,
+  map
 } from 'rxjs';
 import { ControlAction } from '@blue-might/app/lib/classes/playerModule/Controls';
 
@@ -61,16 +66,23 @@ import BmPanelUnitPreview from '../panel/UnitPreview.vue';
 import BmPanelPlayerUnit from '../panel/PlayerUnit.vue';
 import BmPanelGunScreen from '../panel/GunScreen.vue';
 import BmPanelMap from '../panel/NavigatorMap.vue';
-import BmMessage, { MESSAGE_TYPE } from '../Message.vue';
+import BmMessage, { MESSAGE_TYPE, type MESSAGE_PAYLOADS } from '../Message.vue';
 import BmHeadUpDisplayWarning from '../HeadUpDisplayMessage.vue';
 import BmHeadUpIndicator from '../HeadUpIndicator.vue';
 
 const messageType = ref<MESSAGE_TYPE | null>(null);
+const messagePayload = ref<MESSAGE_PAYLOADS | undefined>(undefined);
 const generalEl = ref<InstanceType<typeof BmPanelGeneral> | null>(null);
 
 const $props = defineProps<{
   app: AppPlayground;
 }>();
+
+//#region auto destroy
+let autoDestroyInterval: NodeJS.Timeout | undefined = undefined;
+let autoDestroySeconds = 0;
+const MAX_DESTROY_SECONDS = 5;
+//#endregion;
 
 const subscription = new Subscription();
 
@@ -101,6 +113,69 @@ function setupMessages(app: AppPlayground) {
         generalEl.value?.openMissionBriefing();
       })
   );
+
+  subscription.add(
+    app.modules.player.observables.currentPlayer$
+      .pipe(
+        switchMap(player => player?.modules.vehicle.observables.unit$ ?? EMPTY),
+        switchMap(
+          unit =>
+            unit?.observables.position$.pipe(
+              map(position => ({ unit, position }))
+            ) ?? EMPTY
+        )
+      )
+      // eslint-disable-next-line complexity
+      .subscribe(({ unit, position }) => {
+        const map = unit.getMap();
+        const min = map?.modules.surface.size
+          .clone()
+          .divideScalar(2)
+          .multiplyScalar(-1);
+        const max = min?.clone().multiplyScalar(-1);
+        if (
+          (min && max && position.x < min.x) ||
+          (min && max && position.z < min.y) ||
+          (min && max && position.x > max.x) ||
+          (min && max && position.z > max.y)
+        ) {
+          if (!autoDestroyInterval) startAutoDestroyInterval();
+        } else {
+          if (autoDestroyInterval) stopAutoDestroyInterval();
+        }
+      })
+  );
+
+  function updateMessagePayload() {
+    messagePayload.value = {
+      duration: MAX_DESTROY_SECONDS - autoDestroySeconds
+    };
+  }
+
+  function startAutoDestroyInterval() {
+    messageType.value = MESSAGE_TYPE.OUT_OF_BOUNDS;
+    autoDestroySeconds = 0;
+    updateMessagePayload();
+    autoDestroyInterval = setInterval(() => {
+      autoDestroySeconds++;
+      updateMessagePayload();
+      if (autoDestroySeconds >= MAX_DESTROY_SECONDS) {
+        clearInterval(autoDestroyInterval);
+        autoDestroyInterval = undefined;
+        const damageModule = app.modules.player
+          .getCurrentPlayer()
+          .modules.vehicle.getUnit()?.modules.damage;
+
+        damageModule?.setDamage(damageModule.getMaxDamage());
+      }
+    }, 1000);
+  }
+
+  function stopAutoDestroyInterval() {
+    clearInterval(autoDestroyInterval);
+    autoDestroyInterval = undefined;
+    messageType.value = null;
+  }
 
   subscription.add(
     combineLatest([
