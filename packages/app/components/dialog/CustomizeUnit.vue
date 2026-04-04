@@ -16,6 +16,17 @@
       </div>
     </bm-fieldset>
     <bm-fieldset label="Available Weapons">
+      <div class="projectile-types">
+        <bm-button
+          v-for="preparedProjectileType in preparedProjectileTypes"
+          :key="preparedProjectileType"
+          :class="{
+            selected: preparedProjectileType === currentProjectileType
+          }"
+          :label="preparedProjectileType"
+          @click="onClickProjectileType(preparedProjectileType)" />
+      </div>
+      <bm-separator />
       <div class="weapons">
         <button
           v-for="slot in filteredWeaponSlots"
@@ -70,10 +81,15 @@ import thumbGenerator from '@blue-might/app/services/thumbGenerator';
 import { projectiles, weapons } from '@blue-might/weapon';
 import type { Projectiles } from '@blue-might/weapon/projectile';
 import type Weapon from '@blue-might/app/lib/classes/Weapon';
-import type { WeaponIdentifier } from '@blue-might/app/lib/types/weapon';
+import type {
+  PROJECTILE_TYPE,
+  WeaponIdentifier
+} from '@blue-might/app/lib/types/weapon';
 
 import BmFieldset from '../Fieldset.vue';
+import BmButton from '../Button.vue';
 import type { DialogContext } from '../base/Dialog.vue';
+import BmSeparator from '../Separator.vue';
 
 inject<DialogContext>('dialog')!;
 
@@ -91,6 +107,9 @@ const $props = defineProps<{
 if (!('weapon' in $props.unit.modules)) {
   throw new Error('Unit is missing weapon module');
 }
+
+const currentProjectileType = ref<PROJECTILE_TYPE | null>(null);
+const currentWeaponSlots = ref<WeaponSlotOptionsThumb[]>([]);
 
 const weaponModule = $props.unit.modules.weapon;
 
@@ -137,9 +156,17 @@ const preparedWeapons = ref<WeaponThumb[]>(
   )
 );
 
+const preparedProjectileTypes = computed(() => {
+  const types = currentSlot.value?.slot.projectileTypes;
+  types?.sort((a, b) => a.localeCompare(b));
+  return types;
+});
+
 const filteredWeaponSlots = computed(() => {
   return preparedWeapons.value.filter(slot => {
-    const projectileTypes = currentSlot.value?.slot.projectileTypes ?? [];
+    const projectileTypes = currentProjectileType.value
+      ? [currentProjectileType.value]
+      : (currentSlot.value?.slot.projectileTypes ?? []);
     return (
       projectileTypes.length === 0 ||
       projectileTypes.includes(slot.weapon.projectileType)
@@ -147,7 +174,6 @@ const filteredWeaponSlots = computed(() => {
   });
 });
 
-const currentWeaponSlots = ref<WeaponSlotOptionsThumb[]>([]);
 const subscription = new Subscription();
 
 subscription.add(
@@ -184,11 +210,17 @@ subscription.add(
       );
       currentWeaponSlots.value = slots;
       currentSlotIndex.value = index;
+      currentProjectileType.value =
+        currentSlot.value?.slot.weapon.projectileType ?? null;
     })
 );
 
 function onClickCurrentWeaponSlot(slotIndex: WeaponSlotIndex) {
   currentSlotIndex.value = slotIndex;
+}
+
+function onClickProjectileType(projectileType: PROJECTILE_TYPE) {
+  currentProjectileType.value = projectileType;
 }
 
 function onClickWeaponSlot(weaponId: WeaponIdentifier) {
@@ -222,6 +254,7 @@ function onClickProjectile(projectile: Projectiles) {
   gap: var(--bm-spacing-medium);
 
   & .current-weapons,
+  & .projectile-types,
   & .weapons,
   & .projectiles,
   & .info {

@@ -219,11 +219,7 @@ export default class EditorUnitsAppModule extends AppModule<
   }
 
   async placeUnit(position?: Vector2) {
-    console.log(position?.x, 0, position?.y);
-    // this.state.ghostUnit.setPosition(new Vector3(p.x, 0, p.y));
     const key = this.state.unitKey!;
-    // this.state.unit?.destroy();
-    // this.setUnit(null);
     const radius = this.state.actionRadius;
     if (radius !== 0) {
       await this.sprinkleUnits(key, radius, this.state.actionIntensity, false);
@@ -244,18 +240,6 @@ export default class EditorUnitsAppModule extends AppModule<
     } else {
       this.setMove(false);
     }
-    // if (this.state.autoApply) {
-    //   this.apply();
-    //   const existingUnits = this.app.modules.map
-    //     .getMap()
-    //     ?.modules.units.getUnitsInRadius(new Vector3(p.x, 0, p.y), 0.1);
-    //   if (!existingUnits?.length) {
-    //     const unit = await this.createUnit(key);
-    //     unit.setPosition(new Vector3(p.x, 0, p.y));
-    //     this.setCreate(true);
-    //     this.setMove(true);
-    //     this.setUnit(unit);
-    //   }
   }
 
   removeUnits(position: Vector2) {

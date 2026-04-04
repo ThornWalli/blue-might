@@ -47,6 +47,11 @@ export default class SeaLandingPortSupplyStation_1 extends LandingPortUnit<
       {
         ...options,
         name: 'Sea Landing Port Supply Station',
+        moduleStates: {
+          collision: {
+            enabled: false
+          }
+        },
         moduleOptions: {
           ...options.moduleOptions,
           damage: {

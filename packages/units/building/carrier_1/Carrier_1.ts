@@ -77,7 +77,12 @@ export default class Carrier_1<
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targets: [{ name: 'base', default: true }, { name: 'head' }]
+            targets: [
+              { name: 'base', default: true },
+              { name: 'head' },
+              { name: 'landing_port_rescue' },
+              { name: 'landing_port_supply' }
+            ]
           },
           transport: {
             maxSlots: Infinity,
@@ -125,6 +130,8 @@ export default class Carrier_1<
 
     setIgnorePathfinding(object.getObjectByName('base')!, true);
     setIgnorePathfinding(object.getObjectByName('head')!, true);
+    setIgnorePathfinding(object.getObjectByName('landing_port_rescue')!, true);
+    setIgnorePathfinding(object.getObjectByName('landing_port_supply')!, true);
 
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {

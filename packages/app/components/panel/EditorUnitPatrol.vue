@@ -339,7 +339,8 @@ function onUpdatePatrolRounds(rounds: number) {
 
 <style lang="postcss" scoped>
 .bm-panel-editor-unit-patrol {
-  width: 280px;
+  box-sizing: border-box;
+  width: 348px;
   max-height: 100%;
   overflow: auto;
 

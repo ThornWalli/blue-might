@@ -8,6 +8,7 @@ import type { RawUnitDescription_Factory_1 } from './building/factory_1/Factory_
 import type { RawUnitDescription_FactoryChimney_1 } from './building/factory_chimney_1/FactoryChimney_1';
 import type { RawUnitDescription_CoolingTower_1 } from './building/cooling_tower_1/CoolingTower_1';
 import type { RawUnitDescription_Radar_1 } from './building/radar_1/Radar_1';
+import type { RawUnitDescription_SpaceRocketLauncher_1 } from './building/space_rocket_launcher_1/SpaceRocketLauncher_1';
 import type { RawUnitDescription_House_1 } from './building/house_1/House_1';
 import type { RawUnitDescription_House_2 } from './building/house_2/House_2';
 import type { RawUnitDescription_WindTurbine_1 } from './building/wind_turbine_1/WindTurbine_1';
@@ -74,6 +75,7 @@ import type Scientist_1 from './vehicle/scientist_1/Scientist_1';
 import type Civilian_1 from './vehicle/civilian_1/Civilian_1';
 import type Radar_1 from './building/radar_1/Radar_1';
 import type Carrier_1 from './building/carrier_1/Carrier_1';
+import type SpaceRocketLauncher_1 from './building/space_rocket_launcher_1/SpaceRocketLauncher_1';
 
 export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_LandingPortSupplyStation_1<O>
@@ -97,6 +99,7 @@ export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_FactoryChimney_1<O>
   | RawUnitDescription_CoolingTower_1<O>
   | RawUnitDescription_Radar_1<O>
+  | RawUnitDescription_SpaceRocketLauncher_1<O>
   | RawUnitDescription_Lighthouse_1<O>
   | RawUnitDescription_Flag_1<O>
   | RawUnitDescription_LandingPort_1<O>
@@ -123,6 +126,7 @@ export type Units =
   | FactoryChimney_1
   | CoolingTower_1
   | Radar_1
+  | SpaceRocketLauncher_1
   | House_1
   | House_2
   | WindTurbine_1

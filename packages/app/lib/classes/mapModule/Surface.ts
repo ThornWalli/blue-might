@@ -44,6 +44,8 @@ import type {
 import { isBuilding, isFigure, isPlant } from '../../utils/unit';
 import { LOADER } from '../AssetLoader';
 
+const DEFAULT_MAX_ALTITUDE = 3;
+
 declare module '../Map' {
   interface ModuleStates {
     surface: Partial<State>;
@@ -78,6 +80,7 @@ export interface SurfaceModuleOptions extends MapModuleOptions {
   heightMap?: MapHeightMap | null;
   noise?: MapNoise;
   water?: WaterOptions;
+  maxAltitude?: number;
 }
 
 interface State extends MapModuleState {
@@ -125,7 +128,8 @@ export default class SurfaceModule extends MapModule<
           waterLevel: options.water?.waterLevel ?? 0,
           color: new Color(options.water?.color ?? 0x004080),
           opacity: options.water?.opacity ?? 0.9
-        }
+        },
+        maxAltitude: options.maxAltitude ?? DEFAULT_MAX_ALTITUDE
       },
       {
         ...state,
@@ -858,8 +862,20 @@ export default class SurfaceModule extends MapModule<
         enabled: true,
         waterLevel: 0,
         color: new Color(0x004080)
-      }
+      },
+      maxAltitude: this.options.maxAltitude ?? DEFAULT_MAX_ALTITUDE
     };
+  }
+
+  getDefaultAltitude() {
+    return DEFAULT_MAX_ALTITUDE;
+  }
+
+  getMaxAltitude() {
+    return this.options.maxAltitude ?? DEFAULT_MAX_ALTITUDE;
+  }
+  setMaxAltitude(value: number) {
+    this.options.maxAltitude = value;
   }
 }
 

@@ -476,13 +476,11 @@ export default class HelicopterUnitModule<
 
     // Clamp altitude
 
+    const map = unit.getMap();
     const groundHeight =
-      unit
-        .getMap()
-        ?.modules.surface.getTerrainHeightAt(unitPosition.x, unitPosition.z) ??
+      map?.modules.surface.getTerrainHeightAt(unitPosition.x, unitPosition.z) ??
       0;
-
-    const maxAlt = groundHeight + this.options.maxAltitude;
+    const maxAlt = groundHeight + (map?.modules.surface.getMaxAltitude() ?? 0);
     if (unitPosition.y > maxAlt || (unitPosition.y >= maxAlt && velocity.y > 0))
       velocity.y = -1;
 

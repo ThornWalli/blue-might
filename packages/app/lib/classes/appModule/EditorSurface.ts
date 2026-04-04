@@ -20,6 +20,7 @@ interface Observables extends AppModuleObservables {
   noiseMonochrome$: ReplaySubject<boolean>;
   waterOptions$: ReplaySubject<WaterOptions>;
   heightMapOptions$: ReplaySubject<MapHeightMap>;
+  maxAltitude$: ReplaySubject<number>;
 }
 
 export interface TextureDescription {
@@ -28,6 +29,7 @@ export interface TextureDescription {
 }
 
 interface State extends AppModuleState {
+  maxAltitude: number;
   textures: TextureDescription[];
   noise: MapNoise;
   noiseMonochrome: boolean;
@@ -41,6 +43,7 @@ export default class EditorSurfaceAppModule extends AppModule<
   static override TYPE = 'editorSurface';
   constructor(app: App) {
     super(app, {
+      maxAltitude: 0,
       textures: [],
       noise: {
         ...DEFAULT_MAP_NOISE
@@ -67,6 +70,8 @@ export default class EditorSurfaceAppModule extends AppModule<
     this.observables.waterOptions$.next(this.state.waterOptions);
     this.observables.heightMapOptions$ = new ReplaySubject<MapHeightMap>(1);
     this.observables.heightMapOptions$.next(this.state.heightMapOptions);
+    this.observables.maxAltitude$ = new ReplaySubject<number>(1);
+    this.observables.maxAltitude$.next(this.state.maxAltitude);
     //#endregion
   }
 
@@ -83,6 +88,8 @@ export default class EditorSurfaceAppModule extends AppModule<
             }
           )
         );
+
+        this.setMaxAltitude(map.modules.surface.options.maxAltitude ?? 0);
         this.setHeightMapOptions(map.modules.surface.options.heightMap ?? {});
         this.setNoiseOptions(
           map.modules.surface.options.noise ?? DEFAULT_MAP_NOISE
@@ -114,6 +121,10 @@ export default class EditorSurfaceAppModule extends AppModule<
     return this.state.waterOptions;
   }
 
+  getMaxAltitude() {
+    return this.state.maxAltitude;
+  }
+
   setWaterOptions(waterOptions: Partial<WaterOptions>) {
     this.state.waterOptions = { ...this.state.waterOptions, ...waterOptions };
     this.observables.waterOptions$.next(this.state.waterOptions);
@@ -123,6 +134,11 @@ export default class EditorSurfaceAppModule extends AppModule<
     return this.state.heightMapOptions;
   }
 
+  setMaxAltitude(maxAltitude: number) {
+    this.state.maxAltitude = maxAltitude;
+    this.observables.maxAltitude$.next(maxAltitude);
+  }
+
   setHeightMapOptions(heightMapOptions: Partial<MapHeightMap>) {
     this.state.heightMapOptions = {
       ...this.state.heightMapOptions,
@@ -130,6 +146,10 @@ export default class EditorSurfaceAppModule extends AppModule<
     };
     this.observables.heightMapOptions$.next(this.state.heightMapOptions);
   }
+
+  // setAltitudeOptions(options: Partial<MapHeightMap>) {
+  //   this.setHeightMapOptions(options);
+  // }
 
   async apply() {
     const map = this.app.modules.map.getMap()!;
@@ -144,6 +164,7 @@ export default class EditorSurfaceAppModule extends AppModule<
     surface.setHeightMapOptions(this.getHeightMapOptions());
     surface.setNoiseOptions(this.getNoiseOptions());
     surface.setWaterOptions(this.getWaterOptions());
+    surface.setMaxAltitude(this.getMaxAltitude());
 
     await this.app.modules.map.restartMap(await map.toDescription());
   }

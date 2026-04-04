@@ -575,12 +575,12 @@ export default class Unit<
         this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FIGURE)
     ) {
       desired.y =
-        (this.map?.modules.surface.getSurfaceHeightAt(
+        this.map?.modules.surface.getSurfaceHeightAt(
           desired.x,
           desired.z,
           undefined,
           options
-        ) ?? desired.y) + ('helicopter' in unit.modules ? 1 / 2 : 0);
+        ) ?? desired.y; // + ('helicopter' in unit.modules ? 4 : 0);
     }
 
     const isAutopilot = unit.modules.movable?.hasAIControls() ?? false;

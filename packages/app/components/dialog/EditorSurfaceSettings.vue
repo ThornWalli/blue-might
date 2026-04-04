@@ -52,6 +52,19 @@
         </div>
       </bm-fieldset>
 
+      <bm-fieldset label="Altitude Options">
+        <div class="form-fields">
+          <bm-form-field v-slot="{ id }" label="Max Altitude">
+            <bm-textfield
+              v-model="maxAltitude"
+              :el-attrs="{ type: 'number', id }"
+              @update:model-value="
+                editorSurfaceModule.setMaxAltitude($event)
+              " />
+          </bm-form-field>
+        </div>
+      </bm-fieldset>
+
       <bm-fieldset label="Water Options">
         <div class="form-fields col-2">
           <bm-form-field v-slot="{ id }" label="Enable Water">
@@ -171,6 +184,13 @@ const dialog = inject<DialogContext>('dialog')!;
 const textures = ref<TextureDescription[]>([]);
 const heightMapOptions = ref<MapHeightMap>(DEFAULT_MAP_HEIGHT_MAP);
 const noiseOptions = ref<MapNoise>(DEFAULT_MAP_NOISE);
+const waterOptions = ref<RawWaterOptions<string>>({
+  enabled: false,
+  color: '#004080',
+  waterLevel: 0,
+  opacity: 0.9
+});
+const maxAltitude = ref<number>(0);
 
 const $props = defineProps<{
   app: AppEditor;
@@ -205,13 +225,11 @@ onMounted(() => {
       };
     })
   );
-});
-
-const waterOptions = ref<RawWaterOptions<string>>({
-  enabled: false,
-  color: '#004080',
-  waterLevel: 0,
-  opacity: 0.9
+  subscription.add(
+    editorSurfaceModule.observables.maxAltitude$.subscribe(v => {
+      maxAltitude.value = v;
+    })
+  );
 });
 
 const previewItems = ref<

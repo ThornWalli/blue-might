@@ -40,7 +40,7 @@ import { getCompassDisplayValue } from '../lib/utils/compass';
 import type TransportUnitModule from '../lib/classes/unitModule/Transport';
 import thumbGenerator from '../services/thumbGenerator';
 import type { WARNING_TYPE } from '../lib/classes/unitModule/Radar';
-import { MAX_AIR_VEHICLE_ALTITUDE } from '../lib/classes/unitModule/movable/AirVehicle';
+import type SurfaceModule from '../lib/classes/mapModule/Surface';
 
 export interface TransportSlotInfoSlot {
   key: string;
@@ -130,16 +130,19 @@ function create(app: App) {
   const projectileHelper = ref(false);
   const canCustomize = ref(false);
   const weaponModule = ref<Raw<WeaponUnitModule> | undefined>();
+  const surfaceModule = ref<Raw<SurfaceModule> | undefined>();
 
-  const seaHeight = computed(
+  //#region altitude
+
+  const seaAltitude = computed(
     () => app.modules.map.getMap()?.modules.surface.getWaterLevel() ?? 0
   );
-  const currentHeight = computed(() => {
-    return seaHeight.value + ((position.value?.y ?? 0) - seaHeight.value);
+  const currentAltitude = computed(() => {
+    return seaAltitude.value + ((position.value?.y ?? 0) - seaAltitude.value);
   });
 
   const groundAltitude = computed(() => {
-    return position.value
+    const test = position.value
       ? (app.modules.map
           .getMap()
           ?.modules.surface.getSurfaceHeightAt(
@@ -147,11 +150,19 @@ function create(app: App) {
             position.value.z
           ) ?? 0)
       : 0;
+    return test;
   });
 
   const maxAltitude = computed(() => {
-    return groundAltitude.value + MAX_AIR_VEHICLE_ALTITUDE;
+    return (
+      groundAltitude.value +
+      (surfaceModule.value?.getMaxAltitude() ??
+        surfaceModule.value?.getDefaultAltitude() ??
+        0)
+    );
   });
+
+  //#endregion
 
   const hasFuelWarning = computed(() => {
     if (!fuelInfo.value) return false;
@@ -165,6 +176,17 @@ function create(app: App) {
   });
 
   onMounted(() => {
+    subscription.add(
+      app.modules.map.observables.map$
+        .pipe(
+          map(map => map.modules.surface),
+          filter(surface => !!surface)
+        )
+        .subscribe(module => {
+          surfaceModule.value = module;
+        })
+    );
+
     const unit$ = playerModule.observables.currentPlayer$.pipe(
       switchMap(player => player.modules.vehicle.observables.currentUnit$)
     );
@@ -516,12 +538,12 @@ function create(app: App) {
     unitActive,
     weaponSlots,
     fuelInfo,
-    seaHeight,
+    seaHeight: seaAltitude,
     hasFuelWarning,
     compassValue,
     groundAltitude,
     maxAltitude,
-    currentHeight,
+    currentHeight: currentAltitude,
     playerLifes,
     transportSlotInfo,
     projectileHelper,

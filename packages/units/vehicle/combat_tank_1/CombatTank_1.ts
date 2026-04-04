@@ -76,6 +76,7 @@ export default class CombatTank_1
     barrelTargetShoots: Object3D[];
   }[] = [];
 
+  // eslint-disable-next-line complexity
   constructor(
     options: Omit<
       UnitConstructorOptions<CombatTankOptions, State>,
@@ -95,24 +96,12 @@ export default class CombatTank_1
         name: 'Combat Tank',
         state: {
           weaponActive: false,
-          weaponVelocity: [
-            new Vector2(0, 0),
-            new Vector2(0, 0),
-            new Vector2(0, 0)
-          ],
-          weaponTargetRotation: [
-            new Vector2(0, 0),
-            new Vector2(0, 0),
-            new Vector2(0, 0)
-          ]
+          weaponVelocity: [],
+          weaponTargetRotation: []
         },
         options: {
           ...options.options,
           weaponAngles: options.options?.weaponAngles ?? [
-            {
-              min: new Vector2((-Math.PI * 1) / 4, -Infinity),
-              max: new Vector2((Math.PI * 1) / 15, Infinity)
-            },
             {
               min: new Vector2((-Math.PI * 1) / 4, -Infinity),
               max: new Vector2((Math.PI * 1) / 15, Infinity)
@@ -133,6 +122,7 @@ export default class CombatTank_1
             radius: 10
           },
           weapon: {
+            ...options.moduleOptions?.weapon,
             autoAimFn: (options: AutoAimFnOptions) =>
               autoAimFunction(
                 this.getMap()!.modules.shoot,
@@ -146,22 +136,21 @@ export default class CombatTank_1
                 this.state,
                 () => this.getRotation()
               ),
-            slotCount: 3,
-            slots: options.moduleOptions?.weapon?.slots ?? [
+            slotCount: 2,
+            slots: options.moduleOptions?.weapon?.slots?.slice(0, 1) ?? [
               {
-                projectileTypes: [PROJECTILE_TYPE.P120],
+                projectileTypes: [
+                  PROJECTILE_TYPE.P35,
+                  PROJECTILE_TYPE.P120,
+                  PROJECTILE_TYPE.P155
+                ],
                 weapon: WEAPON.GUN_120MM
               },
               {
                 projectileTypes: [PROJECTILE_TYPE.P35],
                 weapon: WEAPON.RAPID_FIRE_GUN_35MM
-              },
-              {
-                projectileTypes: [PROJECTILE_TYPE.P155],
-                weapon: WEAPON.GUN_155MM
               }
-            ],
-            ...options.moduleOptions?.weapon
+            ]
           },
           collision: {
             ...options.moduleOptions?.collision,
@@ -175,6 +164,13 @@ export default class CombatTank_1
       },
       moduleList
     );
+
+    this.state.weaponVelocity = Array(
+      this.moduleOptions.weapon?.slotCount ?? 0
+    ).fill(new Vector2(0, 0));
+    this.state.weaponTargetRotation = Array(
+      this.moduleOptions.weapon?.slotCount ?? 0
+    ).fill(new Vector2(0, 0));
   }
 
   override async afterSetup(context: SetupContext) {
@@ -219,16 +215,9 @@ export default class CombatTank_1
         barrels: [barrelWrapper],
         barrelTargets: [barrelTargetObj],
         barrelTargetShoots: [barrelTargetObj]
-      },
-      {
-        head: headObj,
-        barrels: [barrelWrapper],
-        barrelTargets: [barrelTargetObj],
-        barrelTargetShoots: [barrelTargetObj]
       }
     );
 
-    this.modules.weapon.registerBarrelTarget(barrelTargetObj);
     this.modules.weapon.registerBarrelTarget(barrelTargetObj);
     this.modules.weapon.registerBarrelTarget(barrelTargetObj);
 

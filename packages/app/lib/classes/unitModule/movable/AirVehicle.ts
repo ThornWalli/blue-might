@@ -32,7 +32,6 @@ export interface AirVehicleUnitModuleObservables extends MovableUnitModuleObserv
   landingPort$: ReplaySubject<LandingPortUnit | null>;
 }
 export interface AirVehicleUnitModuleOptions extends MovableUnitModuleOptions {
-  maxAltitude: number; // clamp altitude
   gearsHeight: number;
 }
 export interface AirVehicleUnitModuleState extends MovableUnitModuleState {
@@ -44,8 +43,6 @@ export interface AirVehicleUnitModuleState extends MovableUnitModuleState {
   flightStatus: FLIGHT_STATUS;
   landingPort: LandingPortUnit | null;
 }
-
-export const MAX_AIR_VEHICLE_ALTITUDE = 3;
 
 export default class AirVehicleUnitModule<
   Options extends AirVehicleUnitModuleOptions = AirVehicleUnitModuleOptions,
@@ -63,8 +60,7 @@ export default class AirVehicleUnitModule<
       unit,
       {
         ...options,
-        gearsHeight: options.gearsHeight ?? 0,
-        maxAltitude: options.maxAltitude ?? MAX_AIR_VEHICLE_ALTITUDE
+        gearsHeight: options.gearsHeight ?? 0
       } as Options,
       {
         ...state,

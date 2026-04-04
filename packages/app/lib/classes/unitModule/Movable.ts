@@ -161,13 +161,13 @@ export default class MovableUnitModule<
           })
       );
 
-      this.subscription.add(
-        unit.modules.player.observables.player$.subscribe(player => {
-          if (!player) {
-            this.turnOn();
-          }
-        })
-      );
+      // this.subscription.add(
+      //   unit.modules.player.observables.player$.subscribe(player => {
+      //     if (!player) {
+      //       this.turnOn();
+      //     }
+      //   })
+      // );
     }
   }
 
