@@ -8,16 +8,16 @@ catalog:
   '@nuxt/eslint': 1.15.2
   '@nuxtjs/critters': 0.9.0
   '@nuxtjs/robots': 5.7.1
-  '@nuxtjs/sitemap': 8.0.11
-  '@types/node': 25.5.0
+  '@nuxtjs/sitemap': 8.0.12
+  '@types/node': 25.5.2
   '@types/pathfinding': 0.1.0
   '@types/three': 0.183.1
   '@types/web': 0.0.345
-  '@typescript-eslint/eslint-plugin': 8.58.0
+  '@typescript-eslint/eslint-plugin': 8.58.1
   change-case: 5.4.4
   consola: 3.4.2
   dotenv-mono: 1.5.1
-  eslint: 10.1.0
+  eslint: 10.2.0
   eslint-config-prettier: 10.1.8
   eslint-plugin-prettier: 5.5.5
   eslint-plugin-security: 4.0.0
@@ -44,16 +44,16 @@ catalog:
   three: 0.183.2
   tsx: 4.21.0
   typescript: 5.9.3
-  typescript-eslint: 8.58.0
+  typescript-eslint: 8.58.1
   ufo: 1.6.3
-  vite: 8.0.3
+  vite: 8.0.8
   vite-plugin-eslint2: 5.1.0
   vite-plugin-markdown: 2.2.0
-  vite-plugin-mkcert: 1.17.10
+  vite-plugin-mkcert: 1.17.12
   vite-plugin-node-polyfills: 0.26.0
   vite-svg-loader: 5.1.1
-  vitest: 4.1.2
-  vue: 3.5.31
+  vitest: 4.1.4
+  vue: 3.5.32
   vue-eslint-parser: 10.4.0
   vue-tsc: 3.2.6
 
