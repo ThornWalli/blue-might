@@ -7,7 +7,7 @@ catalog:
   '@fullhuman/postcss-purgecss': 8.0.0
   '@nuxt/eslint': 1.15.2
   '@nuxtjs/critters': 0.9.0
-  '@nuxtjs/robots': 5.7.1
+  '@nuxtjs/robots': 6.0.6
   '@nuxtjs/sitemap': 8.0.12
   '@types/node': 25.5.2
   '@types/pathfinding': 0.1.0
