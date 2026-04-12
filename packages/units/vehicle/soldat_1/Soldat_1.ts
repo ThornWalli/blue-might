@@ -45,7 +45,14 @@ export default class Soldat_1<
     super(
       {
         ...options,
-        name: 'Soldat'
+        name: 'Soldat',
+        moduleOptions: {
+          ...options.moduleOptions,
+          collision: {
+            ...options.moduleOptions?.collision,
+            targets: [{ name: 'base', default: true }]
+          }
+        }
       },
       moduleList
     );

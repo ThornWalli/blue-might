@@ -41,6 +41,7 @@ export default class BuildingUnit<
     moduleList = addModules(moduleList, [BuildingUnitModule]);
     super(options, moduleList);
     this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.GROUND);
+    this.setGroundNormals(false);
   }
 
   override async setup(context: SetupContext) {

@@ -165,7 +165,6 @@ function setupMessages(app: AppPlayground) {
         const damageModule = app.modules.player
           .getCurrentPlayer()
           .modules.vehicle.getUnit()?.modules.damage;
-
         damageModule?.setDamage(damageModule.getMaxDamage());
       }
     }, 1000);

@@ -36,5 +36,6 @@ export default class SeaVehicleUnit<
     moduleList = addModules(moduleList, [SeaVehicleUnitModule]);
     super(options, moduleList);
     this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.SEA);
+    this.setGroundNormals(false);
   }
 }

@@ -100,7 +100,9 @@ export default class VehiclePlayerModule extends PlayerModule<
               unit !== this.state.figureUnit
           )
           .shift()?.unit as Units) ?? null;
-      this.enterUnit(unit);
+      if (unit) {
+        this.enterUnit(unit);
+      }
     }
   }
 

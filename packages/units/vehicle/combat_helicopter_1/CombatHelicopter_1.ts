@@ -212,11 +212,7 @@ export default class CombatHelicopter_1
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targets: [
-              {
-                name: 'base'
-              }
-            ]
+            targets: [{ name: 'base', default: true }]
           }
         },
         moduleStates: {
@@ -278,7 +274,6 @@ export default class CombatHelicopter_1
     const { object, animations } = await loadGltf(baseGlb);
 
     this.modules.animation.setAnimations(animations);
-    const mesh = object;
 
     if (!this.preview) {
       const barrelObj = object.getObjectByName(`weapon`)!;
@@ -335,7 +330,7 @@ export default class CombatHelicopter_1
       }
     });
 
-    return mesh;
+    return object;
   }
 
   override update(_v: AnimationLoopValue): void {

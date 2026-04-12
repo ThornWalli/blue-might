@@ -174,6 +174,7 @@ export default class Unit<
   updateModules: UnitModule[] = [];
   map: Map | null = null;
   groundAdjustmentMode: GROUND_ADJUSTMENT_MODE = GROUND_ADJUSTMENT_MODE.GROUND;
+  groundNormals: boolean = true;
   position: Vector3 = new Vector3(0, 0, 0);
   rotation: Euler = new Euler(0, 0, 0);
 
@@ -460,6 +461,14 @@ export default class Unit<
     this.groundAdjustmentMode = groundAdjustmentMode;
   }
 
+  getGroundNormals() {
+    return this.groundNormals;
+  }
+
+  setGroundNormals(groundNormals: boolean) {
+    this.groundNormals = groundNormals;
+  }
+
   getRotation() {
     return this.rotation;
   }
@@ -567,8 +576,7 @@ export default class Unit<
       this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FLIGHT &&
       this.groundAdjustmentMode !== GROUND_ADJUSTMENT_MODE.FIGURE
     ) {
-      desired =
-        this.updateGroundAlignment(desired, [unit], true).position ?? desired;
+      desired = this.updateGroundAlignment(desired, [unit]).position ?? desired;
     } else if (
       !this.map?.app.isUpdateActive() &&
       (this.groundAdjustmentMode === GROUND_ADJUSTMENT_MODE.FLIGHT ||
@@ -730,7 +738,7 @@ export default class Unit<
   updateGroundAlignment(
     position?: Vector3,
     ignoredUnits: Unit[] = [],
-    groundNormals = true
+    groundNormals = this.groundNormals
   ) {
     const groundModule = this.map?.modules.surface;
 

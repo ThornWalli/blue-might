@@ -25,6 +25,7 @@ export enum UNIT_TYPE {
 export enum GROUND_ADJUSTMENT_MODE {
   MIN_HEIGHT = 'min-height',
   GROUND = 'ground',
+  MIN_GROUND = 'min-ground',
   FLIGHT = 'flight',
   NONE = 'none',
   SEA = 'sea',

@@ -45,7 +45,14 @@ export default class Scientist_1<
     super(
       {
         ...options,
-        name: 'Scientist'
+        name: 'Scientist',
+        moduleOptions: {
+          ...options.moduleOptions,
+          collision: {
+            ...options.moduleOptions?.collision,
+            targets: [{ name: 'base', default: true }]
+          }
+        }
       },
       moduleList
     );

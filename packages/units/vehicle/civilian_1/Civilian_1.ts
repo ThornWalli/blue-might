@@ -45,7 +45,14 @@ export default class Civilian_1<
     super(
       {
         ...options,
-        name: 'Civilian'
+        name: 'Civilian',
+        moduleOptions: {
+          ...options.moduleOptions,
+          collision: {
+            ...options.moduleOptions?.collision,
+            targets: [{ name: 'base', default: true }]
+          }
+        }
       },
       moduleList
     );

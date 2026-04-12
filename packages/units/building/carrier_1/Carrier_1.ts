@@ -72,9 +72,6 @@ export default class Carrier_1<
             supplyRadius: 0.5,
             sphereTarget: { name: 'landing_port_supply' }
           },
-          damage: {
-            enabled: false
-          },
           collision: {
             ...options.moduleOptions?.collision,
             targets: [

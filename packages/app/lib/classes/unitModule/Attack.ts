@@ -534,10 +534,15 @@ export default class AttackUnitModule extends UnitModule<
   public isAttackAllowed(target: Unit): boolean {
     const unit = this.getUnit();
 
+    const canDamage = target.modules.damage?.canDamage();
     const isDestroyed = target.modules.damage?.isDestroyed();
     const isFriend = unit.modules.faction.isFriendlyFaction(
       target.modules.faction.getFaction()
     );
+
+    if (!canDamage || isDestroyed || isFriend) {
+      return false;
+    }
 
     const modules = (
       target as unknown as Unit<
@@ -567,7 +572,7 @@ export default class AttackUnitModule extends UnitModule<
       result = false;
     }
 
-    return result && !isDestroyed && !isFriend;
+    return result;
   }
 
   private setupDebug() {

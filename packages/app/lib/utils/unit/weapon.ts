@@ -78,7 +78,7 @@ export function normalizeAngle(angle: number): number {
 
 //#region aim
 
-const MAX_PROJECTILE_DISTANCE = 1 / 5;
+const MAX_PROJECTILE_DISTANCE = 0.15;
 
 function simulateProjectile(
   weapon: Weapon,

@@ -52,7 +52,8 @@ export default class Tank_1<
             ...options?.moduleOptions?.collision,
             targets: [
               {
-                name: 'base'
+                name: 'base',
+                default: true
               }
             ]
           },

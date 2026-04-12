@@ -54,9 +54,6 @@ export default class SeaLandingPortSupplyStation_1 extends LandingPortUnit<
         },
         moduleOptions: {
           ...options.moduleOptions,
-          damage: {
-            enabled: false
-          },
           supply: {
             ...options.moduleOptions?.supply,
             supplyRadius: 0.5,

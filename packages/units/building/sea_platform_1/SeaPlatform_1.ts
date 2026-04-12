@@ -51,9 +51,6 @@ export default class SeaPlatform_1 extends BuildingUnit<
         },
         moduleOptions: {
           ...options.moduleOptions,
-          damage: {
-            enabled: false
-          },
           collision: {
             ...options.moduleOptions?.collision,
             targets: [{ name: 'base' }]

@@ -264,7 +264,8 @@ function onClickProjectile(projectile: Projectiles) {
     display: flex;
     gap: var(--bm-spacing-small);
     width: calc(
-      (var(--size) * 3) + var(--bm-spacing-small) * (var(--columns) - 1)
+      (var(--size) * var(--columns)) + var(--bm-spacing-small) *
+        (var(--columns) - 1)
     );
   }
 

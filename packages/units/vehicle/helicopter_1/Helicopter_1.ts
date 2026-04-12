@@ -63,10 +63,10 @@ export default class Helicopter_1 extends HelicopterUnit<
           ...options.options,
           rotationSpeed: options.options?.rotationSpeed ?? 0.25
         },
-
         moduleOptions: {
           ...options.moduleOptions,
           radar: {
+            ...options.moduleOptions?.radar,
             radius: 12
           },
           movable: {
@@ -74,6 +74,7 @@ export default class Helicopter_1 extends HelicopterUnit<
             maxFuel: 200
           },
           transport: {
+            ...options.moduleOptions?.transport,
             entryPosition: new Vector2(0.25, 0.25),
             maxSlots: 4
           },
@@ -85,11 +86,7 @@ export default class Helicopter_1 extends HelicopterUnit<
           },
           collision: {
             ...options.moduleOptions?.collision,
-            targets: [
-              {
-                name: 'base'
-              }
-            ]
+            targets: [{ name: 'base', default: true }]
           }
         },
         moduleStates: {
@@ -139,7 +136,6 @@ export default class Helicopter_1 extends HelicopterUnit<
     const { object, animations } = await loadGltf(baseGlb);
 
     this.modules.animation.setAnimations(animations);
-    const mesh = object;
 
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
@@ -148,10 +144,11 @@ export default class Helicopter_1 extends HelicopterUnit<
       }
     });
 
-    return mesh;
+    return object;
   }
 
   override update(_v: AnimationLoopValue): void {
+    if (this.preview) return;
     super.update(_v);
   }
 }

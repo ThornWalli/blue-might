@@ -42,10 +42,6 @@ export default class LandingPortRescue_1 extends LandingPortUnit<
           collision: {
             ...options.moduleOptions?.collision,
             targets: [{ default: true, name: 'base' }]
-          },
-          damage: {
-            ...options.moduleOptions?.damage,
-            enabled: false
           }
         }
       },
