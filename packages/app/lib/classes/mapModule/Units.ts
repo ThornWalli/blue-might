@@ -42,6 +42,8 @@ import { disposeObject3D, OBJECT_USER_DATA } from '../../utils/object';
 import BuildingUnit from '../unit/Building';
 import type { RawUnitDescription, UnitDescription } from '../Unit';
 import { getUnitMap } from '../../utils/unit';
+import TurretBuildingUnit from '../unit/building/Turret';
+import LandingPortUnit from '../unit/LandingPort';
 
 declare module '../Map' {
   interface ModuleStates {
@@ -175,24 +177,8 @@ export default class UnitsModule extends MapModule<
   }
 
   async setupUnits(units: Unit[]) {
-    const { buildings, others } = units.reduce<{
-      buildings: BuildingUnit[];
-      others: Unit[];
-    }>(
-      (result, unit) => {
-        if (unit instanceof BuildingUnit) {
-          result.buildings.push(unit);
-        } else {
-          result.others.push(unit);
-        }
-        return result;
-      },
-      {
-        buildings: [],
-        others: []
-      }
-    );
-
+    const { buildings, others, landingPorts, turrets } =
+      splitUnitsByType(units);
     const addUnits = async (units: Unit[]) =>
       await lastValueFrom(
         from(units).pipe(
@@ -203,6 +189,8 @@ export default class UnitsModule extends MapModule<
       );
 
     await addUnits(buildings);
+    await addUnits(landingPorts);
+    await addUnits(turrets);
     await addUnits(others);
 
     this.setReady();
@@ -446,4 +434,36 @@ function resolveUnits(units: UnitDescription[]): Unit[] {
           : new Euler().fromArray((rest.rotation ?? [0, 0, 0]) as Vector3Tuple)
     });
   });
+}
+
+export function splitUnitsByType(units: Unit[]) {
+  /**
+   * Filter units by type to add them in a specific order (buildings first, then landing ports, then turrets, then others)
+   * to ensure correct rendering and interaction behavior.
+   */
+  return units.reduce<{
+    buildings: BuildingUnit[];
+    others: Unit[];
+    landingPorts: LandingPortUnit[];
+    turrets: TurretBuildingUnit[];
+  }>(
+    (result, unit) => {
+      if (unit instanceof LandingPortUnit) {
+        result.landingPorts.push(unit);
+      } else if (unit instanceof TurretBuildingUnit) {
+        result.turrets.push(unit);
+      } else if (unit instanceof BuildingUnit) {
+        result.buildings.push(unit);
+      } else {
+        result.others.push(unit);
+      }
+      return result;
+    },
+    {
+      buildings: [],
+      landingPorts: [],
+      turrets: [],
+      others: []
+    }
+  );
 }

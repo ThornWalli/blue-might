@@ -6,11 +6,10 @@ import type {
   UnitOptions,
   UnitState
 } from '@blue-might/app/lib/classes/Unit';
-import {
-  type SetupContext,
-  GROUND_ADJUSTMENT_MODE,
-  type WeaponSupportOptions,
-  type WeaponSupportState
+import type {
+  SetupContext,
+  WeaponSupportOptions,
+  WeaponSupportState
 } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import type { Object3D } from 'three';
@@ -152,7 +151,8 @@ export default class MissileLauncher_1
             targets: [
               {
                 name: 'base',
-                childIndex: 1
+                childIndex: 1,
+                default: true
               }
             ]
           }
@@ -160,8 +160,6 @@ export default class MissileLauncher_1
       },
       moduleList
     );
-
-    this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.MIN_HEIGHT);
 
     //#region observables
     this.observables.opened$ = new ReplaySubject<boolean>(1);

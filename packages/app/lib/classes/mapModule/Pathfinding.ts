@@ -58,7 +58,6 @@ export default class PathfindingModule extends MapModule<
 
   private units: Unit[] = [];
   private unitSubscriptions = new Map<Unit, Subscription>();
-  private collidersByType = new Map<NAVIGATOR_TYPE, Object3D[]>();
   private grid: Grid | null = null;
 
   //#region navigators
@@ -135,16 +134,11 @@ export default class PathfindingModule extends MapModule<
       },
       () => this.map.modules.surface.getWaterLevel()
     );
-    // this.grid = new Grid(
-    //   size.clone().divideScalar(gridSize).round(),
-    //   gridSize,
-    //   (x, y) => {
-    //     const type = tileTypeMap[y]?.[x] ?? TILE_TYPE.BLOCKED;
-    //     return type;
-    //   }
-    // );
+
     console.log('GRID', this.grid);
+
     await this.grid.setup();
+
     if (this.debug) {
       await this.setupDebugGridObjects();
     }
@@ -179,7 +173,7 @@ export default class PathfindingModule extends MapModule<
         gridSize,
         size,
         vehicleType: VehicleType.HELICOPTER,
-        flightHeight: 4 / 3,
+        flightHeight: 7 / 4,
         runways: []
       },
       this.debug

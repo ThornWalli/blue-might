@@ -843,7 +843,7 @@ export default class Unit<
     return this.rotation.y;
   }
 
-  setYaw(yaw: number) {
+  setYaw(yaw: number, options?: { force?: boolean }) {
     const lastYaw = this.rotation.y;
     if (lastYaw === yaw) return;
 
@@ -860,6 +860,7 @@ export default class Unit<
     const isPatrol = unit.modules.patrol?.state.active ?? false;
 
     if (
+      options?.force &&
       !(isPatrol || isAutopilot) &&
       this.modules.collision.checkCollision() >= COLLISION_TYPE.BLOCKED
     ) {

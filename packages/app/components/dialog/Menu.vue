@@ -1,18 +1,21 @@
 <template>
   <div class="bm-dialog-menu">
-    <ul>
-      <li v-for="link in links" :key="link.title">
-        <bm-button :tag="NuxtLink" :href="link.href" :label="link.title" />
-      </li>
-    </ul>
-    <bm-separator />
-    <ul>
-      <li v-for="link in missionLinks" :key="link.title">
-        <bm-button :tag="NuxtLink" :href="link.href" :label="link.title" />
-      </li>
-    </ul>
+    <bm-fieldset label="Mode">
+      <ul class="mode">
+        <li v-for="link in links" :key="link.title">
+          <bm-button :tag="NuxtLink" :href="link.href" :label="link.title" />
+        </li>
+      </ul>
+    </bm-fieldset>
+    <bm-fieldset label="Mission">
+      <ul class="mission">
+        <li v-for="link in missionLinks" :key="link.title">
+          <bm-button :tag="NuxtLink" :href="link.href" :label="link.title" />
+        </li>
+      </ul>
+    </bm-fieldset>
     <bm-details label="Debug">
-      <ul>
+      <ul class="debug">
         <li v-for="link in debugLinks" :key="link.title">
           <bm-button :tag="NuxtLink" :href="link.href" :label="link.title" />
         </li>
@@ -34,7 +37,10 @@
           label="Github" />
       </li>
     </ul>
-    <div class="version">{{ version }}</div>
+    <footer>
+      <span>Blue-Might created by Thorn-Welf Walli</span>
+      <span class="version">{{ version }}</span>
+    </footer>
   </div>
 </template>
 
@@ -43,9 +49,9 @@ import { inject, ref } from 'vue';
 import type { App } from '@blue-might/app/lib/types';
 
 import type { DialogContext } from '../base/Dialog.vue';
-import BmSeparator from '../Separator.vue';
 import BmDetails from '../Details.vue';
 import BmButton from '../Button.vue';
+import BmFieldset from '../Fieldset.vue';
 
 import NuxtLink from '#app/components/nuxt-link';
 import { useRoute, useRuntimeConfig } from '#imports';
@@ -64,7 +70,7 @@ const $route = useRoute();
 
 const links = ref([
   {
-    title: 'Game Mode',
+    title: 'Game',
     href: {
       name: 'map',
       params: {
@@ -73,7 +79,7 @@ const links = ref([
     }
   },
   {
-    title: 'Editor Mode',
+    title: 'Editor',
     href: {
       name: 'editor-map',
       params: {
@@ -82,7 +88,7 @@ const links = ref([
     }
   },
   {
-    title: 'Debug Mode',
+    title: 'Debug',
     href: {
       name: 'debug-map',
       params: {
@@ -177,7 +183,7 @@ const debugLinks = ref([
 .bm-dialog-menu {
   display: flex;
   flex-direction: column;
-  gap: var(--bm-spacing-small);
+  gap: var(--bm-spacing-medium);
   width: 420px;
 
   & a {
@@ -199,21 +205,48 @@ const debugLinks = ref([
   }
 
   & ul {
+    --columns: 2;
+
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(var(--columns), 1fr);
     gap: var(--bm-spacing-small);
 
     & li {
       text-align: center;
     }
+
+    &.mode {
+      --columns: 3;
+    }
+
+    &.mission {
+      --columns: 1;
+    }
+
+    &.debug {
+      --columns: 3;
+    }
   }
 
-  & .version {
+  & footer {
+    display: flex;
+    gap: var(--bm-spacing-small);
+    justify-content: center;
     font-family: var(--font-family-base);
     font-size: 12px;
-    font-style: italic;
-    text-align: center;
     opacity: 0.6;
+
+    & * + * {
+      &::before {
+        padding-right: var(--bm-spacing-small);
+        font-style: normal;
+        content: '|';
+      }
+    }
+
+    & .version {
+      font-style: italic;
+    }
   }
 }
 </style>

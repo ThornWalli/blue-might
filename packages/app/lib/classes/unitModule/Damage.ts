@@ -95,7 +95,7 @@ export default class DamageUnitModule extends UnitModule<
     //#endregion
   }
 
-  lastUpdateTime = 0;
+  private lastUpdateTime = 0;
   override update({ time }: AnimationLoopValue): void {
     const dt = 0.016;
 
@@ -140,17 +140,24 @@ export default class DamageUnitModule extends UnitModule<
       this.spawnSmoke(SMOKE_TYPE.MEDIUM);
     }
   }
+  public getEnabled() {
+    return this.options.enabled;
+  }
 
-  takeDamage(amount: number) {
+  public setEnabled(enabled: boolean) {
+    this.options.enabled = enabled;
+  }
+
+  public takeDamage(amount: number) {
     if (!this.options.enabled) return;
     this.setDamage(this.state.damage + amount);
   }
 
-  takeMaxDamage() {
+  public takeMaxDamage() {
     this.setDamage(this.options.maxDamage);
   }
 
-  setDamage(value: number, force?: boolean) {
+  public setDamage(value: number, force?: boolean) {
     if (!force && !this.canDamage()) return;
     this.state.damage = Math.min(this.options.maxDamage, Math.max(0, value));
     this.observables.damage$.next(this.state.damage);
@@ -160,16 +167,16 @@ export default class DamageUnitModule extends UnitModule<
     }
   }
 
-  setInitialDamage(damage: number) {
+  public setInitialDamage(damage: number) {
     this.state.damage = damage;
     this.setDamage(this.state.damage, true);
   }
 
-  getDamageValue() {
+  public getDamageValue() {
     return this.state.damage / this.options.maxDamage;
   }
 
-  getMaxDamage() {
+  public getMaxDamage() {
     return this.options.maxDamage;
   }
 
@@ -221,6 +228,7 @@ export default class DamageUnitModule extends UnitModule<
   override getOptions() {
     return {
       ...super.getOptions(),
+      enabled: this.options.enabled,
       initialDamage: this.options.initialDamage
     };
   }

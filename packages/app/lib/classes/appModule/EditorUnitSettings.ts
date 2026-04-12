@@ -76,4 +76,12 @@ export default class EditorUnitSettingsAppModule extends AppModule<
     }
   }
   //#endregion
+
+  setUnitActive(active: boolean) {
+    this.state.unit?.modules.pathfinding.setActive(active);
+  }
+
+  setUnitCanTakeDamage(canTakeDamage: boolean) {
+    this.state.unit?.modules.damage.setEnabled(canTakeDamage);
+  }
 }

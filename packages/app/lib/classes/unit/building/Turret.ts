@@ -1,4 +1,4 @@
-import { GROUND_ADJUSTMENT_MODE, UNIT_TYPE } from '../../../types/unit';
+import { UNIT_TYPE } from '../../../types/unit';
 import { addModules } from '../../Module';
 import type {
   UnitConstructorOptions,
@@ -53,6 +53,5 @@ export default class TurretBuildingUnit<
       WeaponUnitModule
     ]);
     super(options, moduleList);
-    this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.GROUND);
   }
 }

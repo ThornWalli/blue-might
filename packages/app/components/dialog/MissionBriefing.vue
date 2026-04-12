@@ -3,29 +3,32 @@
     <form @submit="onSubmit">
       <h1 class="name">Mission Briefing: "{{ mission.getName() }}"</h1>
       <div class="briefing">
-        <div v-if="mission.getObjective()" class="objective">
-          <h2>Objective</h2>
-          <p>{{ mission.getObjective() }}</p>
-        </div>
-        <div v-if="mission.getLocation()" class="location">
-          <h2>Location</h2>
-          <p>{{ mission.getLocation() }}</p>
-        </div>
         <div v-if="mission.getSituationReport()" class="situation-report">
           <h2>Situation Report</h2>
           <div v-html="situationReport"></div>
         </div>
-        <div v-if="mission.getMissionObjectives()" class="mission-objectives">
-          <h2>Mission Objectives</h2>
-          <div v-html="missionObjectives"></div>
+        <div>
+          <div v-if="mission.getObjective()" class="objective">
+            <h2>Objective</h2>
+            <p>{{ mission.getObjective() }}</p>
+          </div>
+          <div v-if="mission.getLocation()" class="location">
+            <h2>Location</h2>
+            <p>{{ mission.getLocation() }}</p>
+          </div>
+          <div v-if="mission.getMissionObjectives()" class="mission-objectives">
+            <h2>Mission Objectives</h2>
+            <div v-html="missionObjectives"></div>
+          </div>
         </div>
       </div>
+
       <div>
         <h2>Targets</h2>
         <div class="units">
           <bm-fieldset
             v-if="targets.some(t => t.type === 'attack')"
-            label="Attack">
+            label="Destroy">
             <table>
               <thead>
                 <tr>
@@ -283,9 +286,15 @@ function onSubmit(e: Event) {
   }
 
   & .briefing {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: var(--bm-spacing-medium);
+
+    & .situation-report + div {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--bm-spacing-medium);
+    }
 
     & :deep(ul),
     & :deep(ol),

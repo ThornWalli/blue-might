@@ -6,11 +6,10 @@ import type {
   UnitOptions,
   UnitState
 } from '@blue-might/app/lib/classes/Unit';
-import {
-  type WeaponSupportOptions,
-  type WeaponSupportState,
-  GROUND_ADJUSTMENT_MODE,
-  type SetupContext
+import type {
+  WeaponSupportOptions,
+  WeaponSupportState,
+  SetupContext
 } from '@blue-might/app/lib/types/unit';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
 import type { Object3D } from 'three';
@@ -150,7 +149,6 @@ export default class Turret_1
       },
       moduleList
     );
-    this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.MIN_HEIGHT);
   }
 
   override setup(context: SetupContext) {

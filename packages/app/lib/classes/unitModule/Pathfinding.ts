@@ -43,6 +43,10 @@ declare module '../../utils/object' {
 OBJECT_USER_DATA.IGNORE_PATHFINDING = 'ignorePathfinding';
 
 export function setIgnorePathfinding(object: Object3D, ignore: boolean) {
+  if (!object) {
+    console.warn('object is missing!');
+    return;
+  }
   object.userData[OBJECT_USER_DATA.IGNORE_PATHFINDING] = ignore;
 }
 
@@ -52,6 +56,7 @@ interface Observables extends UnitModuleObservables {
 }
 
 export interface PathfindingUnitModuleOptions extends UnitModuleOptions {
+  active: boolean;
   navigatorType: NAVIGATOR_TYPE;
 }
 export interface PathfindingUnitModuleState extends UnitModuleState {
@@ -81,14 +86,20 @@ export default class PathfindingUnitModule extends UnitModule<
     state: PathfindingUnitModuleState,
     debug: boolean
   ) {
-    super(unit, options, state, debug);
-
-    this.state = {
-      ...this.state,
-      complete: false,
-      currentPath: null,
-      pendingMove: null
-    };
+    super(
+      unit,
+      {
+        ...options,
+        active: options.active ?? true
+      },
+      {
+        ...state,
+        complete: false,
+        currentPath: null,
+        pendingMove: null
+      },
+      debug
+    );
 
     //#region observables
     this.observables.moveStart$ = new Subject<void>();
@@ -161,7 +172,9 @@ export default class PathfindingUnitModule extends UnitModule<
     const unit = this.getUnit() as MovableUnit;
     const currentPath = this.state.currentPath;
     const movableModule = unit.modules.movable;
+
     if (
+      !this.options.active ||
       unit.modules.damage.isDestroyed() ||
       !currentPath ||
       currentPath.length === 0
@@ -672,16 +685,19 @@ export default class PathfindingUnitModule extends UnitModule<
   }
 
   isGroundMovable() {
-    const unit = this.getUnit();
+    const u = this.getUnit();
     return (
-      unit.hasModuleType(GroundVehicleUnitModule) ||
-      unit.hasModuleType(FigureUnitModule)
+      u.hasModuleType(GroundVehicleUnitModule) ||
+      u.hasModuleType(FigureUnitModule)
     );
   }
 
   isAirMovable() {
-    const unit = this.getUnit();
-    return unit.hasModuleType(HelicopterUnitModule);
+    return this.getUnit().hasModuleType(HelicopterUnitModule);
+  }
+
+  isSeaMovable() {
+    return this.getUnit().hasModuleType(SeaVehicleUnitModule);
   }
 
   isMoving() {
@@ -732,65 +748,17 @@ export default class PathfindingUnitModule extends UnitModule<
 
   //#endregion
 
-  // In PathfindingUnitModule (packages/app/lib/classes/unitModule/Pathfinding.ts) erweitern:
-  isSeaMovable() {
-    // NEU: Ähnlich wie isGroundMovable
-    const unit = this.getUnit();
-    return unit.hasModuleType(SeaVehicleUnitModule); // Annahme: Dein SeaVehicle Modul
+  getActive() {
+    return this.options.active;
+  }
+
+  setActive(active: boolean) {
+    this.options.active = active;
+  }
+
+  override getOptions() {
+    return {
+      active: this.options.active
+    };
   }
 }
-
-// function simplifyPath(path: Vector3[], tolerance = 0.1): Vector3[] {
-//   if (path.length <= 2) {
-//     return path;
-//   }
-
-//   const simplifiedPath: Vector3[] = [path[0]!.clone()];
-//   let horizontalSimplificationStarted = false;
-//   let lastHorizontalDirection: Vector3 | null = null;
-
-//   for (let i = 1; i < path.length - 1; i++) {
-//     const p_prev = path[i - 1]!;
-//     const p_curr = path[i]!;
-//     const p_next = path[i + 1]!;
-
-//     const isVerticalMove = Math.abs(p_curr.y - p_next.y) > 0.01;
-
-//     if (!horizontalSimplificationStarted) {
-//       simplifiedPath.push(p_curr.clone());
-//       if (!isVerticalMove) {
-//         horizontalSimplificationStarted = true;
-//       }
-//     } else {
-//       if (!lastHorizontalDirection) {
-//         const p_prev_xz = p_prev.clone();
-//         p_prev_xz.y = 0;
-//         const p_curr_xz = p_curr.clone();
-//         p_curr_xz.y = 0;
-//         lastHorizontalDirection = new Vector3()
-//           .subVectors(p_curr_xz, p_prev_xz)
-//           .normalize();
-//       }
-
-//       const p_curr_xz = p_curr.clone();
-//       p_curr_xz.y = 0;
-//       const p_next_xz = p_next.clone();
-//       p_next_xz.y = 0;
-//       const currentHorizontalDirection = new Vector3()
-//         .subVectors(p_next_xz, p_curr_xz)
-//         .normalize();
-
-//       if (
-//         lastHorizontalDirection.dot(currentHorizontalDirection) <
-//         1.0 - tolerance
-//       ) {
-//         simplifiedPath.push(p_curr.clone());
-//         lastHorizontalDirection.copy(currentHorizontalDirection);
-//       }
-//     }
-//   }
-
-//   simplifiedPath.push(path[path.length - 1]!.clone());
-
-//   return simplifiedPath;
-// }

@@ -350,10 +350,15 @@ export default class CollisionUnitModule<
     return objs;
   }
 
-  public getDefaultCollisionObject(): Object3D | undefined {
+  public getDefaultCollisionObject() {
     const target = this.options.targets.find(target => target.default);
-    if (!target) return;
-    return this.getUnit().root.getObjectByName(target?.name)!;
+    let obj: Object3D | undefined;
+    if (!target) {
+      obj = this.getCollisionObjects()[0]?.obj;
+    } else {
+      obj = this.getUnit().root.getObjectByName(target?.name);
+    }
+    return obj;
   }
 
   //#region debug

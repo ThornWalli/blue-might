@@ -40,7 +40,7 @@ export default class BuildingUnit<
     moduleList = (moduleList || []) as ModuleList;
     moduleList = addModules(moduleList, [BuildingUnitModule]);
     super(options, moduleList);
-    this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.MIN_HEIGHT);
+    this.setGroundAdjustmentMode(GROUND_ADJUSTMENT_MODE.GROUND);
   }
 
   override async setup(context: SetupContext) {

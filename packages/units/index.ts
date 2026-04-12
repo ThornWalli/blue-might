@@ -19,13 +19,14 @@ export { default as Flag_1 } from './building/flag_1/Flag_1';
 export { default as Windsock_1 } from './building/windsock_1/Windsock_1';
 export { default as Tower_1 } from './building/tower_1/Tower_1';
 export { default as Lighthouse_1 } from './building/lighthouse_1/Lighthouse_1';
+export { default as Battleship_1 } from './building/battleship_1/Battleship_1';
 export { default as Carrier_1 } from './building/carrier_1/Carrier_1';
 export { default as Factory_1 } from './building/factory_1/Factory_1';
 export { default as FactoryChimney_1 } from './building/factory_chimney_1/FactoryChimney_1';
 export { default as CoolingTower_1 } from './building/cooling_tower_1/CoolingTower_1';
 export { default as Radar_1 } from './building/radar_1/Radar_1';
 export { default as SpaceRocketLauncher_1 } from './building/space_rocket_launcher_1/SpaceRocketLauncher_1';
-
+export { default as SeaPlatform_1 } from './building/sea_platform_1/SeaPlatform_1';
 //#endregion
 
 //#region supply

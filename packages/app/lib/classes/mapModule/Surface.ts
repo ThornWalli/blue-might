@@ -8,11 +8,11 @@ import {
   Vector2,
   Vector3,
   Mesh,
-  MeshLambertMaterial,
   NearestFilter,
   Object3D,
   PlaneGeometry,
-  Color
+  Color,
+  MeshStandardMaterial
 } from 'three';
 import { filter, map, Subject } from 'rxjs';
 import type { Units } from '@blue-might/units';
@@ -659,10 +659,11 @@ export default class SurfaceModule extends MapModule<
     geometry.computeVertexNormals();
 
     // Einziges Material mit kombinierter Texture
-    const terrainMaterial = new MeshLambertMaterial({
+    const terrainMaterial = new MeshStandardMaterial({
       map: combinedTexture,
       flatShading: true,
-      wireframe: false
+      wireframe: false,
+      roughness: 1
     });
 
     const backgroundTerrain = new Mesh(geometry, terrainMaterial);
@@ -706,7 +707,7 @@ export default class SurfaceModule extends MapModule<
 
   private createWater(dimension: Vector2) {
     if (!this.options.water) return null;
-    const waterMaterial = new MeshLambertMaterial({
+    const waterMaterial = new MeshStandardMaterial({
       color: this.options.water.color,
       flatShading: true,
       wireframe: false,

@@ -169,7 +169,7 @@ export default class HelicopterUnitModule<
       unit.modules.collision.observables.collision$.subscribe(({ type }) => {
         if (type === COLLISION_TYPE.BLOCKED) {
           this.state.velocity.multiplyScalar(-0.5);
-          unit.modules.damage.takeMaxDamage(); // Aktiviere Schadensaufnahme
+          unit.modules.damage.takeMaxDamage();
         }
       })
     );
@@ -205,12 +205,10 @@ export default class HelicopterUnitModule<
   }
 
   override getMaxPitch() {
-    // Wenn die Gears gerade animiert werden ODER ausgefahren sind, begrenze die Neigung stark.
     return this.state.gearsActive || this.state.gearsOpened ? 0.2 : 0.6;
   }
 
   override getMaxRoll() {
-    // Wenn die Gears gerade animiert werden ODER ausgefahren sind, begrenze die Neigung stark.
     return this.state.gearsActive || this.state.gearsOpened ? 0.2 : 0.6;
   }
   override update(v: AnimationLoopValue): void {
@@ -446,7 +444,6 @@ export default class HelicopterUnitModule<
     }
 
     // Friction & clamps
-    // velocity.multiplyScalar(friction);
     const horizontalVelocity = this.helpers.horizontalVelocity;
     horizontalVelocity.set(velocity.x, 0, velocity.z);
     const hSpeed = horizontalVelocity.length();

@@ -1,51 +1,62 @@
 import { Mesh, SkinnedMesh } from 'three';
 import type {
-  UnitConstructorOptions,
   RawUnitDescription,
+  UnitConstructorOptions,
   UnitOptions
 } from '@blue-might/app/lib/classes/Unit';
 import type { SetupContext } from '@blue-might/app/lib/types/unit';
-import LandingPortUnit, {
-  type LandingPortUnitModuleList,
-  type LandingPortUnitModules,
-  type LandingPortUnitOptions
-} from '@blue-might/app/lib/classes/unit/LandingPort';
 import { loadGltf } from '@blue-might/app/lib/utils/gltf';
+import SupplyUnitModule from '@blue-might/app/lib/classes/unitModule/Supply';
 import { setIgnorePathfinding } from '@blue-might/app/lib/classes/unitModule/Pathfinding';
+import { addModules } from '@blue-might/app/lib/classes/Module';
+import RadarUnitModule from '@blue-might/app/lib/classes/unitModule/Radar';
+import type {
+  BuildingUnitModuleList,
+  BuildingUnitModules,
+  BuildingUnitOptions
+} from '@blue-might/app/lib/classes/unit/Building';
+import BuildingUnit from '@blue-might/app/lib/classes/unit/Building';
 
-import baseGlb from './assets/landing_port_rescue_1.glb?url';
+import baseGlb from './assets/sea_platform_1.glb?url';
 
-export type Options = LandingPortUnitOptions;
-export type Modules = LandingPortUnitModules;
-export type ModuleList = LandingPortUnitModuleList;
-export interface RawUnitDescription_LandingPortRescue_1<
+export type Options = BuildingUnitOptions;
+export type Modules = BuildingUnitModules;
+export type ModuleList = BuildingUnitModuleList;
+
+export interface RawUnitDescription_SeaPlatform_1<
   O extends UnitOptions = Options
 > extends RawUnitDescription<UnitConstructorOptions<O>> {
-  key: 'landing_port_rescue_1';
+  key: 'sea_platform_1';
 }
-export default class LandingPortRescue_1 extends LandingPortUnit<
+
+export default class SeaPlatform_1 extends BuildingUnit<
   Modules,
   ModuleList,
   Options
 > {
-  static override KEY = 'landing_port_rescue_1';
+  static override KEY = 'sea_platform_1';
   constructor(
     options: Omit<UnitConstructorOptions<Options>, 'name'> = {},
     moduleList?: ModuleList
   ) {
+    moduleList = addModules(moduleList, [RadarUnitModule, SupplyUnitModule]);
     super(
       {
         ...options,
-        name: 'Landing Port Rescue',
+        name: 'Sea Platform 1',
+        moduleStates: {
+          collision: {
+            enabled: false
+          }
+        },
         moduleOptions: {
           ...options.moduleOptions,
+          damage: {
+            enabled: false
+          },
           collision: {
             ...options.moduleOptions?.collision,
-            targets: [{ default: true, name: 'base' }]
-          },
-          damage: {
-            ...options.moduleOptions?.damage,
-            enabled: false
+            targets: [{ name: 'base' }]
           }
         }
       },
@@ -68,6 +79,7 @@ export default class LandingPortRescue_1 extends LandingPortUnit<
     object.traverse(child => {
       if (child instanceof Mesh || child instanceof SkinnedMesh) {
         child.receiveShadow = true;
+        child.castShadow = true;
       }
     });
 

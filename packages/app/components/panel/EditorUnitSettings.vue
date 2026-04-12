@@ -9,23 +9,34 @@
       :icon="ICON.MAP_PIN"
       @click="$emit('mode', EDITOR_MODE.PATROL)" />
     <bm-fieldset label="General">
-      <bm-form-field label-top :icon="ICON.FLAG" label="Faction">
-        <bm-select
-          :model-value="unitFaction"
-          :options="factionOptions"
-          @update:model-value="onUpdateFaction" />
-      </bm-form-field>
-      <bm-form-field class="damage" label="Damage">
-        <bm-textfield
-          :model-value="unitDamage * 100"
-          :el-attrs="{
-            type: 'number',
-            min: 0,
-            max: Math.round(maxDamage * 100)
-          }"
-          @update:model-value="onUpdateDamage($event / 100)" />
-        <span>/ {{ Math.round(maxDamage * 100) }}</span>
-      </bm-form-field>
+      <div class="fields">
+        <bm-toggle
+          v-model="active"
+          label="Active"
+          @update:model-value="onUpdateActive" />
+        <bm-toggle
+          v-model="canTakeDamage"
+          label="Can Take Damage"
+          @update:model-value="onUpdateCanTakeDamage" />
+
+        <bm-form-field label-top :icon="ICON.FLAG" label="Faction">
+          <bm-select
+            :model-value="unitFaction"
+            :options="factionOptions"
+            @update:model-value="onUpdateFaction" />
+        </bm-form-field>
+        <bm-form-field class="damage" label="Damage">
+          <bm-textfield
+            :model-value="unitDamage * 100"
+            :el-attrs="{
+              type: 'number',
+              min: 0,
+              max: Math.round(maxDamage * 100)
+            }"
+            @update:model-value="onUpdateDamage($event / 100)" />
+          <span>/ {{ Math.round(maxDamage * 100) }}</span>
+        </bm-form-field>
+      </div>
     </bm-fieldset>
     <bm-fieldset v-if="isFigure" label="Figure">
       <bm-toggle
@@ -84,6 +95,8 @@ import BmDialog from '../Dialog.vue';
 const unit = ref<Raw<Unit> | null>(null);
 const unitDamage = ref<number>(0);
 const maxDamage = ref<number>(1);
+const active = ref<boolean>(false);
+const canTakeDamage = ref<boolean>(false);
 const needRescue = ref<boolean>(false);
 const unitFaction = ref<FactionIdentifier | null>(null);
 const canCustomize = computed(() => {
@@ -135,6 +148,8 @@ onMounted(() => {
   subscription.add(
     editorUnitSettingsModule.observables.unit$.subscribe(u => {
       unit.value = u ? markRaw(u) : null;
+      active.value = unit.value?.modules.pathfinding.getActive() ?? false;
+      canTakeDamage.value = unit.value?.modules.damage.getEnabled() ?? false;
     })
   );
   subscription.add(
@@ -184,7 +199,16 @@ function onClickDebug() {
 function onClickCustomizeUnit() {
   customizeUnitDialog.value?.context?.open();
 }
+
+function onUpdateActive(active: boolean) {
+  editorUnitSettingsModule.setUnitActive(active);
+}
+
+function onUpdateCanTakeDamage(canTakeDamage: boolean) {
+  editorUnitSettingsModule.setUnitCanTakeDamage(canTakeDamage);
+}
 </script>
+
 <style lang="postcss" scoped>
 .bm-panel-editor-unit-settings {
   & .damage {
@@ -199,5 +223,11 @@ function onClickCustomizeUnit() {
       white-space: nowrap;
     }
   }
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--bm-spacing-medium);
 }
 </style>

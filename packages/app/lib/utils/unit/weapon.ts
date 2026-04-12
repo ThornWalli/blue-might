@@ -101,7 +101,6 @@ function simulateProjectile(
 
   const delta = 0.016;
   const maxSteps = 1000;
-
   let time = 0;
   for (let step = 0; step < maxSteps; step++) {
     projectileInstance.update({
@@ -163,7 +162,9 @@ export function autoAimFunction(
   const maxAngle = originalMaxAngle.clone();
 
   // center from target
-  const targetPosition = getCenter(target.root);
+  const targetPosition = getTopFromObject(
+    target.modules.collision.getDefaultCollisionObject() || target.root
+  );
 
   const delta = targetPosition.clone().sub(unitSourcePosition);
   const yawEuler = getRotation(index).clone();
@@ -282,6 +283,7 @@ export function autoAimFunction(
       }
       if (pitches.length > 0) {
         isInPitch = pitchValidFn(pitches[Math.floor(pitches.length / 2)]!);
+
         if (isInPitch) return true;
       }
       if (!isInPitch) {
@@ -295,9 +297,18 @@ export function autoAimFunction(
 
 //#endregion
 
-function getCenter(obj: Object3D): Vector3 {
+// function getCenterFromObject(obj: Object3D): Vector3 {
+//   const box = new Box3().setFromObject(obj);
+//   const center = new Vector3();
+//   box.getCenter(center);
+//   return center;
+// }
+
+function getTopFromObject(obj: Object3D): Vector3 {
   const box = new Box3().setFromObject(obj);
-  const center = new Vector3();
-  box.getCenter(center);
-  return center;
+  const top = new Vector3();
+  const center = box.getCenter(top);
+  top.copy(center);
+  top.y = box.max.y;
+  return top;
 }

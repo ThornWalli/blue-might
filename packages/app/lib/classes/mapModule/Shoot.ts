@@ -243,184 +243,191 @@ export default class ShootModule extends MapModule<
     const raycaster = this.raycaster;
     this.raycastFrameCounter++;
 
-    // Baue die Liste der Ziele nur einmal pro Frame auf
-    const allPossibleTargets: Object3D[] = [
-      ...Object.values(this.map.modules.surface.backgroundMeshes ?? {})
-    ];
-    this.map.modules.units.getUnits().forEach(u => {
-      if (!isUnitDestroyed(u)) {
-        allPossibleTargets.push(u.getRoot());
-      }
-    });
+    // Baue die Liste der Ziele alle 10 Frames auf
 
-    for (const shoot of this.shoots) {
-      if (!shoot.isActive) {
-        continue;
-      }
-
-      const allPossibleTargets_ = allPossibleTargets.filter(
-        obj => !shoot.ignoredObjects.includes(obj)
-      );
-
-      const projectile = shoot.projectileInstance.projectile;
-
-      shoot.lifetime -= delta;
-
-      if (shoot.lifetime < 0) {
-        this.removeShoot(shoot);
-        continue;
-      }
-
-      const targetPosition = shoot.targetUnit
-        ? getPositionFromObject(shoot.targetUnit?.getRoot())
-        : null;
-
-      shoot.projectileInstance.update({
-        ...animationLoopValue,
-        gravity: this.gravity,
-        velocity: shoot.velocity,
-        position: shoot.position,
-        targetPosition
+    if (this.raycastFrameCounter % 10 !== 0) {
+      const allPossibleTargets: Object3D[] = [
+        ...Object.values(this.map.modules.surface.backgroundMeshes ?? {})
+      ];
+      this.map.modules.units.getUnits().forEach(u => {
+        if (!isUnitDestroyed(u)) {
+          allPossibleTargets.push(u.getRoot());
+        }
       });
 
-      shoot.object.position.copy(shoot.position);
+      for (const shoot of this.shoots) {
+        if (!shoot.isActive) {
+          continue;
+        }
 
-      shoot.object.lookAt(
-        shoot.object.position.x + shoot.velocity.x,
-        shoot.object.position.y + shoot.velocity.y,
-        shoot.object.position.z + shoot.velocity.z
-      );
+        const allPossibleTargets_ = allPossibleTargets.filter(
+          obj => !shoot.ignoredObjects.includes(obj)
+        );
 
-      const obj = shoot.object;
-      const oldPosition = this.temp.vector.copy(obj.position);
+        const projectile = shoot.projectileInstance.projectile;
 
-      if (projectile.hasSmoke() && shoot.enableSmoke) {
-        // Smoke nur alle 2 Frames hinzufügen, um Overhead zu reduzieren
-        if (this.raycastFrameCounter % 2 === 0) {
+        shoot.lifetime -= delta;
+
+        if (shoot.lifetime < 0) {
+          this.removeShoot(shoot);
+          continue;
+        }
+
+        const targetPosition = shoot.targetUnit
+          ? getPositionFromObject(shoot.targetUnit?.getRoot())
+          : null;
+
+        shoot.projectileInstance.update({
+          ...animationLoopValue,
+          gravity: this.gravity,
+          velocity: shoot.velocity,
+          position: shoot.position,
+          targetPosition
+        });
+
+        shoot.object.position.copy(shoot.position);
+
+        shoot.object.lookAt(
+          shoot.object.position.x + shoot.velocity.x,
+          shoot.object.position.y + shoot.velocity.y,
+          shoot.object.position.z + shoot.velocity.z
+        );
+
+        const obj = shoot.object;
+        const oldPosition = this.temp.vector.copy(obj.position);
+
+        if (projectile.hasSmoke() && shoot.enableSmoke) {
           this.map.modules.effect.addSmoke(shoot.object.position.clone(), {
             type: SMOKE_TYPE.MEDIUM,
             life: 0.8,
             static: true
           });
         }
-      }
-      let hit = false;
-      const MAX_SHOOT_DISTANCE = 100;
+        let hit = false;
+        const MAX_SHOOT_DISTANCE = 100;
 
-      let needsRaycast = false;
+        let needsRaycast = false;
 
-      this.temp.box.setFromObject(obj);
-      for (const target of allPossibleTargets_) {
-        this.temp.box2.setFromObject(target);
-        if (target !== obj && this.temp.box.intersectsBox(this.temp.box2)) {
-          needsRaycast = true;
-          break;
+        this.temp.box.setFromObject(obj);
+        for (const target of allPossibleTargets_) {
+          this.temp.box2.setFromObject(target);
+          if (target !== obj && this.temp.box.intersectsBox(this.temp.box2)) {
+            needsRaycast = true;
+            break;
+          }
         }
-      }
 
-      if (
-        obj.position.y <=
-        this.map.modules.surface.getSurfaceHeightAt(
-          obj.position.x,
-          obj.position.z
-        ) +
-          0.2
-      ) {
-        needsRaycast = true;
-      }
+        if (
+          obj.position.y <=
+          this.map.modules.surface.getSurfaceHeightAt(
+            obj.position.x,
+            obj.position.z
+          ) +
+            0.2
+        ) {
+          needsRaycast = true;
+        }
 
-      if (needsRaycast) {
-        const direction = this.temp.drag.copy(shoot.velocity).normalize();
-        raycaster.set(oldPosition, direction);
-        const intersections = raycaster.intersectObjects(allPossibleTargets);
+        if (needsRaycast) {
+          const direction = this.temp.drag.copy(shoot.velocity).normalize();
+          raycaster.set(oldPosition, direction);
+          const intersections = raycaster.intersectObjects(allPossibleTargets);
 
-        const validIntersection =
-          shoot.ignoredObjects.length > 0
-            ? intersections.find(i => !shoot.ignoredObjects.includes(i.object))
-            : intersections[0];
+          const validIntersection =
+            shoot.ignoredObjects.length > 0
+              ? intersections.find(
+                  i => !shoot.ignoredObjects.includes(i.object)
+                )
+              : intersections[0];
 
-        if (validIntersection) {
-          const intersection = validIntersection;
-          const point = intersection.point;
-          const normal = intersection.face?.normal;
-          const distanceToIntersection =
-            shoot.object.position.distanceTo(point);
+          if (validIntersection) {
+            const intersection = validIntersection;
+            const point = intersection.point;
+            const normal = intersection.face?.normal;
+            const distanceToIntersection =
+              shoot.object.position.distanceTo(point);
 
-          const moveDistance =
-            shoot.object.position.clone().add(point).length() * delta;
+            const moveDistance =
+              shoot.object.position.clone().add(point).length() * delta;
 
-          if (distanceToIntersection <= Math.max(moveDistance, 0.4)) {
-            hit = true;
+            if (distanceToIntersection <= Math.max(moveDistance, 0.4)) {
+              hit = true;
 
-            // Effekte nur bei Hit hinzufügen
-            if (projectile.hasExplosion()) {
-              this.map.modules.effect.addExplosion(point, 1);
-            }
-            if (projectile.hasDust()) {
-              if (intersection.object.name === 'water') {
-                console.log('WATER HIT');
-                this.map.modules.effect.addWaterCone(
-                  point,
-                  normal,
-                  intersection.object
-                );
-              } else {
-                this.map.modules.effect.addDustCone(
-                  point,
-                  normal,
-                  intersection.object
-                );
+              // Effekte nur bei Hit hinzufügen
+              if (projectile.hasExplosion()) {
+                this.map.modules.effect.addExplosion(point, 1);
               }
-            }
-            if (projectile.hasSmoke()) {
-              this.map.modules.effect.addSmoke(point);
-            }
-            if (projectile.hasFire()) {
-              this.map.modules.effect.addFire(point);
-            }
-            if (projectile.hasShoot()) {
-              this.map.modules.effect.addShoot(point.clone(), {
-                life: 0.8,
-                strength: projectile.strength
-              });
-            }
+              if (projectile.hasDust()) {
+                if (intersection.object.name === 'water') {
+                  console.log('WATER HIT');
+                  this.map.modules.effect.addWaterCone(
+                    point,
+                    normal,
+                    intersection.object
+                  );
+                } else {
+                  this.map.modules.effect.addDustCone(
+                    point,
+                    normal,
+                    intersection.object
+                  );
+                }
+              }
+              if (projectile.hasSmoke()) {
+                this.map.modules.effect.addSmoke(point);
+              }
+              if (projectile.hasFire()) {
+                this.map.modules.effect.addFire(point);
+              }
+              if (projectile.hasShoot()) {
+                this.map.modules.effect.addShoot(point.clone(), {
+                  life: 0.8,
+                  strength: projectile.strength
+                });
+              }
 
-            if (projectile.radius >= 1) {
-              this.hitByProjectileRadius(shoot, point);
-            } else {
-              if (intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]) {
-                const unit = this.map.app
-                  .getScene()
-                  .getObjectById(
-                    intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
-                  )?.userData.unit as Unit;
-                this.hitUnit(unit, shoot, 0);
+              if (projectile.radius >= 1) {
+                this.hitByProjectileRadius(shoot, point);
+              } else {
+                if (
+                  intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
+                ) {
+                  const unit = this.map.app
+                    .getScene()
+                    .getObjectById(
+                      intersection.object.userData[OBJECT_USER_DATA.MAIN_OBJECT]
+                    )?.userData.unit as Unit;
+                  this.hitUnit(unit, shoot, 0);
+                }
               }
             }
           }
         }
-      }
 
-      // Wasser-Check immer machen, aber vereinfacht
-      if (!hit && obj.position.y <= this.map.modules.surface.getWaterLevel()) {
-        hit = true;
-        if (projectile.hasExplosion()) {
-          const position = new Vector3()
-            .copy(obj.position)
-            .setY(
-              this.map.modules.surface.getSurfaceHeightAt(
-                obj.position.x,
-                obj.position.z
-              )
-            );
-          this.map.modules.effect.addExplosion(position, 1);
-          this.hitByProjectileRadius(shoot, position);
+        // Wasser-Check immer machen, aber vereinfacht
+        if (
+          !hit &&
+          obj.position.y <= this.map.modules.surface.getWaterLevel()
+        ) {
+          hit = true;
+          if (projectile.hasExplosion()) {
+            const position = new Vector3()
+              .copy(obj.position)
+              .setY(
+                this.map.modules.surface.getSurfaceHeightAt(
+                  obj.position.x,
+                  obj.position.z
+                )
+              );
+            this.map.modules.effect.addExplosion(position, 1);
+            this.hitByProjectileRadius(shoot, position);
+          }
         }
-      }
 
-      const distanceFromStart = obj.position.distanceTo(shoot.startPosition);
-      if (hit || distanceFromStart > MAX_SHOOT_DISTANCE) {
-        this.removeShoot(shoot);
+        const distanceFromStart = obj.position.distanceTo(shoot.startPosition);
+        if (hit || distanceFromStart > MAX_SHOOT_DISTANCE) {
+          this.removeShoot(shoot);
+        }
       }
     }
 

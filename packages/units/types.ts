@@ -32,6 +32,7 @@ import type { RawUnitDescription_SupplyStation_1 } from './building/supply_stati
 import type { RawUnitDescription_Barrack_1 } from './building/barrack_1/Barrack_1';
 import type { RawUnitDescription_BarrackRescue_1 } from './building/barrack_rescue_1/BarrackRescue_1';
 import type { RawUnitDescription_Carrier_1 } from './building/carrier_1/Carrier_1';
+import type { RawUnitDescription_Battleship_1 } from './building/battleship_1/Battleship_1';
 import type { RawUnitDescription_CombatSubmarine_1 } from './vehicle/combat_submarine_1/CombatSubmarine_1';
 import type { RawUnitDescription_CombatFregatte_1 } from './vehicle/combat_fregatte_1/CombatFregatte_1';
 import type { RawUnitDescription_Tree_1 } from './tree/tree_1/Tree_1';
@@ -76,6 +77,9 @@ import type Civilian_1 from './vehicle/civilian_1/Civilian_1';
 import type Radar_1 from './building/radar_1/Radar_1';
 import type Carrier_1 from './building/carrier_1/Carrier_1';
 import type SpaceRocketLauncher_1 from './building/space_rocket_launcher_1/SpaceRocketLauncher_1';
+import type Battleship_1 from './building/battleship_1/Battleship_1';
+import type { RawUnitDescription_SeaPlatform_1 } from './building/sea_platform_1/SeaPlatform_1';
+import type SeaPlatform_1 from './building/sea_platform_1/SeaPlatform_1';
 
 export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_LandingPortSupplyStation_1<O>
@@ -110,12 +114,14 @@ export type UnitDescriptions<O extends UnitOptions = UnitOptions> =
   | RawUnitDescription_Barrack_1<O>
   | RawUnitDescription_BarrackRescue_1<O>
   | RawUnitDescription_Carrier_1<O>
+  | RawUnitDescription_Battleship_1<O>
   | RawUnitDescription_CombatSubmarine_1<O>
   | RawUnitDescription_CombatFregatte_1<O>
   | RawUnitDescription_CombatShip_1<O>
   | RawUnitDescription_Tree_1<O>
   | RawUnitDescription_Tree_2<O>
-  | RawUnitDescription_Helicopter_1<O>;
+  | RawUnitDescription_Helicopter_1<O>
+  | RawUnitDescription_SeaPlatform_1<O>;
 
 export type Units =
   | Unit
@@ -150,13 +156,15 @@ export type Units =
   | SupplyStation_1
   | Barrack_1
   | Carrier_1
+  | Battleship_1
   | BarrackRescue_1
   | CombatSubmarine_1
   | CombatFregatte_1
   | CombatShip_1
   | Tree_1
   | Tree_2
-  | Helicopter_1;
+  | Helicopter_1
+  | SeaPlatform_1;
 
 export type VehicleUnits =
   | CombatHelicopter_1

@@ -22,7 +22,9 @@ import { getUnitMap } from '../../utils/unit';
 import type { UnitIdentifier } from '../../types/unit';
 
 export enum ACTION {
+  NONE = 'none',
   ADD = 'add',
+  MOVE = 'move',
   REMOVE = 'remove'
 }
 
@@ -70,7 +72,7 @@ export default class EditorUnitsAppModule extends AppModule<
       unit: null,
       creating: false,
       moving: false,
-      action: ACTION.ADD,
+      action: ACTION.NONE,
       actionRadius: 0,
       actionIntensity: 1,
       autoApply: false,
@@ -154,7 +156,9 @@ export default class EditorUnitsAppModule extends AppModule<
                 force: true
               });
             } else if (this.state.unit) {
-              this.state.unit.setPosition(new Vector3(p.x, 0, p.y));
+              this.state.unit.setPosition(new Vector3(p.x, 0, p.y), {
+                force: true
+              });
             }
           }
           this.radiusHelper?.position.set(
@@ -169,11 +173,15 @@ export default class EditorUnitsAppModule extends AppModule<
 
       this.subscription.add(
         editorGrid.observables.currentPosition$.subscribe(async position => {
-          if (this.state.action === ACTION.ADD) {
+          if (
+            this.state.action === ACTION.ADD ||
+            this.state.action === ACTION.MOVE
+          ) {
             if (this.state.moving && this.state.ghostUnit) {
-              this.placeUnit(position);
+              await this.placeUnit(position);
             } else {
               this.setMove(false);
+              this.setAction(ACTION.NONE);
             }
           } else if (this.state.action === ACTION.REMOVE) {
             this.removeUnits(position);
@@ -182,12 +190,13 @@ export default class EditorUnitsAppModule extends AppModule<
       );
       this.subscription.add(
         this.app.modules.selection.observables.selectUnit$.subscribe(u => {
-          if (this.state.ghostUnit) {
+          console.log('selectUnit$', u, this.state.action);
+          if (
+            this.state.ghostUnit ||
+            (this.state.unit && this.state.action !== ACTION.NONE)
+          ) {
             this.placeUnit();
           } else {
-            // if ('isMode' in this.app && !this.app.isMode(EDITOR_MODE.DEFAULT))
-            //   return;
-            console.log('selectUnit$', u);
             this.setUnit(u);
           }
         })
@@ -218,28 +227,37 @@ export default class EditorUnitsAppModule extends AppModule<
     this.setAction(ACTION.ADD);
   }
 
+  private isPlacing = false;
   async placeUnit(position?: Vector2) {
+    if (this.isPlacing) return;
+    this.isPlacing = true;
+
     const key = this.state.unitKey!;
     const radius = this.state.actionRadius;
+
     if (radius !== 0) {
       await this.sprinkleUnits(key, radius, this.state.actionIntensity, false);
     } else if (!this.state.unit) {
-      const unit = await this.createUnit(key);
       const pos = this.state.ghostUnit?.getPosition().clone() ?? new Vector3();
+      const unit = await this.createUnit(key);
+
       if (position) {
         pos.set(position.x, 0, position.y);
       }
-
-      if (unit.checkPosition(pos)) {
-        unit.setPosition(pos);
+      const ignoreCheckPosition = true;
+      if (ignoreCheckPosition || unit.checkPosition(pos)) {
+        unit.setPosition(pos, { force: true });
         this.setUnit(unit);
         this.setUnitKey(null);
+        this.setAction(ACTION.NONE);
       } else {
         unit.destroy();
       }
+      this.setMove(false);
     } else {
       this.setMove(false);
     }
+    this.isPlacing = false;
   }
 
   removeUnits(position: Vector2) {
@@ -263,6 +281,7 @@ export default class EditorUnitsAppModule extends AppModule<
   }
 
   private setUnit(unit: Unit | null) {
+    if (this.state.action === ACTION.ADD) return;
     if (this.state.unit === unit) return;
 
     if (this.state.unit) {
@@ -290,6 +309,7 @@ export default class EditorUnitsAppModule extends AppModule<
     if (this.state.moving === v) return;
     this.state.moving = v;
     this.observables.moving$.next(v);
+    this.setAction(ACTION.MOVE);
   }
 
   setAction(action: ACTION) {
