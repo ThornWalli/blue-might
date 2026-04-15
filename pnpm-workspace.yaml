@@ -7,13 +7,13 @@ catalog:
   '@fullhuman/postcss-purgecss': 8.0.0
   '@nuxt/eslint': 1.15.2
   '@nuxtjs/critters': 0.9.0
-  '@nuxtjs/robots': 6.0.6
+  '@nuxtjs/robots': 6.0.7
   '@nuxtjs/sitemap': 8.0.12
-  '@types/node': 25.5.2
+  '@types/node': 25.6.0
   '@types/pathfinding': 0.1.0
   '@types/three': 0.183.1
   '@types/web': 0.0.345
-  '@typescript-eslint/eslint-plugin': 8.58.1
+  '@typescript-eslint/eslint-plugin': 8.58.2
   change-case: 5.4.4
   consola: 3.4.2
   dotenv-mono: 1.5.1
@@ -29,13 +29,13 @@ catalog:
   postcss-html: 1.8.1
   postcss-nested: 7.0.2
   postcss-normalize: 13.0.1
-  postcss-preset-env: 11.2.0
+  postcss-preset-env: 11.2.1
   postcss-url: 10.1.3
-  prettier: 3.8.1
+  prettier: 3.8.3
   read-pkg: 10.1.0
   rucksack-css: 1.0.2
   rxjs: 7.8.2
-  stylelint: 17.6.0
+  stylelint: 17.7.0
   stylelint-config-css-modules: 4.6.0
   stylelint-config-recess-order: 7.7.0
   stylelint-config-standard: 40.0.0
@@ -44,7 +44,7 @@ catalog:
   three: 0.183.2
   tsx: 4.21.0
   typescript: 6.0.2
-  typescript-eslint: 8.58.1
+  typescript-eslint: 8.58.2
   ufo: 1.6.3
   vite: 8.0.8
   vite-plugin-eslint2: 5.1.0
