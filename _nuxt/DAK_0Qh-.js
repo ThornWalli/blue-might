@@ -1,1 +1,0 @@
-import{o,c as t,a as r}from"./DHX_UYNj.js";const a={xmlns:"http://www.w3.org/2000/svg",fill:"currentColor",viewBox:"0 0 16 16"};function n(s,e){return o(),t("svg",a,[...e[0]||(e[0]=[r("path",{d:"M8.75 3.75a.75.75 0 0 0-1.5 0v3.5h-3.5a.75.75 0 0 0 0 1.5h3.5v3.5a.75.75 0 0 0 1.5 0v-3.5h3.5a.75.75 0 0 0 0-1.5h-3.5z"},null,-1)])])}const c={render:n};export{c as default,n as render};
