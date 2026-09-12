@@ -16,12 +16,12 @@
     "concaveman": "2.0.0",
     "easystarjs": "0.4.4",
     "file-saver": "2.0.5",
-    "jszip": "3.10.1",
-    "marked": "18.0.3",
+    "jszip": "3.10.2",
+    "marked": "18.0.12",
     "rxjs": "catalog:",
     "three": "catalog:",
-    "three-mesh-bvh": "0.9.9",
-    "ts-seedrandom": "1.4.1"
+    "three-mesh-bvh": "0.9.15",
+    "ts-seedrandom": "1.6.0"
   },
   "devDependencies": {
     "@types/concaveman": "1.1.6",
